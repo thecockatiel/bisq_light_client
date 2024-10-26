@@ -1,0 +1,8 @@
+txtorcon~=24.8
+twisted~=24.7
+tqdm~=4.66
+grpcio~=1.67
+grpcio-tools~=1.67
+aiohttp>=3
+
+pypiwin32; platform_system == "Windows"
