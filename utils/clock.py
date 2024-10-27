@@ -11,7 +11,7 @@ class Clock:
         # Convert nanoseconds to milliseconds using floor division
         time_ms = time.time_ns() // 1_000_000
         # add the offset
-        if self.td != None:
+        if self.td is not None:
             time_ms = time_ms + self.td.total_seconds() * 1000
         return time_ms
 

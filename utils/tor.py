@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 async def setup_tor(reactor):
     global tor, logger
-    if tor == None:
+    if tor is None:
         try:
             net_addr = __detect_tor_socks_proxy()
             if net_addr:
