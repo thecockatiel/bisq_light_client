@@ -14,7 +14,7 @@ from utils.aio import get_asyncio_loop
 # Global variables
 CURRENT_TOR_VERSION = "14.0"
 tor: txtorcon.Tor = None
-logger = get_logger("tor")
+logger = get_logger(__name__)
 
 async def setup_tor(reactor):
     global tor, logger
