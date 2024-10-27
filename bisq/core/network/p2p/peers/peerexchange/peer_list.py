@@ -8,7 +8,7 @@ from .peer import Peer
 
 class PeerList(PersistableEnvelope):
     def __init__(self, set: Set[Peer] = None):
-        self.set: Set[Peer] = set if set != None else set
+        self.set: Set[Peer] = set if set is not None else set
 
     def size(self) -> int:
         return len(self.set)
