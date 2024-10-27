@@ -1,0 +1,60 @@
+from typing import List, Set, Optional, Type, TypeVar, Iterable, Collection, Callable
+from google.protobuf import message
+from google.protobuf.any_pb2 import Any
+
+from bisq.core.common.proto import Proto
+from bisq.logging import get_logger
+
+T = TypeVar('T', bound=message.Message)
+
+logger = get_logger(__name__)
+
+class ProtoUtil:
+
+    @staticmethod
+    def byte_set_from_proto_byte_string_list(byte_string_list: List[Any]) -> Set[bytes]:
+        return {b.SerializeToString() for b in byte_string_list}
+
+    @staticmethod
+    def string_or_null_from_proto(proto: str) -> Optional[str]:
+        return None if proto == "" else proto
+
+    @staticmethod
+    def byte_array_or_null_from_proto(proto: Any) -> Optional[bytes]:
+        return None if not proto.ByteSize() else proto.SerializeToString()
+
+    @staticmethod
+    def enum_from_proto(enum_type: Type[T], name: Optional[str]) -> Optional[T]:
+        enum_name = name if name is not None else "UNDEFINED"
+        try:
+            return enum_type.Value(enum_name)
+        except ValueError:
+            try:
+                result = enum_type.Value("UNDEFINED")
+                logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
+                return result
+            except ValueError:
+                return None
+
+    @staticmethod
+    def collection_to_proto(collection: Collection['Proto'], message_type: Type[T]) -> Iterable[T]:
+        result = []
+        for e in collection:
+            message = e.to_proto_message()
+            try:
+                result.append(message_type.FromString(message.SerializeToString()))
+            except Exception as ex:
+                logger.error(f"Message could not be cast. message={message}, message_type={message_type}")
+        return result
+
+    @staticmethod
+    def collection_to_proto_with_extra(collection: Collection['Proto'], extra: Callable[[message.Message], T]) -> Iterable[T]:
+        return [extra(o.to_proto_message()) for o in collection]
+
+    @staticmethod
+    def protocol_string_list_to_list(protocol_string_list: List[str]) -> List[str]:
+        return [] if not protocol_string_list else list(protocol_string_list)
+
+    @staticmethod
+    def protocol_string_list_to_set(protocol_string_list: List[str]) -> Set[str]:
+        return set() if not protocol_string_list else set(protocol_string_list)
