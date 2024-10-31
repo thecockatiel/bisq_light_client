@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List, Set, Optional
 
 from bisq.logging import get_logger
@@ -20,16 +21,14 @@ class Capabilities:
     MANDATORY_CAPABILITY = Capability.DAO_STATE
 
     def __init__(self, capabilities: Optional[List[Capability]] = None):
-        self.capabilities: Set[Capability] = set(capabilities) if capabilities else set()
+        self.capabilities: frozenset[Capability] = frozenset(capabilities) if capabilities else frozenset()
 
-    def set(self, capabilities: Optional[List[Capability]] = None):
-        if capabilities is not None:
-            self.capabilities.clear()
-            self.capabilities.update(capabilities)
+    def set(self, capabilities: Optional[frozenset[Capability]] = None):
+        self.capabilities = capabilities
 
     def add_all(self, capabilities: Optional[List[Capability]] = None):
         if capabilities:
-            self.capabilities.update(capabilities)
+            self.capabilities = self.capabilities.union(capabilities)
 
     def contains_all(self, required_items: Set[Capability]) -> bool:
         return self.capabilities.issuperset(required_items)
@@ -39,6 +38,15 @@ class Capabilities:
 
     def is_empty(self) -> bool:
         return not self.capabilities
+    
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.capabilities.__eq__(other.capabilities)
+        else:
+            return False
+    
+    def __hash__(self):
+        return self.capabilities.__hash__()
 
     @staticmethod
     def to_int_list(capabilities_obj: 'Capabilities') -> List[int]:

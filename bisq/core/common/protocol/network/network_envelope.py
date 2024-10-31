@@ -1,9 +1,11 @@
-from abc import ABC 
+from abc import ABC
+from dataclasses import dataclass 
 from google.protobuf.message import Message
 from bisq.core.common.envelope import Envelope
 import proto.pb_pb2 as protobuf
 # Import protobuf modules as needed
 
+@dataclass(frozen=True)
 class NetworkEnvelope(Envelope, ABC):
     message_version: int
 

@@ -1,5 +1,6 @@
 import re
 import math
+import textwrap
 
 # Pre-compile regex patterns for performance
 pattern_one_second = re.compile(r"(^|\b)1 seconds")
@@ -67,3 +68,21 @@ def readable_file_size(size):
     size_in_units = size / math.pow(1024, digit_groups)
     formatted_size = '{:,.3f}'.format(size_in_units).rstrip('0').rstrip('.')
     return f"{formatted_size} {units[digit_groups]}"
+
+def to_truncated_string(message, max_length=200, remove_line_breaks=True):
+    if message is None:
+        return "null"
+
+    result = message
+    if not isinstance(result, str):
+        result = str(message)
+    
+    if max_length > 3:
+        result = result[:max_length - 3] + '...' if len(result) > max_length else result
+    else:
+        result = result[:max_length]
+
+    if remove_line_breaks:
+        result = result.replace("\n", "")
+
+    return result
