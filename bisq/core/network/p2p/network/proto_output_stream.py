@@ -5,6 +5,7 @@ import time
 from typing import TYPE_CHECKING
 
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
+from proto.delimited_protobuf import write_delimited
 
 from .connection import Connection
 from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
@@ -50,16 +51,10 @@ class ProtoOutputStream:
         finally:
             self.lock.release()
 
-    def __write_message_delimited_to(self, message: 'Message', output_stream: 'BufferedWriter'):
-        data = message.SerializeToString()
-        size = len(data)
-        output_stream.write(size.to_bytes(4, byteorder='big'))
-        output_stream.write(data)
-
     def write_envelope_or_throw(self, envelope: 'NetworkEnvelope'):
         ts = time.time_ns()
         proto = envelope.to_proto_network_envelope()
-        self.__write_message_delimited_to(proto, self.output_stream)
+        write_delimited(self.output_stream, proto)
         self.output_stream.flush()
         duration = (time.time_ns() - ts) // 1_000_000
         if duration > 10_000:
