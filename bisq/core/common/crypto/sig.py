@@ -85,3 +85,12 @@ class Sig:
         except Exception as e:
             logger.error("Error encoding public key to bytes.", exc_info=True)
             raise KeyConversionException(e) from e
+
+    @staticmethod
+    def get_public_key_bytes_as_hex_string(sig_public_key: dsa.DSAPublicKey, allow_none: bool = False):
+        if not sig_public_key:
+            if not allow_none:
+                raise KeyConversionException("Public key is None.")
+            return 'null'
+        
+        return Sig.get_public_key_bytes(sig_public_key).hex()

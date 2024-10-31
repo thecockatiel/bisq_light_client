@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set
 
 from bisq.core.common.protocol.network.network_payload import NetworkPayload 
 
 if TYPE_CHECKING:
-    from bisq.core.common.capabilities import Capabilities
+    from bisq.core.common.capability import Capability
 
 class CapabilityRequiringPayload(NetworkPayload, ABC):
     """
@@ -15,7 +15,7 @@ class CapabilityRequiringPayload(NetworkPayload, ABC):
     """
     
     @abstractmethod
-    def get_required_capabilities(self) -> 'Capabilities':
+    def get_required_capabilities(self) -> 'Set[Capability]':
         """
         Returns the capabilities the other node needs to support to receive that message.
         """

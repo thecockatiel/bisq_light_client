@@ -12,7 +12,7 @@ class Clock:
         time_ms = time.time_ns() // 1_000_000
         # add the offset
         if self.td is not None:
-            time_ms = time_ms + self.td.total_seconds() * 1000
+            time_ms = time_ms + int(self.td.total_seconds() * 1000)
         return time_ms
 
     @staticmethod

@@ -7,8 +7,8 @@ from bisq.core.common.capabilities import Capabilities
 from bisq.core.common.has_capabilities import HasCapabilities
 from bisq.core.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.network.p2p.node_address import NodeAddress 
-from bisq.core.network.supported_capabilities_listener import SupportedCapabilitiesListener
+from bisq.core.network.p2p.network.supported_capabilities_listener import SupportedCapabilitiesListener
+from bisq.core.network.p2p.node_address import NodeAddress
 
 import proto.pb_pb2 as protobuf
 
