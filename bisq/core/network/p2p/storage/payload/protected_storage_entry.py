@@ -165,4 +165,4 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         return hash(self) == hash(other)
 
     def __hash__(self) -> int:
-        return hash((self.owner_pub_key_bytes, self.protected_storage_payload))
+        return hash((self.owner_pub_key_bytes, self.sequence_number, self.protected_storage_payload))
