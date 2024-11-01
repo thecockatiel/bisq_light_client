@@ -25,11 +25,11 @@ logger = get_logger(__name__)
 @dataclass(frozen=True)
 class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDataSizePermission, InitialDataResponse):
     # Set of ProtectedStorageEntry objects
-    data_set: Set['ProtectedStorageEntry']
+    data_set: frozenset['ProtectedStorageEntry']
     
     # Set of PersistableNetworkPayload objects
     # We added that in v 0.6 and the from_proto code will create an empty set if it doesn't exist
-    persistable_network_payload_set: Set['PersistableNetworkPayload']
+    persistable_network_payload_set: frozenset['PersistableNetworkPayload']
     
     request_nonce: int
     is_get_updated_data_response: bool
@@ -47,8 +47,8 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
                  supported_capabilities: Capabilities = Capabilities.app,
                  message_version: int = Version.get_p2p_message_version()):
         super().__init__(message_version)
-        self.data_set = data_set
-        self.persistable_network_payload_set = persistable_network_payload_set
+        self.data_set = frozenset(data_set)
+        self.persistable_network_payload_set = frozenset(persistable_network_payload_set)
         self.request_nonce = request_nonce
         self.is_get_updated_data_response = is_get_updated_data_response
         self.was_truncated = was_truncated
