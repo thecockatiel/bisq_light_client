@@ -53,3 +53,6 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
 
     def __str__(self):
         return self.get_full_address()
+    
+    def __hash__(self) -> int:
+        return hash((self.host_name, self.port))
