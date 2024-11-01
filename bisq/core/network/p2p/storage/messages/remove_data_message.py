@@ -21,9 +21,9 @@ class RemoveDataMessage(BroadcastMessage):
     # PROTO BUFFER
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
-        envelope.remove_data_message = protobuf.RemoveDataMessage(
+        envelope.remove_data_message.CopyFrom(protobuf.RemoveDataMessage(
             protected_storage_entry = self.protected_storage_entry.to_proto_message()
-        )
+        ))
         return envelope
 
     @staticmethod

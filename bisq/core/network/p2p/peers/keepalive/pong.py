@@ -14,7 +14,7 @@ class Pong(NetworkEnvelope, KeepAliveMessage):
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()
-        envelope.pong = protobuf.Pong(request_nonce=self.request_nonce)
+        envelope.pong.CopyFrom(protobuf.Pong(request_nonce=self.request_nonce))
         return envelope
 
     @staticmethod

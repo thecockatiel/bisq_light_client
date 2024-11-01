@@ -41,13 +41,13 @@ class Capabilities:
         return not self.capabilities
     
     def __eq__(self, other):
-        if type(other) is type(self):
-            return self.capabilities.__eq__(other.capabilities)
+        if isinstance(other, Capabilities):
+            return self.capabilities == other.capabilities
         else:
             return False
     
     def __hash__(self):
-        return self.capabilities.__hash__()
+        return None
 
     @staticmethod
     def to_int_list(capabilities_obj: 'Capabilities') -> List[int]:

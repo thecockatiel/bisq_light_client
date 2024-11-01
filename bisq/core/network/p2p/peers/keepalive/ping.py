@@ -16,8 +16,8 @@ class Ping(NetworkEnvelope, KeepAliveMessage):
 
     # Convert the Ping object to a protobuf NetworkEnvelope.
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
-        envelope= self.get_network_envelope_builder()
-        envelope.ping = protobuf.Ping(nonce=self.nonce, last_round_trip_time=self.last_round_trip_time)
+        envelope = self.get_network_envelope_builder()
+        envelope.ping.CopyFrom(protobuf.Ping(nonce=self.nonce, last_round_trip_time=self.last_round_trip_time))
         return envelope
 
     # Create a Ping object from a protobuf Ping message.

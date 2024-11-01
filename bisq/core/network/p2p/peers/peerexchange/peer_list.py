@@ -1,4 +1,5 @@
-from typing import Set, Collection
+from dataclasses import dataclass
+from typing import Set, Iterable
 from google.protobuf.message import Message
 
 from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
@@ -6,9 +7,10 @@ import proto.pb_pb2 as protobuf
 
 from .peer import Peer
 
+@dataclass
 class PeerList(PersistableEnvelope):
-    def __init__(self, set: Set[Peer] = None):
-        self.set: Set[Peer] = set if set is not None else set
+    def __init__(self, set: Set[Peer] = frozenset()):
+        self.set: frozenset[Peer] = frozenset(set if set is not None else set())
 
     def size(self) -> int:
         return len(self.set)
@@ -27,9 +29,8 @@ class PeerList(PersistableEnvelope):
         peers = {Peer.from_proto(peer_proto) for peer_proto in proto.peer}
         return PeerList(peers)
 
-    def set_all(self, collection: Collection[Peer]) -> None:
-        self.set.clear()
-        self.set.update(collection)
+    def set_all(self, collection: Iterable[Peer]) -> None:
+        self.set = frozenset(collection)
 
     def __str__(self) -> str:
         return f"PeerList{{\n     set={self.set}\n}}"
@@ -40,4 +41,4 @@ class PeerList(PersistableEnvelope):
         return self.set == other.set
 
     def __hash__(self) -> int:
-        return hash(frozenset(self.set))
+        return None

@@ -29,7 +29,7 @@ class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapab
             request.version = self.version
         request.supported_capabilities.extend(self.supported_capabilities)
         envelope = self.get_network_envelope_builder()
-        envelope.preliminary_get_data_request = request
+        envelope.preliminary_get_data_request.CopyFrom(request)
         logger.info(f"Sending a PreliminaryGetDataRequest with {request.ByteSize() / 1000} kB and {len(self.excluded_keys)} excluded key entries. Requester's version={self.version}")
         return envelope
 

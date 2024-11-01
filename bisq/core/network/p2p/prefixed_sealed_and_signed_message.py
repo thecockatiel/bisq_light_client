@@ -40,7 +40,7 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
             uid=self.uid
         )
         network_envelope = self.get_network_envelope_builder()
-        network_envelope.prefixed_sealed_and_signed_message = proto_message
+        network_envelope.prefixed_sealed_and_signed_message.CopyFrom(proto_message)
         return network_envelope
 
     @staticmethod

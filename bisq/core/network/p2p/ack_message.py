@@ -63,7 +63,7 @@ class AckMessage(NetworkEnvelope):
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()
-        envelope.ack_message = self.to_proto_message()
+        envelope.ack_message.CopyFrom(self.to_proto_message())
         return envelope
 
     @staticmethod

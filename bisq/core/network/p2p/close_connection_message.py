@@ -16,7 +16,7 @@ class CloseConnectionMessage(NetworkEnvelope):
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()
-        envelope.close_connection_message = protobuf.CloseConnectionMessage(reason=self.reason)
+        envelope.close_connection_message.CopyFrom(protobuf.CloseConnectionMessage(reason=self.reason))
         return envelope
 
     @staticmethod
