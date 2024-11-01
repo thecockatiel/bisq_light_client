@@ -1,7 +1,13 @@
+from dataclasses import dataclass, field
 import hashlib
-from proto.pb_pb2 import NodeAddress as ProtoNodeAddress
+import proto.pb_pb2 as protobuf
 
+@dataclass(frozen=True)
 class NodeAddress:
+    host_name: str
+    port: int
+    address_prefix_hash: bytes = field(init=False, default=None)
+
     def __init__(self, host_name=None, port=None, full_address=None):
         if full_address:
             split = full_address.split(":")
@@ -15,10 +21,10 @@ class NodeAddress:
 
     def to_proto_message(self):
         # Assuming protobuf.NodeAddress is defined elsewhere
-        return ProtoNodeAddress(host_name=self.host_name, port=self.port)
+        return protobuf.NodeAddress(host_name=self.host_name, port=self.port)
 
     @staticmethod
-    def from_proto(proto: ProtoNodeAddress):
+    def from_proto(proto: protobuf.NodeAddress):
         return NodeAddress(host_name=proto.host_name, port=proto.port)
 
     def get_full_address(self):
