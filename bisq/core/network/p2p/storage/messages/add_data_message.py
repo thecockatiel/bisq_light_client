@@ -6,7 +6,6 @@ from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry impor
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
-import bisq.core.common.version as Version
 
 @dataclass(frozen=True)
 class AddDataMessage(BroadcastMessage):

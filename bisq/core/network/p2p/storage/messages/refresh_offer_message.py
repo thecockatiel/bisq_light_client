@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import bisq.core.common.version as Version
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 import proto.pb_pb2 as protobuf
 

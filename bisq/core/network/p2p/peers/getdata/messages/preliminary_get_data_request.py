@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 from bisq.core.common.capabilities import Capabilities
 from bisq.core.common.protocol.proto_util import ProtoUtil
@@ -8,7 +7,6 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.logging import get_logger
 
-import bisq.core.common.version as Version
 import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)

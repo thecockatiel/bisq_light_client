@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 import proto.pb_pb2 as protobuf
-import bisq.core.common.version as Version
 
 @dataclass(frozen=True)
 class CloseConnectionMessage(NetworkEnvelope):

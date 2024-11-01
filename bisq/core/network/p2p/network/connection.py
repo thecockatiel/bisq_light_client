@@ -9,7 +9,7 @@ from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
 import proto.pb_pb2 as protobuf
-from proto.delimited_protobuf import write_delimited, read_delimited
+from proto.delimited_protobuf import read_delimited
 import bisq.core.common.version as Version
 from google.protobuf.message import Error as InvalidProtocolBufferException  
 
