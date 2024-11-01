@@ -8,9 +8,9 @@ if TYPE_CHECKING:
 class SeedNodeRepository(ABC):
     
     @abstractmethod
-    def is_seed_node(self, node_address: NodeAddress) -> bool:
+    def is_seed_node(self, node_address: 'NodeAddress') -> bool:
         pass
     
     @abstractmethod
-    def get_seed_node_addresses(self) -> Collection[NodeAddress]:
+    def get_seed_node_addresses(self) -> Collection['NodeAddress']:
         pass
