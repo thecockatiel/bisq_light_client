@@ -142,3 +142,11 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
 
     def __str__(self) -> str:
         return f"ProtectedMailboxStorageEntry:\n\t  Receivers Public Key: {Sig.get_public_key_bytes_as_hex_string(self.receivers_pub_key_bytes, True)}\n{super().__str__()}"
+    
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ProtectedMailboxStorageEntry):
+            return False
+        return hash(self) == hash(other)
+
+    def __hash__(self) -> int:
+        return hash((self.owner_pub_key_bytes, self.receivers_pub_key_bytes, self.protected_storage_payload))
