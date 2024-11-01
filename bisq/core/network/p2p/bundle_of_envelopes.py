@@ -30,8 +30,8 @@ class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
     def to_proto_network_envelope(self) -> 'protobuf.NetworkEnvelope':
         return protobuf.NetworkEnvelope(bundle_of_envelopes=protobuf.BundleOfEnvelopes(envelopes=[env.to_proto_network_envelope() for env in self.envelopes]))
 
-    @classmethod
-    def from_proto(cls, proto: 'protobuf.BundleOfEnvelopes', resolver: NetworkProtoResolver, message_version: int) -> 'BundleOfEnvelopes':
+    @staticmethod
+    def from_proto(proto: 'protobuf.BundleOfEnvelopes', resolver: NetworkProtoResolver, message_version: int) -> 'BundleOfEnvelopes':
         envelopes = []
         for envelope_proto in proto.envelopes:
             try:
@@ -40,7 +40,7 @@ class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
                     envelopes.append(envelope)
             except ProtobufferException:
                 continue
-        return cls(envelopes=envelopes)
+        return BundleOfEnvelopes(envelopes=envelopes)
 
     def get_required_capabilities(self) -> Capabilities:
         return Capabilities([Capability.BUNDLE_OF_ENVELOPES])

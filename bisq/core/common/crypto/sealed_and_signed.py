@@ -29,9 +29,9 @@ class SealedAndSigned(NetworkPayload):
         else:
             raise ValueError("Either sig_public_key or sig_public_key_bytes must be provided.")
 
-    @classmethod
-    def from_proto(cls, proto: protobuf.SealedAndSigned) -> 'SealedAndSigned':
-        return cls(
+    @staticmethod
+    def from_proto(proto: protobuf.SealedAndSigned) -> 'SealedAndSigned':
+        return SealedAndSigned(
             encrypted_secret_key=proto.encrypted_secret_key,
             encrypted_payload_with_hmac=proto.encrypted_payload_with_hmac,
             signature=proto.signature,

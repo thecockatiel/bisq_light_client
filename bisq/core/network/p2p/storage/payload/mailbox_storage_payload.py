@@ -71,9 +71,9 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
             payload.extra_data.update(self.extra_data_map)
         return payload
 
-    @classmethod
-    def from_proto(cls, proto: protobuf.MailboxStoragePayload) -> 'MailboxStoragePayload':
-        return cls(
+    @staticmethod
+    def from_proto(proto: protobuf.MailboxStoragePayload) -> 'MailboxStoragePayload':
+        return MailboxStoragePayload(
             PrefixedSealedAndSignedMessage.from_payload_proto(proto.prefixed_sealed_and_signed_message),
             Sig.get_public_key_from_bytes(proto.sender_pub_key_for_add_operation_bytes),
             Sig.get_public_key_from_bytes(proto.owner_pub_key_bytes),
