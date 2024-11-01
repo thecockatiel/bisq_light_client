@@ -35,7 +35,7 @@ class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
         envelopes = []
         for envelope_proto in proto.envelopes:
             try:
-                envelope = resolver.from_proto_network_envelope(envelope_proto)
+                envelope = resolver.from_proto(envelope_proto)
                 if envelope is not None:
                     envelopes.append(envelope)
             except ProtobufferException:

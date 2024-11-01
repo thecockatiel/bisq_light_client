@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from google.protobuf import message as Message
 
 import time
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+@dataclass
 class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
     
     def __init__(
