@@ -19,11 +19,6 @@ logger = get_logger(__name__)
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
     sender_node_address: 'NodeAddress'
 
-    def __init__(self, sender_node_address: NodeAddress, nonce: int, excluded_keys: Set[bytes],
-                 version: Optional[str] = Version.VERSION, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version, nonce, excluded_keys, version)
-        self.sender_node_address = sender_node_address
-
     def to_proto_network_envelope(self) -> NetworkEnvelope:
         get_updated_data_request = protobuf.GetUpdatedDataRequest(
             sender_node_address=self.sender_node_address.to_proto_message(),
@@ -47,9 +42,9 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
                      f"{len(excluded_keys)} excluded key entries. Requester's version={requesters_version}")
         
         return GetUpdatedDataRequest(
-            sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
+            message_version=message_version,
             nonce=proto.nonce,
             excluded_keys=excluded_keys,
             version=requesters_version,
-            message_version=message_version
+            sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
         )

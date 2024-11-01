@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from bisq.core.common.capabilities import Capabilities
@@ -15,11 +15,7 @@ logger = get_logger(__name__)
 
 @dataclass(frozen=True)
 class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapabilitiesMessage):
-    supported_capabilities: Capabilities
-
-    def __init__(self, nonce, excluded_keys, version: Optional[str] = Version.VERSION, supported_capabilities=Capabilities.app, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version, nonce, excluded_keys, version)
-        self.supported_capabilities = supported_capabilities
+    supported_capabilities: Capabilities = field(default_factory=lambda: Capabilities.app)
 
     def to_proto_network_envelope(self):
         request = protobuf.PreliminaryGetDataRequest()
@@ -40,9 +36,9 @@ class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapab
         supported_capabilities = Capabilities.from_int_list(proto.supported_capabilities)
         logger.info(f"Received a PreliminaryGetDataRequest with {proto.ByteSize() / 1000} kB and {len(excluded_keys)} excluded key entries. Requester's version={requesters_version}")
         return PreliminaryGetDataRequest(
+            message_version=message_version,
             nonce=proto.nonce,
             excluded_keys=excluded_keys,
             version=requesters_version,
             supported_capabilities=supported_capabilities,
-            message_version=message_version
         )

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar
 import uuid
 import time
@@ -22,15 +22,8 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
     sealed_and_signed: SealedAndSigned
     # From v1.4.0 on addressPrefixHash can be an empty byte array.
     # We cannot make it nullable as not updated nodes would get a nullPointer exception at protobuf serialisation.
-    address_prefix_hash = bytes([])
-    uid: str
-
-    def __init__(self, sender_node_address: NodeAddress, sealed_and_signed: SealedAndSigned):
-        object.__setattr__(self, 'sender_node_address', sender_node_address)
-        object.__setattr__(self, 'sealed_and_signed', sealed_and_signed)
-        object.__setattr__(self, 'address_prefix_hash', b'')  # From v1.4.0 on addressPrefixHash can be empty
-        object.__setattr__(self, 'uid', str(uuid.uuid4()))
-        object.__setattr__(self, 'message_version', Version.get_p2p_message_version())
+    address_prefix_hash: bytes = field(default_factory=lambda: b'')
+    uid: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def to_proto_network_envelope(self) -> NetworkEnvelope:
         proto_message = protobuf.PrefixedSealedAndSignedMessage(
@@ -47,12 +40,12 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
     def from_proto(proto: protobuf.PrefixedSealedAndSignedMessage, message_version: int) -> 'PrefixedSealedAndSignedMessage':
         sender_node_address = NodeAddress.from_proto(proto.node_address)
         sealed_and_signed = SealedAndSigned.from_proto(proto.sealed_and_signed)
-        return PrefixedSealedAndSignedMessage._private_constructor(
-            sender_node_address,
-            sealed_and_signed,
-            proto.address_prefix_hash,
-            proto.uid,
-            message_version
+        return PrefixedSealedAndSignedMessage(
+            sender_node_address=sender_node_address,
+            sealed_and_signed=sealed_and_signed,
+            address_prefix_hash=proto.address_prefix_hash,
+            uid=proto.uid,
+            message_version=message_version
         )
 
     @staticmethod
@@ -60,27 +53,13 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
         # Payloads don't have a message version; set to -1 to indicate it's irrelevant
         sender_node_address = NodeAddress.from_proto(proto.node_address)
         sealed_and_signed = SealedAndSigned.from_proto(proto.sealed_and_signed)
-        return PrefixedSealedAndSignedMessage._private_constructor(
-            sender_node_address,
-            sealed_and_signed,
-            proto.address_prefix_hash,
-            proto.uid,
-            -1
+        return PrefixedSealedAndSignedMessage(
+            sender_node_address=sender_node_address,
+            sealed_and_signed=sealed_and_signed,
+            address_prefix_hash=proto.address_prefix_hash,
+            uid=proto.uid,
+            message_version=-1
         )
-
-    @staticmethod
-    def _private_constructor(sender_node_address: NodeAddress,
-                             sealed_and_signed: SealedAndSigned,
-                             address_prefix_hash: bytes,
-                             uid: str,
-                             message_version: int) -> 'PrefixedSealedAndSignedMessage':
-        instance = PrefixedSealedAndSignedMessage.__new__(PrefixedSealedAndSignedMessage)
-        object.__setattr__(instance, 'sender_node_address', sender_node_address)
-        object.__setattr__(instance, 'sealed_and_signed', sealed_and_signed)
-        object.__setattr__(instance, 'address_prefix_hash', address_prefix_hash)
-        object.__setattr__(instance, 'uid', uid)
-        object.__setattr__(instance, 'message_version', message_version)
-        return instance
 
     def get_ttl(self) -> int:
         return self.TTL

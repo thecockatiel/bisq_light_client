@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-@dataclass(frozen=True)
 class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePayload):
     """
     Payload which supports a time to live and sender and receiver's pub keys for storage operations.\n
@@ -92,3 +91,15 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
                 pass
         # If not set in extra_data_map or value is invalid or too large we return default TTL
         return self.TTL
+
+    def __eq__(self, other):
+        if not isinstance(other, MailboxStoragePayload):
+            return False
+        return (self.prefixed_sealed_and_signed_message == other.prefixed_sealed_and_signed_message and
+                self.sender_pub_key_for_add_operation_bytes == other.sender_pub_key_for_add_operation_bytes and
+                self.owner_pub_key_bytes == other.owner_pub_key_bytes and
+                self.extra_data_map == other.extra_data_map)
+
+    def __hash__(self):
+        return hash((self.prefixed_sealed_and_signed_message, self.sender_pub_key_for_add_operation_bytes,
+                     self.owner_pub_key_bytes, self.extra_data_map))

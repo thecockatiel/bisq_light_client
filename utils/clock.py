@@ -1,13 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timezone, timedelta
 import time
 
 @dataclass(frozen=True)
 class Clock:
-    
-    def __init__(self, td: timedelta = None, tz: timezone = None):
-        self.tz = tz
-        self.td = td
+    td: timedelta = field(default=None)
+    tz: timezone = field(default=None)
 
     def millis(self):
         # Convert nanoseconds to milliseconds using floor division

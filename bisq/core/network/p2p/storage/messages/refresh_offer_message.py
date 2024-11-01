@@ -10,13 +10,6 @@ class RefreshOfferMessage(BroadcastMessage):
     hash_of_payload: bytes            # 32 bytes
     sequence_number: int              # 4 bytes
 
-    def __init__(self, hash_of_data_and_seq_nr: bytes, signature: bytes, hash_of_payload: bytes, sequence_number: int, message_version=Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.hash_of_data_and_seq_nr = hash_of_data_and_seq_nr
-        self.signature = signature
-        self.hash_of_payload = hash_of_payload
-        self.sequence_number = sequence_number
-
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
         refresh_offer_message = protobuf.RefreshOfferMessage(
@@ -31,9 +24,9 @@ class RefreshOfferMessage(BroadcastMessage):
     @staticmethod
     def from_proto(proto: protobuf.RefreshOfferMessage, message_version: int):
         return RefreshOfferMessage(
+            message_version,
             proto.hash_of_data_and_seq_nr,
             proto.signature,
             proto.hash_of_payload,
             proto.sequence_number,
-            message_version
         )

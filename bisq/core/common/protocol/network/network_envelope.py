@@ -1,18 +1,13 @@
 from abc import ABC
-from dataclasses import dataclass 
+from dataclasses import dataclass, field 
 from google.protobuf.message import Message
 from bisq.core.common.envelope import Envelope
 import proto.pb_pb2 as protobuf
-# Import protobuf modules as needed
+import bisq.core.common.version as Version
 
 @dataclass(frozen=True)
 class NetworkEnvelope(Envelope, ABC):
-    message_version: int
-
-    # PROTO BUFFER
-
-    def __init__(self, message_version: int):
-        self.message_version = message_version
+    message_version: int = field(default_factory=Version.get_p2p_message_version)
 
     def get_network_envelope_builder(self):
         return protobuf.NetworkEnvelope(message_version=self.message_version)
