@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from bisq.core.network.p2p.storage.broadcast_message import BroadcastMessage
+from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 import bisq.core.common.version as Version
 import proto.pb_pb2 as protobuf
