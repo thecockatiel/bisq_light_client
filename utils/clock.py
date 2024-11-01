@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from datetime import timezone, timedelta
 import time
 
+@dataclass(frozen=True)
 class Clock:
     
     def __init__(self, td: timedelta = None, tz: timezone = None):
