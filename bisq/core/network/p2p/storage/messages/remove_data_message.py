@@ -13,7 +13,10 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class RemoveDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedStorageEntry
-    message_version: int = field(default_factory=Version.get_p2p_message_version)
+    
+    def __init__(self, protected_storage_entry: ProtectedStorageEntry, message_version: int = Version.get_p2p_message_version()):
+        super().__init__(message_version)
+        self.protected_storage_entry = protected_storage_entry
 
     # PROTO BUFFER
     def to_proto_network_envelope(self):
