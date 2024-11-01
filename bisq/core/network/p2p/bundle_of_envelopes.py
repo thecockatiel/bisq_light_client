@@ -13,20 +13,17 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-# @EqualsAndHashCode(callSuper = true)
-@dataclass
+@dataclass(frozen=True, unsafe_hash=True)
 class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
     # Private final List<NetworkEnvelope> envelopes;
-    envelopes: List[NetworkEnvelope] = field(default_factory=list)
+    envelopes: tuple[NetworkEnvelope] = field(default_factory=tuple)
 
-    def __init__(self, envelopes: Optional[List[NetworkEnvelope]] = None):
-        if envelopes is None:
-            envelopes = []
-        super().__init__(Version.get_p2p_message_version())
+    def __init__(self, envelopes: Optional[List[NetworkEnvelope]] = (), message_version: int = Version.get_p2p_message_version()):
+        super().__init__(message_version)
         self.envelopes = envelopes
 
     def add(self, network_envelope: NetworkEnvelope) -> None:
-        self.envelopes.append(network_envelope)
+        self.envelopes += (network_envelope,)
 
     # PROTO BUFFER
 
@@ -44,8 +41,6 @@ class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
             except ProtobufferException:
                 continue
         return cls(envelopes=envelopes)
-
-    # CapabilityRequiringPayload
 
     def get_required_capabilities(self) -> Capabilities:
         return Capabilities([Capability.BUNDLE_OF_ENVELOPES])
