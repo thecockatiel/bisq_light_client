@@ -122,11 +122,11 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         return protobuf.ProtectedMailboxStorageEntry(entry=super().to_proto_message(),
                                                      receivers_pub_key_bytes=self.receivers_pub_key_bytes)
 
-    @classmethod
-    def from_proto(cls, proto: protobuf.ProtectedMailboxStorageEntry,
+    @staticmethod
+    def from_proto(proto: protobuf.ProtectedMailboxStorageEntry,
                   resolver: 'NetworkProtoResolver') -> 'ProtectedMailboxStorageEntry':
         entry = ProtectedStorageEntry.from_proto(proto.entry, resolver)
-        return cls(
+        return ProtectedMailboxStorageEntry(
             cast(MailboxStoragePayload, entry.protected_storage_payload),
             entry.owner_pub_key,
             entry.sequence_number,

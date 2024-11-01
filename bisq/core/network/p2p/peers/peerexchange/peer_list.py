@@ -22,10 +22,10 @@ class PeerList(PersistableEnvelope):
         
         return envelope_proto
 
-    @classmethod
-    def from_proto(cls, proto: protobuf.PeerList) -> 'PeerList':
+    @staticmethod
+    def from_proto(proto: protobuf.PeerList) -> 'PeerList':
         peers = {Peer.from_proto(peer_proto) for peer_proto in proto.peer}
-        return cls(peers)
+        return PeerList(peers)
 
     def set_all(self, collection: Collection[Peer]) -> None:
         self.set.clear()

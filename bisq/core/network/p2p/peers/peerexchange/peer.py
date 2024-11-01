@@ -15,7 +15,7 @@ import proto.pb_pb2 as protobuf
 
 @dataclass
 class Peer(HasCapabilities, NetworkPayload, PersistablePayload, SupportedCapabilitiesListener):
-    MAX_FAILED_CONNECTION_ATTEMPTS: int = 5
+    MAX_FAILED_CONNECTION_ATTEMPTS: int = field(default=5, init=False, repr=False)
 
     node_address: NodeAddress
     date: int = field(default_factory=lambda: int(datetime.now().timestamp() * 1000))
@@ -30,11 +30,11 @@ class Peer(HasCapabilities, NetworkPayload, PersistablePayload, SupportedCapabil
         )
         return peer_proto
 
-    @classmethod
-    def from_proto(cls, proto: protobuf.Peer) -> 'Peer':
+    @staticmethod
+    def from_proto(proto: protobuf.Peer) -> 'Peer':
         node_address = NodeAddress.from_proto(proto)
         capabilities = Capabilities.from_int_list(proto.supported_capabilities)
-        return cls(node_address=node_address, date=proto.date, capabilities=capabilities)
+        return Peer(node_address=node_address, date=proto.date, capabilities=capabilities)
 
     def on_disconnect(self) -> None:
         self._failed_connection_attempts += 1
