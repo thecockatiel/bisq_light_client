@@ -1,0 +1,2 @@
+class KeepAliveMessage:
+    pass
