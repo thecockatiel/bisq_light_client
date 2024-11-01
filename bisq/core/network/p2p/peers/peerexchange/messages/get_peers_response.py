@@ -6,7 +6,6 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.peers.peerexchange.messages.peer_exchange_message import PeerExchangeMessage
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
-import bisq.core.common.version as Version
 import proto.pb_pb2 as protobuf
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 
 from bisq.core.common.capabilities import Capabilities
@@ -10,7 +10,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request impor
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.logging import get_logger
-import bisq.core.common.version as Version
+
 from utils.formatting import readable_file_size
 import proto.pb_pb2 as protobuf
 

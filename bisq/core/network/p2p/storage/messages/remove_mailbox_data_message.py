@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
-import bisq.core.common.version as Version
 import proto.pb_pb2 as protobuf
 
 from typing import TYPE_CHECKING
