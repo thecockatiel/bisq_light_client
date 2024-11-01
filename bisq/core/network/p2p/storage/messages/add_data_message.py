@@ -20,7 +20,7 @@ class AddDataMessage(BroadcastMessage):
 
     @staticmethod
     def from_proto(proto: protobuf.AddDataMessage, resolver: NetworkProtoResolver, message_version: int) -> 'AddDataMessage':
-        protected_storage_entry = cast(ProtectedStorageEntry, resolver.from_proto_storage_entry_wrapper(proto.entry))
+        protected_storage_entry = cast(ProtectedStorageEntry, resolver.from_proto(proto.entry))
         return AddDataMessage(protected_storage_entry, message_version)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:

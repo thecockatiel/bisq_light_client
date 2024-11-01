@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 from bisq.core.common.crypto.sig import Sig, dsa
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
@@ -11,7 +12,11 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+@dataclass
 class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
+    receivers_pub_key: dsa.DSAPublicKey
+    receivers_pub_key_bytes: bytes
+
     def __init__(self,
                  mailbox_storage_payload: MailboxStoragePayload,
                  owner_pub_key: dsa.DSAPublicKey,
@@ -20,8 +25,6 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                  receivers_pub_key: dsa.DSAPublicKey,
                  clock: Clock,
                  creation_time_stamp: int = None):
-        self.receivers_pub_key = receivers_pub_key
-        self.receivers_pub_key_bytes = Sig.get_public_key_bytes(receivers_pub_key)
         super().__init__(mailbox_storage_payload,
                          Sig.get_public_key_bytes(owner_pub_key),
                          owner_pub_key,
@@ -29,6 +32,8 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                          signature,
                          clock,
                          creation_time_stamp= clock.millis() if creation_time_stamp is None else creation_time_stamp)
+        self.receivers_pub_key = receivers_pub_key
+        self.receivers_pub_key_bytes = Sig.get_public_key_bytes(receivers_pub_key)
 
     #/////////////////////////////////////////////////////////////////////////////////////////
     # API

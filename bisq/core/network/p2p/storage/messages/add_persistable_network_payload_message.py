@@ -28,6 +28,6 @@ class AddPersistableNetworkPayloadMessage(BroadcastMessage):
     @staticmethod
     def from_proto(proto: protobuf.AddPersistableNetworkPayloadMessage, resolver: 'NetworkProtoResolver', message_version: int):
         return AddPersistableNetworkPayloadMessage(
-            persistable_network_payload=resolver.from_proto_persistable_network(proto.payload),
+            persistable_network_payload=resolver.from_proto(proto.payload),
             message_version=message_version
         )

@@ -20,7 +20,7 @@ class PersistableNetworkPayload(NetworkPayload, PersistablePayload, ABC):
 
     @staticmethod
     def from_proto(payload: protobuf.PersistableNetworkPayload, resolver: ProtoResolver):
-        return resolver.from_proto_persistable_network(payload)
+        return resolver.from_proto(payload)
 
     @abstractmethod
     def to_proto_message(self) -> protobuf.PersistableNetworkPayload:

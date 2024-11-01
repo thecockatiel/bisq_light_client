@@ -502,7 +502,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                                  f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
                     time.sleep(20)
 
-                network_envelope = self.network_proto_resolver.from_proto_network_envelope(proto)
+                network_envelope = self.network_proto_resolver.from_proto(proto)
                 self.last_read_timestamp = now
                 logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
                 size = proto.ByteSize()

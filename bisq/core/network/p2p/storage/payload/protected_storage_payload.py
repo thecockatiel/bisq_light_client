@@ -42,4 +42,4 @@ class ProtectedStoragePayload(NetworkPayload, ABC):
 
     @staticmethod
     def from_proto(storage_payload, network_proto_resolver: 'NetworkProtoResolver') -> 'ProtectedStoragePayload':
-        return network_proto_resolver.from_proto_storage_payload(storage_payload)
+        return network_proto_resolver.from_proto(storage_payload)
