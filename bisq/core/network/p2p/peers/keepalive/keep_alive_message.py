@@ -1,2 +1,3 @@
-class KeepAliveMessage:
+from abc import ABC
+class KeepAliveMessage(ABC):
     pass
