@@ -5,6 +5,7 @@ from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
 import bisq.core.common.version as Version 
+from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
 import proto.pb_pb2 as protobuf
@@ -13,17 +14,16 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-@dataclass(frozen=True, unsafe_hash=True)
-class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
-    # Private final List<NetworkEnvelope> envelopes;
-    envelopes: tuple[NetworkEnvelope] = field(default_factory=tuple)
+@dataclass
+class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, CapabilityRequiringPayload):
+    envelopes: list[NetworkEnvelope]
 
-    def __init__(self, envelopes: Optional[List[NetworkEnvelope]] = (), message_version: int = Version.get_p2p_message_version()):
+    def __init__(self, envelopes: Optional[List[NetworkEnvelope]] = [], message_version: int = Version.get_p2p_message_version()):
         super().__init__(message_version)
         self.envelopes = envelopes
 
     def add(self, network_envelope: NetworkEnvelope) -> None:
-        self.envelopes += (network_envelope,)
+        self.envelopes.append(network_envelope)
 
     # PROTO BUFFER
 
@@ -44,3 +44,12 @@ class BundleOfEnvelopes(BroadcastMessage, CapabilityRequiringPayload):
 
     def get_required_capabilities(self) -> Capabilities:
         return Capabilities([Capability.BUNDLE_OF_ENVELOPES])
+    
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, BundleOfEnvelopes):
+            return False
+        return (self.message_version == other.message_version and
+                self.envelopes == other.envelopes)
+
+    def __hash__(self):
+        return None

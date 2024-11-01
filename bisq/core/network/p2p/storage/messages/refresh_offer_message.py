@@ -18,15 +18,15 @@ class RefreshOfferMessage(BroadcastMessage):
         self.sequence_number = sequence_number
 
     def to_proto_network_envelope(self):
-        network_envelope = protobuf.NetworkEnvelope()
+        envelope = self.get_network_envelope_builder()
         refresh_offer_message = protobuf.RefreshOfferMessage(
             hash_of_data_and_seq_nr=self.hash_of_data_and_seq_nr,
             signature=self.signature,
             hash_of_payload=self.hash_of_payload,
             sequence_number=self.sequence_number
         )
-        network_envelope.refresh_offer_message.CopyFrom(refresh_offer_message)
-        return network_envelope
+        envelope.refresh_offer_message.CopyFrom(refresh_offer_message)
+        return envelope
 
     @staticmethod
     def from_proto(proto: protobuf.RefreshOfferMessage, message_version: int):

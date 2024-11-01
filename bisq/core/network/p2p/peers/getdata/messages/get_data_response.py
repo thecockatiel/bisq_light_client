@@ -64,7 +64,7 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
         get_data_response.supported_capabilities = self.supported_capabilities.to_int_list()
 
         network_envelope = self.get_network_envelope_builder()
-        network_envelope.get_data_response = get_data_response
+        network_envelope.get_data_response.CopyFrom(get_data_response)
 
         logger.info(f"Sending a GetDataResponse with {readable_file_size(network_envelope.ByteSize())}")
         return network_envelope

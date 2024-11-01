@@ -42,7 +42,7 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
             request.supported_capabilities = self.supported_capabilities.to_int_list()
         
         envelope = self.get_network_envelope_builder()
-        envelope.get_peers_request = request
+        envelope.get_peers_request.CopyFrom(request)
         return envelope
 
     @staticmethod

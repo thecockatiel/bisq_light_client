@@ -22,7 +22,7 @@ class AddPersistableNetworkPayloadMessage(BroadcastMessage):
 
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
-        envelope.add_persistable_network_payload_message = protobuf.AddPersistableNetworkPayloadMessage(payload=self.persistable_network_payload.to_proto_message())
+        envelope.add_persistable_network_payload_message.CopyFrom(protobuf.AddPersistableNetworkPayloadMessage(payload=self.persistable_network_payload.to_proto_message()))
         return envelope
 
     @staticmethod

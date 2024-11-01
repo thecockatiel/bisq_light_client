@@ -21,8 +21,10 @@ class RemoveMailboxDataMessage(BroadcastMessage):
     # PROTO BUFFER
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
-        envelope.remove_mailbox_data_message = protobuf.RemoveMailboxDataMessage(
-            protected_storage_entry = self.protected_storage_entry.to_proto_message()
+        envelope.remove_mailbox_data_message.CopyFrom(
+            protobuf.RemoveMailboxDataMessage(
+                protected_storage_entry = self.protected_storage_entry.to_proto_message()
+            )
         )
         return envelope
 
