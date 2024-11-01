@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import typing
 
 from bisq.core.common.protocol.proto_resolver import ProtoResolver
 from utils.clock import Clock
@@ -8,15 +9,7 @@ import proto.pb_pb2 as protobuf
 
 class NetworkProtoResolver(ProtoResolver, ABC):
     @abstractmethod
-    def from_proto_network_envelope(self, proto: protobuf.NetworkEnvelope) -> NetworkEnvelope:
-        pass
-
-    @abstractmethod
-    def from_proto_storage_payload(self, proto: protobuf.StoragePayload) -> NetworkPayload:
-        pass
-
-    @abstractmethod
-    def from_proto_storage_entry_wrapper(self, proto: protobuf.StorageEntryWrapper) -> NetworkPayload:
+    def from_proto(self, proto: typing.Union[protobuf.NetworkEnvelope, protobuf.StoragePayload, protobuf.StorageEntryWrapper]) -> typing.Union[NetworkEnvelope, NetworkPayload]:
         pass
 
     @abstractmethod
