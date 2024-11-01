@@ -12,16 +12,10 @@ import bisq.core.common.version as Version
 class AddDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedStorageEntry
 
-    def __init__(self, protected_storage_entry: ProtectedStorageEntry, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.protected_storage_entry = protected_storage_entry
-
-    # PROTO BUFFER
-
     @staticmethod
     def from_proto(proto: protobuf.AddDataMessage, resolver: NetworkProtoResolver, message_version: int) -> 'AddDataMessage':
         protected_storage_entry = cast(ProtectedStorageEntry, resolver.from_proto(proto.entry))
-        return AddDataMessage(protected_storage_entry, message_version)
+        return AddDataMessage(message_version, protected_storage_entry)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         entry = protobuf.StorageEntryWrapper()

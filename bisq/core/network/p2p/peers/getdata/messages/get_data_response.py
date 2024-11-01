@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Set
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from bisq.core.common.capabilities import Capabilities
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 @dataclass(frozen=True)
 class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDataSizePermission, InitialDataResponse):
     # Set of ProtectedStorageEntry objects
-    data_set: frozenset['ProtectedStorageEntry']
+    data_set: frozenset['ProtectedStorageEntry'] = field(default_factory=frozenset)
     
     # Set of PersistableNetworkPayload objects
     # We added that in v 0.6 and the from_proto code will create an empty set if it doesn't exist
@@ -33,26 +33,10 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
     
     request_nonce: int
     is_get_updated_data_response: bool
-    supported_capabilities: Capabilities
+    supported_capabilities: Capabilities = field(default_factory=lambda: Capabilities.app)
     
     # Added at v1.9.6
     was_truncated: bool
-
-    def __init__(self,
-                 data_set: Set['ProtectedStorageEntry'],
-                 persistable_network_payload_set: Set['PersistableNetworkPayload'],
-                 request_nonce: int,
-                 is_get_updated_data_response: bool,
-                 was_truncated: bool,
-                 supported_capabilities: Capabilities = Capabilities.app,
-                 message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.data_set = frozenset(data_set)
-        self.persistable_network_payload_set = frozenset(persistable_network_payload_set)
-        self.request_nonce = request_nonce
-        self.is_get_updated_data_response = is_get_updated_data_response
-        self.was_truncated = was_truncated
-        self.supported_capabilities = supported_capabilities
 
     def to_proto_network_envelope(self) -> NetworkEnvelope:
         get_data_response = protobuf.GetDataResponse()
@@ -76,13 +60,13 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
         data_set = {resolver.from_proto(entry) for entry in proto.data_set}
         persistable_network_payload_set = {resolver.from_proto(e) for e in proto.persistable_network_payload_items}
         return GetDataResponse(
+            message_version,
             data_set,
             persistable_network_payload_set,
             proto.request_nonce,
             proto.is_get_updated_data_response,
-            was_truncated,
             Capabilities.from_int_list(proto.supported_capabilities),
-            message_version
+            was_truncated,
         )
 
     def associated_request(self) -> type:

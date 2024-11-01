@@ -14,10 +14,6 @@ if TYPE_CHECKING:
 class RemoveMailboxDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedMailboxStorageEntry
 
-    def __init__(self, protected_storage_entry: ProtectedMailboxStorageEntry, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.protected_storage_entry = protected_storage_entry
-
     # PROTO BUFFER
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
@@ -30,4 +26,4 @@ class RemoveMailboxDataMessage(BroadcastMessage):
 
     @staticmethod
     def from_proto(proto: 'protobuf.RemoveMailboxDataMessage', resolver: 'NetworkProtoResolver', message_version: int):
-        return RemoveMailboxDataMessage(ProtectedMailboxStorageEntry.from_proto(proto.protected_storage_entry, resolver), message_version)
+        return RemoveMailboxDataMessage(message_version, ProtectedMailboxStorageEntry.from_proto(proto.protected_storage_entry, resolver))

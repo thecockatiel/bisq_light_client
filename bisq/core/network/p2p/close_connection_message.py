@@ -8,10 +8,6 @@ import bisq.core.common.version as Version
 class CloseConnectionMessage(NetworkEnvelope):
     reason: str
 
-    def __init__(self, reason: str, message_version: int = Version.get_p2p_message_version()): 
-        super().__init__(message_version)
-        self.reason = reason
-
     # PROTO BUFFER
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
@@ -21,4 +17,4 @@ class CloseConnectionMessage(NetworkEnvelope):
 
     @staticmethod
     def from_proto(proto: protobuf.CloseConnectionMessage, message_version: int) -> 'CloseConnectionMessage':
-        return CloseConnectionMessage(proto.reason, message_version)
+        return CloseConnectionMessage(reason=proto.reason, message_version=message_version)

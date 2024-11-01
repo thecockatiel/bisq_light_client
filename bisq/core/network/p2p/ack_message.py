@@ -18,7 +18,7 @@ import proto.pb_pb2 as protobuf
 class AckMessage(NetworkEnvelope):
     TTL: int = 7 * 24 * 60 * 60 * 1000 # 604800000 ms or 7 days
 
-    uid: str
+    uid: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
     sender_node_address: NodeAddress
     source_type: AckMessageSourceType
     source_msg_class_name: str
@@ -26,24 +26,6 @@ class AckMessage(NetworkEnvelope):
     source_id: str
     success: bool
     error_message: Optional[str]
-
-    def __init__(self, sender_node_address: NodeAddress,
-                 source_type: AckMessageSourceType,
-                 source_msg_class_name: str,
-                 source_uid: str,
-                 source_id: str,
-                 success: bool,
-                 error_message: str,
-                 message_version = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.uid = str(uuid.uuid4())
-        self.sender_node_address = sender_node_address
-        self.source_type = source_type
-        self.source_msg_class_name = source_msg_class_name
-        self.source_uid = source_uid
-        self.source_id = source_id
-        self.success = success
-        self.error_message = error_message
 
     # PROTO BUFFER
     def to_proto_message(self) -> protobuf.AckMessage:

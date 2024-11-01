@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class AddPersistableNetworkPayloadMessage(BroadcastMessage):
     persistable_network_payload: 'PersistableNetworkPayload'
-    message_version: int = field(default_factory=lambda: Version.get_p2p_message_version())
 
     def __post_init__(self):
         if not isinstance(self.persistable_network_payload, PersistableNetworkPayload):
@@ -28,6 +27,6 @@ class AddPersistableNetworkPayloadMessage(BroadcastMessage):
     @staticmethod
     def from_proto(proto: protobuf.AddPersistableNetworkPayloadMessage, resolver: 'NetworkProtoResolver', message_version: int):
         return AddPersistableNetworkPayloadMessage(
+            message_version=message_version,
             persistable_network_payload=resolver.from_proto(proto.payload),
-            message_version=message_version
         )

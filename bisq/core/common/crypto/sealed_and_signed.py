@@ -8,24 +8,17 @@ from .sig import Sig, dsa  # Replace with actual module imports
 
 @dataclass(frozen=True)
 class SealedAndSigned(NetworkPayload):
-    def __init__(
-        self,
-        encrypted_secret_key: bytes,
-        encrypted_payload_with_hmac: bytes,
-        signature: bytes,
-        sig_public_key: Optional['dsa.DSAPublicKey'] = None,
-        sig_public_key_bytes: Optional[bytes] = None
-    ):
-        self.encrypted_secret_key = encrypted_secret_key
-        self.encrypted_payload_with_hmac = encrypted_payload_with_hmac
-        self.signature = signature
+    encrypted_secret_key: bytes
+    encrypted_payload_with_hmac: bytes
+    signature: bytes
+    sig_public_key: Optional['dsa.DSAPublicKey'] = field(default=None)
+    sig_public_key_bytes: Optional[bytes] = field(default=None)
 
-        if sig_public_key is not None:
-            self.sig_public_key = sig_public_key
-            self.sig_public_key_bytes = Sig.get_public_key_bytes(sig_public_key)
-        elif sig_public_key_bytes is not None:
-            self.sig_public_key_bytes = sig_public_key_bytes
-            self.sig_public_key = Sig.get_public_key_from_bytes(sig_public_key_bytes)
+    def __post_init__(self):
+        if self.sig_public_key is not None:
+            object.__setattr__(self, 'sig_public_key_bytes', Sig.get_public_key_bytes(self.sig_public_key))
+        elif self.sig_public_key_bytes is not None:
+            object.__setattr__(self, 'sig_public_key', Sig.get_public_key_from_bytes(self.sig_public_key_bytes))
         else:
             raise ValueError("Either sig_public_key or sig_public_key_bytes must be provided.")
 

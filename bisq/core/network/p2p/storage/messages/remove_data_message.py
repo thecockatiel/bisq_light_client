@@ -13,10 +13,6 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class RemoveDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedStorageEntry
-    
-    def __init__(self, protected_storage_entry: ProtectedStorageEntry, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.protected_storage_entry = protected_storage_entry
 
     # PROTO BUFFER
     def to_proto_network_envelope(self):
@@ -28,4 +24,4 @@ class RemoveDataMessage(BroadcastMessage):
 
     @staticmethod
     def from_proto(proto: 'protobuf.RemoveDataMessage', resolver: 'NetworkProtoResolver', message_version: int):
-        return RemoveDataMessage(ProtectedStorageEntry.from_proto(proto.protected_storage_entry, resolver), message_version)
+        return RemoveDataMessage(message_version, ProtectedStorageEntry.from_proto(proto.protected_storage_entry, resolver))

@@ -8,11 +8,6 @@ import proto.pb_pb2 as protobuf
 class Ping(NetworkEnvelope, KeepAliveMessage):
     nonce: int
     last_round_trip_time: int
-    
-    def __init__(self, nonce: int, last_round_trip_time: int, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.nonce = nonce
-        self.last_round_trip_time = last_round_trip_time
 
     # Convert the Ping object to a protobuf NetworkEnvelope.
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
@@ -23,4 +18,6 @@ class Ping(NetworkEnvelope, KeepAliveMessage):
     # Create a Ping object from a protobuf Ping message.
     @staticmethod
     def from_proto(proto: protobuf.Ping, message_version: int) -> 'Ping':
-        return Ping(proto.nonce, proto.last_round_trip_time, message_version)
+        return Ping(message_version,
+                    proto.nonce,
+                    proto.last_round_trip_time)

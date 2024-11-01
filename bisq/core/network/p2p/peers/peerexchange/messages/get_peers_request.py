@@ -20,14 +20,9 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
     reported_peers: Set[Peer]
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
-    def __init__(self, sender_node_address: NodeAddress, nonce: int, reported_peers: Set[Peer], supported_capabilities: Optional[Capabilities] = None, message_version: int = Version.get_p2p_message_version()):
+    def __post_init__(self):
         if self.sender_node_address is None:
             raise ValueError("sender_node_address must not be null at GetPeersRequest")
-        super().__init__(message_version)
-        self.sender_node_address = sender_node_address
-        self.nonce = nonce
-        self.reported_peers = reported_peers
-        self.supported_capabilities = supported_capabilities
 
     # PROTO BUFFER
 
@@ -48,9 +43,9 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
     @staticmethod
     def from_proto(proto: protobuf.GetPeersRequest, message_version: int):
         return GetPeersRequest(
+            message_version=message_version,
             sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
             nonce=proto.nonce,
             reported_peers={Peer.from_proto(peer) for peer in proto.reported_peers},
             supported_capabilities=Capabilities.from_int_list(proto.supported_capabilities),
-            message_version=message_version,
         )

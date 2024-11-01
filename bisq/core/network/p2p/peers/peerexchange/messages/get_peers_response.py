@@ -15,12 +15,6 @@ class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabiliti
     reported_peers: Set[Peer]
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
-    def __init__(self, request_nonce: int, reported_peers: Set[Peer], supported_capabilities: Optional[Capabilities] = Capabilities.app, message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.request_nonce = request_nonce
-        self.reported_peers = reported_peers
-        self.supported_capabilities = supported_capabilities
-
     def to_proto_network_envelope(self):
         clone = set(self.reported_peers)
         builder = protobuf.GetPeersResponse(
@@ -46,8 +40,8 @@ class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabiliti
             reported_peers.add(Peer(node_address=node_address, supported_capabilities=capabilities))
 
         return GetPeersResponse(
+            message_version=message_version,
             request_nonce=proto.request_nonce,
             reported_peers=reported_peers,
             supported_capabilities=Capabilities.from_int_list(proto.supported_capabilities),
-            message_version=message_version
         )
