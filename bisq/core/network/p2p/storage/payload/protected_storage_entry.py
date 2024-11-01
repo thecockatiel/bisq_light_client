@@ -158,3 +158,11 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
                 f"Owner Public Key: {Sig.get_public_key_bytes_as_hex_string(self.owner_pub_key_bytes)}\n\t"
                 f"Sequence Number: {self.sequence_number}\n\tSignature: {self.signature.hex()}\n\t"
                 f"Timestamp: {self.creation_time_stamp}\n}}")
+    
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ProtectedStorageEntry):
+            return False
+        return hash(self) == hash(other)
+
+    def __hash__(self) -> int:
+        return hash((self.owner_pub_key_bytes, self.protected_storage_payload))
