@@ -11,16 +11,11 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     port: int
     address_prefix_hash: bytes = field(init=False, default=None)
 
-    def __init__(self, host_name: str = None, port: int = None, full_address: str = None):
-        if full_address:
-            split = full_address.split(":")
-            assert len(split) == 2, "fullAddress must contain ':'"
-            self.host_name = split[0]
-            self.port = int(split[1])
-        else:
-            self.host_name = host_name
-            self.port = port
-        self.address_prefix_hash = None
+    @staticmethod
+    def from_full_address(full_address: str) -> 'NodeAddress':
+        split = full_address.split(":")
+        assert len(split) == 2, "fullAddress must contain ':'"
+        return NodeAddress(host_name=split[0], port=int(split[1]))
 
     def to_proto_message(self):
         return protobuf.NodeAddress(host_name=self.host_name, port=self.port)
