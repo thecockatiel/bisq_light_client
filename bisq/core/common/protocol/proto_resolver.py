@@ -8,11 +8,5 @@ if TYPE_CHECKING:
 
 class ProtoResolver(ABC):
     @abstractmethod
-    def from_proto_payment_account(self, proto: 'protobuf.PaymentAccountPayload') -> Payload:
-        # Convert PaymentAccountPayload to Payload
-        pass
-
-    @abstractmethod
-    def from_proto_persistable_network(self, proto: 'protobuf.PersistableNetworkPayload') -> PersistablePayload:
-        # Convert PersistableNetworkPayload to PersistablePayload
+    def from_proto(self, proto: 'protobuf.PaymentAccountPayload' | 'protobuf.PersistableNetworkPayload') -> Payload:
         pass
