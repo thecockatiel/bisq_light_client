@@ -32,7 +32,7 @@ class CloseConnectionReason(Enum):
     MANDATORY_CAPABILITIES_NOT_SUPPORTED = False, False
 
     def __new__(cls, *args, **kwds):
-        value = len(cls.__members__) + 1
+        value = len(cls.__members__)
         obj = object.__new__(cls)
         obj._value_ = value
         return obj

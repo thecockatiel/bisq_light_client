@@ -10,7 +10,7 @@ class RuleViolation(Enum):
     INVALID_CLASS = 2
 
     def __new__(cls, *args, **kwds):
-        value = len(cls.__members__) + 1
+        value = len(cls.__members__)
         obj = object.__new__(cls)
         obj._value_ = value
         return obj
