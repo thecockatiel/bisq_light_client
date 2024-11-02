@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Set, Iterable
 from google.protobuf.message import Message
 
@@ -9,8 +9,7 @@ from .peer import Peer
 
 @dataclass
 class PeerList(PersistableEnvelope):
-    def __init__(self, set: Set[Peer] = frozenset()):
-        self.set: frozenset[Peer] = frozenset(set if set is not None else set())
+    set: frozenset[Peer] = field(default=frozenset())
 
     def size(self) -> int:
         return len(self.set)
