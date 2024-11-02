@@ -12,6 +12,13 @@ from bisq.logging import get_logger
 logger = get_logger(__name__)
 
 class Encryption:
+    ASYM_KEY_ALGO = "RSA"
+    ASYM_CIPHER = "RSA/ECB/OAEPWithSHA-256AndMGF1PADDING"
+
+    SYM_KEY_ALGO = "AES"
+    SYM_CIPHER = "AES"
+
+    HMAC = "HmacSHA256"
 
     @staticmethod
     def generate_key_pair():
