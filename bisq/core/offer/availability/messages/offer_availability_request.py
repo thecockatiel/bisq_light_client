@@ -19,7 +19,7 @@ class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
     burning_man_selection_height: int
     supported_capabilities: Optional[Capabilities] = None
 
-    def toProtoNetworkEnvelope(self) -> 'NetworkEnvelope':
+    def to_proto_network_envelope(self) -> 'NetworkEnvelope':
         offer = protobuf.OfferAvailabilityRequest(
             offer_id=self.offer_id,
             pub_key_ring=self.pub_key_ring.to_proto_message(),
@@ -39,7 +39,7 @@ class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
         return envelope
 
     @staticmethod
-    def fromProto(proto: protobuf.OfferAvailabilityRequest, message_version: int) -> 'OfferAvailabilityRequest':
+    def from_proto(proto: protobuf.OfferAvailabilityRequest, message_version: int) -> 'OfferAvailabilityRequest':
         return OfferAvailabilityRequest(
             message_version=message_version,
             offer_id=proto.offer_id,
