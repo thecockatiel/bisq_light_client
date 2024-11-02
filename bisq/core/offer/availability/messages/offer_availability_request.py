@@ -1,5 +1,5 @@
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 from bisq.core.common.capabilities import Capabilities
@@ -17,7 +17,7 @@ class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
     takers_trade_price: int
     is_taker_api_user: bool
     burning_man_selection_height: int
-    supported_capabilities: Optional[Capabilities] = None
+    supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def to_proto_network_envelope(self) -> 'NetworkEnvelope':
         offer = protobuf.OfferAvailabilityRequest(

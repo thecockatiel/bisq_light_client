@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Set, Optional
 
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
@@ -12,4 +12,4 @@ class GetDataRequest(NetworkEnvelope, ExtendedDataSizePermission, InitialDataReq
     excluded_keys: Set[bytes]
     # Added at v1.4.0
     # The version of the requester. Used for response to send potentially missing historical data
-    version: Optional[str] = None
+    version: Optional[str] = field(default=None)
