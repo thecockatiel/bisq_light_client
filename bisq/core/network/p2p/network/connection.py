@@ -577,7 +577,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         if not isinstance(network_envelope, SupportedCapabilitiesMessage):
             return False
 
-        supported_capabilities = network_envelope.get_supported_capabilities()
+        supported_capabilities = network_envelope.supported_capabilities
         if not supported_capabilities or supported_capabilities.is_empty():
             return False
 
