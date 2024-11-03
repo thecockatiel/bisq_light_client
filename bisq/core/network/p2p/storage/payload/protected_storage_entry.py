@@ -87,8 +87,8 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         return isinstance(self.protected_storage_payload, ExpirablePayload) and \
                (clock.millis() - self.creation_time_stamp) > self.protected_storage_payload.get_ttl()
 
-    def get_get_data_response_priority(self) -> GetDataResponsePriority:
-        return self.protected_storage_payload.get_get_data_response_priority()
+    def get_data_response_priority(self) -> GetDataResponsePriority:
+        return self.protected_storage_payload.get_data_response_priority()
 
     def is_valid_for_add_operation(self) -> bool:
         """

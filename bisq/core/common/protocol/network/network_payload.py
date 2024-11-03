@@ -9,5 +9,5 @@ class NetworkPayload(Payload, ABC):
     Interface for objects used inside WireEnvelope or other WirePayloads.
     """
 
-    def get_get_data_response_priority(self) -> GetDataResponsePriority:
+    def get_data_response_priority(self) -> GetDataResponsePriority:
         return GetDataResponsePriority.LOW
