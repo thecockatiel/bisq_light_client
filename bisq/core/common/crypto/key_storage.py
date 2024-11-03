@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.backends import default_backend
 from bisq.core.common.crypto.key_entry import KeyEntry
+from bisq.core.common.crypto.key_pair import KeyPair
 from bisq.core.common.file.file_util import rolling_backup
 from bisq.logging import get_logger
 from utils.dir import check_dir
@@ -32,14 +33,14 @@ class KeyStorage:
                 encoded_private_key_data = f.read()
                 private_key = serialization.load_pem_private_key(encoded_private_key_data, password=None, backend=default_backend())
                 public_key = private_key.public_key()
-            return private_key, public_key
+            return KeyPair(private_key, public_key)
         except Exception as e:
             logger.error(f"Could not load key {key_entry}: {e}")
             raise RuntimeError(f"Could not load key {key_entry}: {e}") from e
 
     def save_key_ring(self, key_ring: 'KeyRing'):
-        self.save_private_key(key_ring.signature_key_pair[0], KeyEntry.MSG_SIGNATURE.file_name)
-        self.save_private_key(key_ring.encryption_key_pair[0], KeyEntry.MSG_ENCRYPTION.file_name)
+        self.save_private_key(key_ring.signature_key_pair.private_key, KeyEntry.MSG_SIGNATURE.file_name)
+        self.save_private_key(key_ring.encryption_key_pair.private_key, KeyEntry.MSG_ENCRYPTION.file_name)
 
     def save_private_key(self, private_key: dsa.DSAPrivateKey | rsa.RSAPrivateKey, name: str):
         if not os.path.exists(self.storage_dir):

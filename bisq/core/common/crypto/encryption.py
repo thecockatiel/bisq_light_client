@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_paddin
 from cryptography.hazmat.backends import default_backend
 from bisq.core.common.crypto.crypto_exception import CryptoException
 from bisq.core.common.crypto.key_conversion_exception import KeyConversionException
+from bisq.core.common.crypto.key_pair import KeyPair
 from bisq.logging import get_logger
 
 logger = get_logger(__name__)
@@ -29,8 +30,7 @@ class Encryption:
                 backend=default_backend()
             )
             public_key = private_key.public_key()
-
-            return private_key, public_key
+            return KeyPair(private_key, public_key)
         except Exception as e:
             logger.error("Could not create key.", exc_info=True)
             raise RuntimeError("Could not create key.") from e

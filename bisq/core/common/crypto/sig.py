@@ -6,6 +6,7 @@ from cryptography.exceptions import InvalidSignature
 
 from bisq.core.common.crypto.crypto_exception import CryptoException
 from bisq.core.common.crypto.key_conversion_exception import KeyConversionException
+from bisq.core.common.crypto.key_pair import KeyPair
 from bisq.logging import get_logger
 
 logger = get_logger(__name__)
@@ -19,7 +20,7 @@ class Sig:
         try:
             private_key = dsa.generate_private_key(key_size=1024, backend=default_backend())
             public_key = private_key.public_key()
-            return (private_key, public_key)
+            return KeyPair(private_key, public_key)
         except ValueError as e:
             logger.error("Could not create key.", exc_info=True)
             raise RuntimeError("Could not create key.") from e
