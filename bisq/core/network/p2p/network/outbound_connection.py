@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.message_listener import MessageListener
 
 
-class InboundConnection(Connection):
+class OutboundConnection(Connection):
     def __init__(
         self,
         socket: "Socket",
