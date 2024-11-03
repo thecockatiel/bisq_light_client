@@ -4,6 +4,7 @@ tqdm~=4.66
 grpcio~=1.67
 grpcio-tools~=1.67
 aiohttp>=3
-cryptography>=43.0.3
+cryptography>=43.0
+pycryptodome>=3.21
 
 pypiwin32; platform_system == "Windows"
