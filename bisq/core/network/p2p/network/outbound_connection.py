@@ -1,4 +1,6 @@
 from typing import Optional, TYPE_CHECKING
+
+from bisq.core.network.p2p.node_address import NodeAddress
 from .connection import Connection
 
 if TYPE_CHECKING:
@@ -17,6 +19,7 @@ class InboundConnection(Connection):
         socket: "Socket",
         message_listener: "MessageListener",
         connection_listener: "ConnectionListener",
+        peer_node_address: "NodeAddress",
         network_proto_resolver: "NetworkProtoResolver",
         ban_filter: Optional["BanFilter"] = None,
     ):
@@ -24,7 +27,7 @@ class InboundConnection(Connection):
             socket=socket,
             message_listener=message_listener,
             connection_listener=connection_listener,
-            peers_node_address=None,
+            peers_node_address=peer_node_address,
             network_proto_resolver=network_proto_resolver,
             ban_filter=ban_filter,
         )
