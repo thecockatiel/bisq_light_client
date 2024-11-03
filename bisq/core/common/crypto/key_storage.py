@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
-
+from cryptography.hazmat.backends import default_backend
 from bisq.core.common.crypto.key_entry import KeyEntry
 from bisq.core.common.file.file_util import rolling_backup
 from bisq.logging import get_logger
@@ -30,7 +30,7 @@ class KeyStorage:
             private_key_path = os.path.join(self.storage_dir, f"{key_entry.file_name}.key")
             with open(private_key_path, 'rb') as f:
                 encoded_private_key_data = f.read()
-                private_key = serialization.load_pem_private_key(encoded_private_key_data, password=None)
+                private_key = serialization.load_pem_private_key(encoded_private_key_data, password=None, backend=default_backend())
                 public_key = private_key.public_key()
             return private_key, public_key
         except Exception as e:
