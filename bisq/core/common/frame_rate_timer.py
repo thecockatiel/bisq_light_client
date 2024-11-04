@@ -65,3 +65,6 @@ class FrameRateTimer(Timer, Callable):
         if isinstance(other, FrameRateTimer):
             return self.uid == other.uid
         return False
+
+    def __hash__(self) -> int:
+        return hash(self.uid)
