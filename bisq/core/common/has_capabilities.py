@@ -1,13 +1,12 @@
-from abc import ABC, abstractmethod
-from .capabilities import Capabilities
+from typing import Optional, TYPE_CHECKING
 
-class HasCapabilities(ABC):
-    """
-    Holds a set of Capabilities.
+if TYPE_CHECKING:
+    from bisq.core.common.capabilities import Capabilities
 
-    Author: Florian Reimair
-    """
+class HasCapabilities():
+    capabilities: Optional['Capabilities']
 
-    @abstractmethod
-    def get_capabilities(self) -> Capabilities:
-        pass
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "capabilities"):
+            raise RuntimeError(f"You need to have 'capabilities' in {cls.__name__}")
