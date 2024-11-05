@@ -7,7 +7,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeAddressMessage):
     sender_node_address: NodeAddress
     trade_id: str
