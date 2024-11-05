@@ -1,15 +1,20 @@
 from dataclasses import dataclass, field
 
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
-from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
+from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import (
+    ProtectedMailboxStorageEntry,
+)
 import proto.pb_pb2 as protobuf
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver    
+    from bisq.core.common.protocol.network.network_proto_resolver import (
+        NetworkProtoResolver,
+    )
 
-@dataclass(frozen=True)
+
+@dataclass(frozen=True, kw_only=True)
 class RemoveMailboxDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedMailboxStorageEntry
 
@@ -18,11 +23,20 @@ class RemoveMailboxDataMessage(BroadcastMessage):
         envelope = self.get_network_envelope_builder()
         envelope.remove_mailbox_data_message.CopyFrom(
             protobuf.RemoveMailboxDataMessage(
-                protected_storage_entry = self.protected_storage_entry.to_proto_message()
+                protected_storage_entry=self.protected_storage_entry.to_proto_message()
             )
         )
         return envelope
 
     @staticmethod
-    def from_proto(proto: 'protobuf.RemoveMailboxDataMessage', resolver: 'NetworkProtoResolver', message_version: int):
-        return RemoveMailboxDataMessage(message_version, ProtectedMailboxStorageEntry.from_proto(proto.protected_storage_entry, resolver))
+    def from_proto(
+        proto: "protobuf.RemoveMailboxDataMessage",
+        resolver: "NetworkProtoResolver",
+        message_version: int,
+    ):
+        return RemoveMailboxDataMessage(
+            message_version=message_version,
+            protected_storage_entry=ProtectedMailboxStorageEntry.from_proto(
+                proto.protected_storage_entry, resolver
+            ),
+        )
