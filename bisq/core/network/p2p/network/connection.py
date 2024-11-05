@@ -62,6 +62,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
     # TODO decrease limits again after testing
     SOCKET_TIMEOUT = int(timedelta(seconds=240).total_seconds() * 1000)
     SHUTDOWN_TIMEOUT = 100 # ms
+    capabilities: Capabilities
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
