@@ -1,7 +1,7 @@
 import threading
 import weakref
 
-from typing import Iterator, Set, TypeVar, Generic
+from typing import Iterator, List, Set, TypeVar, Generic
 from typing import Dict, TypeVar, Generic
 
 T = TypeVar('T')
@@ -94,3 +94,54 @@ class ConcurrentDict(Generic[K, V]):
     def remove(self, key: K) -> V:
         with self._lock:
             return self._dict.pop(key, None)
+        
+class ConcurrentList(Generic[T]):
+    def __init__(self):
+        self._list: List[T] = []
+        self._read_lock = threading.RLock()
+        self._write_lock = threading.Lock()
+    
+    def append(self, item: T) -> None:
+        with self._write_lock:
+            self._list.append(item)
+    
+    def extend(self, items: List[T]) -> None:
+        with self._write_lock:
+            self._list.extend(items)
+            
+    def pop(self, index: int = -1) -> T:
+        with self._write_lock:
+            return self._list.pop(index)
+            
+    def remove(self, item: T) -> None:
+        with self._write_lock:
+            self._list.remove(item)
+            
+    def clear(self) -> None:
+        with self._write_lock:
+            self._list.clear()
+            
+    def insert(self, index: int, item: T) -> None:
+        with self._write_lock:
+            self._list.insert(index, item)
+    
+    def __getitem__(self, index: int) -> T:
+        with self._read_lock:
+            return self._list[index]
+    
+    def __setitem__(self, index: int, value: T) -> None:
+        with self._write_lock:
+            self._list[index] = value
+            
+    def __len__(self) -> int:
+        with self._read_lock:
+            return len(self._list)
+            
+    def __iter__(self) -> Iterator[T]:
+        with self._read_lock:
+            return iter(self._list.copy())
+            
+    def __contains__(self, item: T) -> bool:
+        with self._read_lock:
+            return item in self._list
+        
