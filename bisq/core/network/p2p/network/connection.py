@@ -297,7 +297,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
             
-    def shutdown(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
+    def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
         if not self.stopped:
@@ -390,13 +390,13 @@ class Connection(HasCapabilities, Callable, MessageListener):
             self.ruleViolation = rule_violation
             if rule_violation == RuleViolation.PEER_BANNED:
                 logger.debug("We close connection due RuleViolation.PEER_BANNED. peersNodeAddress=%s", str(self.peers_node_address))
-                self.shutdown(CloseConnectionReason.PEER_BANNED)
+                self.shut_down(CloseConnectionReason.PEER_BANNED)
             elif rule_violation == RuleViolation.INVALID_CLASS:
                 logger.warning("We close connection due RuleViolation.INVALID_CLASS")
-                self.shutdown(CloseConnectionReason.INVALID_CLASS_RECEIVED)
+                self.shut_down(CloseConnectionReason.INVALID_CLASS_RECEIVED)
             else:
                 logger.warning("We close connection due RuleViolation.RULE_VIOLATION")
-                self.shutdown(CloseConnectionReason.RULE_VIOLATION)
+                self.shut_down(CloseConnectionReason.RULE_VIOLATION)
             return True
         else:
             return False
@@ -425,7 +425,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         else:
             logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}")
         
-        self.shutdown(close_connection_reason)        
+        self.shut_down(close_connection_reason)        
     
 
     def process_senders_node_address_message(self, senders_node_address_message: SendersNodeAddressMessage) -> bool:
@@ -456,7 +456,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
 
                 if self.socket is not None and self.socket._closed:
                     logger.warning(f'Socket is null or closed socket={self.socket}')
-                    self.shutdown(CloseConnectionReason.SOCKET_CLOSED)
+                    self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                     return
                 try:
                     # Blocking read from the inputStream
@@ -465,7 +465,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                     
                     if self.socket is not None and self.socket._closed:
                         logger.warning(f'Socket is null or closed socket={self.socket}')
-                        self.shutdown(CloseConnectionReason.SOCKET_CLOSED)
+                        self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                         return
                     
                     if proto is None:
@@ -475,7 +475,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                             logger.warning("proto is null because protoInputStream.read()=-1 (EOF). That is expected if client got stopped without proper shutdown.")
                         else:
                             logger.warning("proto is null. protoInputStream.read()=" + self.proto_input_stream.read())
-                        self.shutdown(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
+                        self.shut_down(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
                         return
                     
                     if self.ban_filter and self.peers_node_address and self.ban_filter.is_peer_banned(self.peers_node_address):
@@ -548,7 +548,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
 
                     if CloseConnectionReason.PEER_BANNED.name == proto.close_connection_message.reason:
                         logger.warning("We got shut down because we are banned by the other peer. Peer: %s", str(self.peers_node_address))
-                        self.shutdown(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
+                        self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
                         return
                 elif not self.stopped:
                     # We don't want to get the activity ts updated by ping/pong msg
@@ -588,7 +588,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
             logger.info(f"We close a connection because of CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED "
                         f"to node {self.get_sender_node_address_as_string(network_envelope)}. Capabilities of old node: f{supported_capabilities.pretty_print()}, "
                         f"networkEnvelope class name={network_envelope.__class__.__name__}")
-            self.shutdown(CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED)
+            self.shut_down(CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED)
             return True
 
         self.capabilities = supported_capabilities
