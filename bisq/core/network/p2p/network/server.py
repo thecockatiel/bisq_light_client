@@ -1,19 +1,20 @@
-import logging
 from socket import socket as Socket, error as SocketError
 import threading
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-from bisq.core.common.protocol.network.network_proto_resolver import (
-    NetworkProtoResolver,
-)
-from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-from bisq.core.network.p2p.network.connection import Connection
-from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 from bisq.core.network.p2p.network.inbound_connection import InboundConnection
-from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.logging import get_logger
 from utils.concurrency import ThreadSafeSet
+
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.network.message_listener import MessageListener
+    from bisq.core.network.p2p.network.connection_listener import ConnectionListener
+    from bisq.core.common.protocol.network.network_proto_resolver import (
+        NetworkProtoResolver,
+    )
+    from bisq.core.network.p2p.network.ban_filter import BanFilter
+    from bisq.core.network.p2p.network.connection import Connection
 
 logger = get_logger(__name__)
 
@@ -22,10 +23,10 @@ class Server(Callable):
     def __init__(
         self,
         server_socket: Socket,
-        message_listener: MessageListener,
-        connection_listener: ConnectionListener,
-        network_proto_resolver: NetworkProtoResolver,
-        ban_filter: BanFilter = None,
+        message_listener: "MessageListener",
+        connection_listener: "ConnectionListener",
+        network_proto_resolver: "NetworkProtoResolver",
+        ban_filter: "BanFilter" = None,
     ):
         self.server_socket = server_socket
         self.message_listener = message_listener
