@@ -11,7 +11,7 @@ import proto.pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
     pub_key_ring: PubKeyRing
     takers_trade_price: int

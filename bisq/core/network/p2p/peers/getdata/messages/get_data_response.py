@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDataSizePermission, InitialDataResponse):
     # Set of ProtectedStorageEntry objects
     data_set: frozenset['ProtectedStorageEntry'] = field(default_factory=frozenset)
@@ -60,13 +60,13 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
         data_set = {resolver.from_proto(entry) for entry in proto.data_set}
         persistable_network_payload_set = {resolver.from_proto(e) for e in proto.persistable_network_payload_items}
         return GetDataResponse(
-            message_version,
-            data_set,
-            persistable_network_payload_set,
-            proto.request_nonce,
-            proto.is_get_updated_data_response,
-            Capabilities.from_int_list(proto.supported_capabilities),
-            was_truncated,
+            message_version=message_version,
+            data_set=data_set,
+            persistable_network_payload_set=persistable_network_payload_set,
+            request_nonce=proto.request_nonce,
+            is_get_updated_data_response=proto.is_get_updated_data_response,
+            supported_capabilities=Capabilities.from_int_list(proto.supported_capabilities),
+            was_truncated=was_truncated,
         )
 
     def associated_request(self) -> type:
