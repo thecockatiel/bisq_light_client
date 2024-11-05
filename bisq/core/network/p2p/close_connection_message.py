@@ -1,11 +1,14 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 import proto.pb_pb2 as protobuf
 
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 @dataclass(frozen=True)
 class CloseConnectionMessage(NetworkEnvelope):
-    reason: str
+    reason: 'CloseConnectionReason'
 
     # PROTO BUFFER
 
