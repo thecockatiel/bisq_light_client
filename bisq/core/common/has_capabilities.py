@@ -4,9 +4,7 @@ if TYPE_CHECKING:
     from bisq.core.common.capabilities import Capabilities
 
 class HasCapabilities():
-    capabilities: Optional['Capabilities']
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        if not hasattr(cls, "capabilities"):
-            raise RuntimeError(f"You need to have 'capabilities' in {cls.__name__}")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not hasattr(self, 'capabilities'):
+            raise RuntimeError(f"You need to have 'capabilities' in {self.__name__}")
