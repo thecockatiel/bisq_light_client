@@ -3,7 +3,8 @@ from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True)
+
+@dataclass(frozen=True, kw_only=True)
 class Pong(NetworkEnvelope, KeepAliveMessage):
     request_nonce: int
 
@@ -13,5 +14,5 @@ class Pong(NetworkEnvelope, KeepAliveMessage):
         return envelope
 
     @staticmethod
-    def from_proto(proto: protobuf.Pong, message_version: int) -> 'Pong':
-        return Pong(message_version, proto.request_nonce)
+    def from_proto(proto: protobuf.Pong, message_version: int) -> "Pong":
+        return Pong(message_version=message_version, nonce=proto.request_nonce)

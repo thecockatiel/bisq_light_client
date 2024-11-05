@@ -11,7 +11,7 @@ import proto.pb_pb2 as protobuf
 
 logger =  get_logger(__name__)
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNodeAddressMessage):
     TTL: ClassVar[int] = 15 * 24 * 60 * 60 * 1000  # 15 days in milliseconds
 

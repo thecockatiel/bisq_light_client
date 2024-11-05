@@ -4,7 +4,7 @@ from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.uid_message import UidMessage
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class OfferMessage(NetworkEnvelope, DirectMessage, UidMessage):
     message_version: int
     offer_id: str
