@@ -76,6 +76,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         # the shutDown being called.
         self.capabilities_listeners: ThreadSafeWeakSet[SupportedCapabilitiesListener] = ThreadSafeWeakSet()
         self.rule_violations: ConcurrentDict[str, int] = ConcurrentDict()
+        self.rule_violation: RuleViolation = None
         self.capabilities = Capabilities()
         self.message_time_stamps: List[int] = []
 
@@ -296,15 +297,37 @@ class Connection(HasCapabilities, Callable, MessageListener):
                          f"peersNodeAddress= {peerNodeAddress.get_full_address()}\n" +
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
-            
+    
+    def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
+        try:
+            reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
+            self.send_message(CloseConnectionMessage(reason))
+
+            self.stopped = True
+
+            time.sleep(0.2)
+        except Exception as e:
+            logger.error(e, exc_info=True)
+        finally:
+            self.stopped = True
+            UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
+ 
+    
     def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
         if not self.stopped:
             peers_node_address = str(self.peers_node_address) if self.peers_node_address else "null"
-            logger.debug(f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nShutDown connection:\npeersNodeAddress={peers_node_address}\ncloseConnectionReason={close_connection_reason}\nuid={self.uid}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
+            logger.debug(
+                f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                f"ShutDown connection:"
+                f"\npeersNodeAddress={peers_node_address}"
+                f"\ncloseConnectionReason={close_connection_reason}"
+                f"\nuid={self.uid}"
+                f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+            )
             if close_connection_reason.send_close_message:
-                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler)).start()
+                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler), name=f"Connection:SendCloseConnectionMessage-{self.uid}").start()
             else:
                 self.stopped = True
                 self.do_shut_down(close_connection_reason, shut_down_complete_handler)
@@ -386,10 +409,10 @@ class Connection(HasCapabilities, Callable, MessageListener):
         self.rule_violations.put(rule_violation, num_rule_violations) 
 
         if num_rule_violations >= rule_violation.max_tolerance:
-            logger.warning("We close connection as we received too many corrupt requests. ruleViolations=%s connection with address%s and uid %s", str(self.rule_violations), self.peers_node_address, self.uid)
-            self.ruleViolation = rule_violation
+            logger.warning(f"We close connection as we received too many corrupt requests. ruleViolations={self.rule_violations} connection with address{self.peers_node_address} and uid {self.uid}")
+            self.rule_violation = rule_violation
             if rule_violation == RuleViolation.PEER_BANNED:
-                logger.debug("We close connection due RuleViolation.PEER_BANNED. peersNodeAddress=%s", str(self.peers_node_address))
+                logger.debug(f"We close connection due RuleViolation.PEER_BANNED. peersNodeAddress={self.peers_node_address}")
                 self.shut_down(CloseConnectionReason.PEER_BANNED)
             elif rule_violation == RuleViolation.INVALID_CLASS:
                 logger.warning("We close connection due RuleViolation.INVALID_CLASS")
