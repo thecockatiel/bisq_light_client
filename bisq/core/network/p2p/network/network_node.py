@@ -254,16 +254,14 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
         if inbound_connection_optional is not None:
             connection = inbound_connection_optional
-            print(
-                f"We have found a connection in inBoundConnections. Connection.uid={connection.get_uid()}"
+            logger.info(
+                f"We have found a connection in inBoundConnections. Connection.uid={connection.uid}"
             )
-            if connection.is_stopped():
-                print(
-                    f"We have a connection which is already stopped in inBoundConnections. Connection.uid={connection.get_uid()}"
+            if connection.stopped:
+                logger.info(
+                    f"We have a connection which is already stopped in inBoundConnections. Connection.uid={connection.uid}"
                 )
-                # Assuming 'in_bound_connections' is a global or class variable
-                global in_bound_connections
-                in_bound_connections.remove(connection)
+                self.inbound_connections.remove(connection)
                 return None
             else:
                 return connection
@@ -278,16 +276,14 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
         if outbound_connection_optional is not None:
             connection = outbound_connection_optional
-            print(
-                f"We have found a connection in outBoundConnections. Connection.uid={connection.get_uid()}"
+            logger.info(
+                f"We have found a connection in outBoundConnections. Connection.uid={connection.uid}"
             )
-            if connection.is_stopped():
-                print(
-                    f"We have a connection which is already stopped in outBoundConnections. Connection.uid={connection.get_uid()}"
+            if connection.stopped:
+                logger.info(
+                    f"We have a connection which is already stopped in outBoundConnections. Connection.uid={connection.uid}"
                 )
-                # Assuming 'out_bound_connections' is a global or class variable
-                global out_bound_connections
-                out_bound_connections.remove(connection)
+                self.outbound_connections.remove(connection)
                 return None
             else:
                 return connection
