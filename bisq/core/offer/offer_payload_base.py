@@ -4,8 +4,6 @@ import hashlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Dict
 
-from dataclasses_json import Exclude, LetterCase, Undefined, config, dataclass_json
-
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload import RequiresOwnerIsOnlinePayload
@@ -15,13 +13,11 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.offer.offer_direction import OfferDirection
 
-
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.EXCLUDE)
 @dataclass(kw_only=True)
 class OfferPayloadBase(
     ProtectedStoragePayload, ExpirablePayload, RequiresOwnerIsOnlinePayload, ABC
 ):
-    TTL: int = field(default=timedelta(minutes=9).total_seconds() * 1000, init=False, metadata=config(exclude=Exclude.ALWAYS))
+    TTL: int = field(default=timedelta(minutes=9).total_seconds() * 1000, init=False)
 
     id: str
     date: int
@@ -39,7 +35,7 @@ class OfferPayloadBase(
     direction: "OfferDirection"
     version_nr: str
     protocol_version: int
-    pub_key_ring: "PubKeyRing" = field(metadata=config(exclude=Exclude.ALWAYS))
+    pub_key_ring: "PubKeyRing"
     # cache
     hash: Optional[bytes] = field(default=None, repr=False, hash=False)
     extra_data_map: Optional[Dict[str, str]] = field(default=None)
