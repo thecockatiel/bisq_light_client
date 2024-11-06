@@ -13,6 +13,3 @@ class OfferMessage(NetworkEnvelope, DirectMessage, UidMessage):
     def __post_init__(self):
         if self.uid is not None and not isinstance(self.uid, str):
             raise ValueError("uid must be a string or None")
-        
-    def get_uid(self) -> str:
-        return self.uid

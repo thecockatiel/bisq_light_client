@@ -63,6 +63,3 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
 
     def get_ttl(self) -> int:
         return self.TTL
-    
-    def get_uid(self) -> str:
-        return self.uid
