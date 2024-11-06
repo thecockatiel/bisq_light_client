@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
-import warnings
  
 from bisq.core.network.p2p.node_address import NodeAddress
 from trade_mailbox_message import TradeMailboxMessage
