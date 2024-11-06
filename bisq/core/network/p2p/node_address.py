@@ -4,10 +4,10 @@ from bisq.core.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.common.used_for_trade_contract_json import UsedForTradeContractJson
 import proto.pb_pb2 as protobuf
-from dataclasses_json import Exclude, dataclass_json, config, LetterCase
+from dataclasses_json import Exclude, Undefined, dataclass_json, config, LetterCase
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.EXCLUDE)
 @dataclass
 class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     host_name: str
