@@ -8,6 +8,5 @@ cryptography>=43.0
 pycryptodome>=3.21
 httpx~=0.27
 httpx-socks~=0.9
-dataclasses-json~=0.6
 
 pypiwin32; platform_system == "Windows"
