@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 class UidMessage(ABC):
-
-    @abstractmethod
-    def get_uid(self) -> str:
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not hasattr(self, 'uid'):
+            raise RuntimeError(f"You need to have 'uid' in {self.__name__}")
