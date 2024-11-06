@@ -4,15 +4,20 @@ from bisq.core.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.common.used_for_trade_contract_json import UsedForTradeContractJson
 import proto.pb_pb2 as protobuf
+from dataclasses_json import Exclude, dataclass_json, config, LetterCase
 
-@dataclass(frozen=True)
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
 class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     host_name: str
     port: int
-    address_prefix_hash: bytes = field(init=False, default=None)
+    address_prefix_hash: bytes = field(
+        init=False, default=None, metadata=config(exclude=Exclude.ALWAYS)
+    )
 
     @staticmethod
-    def from_full_address(full_address: str) -> 'NodeAddress':
+    def from_full_address(full_address: str) -> "NodeAddress":
         split = full_address.split(":")
         assert len(split) == 2, "fullAddress must contain ':'"
         return NodeAddress(host_name=split[0], port=int(split[1]))
@@ -43,11 +48,13 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     def get_address_prefix_hash(self):
         if self.address_prefix_hash is None:
             full_address = self.get_full_address()
-            self.address_prefix_hash = hashlib.sha256(full_address[:min(2, len(full_address))].encode()).digest()
+            self.address_prefix_hash = hashlib.sha256(
+                full_address[: min(2, len(full_address))].encode()
+            ).digest()
         return self.address_prefix_hash
 
     def __str__(self):
         return self.get_full_address()
-    
+
     def __hash__(self) -> int:
         return hash((self.host_name, self.port))
