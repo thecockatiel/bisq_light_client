@@ -1,4 +1,5 @@
 from enum import Enum
+from bisq.core.common.protocol.proto_util import ProtoUtil
 import proto.pb_pb2 as protobuf
 
 class AvailabilityResult(Enum):
@@ -20,7 +21,7 @@ class AvailabilityResult(Enum):
     @staticmethod
     def from_proto(proto: 'protobuf.AvailabilityResult'):
         name = protobuf.AvailabilityResult.Name(proto)
-        return AvailabilityResult[name]
+        return ProtoUtil.enum_from_proto(AvailabilityResult, name)
     
     def __init__(self, description: str):
         self.description = description

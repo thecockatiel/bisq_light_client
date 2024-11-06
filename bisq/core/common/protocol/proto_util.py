@@ -27,10 +27,10 @@ class ProtoUtil:
     def enum_from_proto(enum_type: Type[T], name: Optional[str]) -> Optional[T]:
         enum_name = name if name is not None else "UNDEFINED"
         try:
-            return enum_type.Value(enum_name)
+            return enum_type[enum_name]
         except ValueError:
             try:
-                result = enum_type.Value("UNDEFINED")
+                result = enum_type["UNDEFINED"]
                 logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
                 return result
             except ValueError:
