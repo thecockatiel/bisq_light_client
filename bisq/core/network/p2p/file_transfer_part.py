@@ -38,15 +38,14 @@ class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeA
 
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
-        protobuf.FileTransferPart(
+        envelope.file_transfer_part.CopyFrom(protobuf.FileTransferPart(
             senderNodeAddress=self.sender_node_address.to_proto_message(),
             tradeId=self.trade_id,
             traderId=self.trader_id,
             uid=self.uid,
             seqNumOrFileLength=self.seq_num_or_file_length,
             messageData=self.message_data
-        )
-        envelope.file_transfer_part.CopyFrom()
+        ))
         return envelope
 
     def get_sender_node_address(self) -> NodeAddress:
