@@ -110,7 +110,7 @@ class Sig:
             raise KeyConversionException(e) from e
 
     @staticmethod
-    def get_public_key_bytes_as_hex_string(sig_public_key: dsa.DSAPublicKey, allow_none: bool = False):
+    def get_public_key_as_hex_string(sig_public_key: dsa.DSAPublicKey, allow_none: bool = False):
         if not sig_public_key:
             if not allow_none:
                 raise KeyConversionException("Public key is None.")
@@ -119,7 +119,7 @@ class Sig:
         return Sig.get_public_key_bytes(sig_public_key).hex()
 
     @staticmethod
-    def get_private_key_bytes_as_hex_string(sig_private_key: dsa.DSAPrivateKey, allow_none: bool = False):
+    def get_private_key_as_hex_string(sig_private_key: dsa.DSAPrivateKey, allow_none: bool = False):
         if not sig_private_key:
             if not allow_none:
                 raise KeyConversionException("Private key is None.")

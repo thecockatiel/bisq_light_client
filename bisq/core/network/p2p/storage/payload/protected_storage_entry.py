@@ -106,7 +106,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
                 res1 = str(self)
                 res2 = "null"
                 if self.protected_storage_payload.get_owner_pub_key() != None:
-                    res2 = Sig.get_public_key_bytes_as_hex_string(self.protected_storage_payload.get_owner_pub_key(), True)
+                    res2 = Sig.get_public_key_as_hex_string(self.protected_storage_payload.get_owner_pub_key(), True)
 
                 logger.warning(f"ProtectedStorageEntry::isValidForAddOperation() failed. Entry owner does not match Payload owner:\n"
                                f"ProtectedStorageEntry={res1}\nPayloadOwner={res2}")
@@ -124,7 +124,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
             res1 = str(self)
             res2 = "null"
             if self.protected_storage_payload.get_owner_pub_key() != None:
-                res2 = Sig.get_public_key_bytes_as_hex_string(self.protected_storage_payload.get_owner_pub_key(), True)
+                res2 = Sig.get_public_key_as_hex_string(self.protected_storage_payload.get_owner_pub_key(), True)
             logger.warning(f"ProtectedStorageEntry::isValidForRemoveOperation() failed. Entry owner does not match Payload owner:\n"
                            f"ProtectedStorageEntry={res1}\nPayloadOwner={res2}")
         return result
@@ -149,13 +149,13 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
     def matches_relevant_pub_key(self, protected_storage_entry: 'ProtectedStorageEntry') -> bool:
         result = protected_storage_entry.owner_pub_key == self.owner_pub_key
         if not result:
-            logger.warning(f"New data entry does not match our stored data. storedData.ownerPubKey={Sig.get_public_key_bytes_as_hex_string(protected_storage_entry.owner_pub_key)}\n"
-                           f"ownerPubKey={Sig.get_public_key_bytes_as_hex_string(self.owner_pub_key_bytes)}")
+            logger.warning(f"New data entry does not match our stored data. storedData.ownerPubKey={Sig.get_public_key_as_hex_string(protected_storage_entry.owner_pub_key)}\n"
+                           f"ownerPubKey={Sig.get_public_key_as_hex_string(self.owner_pub_key_bytes)}")
         return result
 
     def __str__(self) -> str:
         return (f"ProtectedStorageEntry {{\n\tPayload: {self.protected_storage_payload}\n\t"
-                f"Owner Public Key: {Sig.get_public_key_bytes_as_hex_string(self.owner_pub_key_bytes)}\n\t"
+                f"Owner Public Key: {Sig.get_public_key_as_hex_string(self.owner_pub_key_bytes)}\n\t"
                 f"Sequence Number: {self.sequence_number}\n\tSignature: {self.signature.hex()}\n\t"
                 f"Timestamp: {self.creation_time_stamp}\n}}")
     
