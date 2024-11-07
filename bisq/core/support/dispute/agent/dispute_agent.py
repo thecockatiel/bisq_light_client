@@ -38,7 +38,7 @@ class DisputeAgent(ProtectedStoragePayload, ExpirablePayload, ABC):
         # field in a class would break that hash and therefore break the storage mechanism.
         self.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(extra_data_map)
  
-    def get_get_data_response_priority(self) -> str:
+    def get_data_response_priority(self) -> str:
         return GetDataResponsePriority.HIGH
 
     def get_ttl(self) -> int:

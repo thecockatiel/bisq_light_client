@@ -86,7 +86,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
             extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
         )
 
-    def get_get_data_response_priority(self) -> GetDataResponsePriority:
+    def get_data_response_priority(self) -> GetDataResponsePriority:
         return GetDataResponsePriority.HIGH
 
     def get_ttl(self) -> int:
