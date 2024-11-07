@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 class SupportedCapabilitiesMessage():
     supported_capabilities: Optional['Capabilities']
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        if not hasattr(cls, "supported_capabilities"):
-            raise RuntimeError(f"You need to have 'supported_capabilities' in {cls.__name__}")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not hasattr(self, "supported_capabilities"):
+            raise RuntimeError(f"You need to have 'supported_capabilities' in {self.__name__}")
