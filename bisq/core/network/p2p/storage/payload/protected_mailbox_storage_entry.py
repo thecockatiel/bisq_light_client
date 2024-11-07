@@ -64,7 +64,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
             res2 = "null"
             if mailbox_storage_payload.get_owner_pub_key():
                 if mailbox_storage_payload.sender_pub_key_for_add_operation:
-                    res2 = Sig.get_public_key_bytes_as_hex_string(mailbox_storage_payload.sender_pub_key_for_add_operation, True)
+                    res2 = Sig.get_public_key_as_hex_string(mailbox_storage_payload.sender_pub_key_for_add_operation, True)
 
             logger.warning("ProtectedMailboxStorageEntry::isValidForAddOperation() failed. " +
                     "Entry owner does not match sender key in payload:\nProtectedStorageEntry=%s\n" +
@@ -92,7 +92,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
             res1 = str(self)
             res2 = "null"
             if mailbox_storage_payload.get_owner_pub_key():
-                res2 = Sig.get_public_key_bytes_as_hex_string(mailbox_storage_payload.get_owner_pub_key(), True)
+                res2 = Sig.get_public_key_as_hex_string(mailbox_storage_payload.get_owner_pub_key(), True)
 
             logger.warning("ProtectedMailboxStorageEntry::isValidForRemoveOperation() failed. " +
                     "Entry owner does not match Payload owner:\nProtectedStorageEntry=%s\n" +
@@ -115,8 +115,8 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         if not result:
             logger.warning("ProtectedMailboxStorageEntry::isMetadataEquals() failed due to metadata mismatch. " +
                     "new.receiversPubKey=%s\nstored.receiversPubKey=%s", 
-                    Sig.get_public_key_bytes_as_hex_string(protected_mailbox_storage_entry.receivers_pub_key_bytes, True),
-                    Sig.get_public_key_bytes_as_hex_string(self.receivers_pub_key_bytes, True))
+                    Sig.get_public_key_as_hex_string(protected_mailbox_storage_entry.receivers_pub_key_bytes, True),
+                    Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True))
         return result
 
     #/////////////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
             creation_time_stamp=entry.creation_time_stamp)
 
     def __str__(self) -> str:
-        return f"ProtectedMailboxStorageEntry:\n\t  Receivers Public Key: {Sig.get_public_key_bytes_as_hex_string(self.receivers_pub_key_bytes, True)}\n{super().__str__()}"
+        return f"ProtectedMailboxStorageEntry:\n\t  Receivers Public Key: {Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True)}\n{super().__str__()}"
     
     def __eq__(self, other) -> bool:
         if not isinstance(other, ProtectedMailboxStorageEntry):
