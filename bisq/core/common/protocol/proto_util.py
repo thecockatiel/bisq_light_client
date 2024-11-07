@@ -16,11 +16,11 @@ class ProtoUtil:
         return {b.SerializeToString() for b in byte_string_list}
 
     @staticmethod
-    def string_or_null_from_proto(proto: str) -> Optional[str]:
+    def string_or_none_from_proto(proto: str) -> Optional[str]:
         return None if proto == "" else proto
 
     @staticmethod
-    def byte_array_or_null_from_proto(proto: Any) -> Optional[bytes]:
+    def byte_array_or_none_from_proto(proto: Any) -> Optional[bytes]:
         return None if not proto.ByteSize() else proto.SerializeToString()
 
     @staticmethod
