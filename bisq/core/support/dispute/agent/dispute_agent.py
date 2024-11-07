@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from abc import ABC
 from datetime import timedelta
 from typing import List, Dict, Optional, Any
-from datetime import datetime
 
 from bisq.core.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
