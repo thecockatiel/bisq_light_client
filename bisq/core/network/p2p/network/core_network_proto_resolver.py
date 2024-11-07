@@ -26,6 +26,7 @@ from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry impor
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 from bisq.core.offer.availability.messages.offer_availability_request import OfferAvailabilityRequest
 from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
+from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.support.dispute.arbitrator.arbitrator import Arbitrator
 from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
 from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
