@@ -30,7 +30,7 @@ class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapab
     @staticmethod
     def from_proto(proto: protobuf.PreliminaryGetDataRequest, message_version: int):
         excluded_keys = ProtoUtil.byte_set_from_proto_byte_string_list(proto.excluded_keys)
-        requesters_version  = ProtoUtil.string_or_null_from_proto(proto.version)
+        requesters_version  = ProtoUtil.string_or_none_from_proto(proto.version)
         supported_capabilities = Capabilities.from_int_list(proto.supported_capabilities)
         logger.info(f"Received a PreliminaryGetDataRequest with {proto.ByteSize() / 1000} kB and {len(excluded_keys)} excluded key entries. Requester's version={requesters_version}")
         return PreliminaryGetDataRequest(

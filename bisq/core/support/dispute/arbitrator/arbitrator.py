@@ -73,8 +73,8 @@ class Arbitrator(DisputeAgent):
             registration_date=proto.registration_date,
             registration_pub_key=proto.registration_pub_key,
             registration_signature=proto.registration_signature,
-            email_address=ProtoUtil.string_or_null_from_proto(proto.email_address),
-            info=ProtoUtil.string_or_null_from_proto(proto.info),
+            email_address=ProtoUtil.string_or_none_from_proto(proto.email_address),
+            info=ProtoUtil.string_or_none_from_proto(proto.info),
             extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
         )
 

@@ -35,7 +35,7 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
     @staticmethod
     def from_proto(proto: protobuf.GetUpdatedDataRequest, message_version: int) -> 'GetUpdatedDataRequest':
         excluded_keys = ProtoUtil.byte_set_from_proto_byte_string_list(proto.excluded_keys)
-        requesters_version = ProtoUtil.string_or_null_from_proto(proto.version)
+        requesters_version = ProtoUtil.string_or_none_from_proto(proto.version)
         logger.info(f"Received a GetUpdatedDataRequest with {proto.ByteSize() / 1000} kB and "
                      f"{len(excluded_keys)} excluded key entries. Requester's version={requesters_version}")
         
