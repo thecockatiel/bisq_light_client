@@ -1,0 +1,64 @@
+from dataclasses import dataclass
+from typing import Optional
+from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.core.network.p2p.node_address import NodeAddress
+from trade_mailbox_message import TradeMailboxMessage
+import proto.pb_pb2 as protobuf
+
+
+@dataclass(frozen=True, kw_only=True)
+class CounterCurrencyTransferStartedMessage(TradeMailboxMessage):
+    buyer_payout_address: str
+    sender_node_address: NodeAddress
+    buyer_signature: bytes
+    counter_currency_tx_id: Optional[str] = None
+    counter_currency_extra_data: Optional[str] = None
+
+    def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
+        builder = protobuf.CounterCurrencyTransferStartedMessage(
+            trade_id=self.trade_id,
+            buyer_payout_address=self.buyer_payout_address,
+            sender_node_address=self.sender_node_address.to_proto_message(),
+            buyer_signature=protobuf(value=self.buyer_signature),
+            uid=self.uid,
+        )
+
+        if self.counter_currency_tx_id:
+            builder.counter_currency_tx_id = self.counter_currency_tx_id
+        if self.counter_currency_extra_data:
+            builder.counter_currency_extra_data = self.counter_currency_extra_data
+
+        envelope = self.get_network_envelope_builder()
+        envelope.counter_currency_transfer_started_message.CopyFrom(builder)
+        return envelope
+
+    @staticmethod
+    def from_proto(
+        proto: protobuf.CounterCurrencyTransferStartedMessage, message_version: int
+    ) -> "CounterCurrencyTransferStartedMessage":
+        return CounterCurrencyTransferStartedMessage(
+            message_version=message_version,
+            trade_id=proto.trade_id,
+            uid=proto.uid,
+            buyer_payout_address=proto.buyer_payout_address,
+            sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
+            buyer_signature=proto.buyer_signature,
+            counter_currency_tx_id=ProtoUtil.string_or_none_from_proto(
+                proto.counter_currency_tx_id
+            ),
+            counter_currency_extra_data=ProtoUtil.string_or_none_from_proto(
+                proto.counter_currency_extra_data
+            ),
+        )
+
+    def __str__(self) -> str:
+        return (
+            f"CounterCurrencyTransferStartedMessage({{\n"
+            f"    buyer_payout_address: '{self.buyer_payout_address}',\n"
+            f"    sender_node_address: {self.sender_node_address},\n"
+            f"    counter_currency_tx_id: {self.counter_currency_tx_id},\n"
+            f"    counter_currency_extra_data: {self.counter_currency_extra_data},\n"
+            f"    uid: '{self.uid}',\n"
+            f"    buyer_signature: {self.buyer_signature.hex()}\n"
+            f"}} {super().__str__()}"
+        )
