@@ -1,10 +1,11 @@
+from enum import Enum
 import unittest
 from typing import Type, Optional
 
 from bisq.core.common.protocol.proto_util import ProtoUtil
 
 class TestEnumFromProto(unittest.TestCase):
-    class MockEnum:
+    class MockEnum(Enum):
         VALUE_ONE = 1
         UNDEFINED = 0
 
@@ -17,16 +18,14 @@ class TestEnumFromProto(unittest.TestCase):
 
     def test_valid_enum(self):
         result = ProtoUtil.enum_from_proto(self.MockEnum, "VALUE_ONE")
-        self.assertEqual(result, 1)
         self.assertEqual(result, self.MockEnum.VALUE_ONE)
 
     def test_invalid_enum_with_undefined(self):
         result = ProtoUtil.enum_from_proto(self.MockEnum, "INVALID_NAME")
-        self.assertEqual(result, 0)
         self.assertEqual(result, self.MockEnum.UNDEFINED)
 
     def test_invalid_enum_without_undefined(self):
-        class NoUndefinedEnum:
+        class NoUndefinedEnum(Enum):
             VALUE_ONE = 1
 
             @classmethod
