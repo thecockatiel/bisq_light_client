@@ -13,7 +13,7 @@ import proto.pb_pb2 as protobuf
 
 
 class Alert(ProtectedStoragePayload, ExpirablePayload):
-    TTL: int = timedelta(days=90).total_seconds() * 1000  # milliseconds
+    TTL: int = int(timedelta(days=90).total_seconds() * 1000)  # milliseconds
 
     message: str
     is_update_info: bool

@@ -10,7 +10,7 @@ from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePay
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 
 class DisputeAgent(ProtectedStoragePayload, ExpirablePayload, ABC):
-    TTL = timedelta(days=10).total_seconds() * 1000  # Convert to milliseconds
+    TTL = int(timedelta(days=10).total_seconds() * 1000)  # Convert to milliseconds
 
     def __init__(
         self,
