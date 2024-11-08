@@ -138,6 +138,7 @@ class OfferPayload(OfferPayloadBase):
         
         return protobuf.StoragePayload(offer_payload=offer_payload)
     
+    @staticmethod
     def from_proto(proto: protobuf.OfferPayload) -> 'OfferPayload':
         assert proto.offer_fee_payment_tx_id, "OfferFeePaymentTxId must be set in PB.OfferPayload"
         
