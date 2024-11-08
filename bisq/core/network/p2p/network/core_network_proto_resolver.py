@@ -36,6 +36,7 @@ from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
 from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import CounterCurrencyTransferStartedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import MediatedPayoutTxPublishedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
+from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import PeerPublishedDelayedPayoutTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import RefreshTradeStateRequest
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
 from bisq.core.filter.Filter import Filter
