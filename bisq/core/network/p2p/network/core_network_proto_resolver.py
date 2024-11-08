@@ -41,10 +41,12 @@ from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_
 from bisq.core.trade.protocol.bisq_v1.messages.deposit_tx_message import DepositTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import MediatedPayoutTxPublishedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
+from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import PayoutTxPublishedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import PeerPublishedDelayedPayoutTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import RefreshTradeStateRequest
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
 from bisq.core.filter.Filter import Filter
+from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
 from bisq.logging import get_logger
 from utils.clock import Clock
 import proto.pb_pb2 as protobuf
