@@ -17,3 +17,6 @@ class Attachment(NetworkPayload):
     @staticmethod
     def from_proto(proto: protobuf.Attachment) -> "Attachment":
         return Attachment(file_name=proto.file_name, bytes=proto.bytes)
+
+    def __str__(self) -> str:
+        return f"Attachment{{file_name='{self.file_name}', bytes={len(self.bytes)}}}"
