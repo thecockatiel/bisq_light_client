@@ -8,7 +8,7 @@ from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.close_connection_message import CloseConnectionMessage
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
-from bisq.core.network.p2p.inventory.get_inventory_request import GetInventoryRequest
+from bisq.core.network.p2p.inventory.messages.get_inventory_request import GetInventoryRequest
 from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
@@ -37,6 +37,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_request import DelayedPayoutTxSignatureRequest
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_response import DelayedPayoutTxSignatureResponse
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_message import DepositTxAndDelayedPayoutTxMessage
+from bisq.core.trade.protocol.bisq_v1.messages.deposit_tx_message import DepositTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import MediatedPayoutTxPublishedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
 from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import PeerPublishedDelayedPayoutTxMessage

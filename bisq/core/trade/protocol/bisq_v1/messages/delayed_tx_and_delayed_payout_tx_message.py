@@ -9,6 +9,8 @@ import proto.pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
 
+# It is the last message in the take offer phase. We use MailboxMessage instead of DirectMessage to add more tolerance
+# in case of network issues and as the message does not trigger further protocol execution.
 @dataclass(frozen=True, kw_only=True)
 class DepositTxAndDelayedPayoutTxMessage(TradeMailboxMessage):
     sender_node_address: NodeAddress
