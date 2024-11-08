@@ -73,7 +73,7 @@ class SignedWitness(
 
     def to_proto_message(self):
         builder = protobuf.SignedWitness(
-            verification_method=self.verification_method.to_proto_message(),
+            verification_method=VerificationMethod.to_proto_message(self.verification_method),
             account_age_witness_hash=self.account_age_witness_hash,
             signature=self.signature,
             signer_pub_key=self.signer_pub_key,
@@ -81,7 +81,7 @@ class SignedWitness(
             date=self.date,
             trade_amount=self.trade_amount,
         )
-        return protobuf.PersistableNetworkPayload(signedWitness=builder)
+        return protobuf.PersistableNetworkPayload(signed_witness=builder)
     
     def to_proto_signed_witness(self):
         return self.to_proto_message().signed_witness
