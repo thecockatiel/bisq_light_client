@@ -1,6 +1,7 @@
 
 from typing import TYPE_CHECKING
 from bisq.core.alert.alert import Alert
+from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.ack_message import AckMessage
