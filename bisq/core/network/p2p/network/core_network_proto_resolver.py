@@ -34,6 +34,7 @@ from bisq.core.support.dispute.arbitration.messages.peer_published_dispute_payou
 from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
 from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
 from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import CounterCurrencyTransferStartedMessage
+from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
 from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import RefreshTradeStateRequest
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
 from bisq.core.filter.Filter import Filter
