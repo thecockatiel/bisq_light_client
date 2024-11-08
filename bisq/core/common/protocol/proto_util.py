@@ -28,12 +28,12 @@ class ProtoUtil:
         enum_name = name if name is not None else "UNDEFINED"
         try:
             return enum_type[enum_name]
-        except ValueError:
+        except:
             try:
                 result = enum_type["UNDEFINED"]
                 logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
                 return result
-            except ValueError:
+            except:
                 return None
 
     @staticmethod
