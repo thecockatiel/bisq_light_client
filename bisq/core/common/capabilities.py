@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import List, Set, Optional
 
 from bisq.logging import get_logger
@@ -6,7 +5,6 @@ from .capability import Capability
 
 logger = get_logger(__name__)
 
-@dataclass
 class Capabilities:
     """
     hold a set of capabilities and offers appropriate comparison methods.
