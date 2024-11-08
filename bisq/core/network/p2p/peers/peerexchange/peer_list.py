@@ -18,8 +18,9 @@ class PeerList(PersistableEnvelope):
         peer_list_proto = protobuf.PeerList()
         peer_list_proto.peer.extend([peer.to_proto_message() for peer in self.set])
         
-        envelope_proto = protobuf.PersistableEnvelope()
-        envelope_proto.peer_list = peer_list_proto
+        envelope_proto = protobuf.PersistableEnvelope(
+            peer_list=peer_list_proto
+        )
         
         return envelope_proto
 

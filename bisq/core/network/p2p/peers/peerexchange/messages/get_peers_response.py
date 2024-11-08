@@ -24,7 +24,7 @@ class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabiliti
             builder.reported_peers.add(peer.to_proto_message())
 
         if self.supported_capabilities:
-            builder.supported_capabilities = Capabilities.to_int_list(self.supported_capabilities)
+            builder.supported_capabilities.extend(Capabilities.to_int_list(self.supported_capabilities))
 
         envelope = self.get_network_envelope_builder()
         envelope.get_peers_response.CopyFrom(builder)

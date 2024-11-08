@@ -35,7 +35,7 @@ class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
             offer.uid = self.uid
 
         envelope = self.get_network_envelope_builder()
-        envelope.offer_availability_request = offer
+        envelope.offer_availability_request.CopyFrom(offer)
         return envelope
 
     @staticmethod

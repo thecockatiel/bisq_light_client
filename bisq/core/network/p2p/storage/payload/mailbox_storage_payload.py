@@ -63,7 +63,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
 
     def to_proto_message(self) -> protobuf.StoragePayload:
         payload = protobuf.MailboxStoragePayload()
-        payload.prefixed_sealed_and_signed_message = self.prefixed_sealed_and_signed_message.to_proto_message()
+        payload.prefixed_sealed_and_signed_message.CopyFrom(self.prefixed_sealed_and_signed_message.to_proto_message()) 
         payload.sender_pub_key_for_add_operation_bytes = self.sender_pub_key_for_add_operation_bytes
         payload.owner_pub_key_bytes = self.owner_pub_key_bytes
         if self.extra_data_map:
