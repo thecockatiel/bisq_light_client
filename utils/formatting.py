@@ -86,3 +86,11 @@ def to_truncated_string(message, max_length=200, remove_line_breaks=True):
         result = result.replace("\n", "")
 
     return result
+
+def get_short_id(id: str, sep='-'):
+    if not id: return "None"
+    chunks = id.split(sep)
+    if len(chunks) > 1: # NOTE: incorrect logic in in original bisq. Should be > 1, not > 0, but I don't know if it's intentional
+        return chunks[0]
+    else:
+        return id[:min(8, len(id))]
