@@ -8,6 +8,7 @@ from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.close_connection_message import CloseConnectionMessage
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
+from bisq.core.network.p2p.inventory.get_inventory_request import GetInventoryRequest
 from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
