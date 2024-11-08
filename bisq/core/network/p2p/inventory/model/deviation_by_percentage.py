@@ -1,8 +1,9 @@
 
 from bisq.core.network.p2p.inventory.model.deviation_severity import DeviationSeverity
+from bisq.core.network.p2p.inventory.model.deviation_type import DeviationType
 
 
-class DeviationByPercentage:
+class DeviationByPercentage(DeviationType):
     
     # In case want to see the % deviation but not trigger any warnings or alerts
     # don't pass any values to the constructor
