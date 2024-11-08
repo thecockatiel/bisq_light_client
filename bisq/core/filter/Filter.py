@@ -12,7 +12,7 @@ import proto.pb_pb2 as protobuf
 from utils.time import get_time_ms
 
 class Filter(ProtectedStoragePayload, ExpirablePayload):
-    TTL = timedelta(days=180).total_seconds() * 1000
+    TTL = int(timedelta(days=180).total_seconds() * 1000)
 
     def __init__(self,
                  banned_offer_ids: List[str],

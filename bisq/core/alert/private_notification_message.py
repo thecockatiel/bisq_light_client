@@ -11,7 +11,7 @@ import proto.pb_pb2 as protobuf
 
 @dataclass(frozen=True, kw_only=True)
 class PrivateNotificationMessage(NetworkEnvelope, MailboxMessage):
-    TTL: ClassVar[int] = timedelta(days=30).total_seconds() * 1000
+    TTL: ClassVar[int] = int(timedelta(days=30).total_seconds() * 1000)
 
     private_notification_payload: PrivateNotificationPayload
     sender_node_address: NodeAddress

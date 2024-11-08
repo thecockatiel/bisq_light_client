@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class OfferPayloadBase(
     ProtectedStoragePayload, ExpirablePayload, RequiresOwnerIsOnlinePayload, ABC
 ):
-    TTL: int = field(default=timedelta(minutes=9).total_seconds() * 1000, init=False)
+    TTL: int = field(default=int(timedelta(minutes=9).total_seconds() * 1000), init=False)
 
     id: str
     date: int
