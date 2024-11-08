@@ -42,8 +42,8 @@ class VerificationMethod(IntEnum):
 @dataclass
 class SignedWitness(
     ProcessOncePersistableNetworkPayload,
-    PersistableNetworkPayload,
     DateTolerantPayload,
+    PersistableNetworkPayload,
     CapabilityRequiringPayload,
 ):
     TOLERANCE: ClassVar[int] = int(
