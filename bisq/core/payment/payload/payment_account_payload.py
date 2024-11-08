@@ -10,6 +10,7 @@ from bisq.core.common.used_for_trade_contract_json import UsedForTradeContractJs
 
 logger = logging.getLogger(__name__)
 
+# todo: double check impl
 class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     """
     That class is used in the contract for creating the contract json. Any change will break the contract.
