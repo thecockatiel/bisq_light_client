@@ -9,10 +9,10 @@ class SupportType(IntEnum):
     REFUND = 3
 
     @staticmethod
-    def from_proto(direction: protobuf.SupportType): 
-        name = protobuf.SupportType.Name(direction)
-        return ProtoUtil.enum_from_proto(SupportType, name)
+    def from_proto(type: 'protobuf.SupportType'):
+        return ProtoUtil.enum_from_proto(SupportType, protobuf.SupportType, type)
 
     @staticmethod
-    def to_proto_message(direction: 'SupportType'):
-        return protobuf.SupportType.Value(direction.name)
+    def to_proto_message(type: 'SupportType'):
+        return ProtoUtil.proto_enum_from_enum(protobuf.SupportType, type)
+

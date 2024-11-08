@@ -1,3 +1,5 @@
+from enum import Enum
+from google.protobuf.internal.enum_type_wrapper import EnumTypeWrapper
 from typing import List, Set, Optional, Type, TypeVar, Iterable, Collection, Callable
 from google.protobuf import message
 from google.protobuf.any_pb2 import Any
@@ -24,13 +26,29 @@ class ProtoUtil:
         return None if not proto.ByteSize() else proto.SerializeToString()
 
     @staticmethod
-    def enum_from_proto(enum_type: Type[T], name: Optional[str]) -> Optional[T]:
-        enum_name = name if name is not None else "UNDEFINED"
+    def enum_from_proto(enum_type: Type[T], proto_enum_type: "EnumTypeWrapper", proto_enum_value: Optional[Any] = None) -> Optional[T]:
         try:
+            if proto_enum_value is None:
+                enum_name = proto_enum_type
+            else:
+                enum_name = proto_enum_type.Name(proto_enum_value)
             return enum_type[enum_name]
         except:
             try:
                 result = enum_type["UNDEFINED"]
+                logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
+                return result
+            except:
+                return None
+
+    @staticmethod
+    def proto_enum_from_enum(proto_enum_type: Type[T], enum: Optional[Enum]) -> Optional[T]:
+        enum_name = enum.name if enum is not None else "UNDEFINED"
+        try:
+            return proto_enum_type.Value(enum_name)
+        except:
+            try:
+                result = proto_enum_type.Value["UNDEFINED"]
                 logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
                 return result
             except:

@@ -31,13 +31,12 @@ class VerificationMethod(IntEnum):
     TRADE = 1
 
     @staticmethod
-    def from_proto(method: protobuf.SignedWitness.VerificationMethod):
-        name = protobuf.SignedWitness.VerificationMethod.Name(method)
-        return ProtoUtil.enum_from_proto(VerificationMethod, name)
+    def from_proto(proto: protobuf.SignedWitness.VerificationMethod):
+        return ProtoUtil.enum_from_proto(VerificationMethod, protobuf.SignedWitness.VerificationMethod, proto)
 
     @staticmethod
     def to_proto_message(method: "VerificationMethod"):
-        return protobuf.SignedWitness.VerificationMethod.Value(method.name)
+        return ProtoUtil.proto_enum_from_enum(protobuf.SignedWitness.VerificationMethod, method)
 
 
 @dataclass

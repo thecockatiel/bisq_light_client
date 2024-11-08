@@ -7,10 +7,9 @@ class OfferDirection(IntEnum):
     SELL = 1
 
     @staticmethod
-    def from_proto(direction: protobuf.OfferDirection): 
-        name = protobuf.OfferDirection.Name(direction)
-        return ProtoUtil.enum_from_proto(OfferDirection, name)
+    def from_proto(direction: protobuf.OfferDirection):
+        return ProtoUtil.enum_from_proto(OfferDirection, protobuf.OfferDirection, direction)
 
     @staticmethod
     def to_proto_message(direction: 'OfferDirection'):
-        return protobuf.OfferDirection.Value(direction.name)
+        return ProtoUtil.proto_enum_from_enum(protobuf.OfferDirection, direction)

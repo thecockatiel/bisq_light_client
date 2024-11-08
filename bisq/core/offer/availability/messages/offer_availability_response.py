@@ -20,7 +20,7 @@ class OfferAvailabilityResponse(OfferMessage, SupportedCapabilitiesMessage):
     def to_proto_network_envelope(self):
         offer = protobuf.OfferAvailabilityResponse(
             offer_id=self.offer_id,
-            availability_result=protobuf.AvailabilityResult.Value(self.availability_result.name)
+            availability_result=AvailabilityResult.to_proto_message(self.availability_result)
         )
         
         if self.supported_capabilities:
