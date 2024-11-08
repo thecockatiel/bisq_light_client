@@ -1,0 +1,19 @@
+from dataclasses import dataclass
+from bisq.core.common.protocol.network.network_payload import NetworkPayload
+import proto.pb_pb2 as protobuf
+
+
+@dataclass(frozen=True)
+class Attachment(NetworkPayload):
+    file_name: str
+    bytes: bytes
+
+    def to_proto_message(self) -> protobuf.Attachment:
+        return protobuf.Attachment(
+            file_name=self.file_name,
+            bytes=self.bytes,
+        )
+
+    @staticmethod
+    def from_proto(proto: protobuf.Attachment) -> "Attachment":
+        return Attachment(file_name=proto.file_name, bytes=proto.bytes)
