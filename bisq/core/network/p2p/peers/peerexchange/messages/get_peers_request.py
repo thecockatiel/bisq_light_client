@@ -33,7 +33,7 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
                                            reported_peers=[peer.to_proto_message() for peer in clone])
         
         if self.supported_capabilities is not None:
-            request.supported_capabilities = self.supported_capabilities.to_int_list()
+            request.supported_capabilities.extend(Capabilities.to_int_list(self.supported_capabilities))
         
         envelope = self.get_network_envelope_builder()
         envelope.get_peers_request.CopyFrom(request)

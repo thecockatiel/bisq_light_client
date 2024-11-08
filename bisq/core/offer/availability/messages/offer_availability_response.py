@@ -39,9 +39,9 @@ class OfferAvailabilityResponse(OfferMessage, SupportedCapabilitiesMessage):
             offer.arbitrator = self.arbitrator.to_proto_message()
         
         envelope = self.get_network_envelope_builder()
-        envelope.offer_availability_response = protobuf.OfferAvailabilityResponse(
+        envelope.offer_availability_response.CopyFrom(protobuf.OfferAvailabilityResponse(
             offer=offer
-        )
+        ))
         return envelope
 
     @staticmethod
