@@ -19,11 +19,11 @@ class PersistableNetworkPayload(NetworkPayload, PersistablePayload, ABC):
     """
 
     @staticmethod
-    def from_proto(payload: protobuf.PersistableNetworkPayload, resolver: ProtoResolver):
+    def from_proto(payload: "protobuf.PersistableNetworkPayload", resolver: "ProtoResolver"):
         return resolver.from_proto(payload)
 
     @abstractmethod
-    def to_proto_message(self) -> protobuf.PersistableNetworkPayload:
+    def to_proto_message(self) -> "protobuf.PersistableNetworkPayload":
         pass
 
     @abstractmethod
