@@ -1,12 +1,12 @@
 
 
 from bisq.core.locale.babel_min import default_locale
-from bisq.core.locale.locale_util import ALL_LANGUAGE_CODES, ALL_LOCALES
+from bisq.core.locale.locale_util import ALL_LANGUAGE_CODES, ALL_LOCALES, DEFAULT_LOCALE, LocaleData
 
 # TODO: complete ?
 class LanguageUtil:
     @staticmethod
-    def get_default_language():
+    def get_default_language() -> 'LocaleData':
         locale = default_locale()
         language, country = locale[0], locale[1]
         locale = None
@@ -20,7 +20,7 @@ class LanguageUtil:
                     return locale_data
                 if not locale:
                     locale = locale_data
-        return locale
+        return locale if locale else DEFAULT_LOCALE
     
     user_language_codes = [
         "en",

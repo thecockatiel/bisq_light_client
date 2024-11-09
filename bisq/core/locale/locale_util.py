@@ -9,6 +9,9 @@ class LocaleData():
     display_language: str
     country: str
     display_country: str
+    
+
+DEFAULT_LOCALE = LocaleData('en', 'English', 'US', 'United States')
 
 ALL_LOCALES = {
     LocaleData('ps', 'Pashto', 'AF', 'Afghanistan'),
