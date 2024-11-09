@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 # This file contains data exported from java bisq project by printing needed data from the list inside LanguageUtil and using Locale class
+# NOTE: I am aware that this limited implementation is limited to English, and that's fine for now, at least.
 
 @dataclass(frozen=True)
 class LocaleData():
