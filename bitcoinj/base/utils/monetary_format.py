@@ -672,3 +672,11 @@ FIAT_PLAIN_FORMAT = (
 
 COIN_FRIENDLY_FORMAT = MonetaryFormat.BTC().with_min_decimals(2).repeat_optional_decimals(1, 6).postfix_code()
 COIN_PLAIN_FORMAT = MonetaryFormat.BTC().with_min_decimals(0).repeat_optional_decimals(1, 8).no_code()
+
+ALTCOIN_FRIENDLY_FORMAT = MonetaryFormat.FIAT().postfix_code()    
+ALTCOIN_PLAIN_FORMAT = (
+         MonetaryFormat.FIAT()
+        .with_min_decimals(0)
+        .repeat_optional_decimals(1, 8)
+        .no_code()
+    )
