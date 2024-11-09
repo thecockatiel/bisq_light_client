@@ -4,9 +4,6 @@ from typing import Tuple
 from bitcoinj.base.monetary import Monetary
 import bitcoinj.base.utils.monetary_format
 
-
-# Note: Python implementation of Fiat is incomplete and probably inaccurate
-# TODO: check this for improvement later.
 class Fiat(Monetary):
     """
     Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type
