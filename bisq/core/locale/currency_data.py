@@ -23,7 +23,34 @@ for (countryCode in countryCodes) {
 ```
 
 this maps all country codes to their respective currency.
+
+currency names generated from the following code:
+```kotlin
+val locales = LocaleUtil.getAllLocales()
+val countryCodes = mutableSetOf<String>()
+for (locale in locales) {
+    countryCodes.add(locale.country)
+}
+val currencyCodes = mutableSetOf<String>()
+for (countryCode in countryCodes) {
+    val currency = Currency.getInstance(
+        Locale(
+            Locale.getDefault().language,
+            countryCode,
+        ),
+    )
+    currencyCodes.add(currency.currencyCode)
+}
+for (currencyCode in currencyCodes) {
+    val currency = Currency.getInstance(currencyCode)
+    println("'$currencyCode': CurrencyData('${currency.currencyCode}', '${currency.displayName}', '${currency.symbol}', ${currency.defaultFractionDigits}, ${currency.numericCode}),")
+}
+```
+
 """
+
+from dataclasses import dataclass
+
 
 COUNTRY_TO_CURRENCY_CODE_MAP = {
     "AF": "AFN",
@@ -273,4 +300,170 @@ COUNTRY_TO_CURRENCY_CODE_MAP = {
     "YE": "YER",
     "ZM": "ZMW",
     "ZW": "ZWL",
+}
+
+@dataclass(frozen=True)
+class CurrencyData:
+    currency_code: str
+    display_name: str
+    symbol: str
+    default_fraction_digits: int
+    numeric_code: int
+    
+CURRENCY_TO_DATA_MAP = {
+    'AFN': CurrencyData('AFN', 'Afghan Afghani', 'AFN', 2, 971),
+    'EUR': CurrencyData('EUR', 'Euro', '€', 2, 978),
+    'ALL': CurrencyData('ALL', 'Albanian Lek', 'ALL', 2, 8),
+    'DZD': CurrencyData('DZD', 'Algerian Dinar', 'DZD', 2, 12),
+    'USD': CurrencyData('USD', 'US Dollar', '$', 2, 840),
+    'AOA': CurrencyData('AOA', 'Angolan Kwanza', 'AOA', 2, 973),
+    'XCD': CurrencyData('XCD', 'East Caribbean Dollar', 'EC$', 2, 951),
+    'ARS': CurrencyData('ARS', 'Argentine Peso', 'ARS', 2, 32),
+    'AMD': CurrencyData('AMD', 'Armenian Dram', 'AMD', 2, 51),
+    'AWG': CurrencyData('AWG', 'Aruban Florin', 'AWG', 2, 533),
+    'AUD': CurrencyData('AUD', 'Australian Dollar', 'A$', 2, 36),
+    'AZN': CurrencyData('AZN', 'Azerbaijani Manat', 'AZN', 2, 944),
+    'BSD': CurrencyData('BSD', 'Bahamian Dollar', 'BSD', 2, 44),
+    'BHD': CurrencyData('BHD', 'Bahraini Dinar', 'BHD', 3, 48),
+    'BDT': CurrencyData('BDT', 'Bangladeshi Taka', 'BDT', 2, 50),
+    'BBD': CurrencyData('BBD', 'Barbadian Dollar', 'BBD', 2, 52),
+    'BYN': CurrencyData('BYN', 'Belarusian Ruble', 'BYN', 2, 933),
+    'BZD': CurrencyData('BZD', 'Belize Dollar', 'BZD', 2, 84),
+    'XOF': CurrencyData('XOF', 'West African CFA Franc', 'F CFA', 0, 952),
+    'BMD': CurrencyData('BMD', 'Bermudan Dollar', 'BMD', 2, 60),
+    'BTN': CurrencyData('BTN', 'Bhutanese Ngultrum', 'BTN', 2, 64),
+    'BOB': CurrencyData('BOB', 'Bolivian Boliviano', 'BOB', 2, 68),
+    'BAM': CurrencyData('BAM', 'Bosnia-Herzegovina Convertible Mark', 'BAM', 2, 977),
+    'BWP': CurrencyData('BWP', 'Botswanan Pula', 'BWP', 2, 72),
+    'BRL': CurrencyData('BRL', 'Brazilian Real', 'R$', 2, 986),
+    'BND': CurrencyData('BND', 'Brunei Dollar', 'BND', 2, 96),
+    'BGN': CurrencyData('BGN', 'Bulgarian Lev', 'BGN', 2, 975),
+    'BIF': CurrencyData('BIF', 'Burundian Franc', 'BIF', 0, 108),
+    'KHR': CurrencyData('KHR', 'Cambodian Riel', 'KHR', 2, 116),
+    'XAF': CurrencyData('XAF', 'Central African CFA Franc', 'FCFA', 0, 950),
+    'CAD': CurrencyData('CAD', 'Canadian Dollar', 'CA$', 2, 124),
+    'CVE': CurrencyData('CVE', 'Cape Verdean Escudo', 'CVE', 2, 132),
+    'KYD': CurrencyData('KYD', 'Cayman Islands Dollar', 'KYD', 2, 136),
+    'CLP': CurrencyData('CLP', 'Chilean Peso', 'CLP', 0, 152),
+    'CNY': CurrencyData('CNY', 'Chinese Yuan', 'CN¥', 2, 156),
+    'COP': CurrencyData('COP', 'Colombian Peso', 'COP', 2, 170),
+    'KMF': CurrencyData('KMF', 'Comorian Franc', 'KMF', 0, 174),
+    'CDF': CurrencyData('CDF', 'Congolese Franc', 'CDF', 2, 976),
+    'NZD': CurrencyData('NZD', 'New Zealand Dollar', 'NZ$', 2, 554),
+    'CRC': CurrencyData('CRC', 'Costa Rican Colón', 'CRC', 2, 188),
+    'CUP': CurrencyData('CUP', 'Cuban Peso', 'CUP', 2, 192),
+    'ANG': CurrencyData('ANG', 'Netherlands Antillean Guilder', 'ANG', 2, 532),
+    'CZK': CurrencyData('CZK', 'Czech Koruna', 'CZK', 2, 203),
+    'DKK': CurrencyData('DKK', 'Danish Krone', 'DKK', 2, 208),
+    'DJF': CurrencyData('DJF', 'Djiboutian Franc', 'DJF', 0, 262),
+    'DOP': CurrencyData('DOP', 'Dominican Peso', 'DOP', 2, 214),
+    'EGP': CurrencyData('EGP', 'Egyptian Pound', 'EGP', 2, 818),
+    'SVC': CurrencyData('SVC', 'Salvadoran Colón', 'SVC', 2, 222),
+    'ERN': CurrencyData('ERN', 'Eritrean Nakfa', 'ERN', 2, 232),
+    'ETB': CurrencyData('ETB', 'Ethiopian Birr', 'ETB', 2, 230),
+    'FKP': CurrencyData('FKP', 'Falkland Islands Pound', 'FKP', 2, 238),
+    'FJD': CurrencyData('FJD', 'Fijian Dollar', 'FJD', 2, 242),
+    'XPF': CurrencyData('XPF', 'CFP Franc', 'CFPF', 0, 953),
+    'GMD': CurrencyData('GMD', 'Gambian Dalasi', 'GMD', 2, 270),
+    'GEL': CurrencyData('GEL', 'Georgian Lari', 'GEL', 2, 981),
+    'GHS': CurrencyData('GHS', 'Ghanaian Cedi', 'GHS', 2, 936),
+    'GIP': CurrencyData('GIP', 'Gibraltar Pound', 'GIP', 2, 292),
+    'GTQ': CurrencyData('GTQ', 'Guatemalan Quetzal', 'GTQ', 2, 320),
+    'GBP': CurrencyData('GBP', 'British Pound', '£', 2, 826),
+    'GNF': CurrencyData('GNF', 'Guinean Franc', 'GNF', 0, 324),
+    'GYD': CurrencyData('GYD', 'Guyanaese Dollar', 'GYD', 2, 328),
+    'HTG': CurrencyData('HTG', 'Haitian Gourde', 'HTG', 2, 332),
+    'HNL': CurrencyData('HNL', 'Honduran Lempira', 'HNL', 2, 340),
+    'HKD': CurrencyData('HKD', 'Hong Kong Dollar', 'HK$', 2, 344),
+    'HUF': CurrencyData('HUF', 'Hungarian Forint', 'HUF', 2, 348),
+    'ISK': CurrencyData('ISK', 'Icelandic Króna', 'ISK', 0, 352),
+    'INR': CurrencyData('INR', 'Indian Rupee', '₹', 2, 356),
+    'IDR': CurrencyData('IDR', 'Indonesian Rupiah', 'IDR', 2, 360),
+    'IRR': CurrencyData('IRR', 'Iranian Rial', 'IRR', 2, 364),
+    'IQD': CurrencyData('IQD', 'Iraqi Dinar', 'IQD', 3, 368),
+    'ILS': CurrencyData('ILS', 'Israeli New Shekel', '₪', 2, 376),
+    'JMD': CurrencyData('JMD', 'Jamaican Dollar', 'JMD', 2, 388),
+    'JPY': CurrencyData('JPY', 'Japanese Yen', '¥', 0, 392),
+    'JOD': CurrencyData('JOD', 'Jordanian Dinar', 'JOD', 3, 400),
+    'KZT': CurrencyData('KZT', 'Kazakhstani Tenge', 'KZT', 2, 398),
+    'KES': CurrencyData('KES', 'Kenyan Shilling', 'KES', 2, 404),
+    'KWD': CurrencyData('KWD', 'Kuwaiti Dinar', 'KWD', 3, 414),
+    'KGS': CurrencyData('KGS', 'Kyrgystani Som', 'KGS', 2, 417),
+    'LAK': CurrencyData('LAK', 'Laotian Kip', 'LAK', 2, 418),
+    'LBP': CurrencyData('LBP', 'Lebanese Pound', 'LBP', 2, 422),
+    'LSL': CurrencyData('LSL', 'Lesotho Loti', 'LSL', 2, 426),
+    'LRD': CurrencyData('LRD', 'Liberian Dollar', 'LRD', 2, 430),
+    'LYD': CurrencyData('LYD', 'Libyan Dinar', 'LYD', 3, 434),
+    'CHF': CurrencyData('CHF', 'Swiss Franc', 'CHF', 2, 756),
+    'MOP': CurrencyData('MOP', 'Macanese Pataca', 'MOP', 2, 446),
+    'MKD': CurrencyData('MKD', 'Macedonian Denar', 'MKD', 2, 807),
+    'MGA': CurrencyData('MGA', 'Malagasy Ariary', 'MGA', 2, 969),
+    'MWK': CurrencyData('MWK', 'Malawian Kwacha', 'MWK', 2, 454),
+    'MYR': CurrencyData('MYR', 'Malaysian Ringgit', 'MYR', 2, 458),
+    'MVR': CurrencyData('MVR', 'Maldivian Rufiyaa', 'MVR', 2, 462),
+    'MRU': CurrencyData('MRU', 'Mauritanian Ouguiya', 'MRU', 2, 929),
+    'MUR': CurrencyData('MUR', 'Mauritian Rupee', 'MUR', 2, 480),
+    'MXN': CurrencyData('MXN', 'Mexican Peso', 'MX$', 2, 484),
+    'MDL': CurrencyData('MDL', 'Moldovan Leu', 'MDL', 2, 498),
+    'MNT': CurrencyData('MNT', 'Mongolian Tugrik', 'MNT', 2, 496),
+    'MAD': CurrencyData('MAD', 'Moroccan Dirham', 'MAD', 2, 504),
+    'MZN': CurrencyData('MZN', 'Mozambican Metical', 'MZN', 2, 943),
+    'MMK': CurrencyData('MMK', 'Myanmar Kyat', 'MMK', 2, 104),
+    'NAD': CurrencyData('NAD', 'Namibian Dollar', 'NAD', 2, 516),
+    'NPR': CurrencyData('NPR', 'Nepalese Rupee', 'NPR', 2, 524),
+    'NIO': CurrencyData('NIO', 'Nicaraguan Córdoba', 'NIO', 2, 558),
+    'NGN': CurrencyData('NGN', 'Nigerian Naira', 'NGN', 2, 566),
+    'KPW': CurrencyData('KPW', 'North Korean Won', 'KPW', 2, 408),
+    'NOK': CurrencyData('NOK', 'Norwegian Krone', 'NOK', 2, 578),
+    'OMR': CurrencyData('OMR', 'Omani Rial', 'OMR', 3, 512),
+    'PKR': CurrencyData('PKR', 'Pakistani Rupee', 'PKR', 2, 586),
+    'PAB': CurrencyData('PAB', 'Panamanian Balboa', 'PAB', 2, 590),
+    'PGK': CurrencyData('PGK', 'Papua New Guinean Kina', 'PGK', 2, 598),
+    'PYG': CurrencyData('PYG', 'Paraguayan Guarani', 'PYG', 0, 600),
+    'PEN': CurrencyData('PEN', 'Peruvian Sol', 'PEN', 2, 604),
+    'PHP': CurrencyData('PHP', 'Philippine Piso', '₱', 2, 608),
+    'PLN': CurrencyData('PLN', 'Polish Zloty', 'PLN', 2, 985),
+    'QAR': CurrencyData('QAR', 'Qatari Rial', 'QAR', 2, 634),
+    'RON': CurrencyData('RON', 'Romanian Leu', 'RON', 2, 946),
+    'RUB': CurrencyData('RUB', 'Russian Ruble', 'RUB', 2, 643),
+    'RWF': CurrencyData('RWF', 'Rwandan Franc', 'RWF', 0, 646),
+    'SHP': CurrencyData('SHP', 'St. Helena Pound', 'SHP', 2, 654),
+    'WST': CurrencyData('WST', 'Samoan Tala', 'WST', 2, 882),
+    'STN': CurrencyData('STN', 'São Tomé & Príncipe Dobra', 'STN', 2, 930),
+    'SAR': CurrencyData('SAR', 'Saudi Riyal', 'SAR', 2, 682),
+    'RSD': CurrencyData('RSD', 'Serbian Dinar', 'RSD', 2, 941),
+    'SCR': CurrencyData('SCR', 'Seychellois Rupee', 'SCR', 2, 690),
+    'SLE': CurrencyData('SLE', 'Sierra Leonean Leone', 'SLE', 2, 925),
+    'SGD': CurrencyData('SGD', 'Singapore Dollar', 'SGD', 2, 702),
+    'SBD': CurrencyData('SBD', 'Solomon Islands Dollar', 'SBD', 2, 90),
+    'SOS': CurrencyData('SOS', 'Somali Shilling', 'SOS', 2, 706),
+    'ZAR': CurrencyData('ZAR', 'South African Rand', 'ZAR', 2, 710),
+    'KRW': CurrencyData('KRW', 'South Korean Won', '₩', 0, 410),
+    'SSP': CurrencyData('SSP', 'South Sudanese Pound', 'SSP', 2, 728),
+    'LKR': CurrencyData('LKR', 'Sri Lankan Rupee', 'LKR', 2, 144),
+    'SDG': CurrencyData('SDG', 'Sudanese Pound', 'SDG', 2, 938),
+    'SRD': CurrencyData('SRD', 'Surinamese Dollar', 'SRD', 2, 968),
+    'SZL': CurrencyData('SZL', 'Swazi Lilangeni', 'SZL', 2, 748),
+    'SEK': CurrencyData('SEK', 'Swedish Krona', 'SEK', 2, 752),
+    'SYP': CurrencyData('SYP', 'Syrian Pound', 'SYP', 2, 760),
+    'TWD': CurrencyData('TWD', 'New Taiwan Dollar', 'NT$', 2, 901),
+    'TJS': CurrencyData('TJS', 'Tajikistani Somoni', 'TJS', 2, 972),
+    'TZS': CurrencyData('TZS', 'Tanzanian Shilling', 'TZS', 2, 834),
+    'THB': CurrencyData('THB', 'Thai Baht', 'THB', 2, 764),
+    'TOP': CurrencyData('TOP', 'Tongan Paʻanga', 'TOP', 2, 776),
+    'TTD': CurrencyData('TTD', 'Trinidad & Tobago Dollar', 'TTD', 2, 780),
+    'TND': CurrencyData('TND', 'Tunisian Dinar', 'TND', 3, 788),
+    'TRY': CurrencyData('TRY', 'Turkish Lira', 'TRY', 2, 949),
+    'TMT': CurrencyData('TMT', 'Turkmenistani Manat', 'TMT', 2, 934),
+    'UGX': CurrencyData('UGX', 'Ugandan Shilling', 'UGX', 0, 800),
+    'UAH': CurrencyData('UAH', 'Ukrainian Hryvnia', 'UAH', 2, 980),
+    'AED': CurrencyData('AED', 'United Arab Emirates Dirham', 'AED', 2, 784),
+    'UYU': CurrencyData('UYU', 'Uruguayan Peso', 'UYU', 2, 858),
+    'UZS': CurrencyData('UZS', 'Uzbekistani Som', 'UZS', 2, 860),
+    'VUV': CurrencyData('VUV', 'Vanuatu Vatu', 'VUV', 0, 548),
+    'VES': CurrencyData('VES', 'Venezuelan Bolívar', 'VES', 2, 928),
+    'VND': CurrencyData('VND', 'Vietnamese Dong', '₫', 0, 704),
+    'YER': CurrencyData('YER', 'Yemeni Rial', 'YER', 2, 886),
+    'ZMW': CurrencyData('ZMW', 'Zambian Kwacha', 'ZMW', 2, 967),
+    'ZWL': CurrencyData('ZWL', 'Zimbabwean Dollar (2009)', 'ZWL', 2, 932),
 }
