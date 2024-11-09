@@ -310,7 +310,7 @@ class CurrencyData:
     default_fraction_digits: int
     numeric_code: int
     
-CURRENCY_TO_DATA_MAP = {
+CURRENCY_CODE_TO_DATA_MAP = {
     'AFN': CurrencyData('AFN', 'Afghan Afghani', 'AFN', 2, 971),
     'EUR': CurrencyData('EUR', 'Euro', '€', 2, 978),
     'ALL': CurrencyData('ALL', 'Albanian Lek', 'ALL', 2, 8),
