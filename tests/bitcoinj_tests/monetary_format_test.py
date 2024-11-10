@@ -1,4 +1,5 @@
 import unittest 
+
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
 from bitcoinj.base.utils.monetary_format import MonetaryFormat

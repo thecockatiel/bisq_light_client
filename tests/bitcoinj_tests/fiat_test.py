@@ -4,7 +4,7 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
 
-class TestFiat(unittest.TestCase): 
+class TestFiat(unittest.TestCase):
     def test_parse_and_value_of(self):
         self.assertEqual(Fiat.value_of("EUR", 10000), Fiat.parse_fiat("EUR", "1"))
         self.assertEqual(Fiat.value_of("EUR", 100), Fiat.parse_fiat("EUR", "0.01"))
