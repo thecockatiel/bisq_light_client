@@ -1,9 +1,11 @@
 from decimal import ROUND_DOWN, Decimal
+from functools import total_ordering
 from typing import Tuple
 
 from bitcoinj.base.monetary import Monetary
 import bitcoinj.base.utils.monetary_format
 
+@total_ordering
 class Fiat(Monetary):
     """
     Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type
@@ -160,10 +162,5 @@ class Fiat(Monetary):
             raise ValueError("Cannot compare different currencies")
         return self.value < other.value
     
-    def __gt__(self, other: "Fiat") -> bool:
-        if self.currency_code != other.currency_code:
-            raise ValueError("Cannot compare different currencies")
-        return self.value > other.value
-
     def __hash__(self) -> int:
         return hash((self.value, self.currency_code))
