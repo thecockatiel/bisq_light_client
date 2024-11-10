@@ -1,6 +1,6 @@
 
 from typing import Optional, Tuple, Union
-from electrum_min import constants
+from electrum_min import constants, segwit_addr
 from electrum_min.util import BitcoinException, inv_dict, to_bytes
 from .crypto import sha256d
 
@@ -65,6 +65,15 @@ def b58_address_to_hash160(addr: str) -> Tuple[int, bytes]:
         raise Exception(f'expected 21 payload bytes in base58 address. got: {len(_bytes)}')
     return _bytes[0], _bytes[1:21]
 
+
+def is_segwit_address(addr: str, *, net=None) -> bool:
+    if net is None: net = constants.net
+    try:
+        witver, witprog = segwit_addr.decode_segwit_address(net.SEGWIT_HRP, addr)
+    except Exception as e:
+        return False
+    return witprog is not None
+
 def is_b58_address(addr: str, *, net: constants.AbstractNet=None) -> bool:
     if net is None: net = constants.net
     
@@ -76,3 +85,7 @@ def is_b58_address(addr: str, *, net: constants.AbstractNet=None) -> bool:
     if addrtype not in [net.ADDRTYPE_P2PKH, net.ADDRTYPE_P2SH]:
         return False
     return True
+
+def is_address(addr: str, *, net=None) -> bool:
+    return is_segwit_address(addr, net=net) \
+           or is_b58_address(addr, net=net)
