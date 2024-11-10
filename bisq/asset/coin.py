@@ -22,7 +22,7 @@ class Coin(AbstractAsset, ABC):
 
     since: 0.7.0
     """
-    
+
     class Network(IntEnum):
         MAINNET = 0
         TESTNET = 1
@@ -36,10 +36,4 @@ class Coin(AbstractAsset, ABC):
         network: Network = Network.MAINNET,
     ):
         super().__init__(name, ticker_symbol, address_validator)
-        self._network = network
-
-    @property
-    def network(self) -> Network:
-        """Get the network type for this coin."""
-        return self._network
-
+        self.network = network
