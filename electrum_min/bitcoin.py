@@ -65,7 +65,7 @@ def b58_address_to_hash160(addr: str) -> Tuple[int, bytes]:
         raise Exception(f'expected 21 payload bytes in base58 address. got: {len(_bytes)}')
     return _bytes[0], _bytes[1:21]
 
-def is_b58_address(addr: str, *, net=None) -> bool:
+def is_b58_address(addr: str, *, net: constants.AbstractNet=None) -> bool:
     if net is None: net = constants.net
     
     try:

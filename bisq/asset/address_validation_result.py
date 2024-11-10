@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import ClassVar, Optional
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class AddressValidationResult:
     """
     Value object representing the result of validating an Asset address.
@@ -13,9 +13,6 @@ class AddressValidationResult:
     message: str
     i18n_key: str
 
-    # Class-level constant for valid address
-    _VALID_ADDRESS: ClassVar['AddressValidationResult'] = None  # Will be initialized after class definition
-
     def is_valid(self) -> bool:
         return self.is_valid
 
@@ -25,10 +22,12 @@ class AddressValidationResult:
     def get_message(self) -> str:
         return self.message
 
+    # Class-level constant for valid address
+    _VALID_ADDRESS: ClassVar['AddressValidationResult'] = None 
     @classmethod
     def valid_address(cls) -> 'AddressValidationResult':
         if cls._VALID_ADDRESS is None:
-            cls._VALID_ADDRESS = cls(True, "", "")
+            cls._VALID_ADDRESS = cls(is_valid=True, message="", i18n_key="")
         return cls._VALID_ADDRESS
 
     @classmethod
@@ -36,11 +35,8 @@ class AddressValidationResult:
                        i18n_key: str = "validation.altcoin.invalidAddress") -> 'AddressValidationResult':
         message = str(cause) if cause else ""
             
-        return cls(False, message, i18n_key)
+        return cls(is_valid=False, message=message, i18n_key=i18n_key)
 
     @classmethod
     def invalid_structure(cls) -> 'AddressValidationResult':
         return cls.invalid_address("", "validation.altcoin.wrongStructure")
-
-# Initialize the class-level constant
-AddressValidationResult.valid_address()
