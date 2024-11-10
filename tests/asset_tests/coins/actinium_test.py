@@ -14,7 +14,7 @@ class CoinsTest(AbstractAssetTest):
         self.assert_valid_address("NTFtsh4Ff2ijPNsnQAUf5fKTp7DJaGxSZK")
         self.assert_valid_address("PLRiNpnTzWqufAoRFN1u9zBstHqjyM2qgB")
         self.assert_valid_address("PMFpWHR2AbBwaR4G2rA5nWB1F7cbZWua5Z")
-        self.assert_valid_address("P9XE6tupGocWnsNgoUxRPzASYAPVAyu2T8")\
+        self.assert_valid_address("P9XE6tupGocWnsNgoUxRPzASYAPVAyu2T8")
 
     def test_invalid_addresses(self):
         self.assert_invalid_address("MgTFtsh4Ff2ijPNsnQAUf5fKTp7DJaGxSZK")
