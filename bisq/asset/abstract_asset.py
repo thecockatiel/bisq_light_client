@@ -22,18 +22,18 @@ class AbstractAsset(Asset, ABC):
             raise ValueError("Ticker symbol cannot be blank")
         if address_validator is None:
             raise ValueError("Address validator cannot be None")
-        self._name = name
-        self._ticker_symbol = ticker_symbol
-        self._address_validator = address_validator
+        self.name = name
+        self.ticker_symbol = ticker_symbol
+        self.address_validator = address_validator
 
     def get_name(self) -> str:
-        return self._name
+        return self.name
 
     def get_ticker_symbol(self) -> str:
-        return self._ticker_symbol
+        return self.ticker_symbol
 
     def validate_address(self, address: str) -> "AddressValidationResult":
-        return self._address_validator.validate(address)
+        return self.address_validator.validate(address)
 
     def __str__(self) -> str:
         return self.__class__.__name__
