@@ -8,12 +8,6 @@ if TYPE_CHECKING:
     from bisq.asset.address_validator import AddressValidator
 
 
-class CoinNetwork(IntEnum):
-    MAINNET = 0
-    TESTNET = 1
-    REGTEST = 2
-
-
 class Coin(AbstractAsset, ABC):
     """
     Abstract base class for Assets with their own dedicated blockchain, such as
@@ -28,18 +22,24 @@ class Coin(AbstractAsset, ABC):
 
     since: 0.7.0
     """
+    
+    class Network(IntEnum):
+        MAINNET = 0
+        TESTNET = 1
+        REGTEST = 2
 
     def __init__(
         self,
         name: str,
         ticker_symbol: str,
         address_validator: "AddressValidator",
-        network: CoinNetwork = CoinNetwork.MAINNET,
+        network: Network = Network.MAINNET,
     ):
         super().__init__(name, ticker_symbol, address_validator)
         self._network = network
 
     @property
-    def network(self) -> CoinNetwork:
+    def network(self) -> Network:
         """Get the network type for this coin."""
         return self._network
+
