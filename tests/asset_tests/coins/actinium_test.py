@@ -1,7 +1,7 @@
 import unittest
 
 from bisq.asset.coins.actinium import Actinium
-from tests.asset.abstract_asset_test import AbstractAssetTest
+from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
 class CoinsTest(AbstractAssetTest):
 
