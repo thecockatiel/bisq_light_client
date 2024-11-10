@@ -1,10 +1,12 @@
 
 from decimal import Decimal, InvalidOperation
+from functools import total_ordering
 from typing import Union
 from bitcoinj.base.monetary import Monetary
 import bitcoinj.base.utils.monetary_format
 
 
+@total_ordering
 class Coin(Monetary):
     
     SMALLEST_UNIT_EXPONENT = 8
@@ -246,9 +248,6 @@ class Coin(Monetary):
     # Rich comparison methods
     def __lt__(self, other: 'Coin') -> bool:
         return self.value < other.value
-
-    def __gt__(self, other: 'Coin') -> bool:
-        return self.value > other.value
     
     def to_sat(self):
         return self.value
