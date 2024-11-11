@@ -8,6 +8,13 @@ First, you need to generate the proto files in `proto` directory. refer to READM
 
 Minimum required python version is 3.10
 
+## Run tests
+
+```bash
+# in root of project
+python -m unittest discover -s tests -p '*_test.py'
+```
+
 ## Credits
 
 This project uses source codes taken from [Electrum](https://github.com/spesmilo/electrum) where applicable
