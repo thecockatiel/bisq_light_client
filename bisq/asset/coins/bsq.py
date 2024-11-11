@@ -1,7 +1,7 @@
 from bisq.asset.address_validation_result import AddressValidationResult
 from bisq.asset.bitcoin_address_validator import BitcoinAddressValidator
 from bisq.asset.coin import Coin
-from electrum_min.constants import AbstractNet, BitcoinMainnet, BitcoinRegtest, BitcoinTestnet
+from bitcoinj.core.network_parameters import MainNetParams, TestNet3Params, RegTestParams, NetworkParameters
 
 class BSQAddressValidator(BitcoinAddressValidator):
     
@@ -15,15 +15,15 @@ class BSQAddressValidator(BitcoinAddressValidator):
 
 class BSQ(Coin):
     
-    def __init__(self, network: Coin.Network, net: AbstractNet):
+    def __init__(self, network: Coin.Network, network_parameters: NetworkParameters):
         super().__init__(
             name="BSQ",
             ticker_symbol="BSQ",    
-            address_validator=BSQAddressValidator(net),
+            address_validator=BSQAddressValidator(network_parameters),
             network=network,
         )
     
-    Mainnet = lambda: BSQ(Coin.Network.MAINNET, BitcoinMainnet())
-    Testnet = lambda: BSQ(Coin.Network.TESTNET, BitcoinTestnet())
-    Regtest = lambda: BSQ(Coin.Network.REGTEST, BitcoinRegtest())
+    Mainnet = lambda: BSQ(Coin.Network.MAINNET, MainNetParams())
+    Testnet = lambda: BSQ(Coin.Network.TESTNET, TestNet3Params())
+    Regtest = lambda: BSQ(Coin.Network.REGTEST, RegTestParams())
     
