@@ -16,7 +16,7 @@ class RegexAddressValidator(AddressValidator):
     def validate(self, address: str):
         if not re.match(self.regex, address):
             if self.error_msg_i18n_key:
-                return AddressValidationResult.invalid_structure(self.error_msg_i18n_key)
+                return AddressValidationResult.invalid_address("", self.error_msg_i18n_key)
             else:
                 return AddressValidationResult.invalid_structure()
         return AddressValidationResult.valid_address()

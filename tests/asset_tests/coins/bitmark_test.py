@@ -16,7 +16,7 @@ class BitmarkTest(AbstractAssetTest):
     def test_invalid_addresses(self):
         self.assert_invalid_address("bMigVohTEiA3gxhFWpDJBrZ14j2RnDkWCt")
         self.assert_invalid_address("F9z7PKmo1sLQYtFuZjTQ1zZXhPQtHLScKT")
-        self.assert_invalid_address("16Ftsh4Ff2ijPNsnQAUf5fKTp7DJaGxSZK#")
+        self.assert_invalid_address("16Ftsh4Ff2ijPNsnQAUf5fKTp7DJaGxSZK")
 
 
 if __name__ == '__main__':
