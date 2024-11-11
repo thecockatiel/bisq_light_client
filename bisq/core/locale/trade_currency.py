@@ -1,7 +1,5 @@
 from abc import ABC
 from functools import total_ordering
-import bisq.core.locale.fiat_currency
-import bisq.core.locale.crypto_currency
 import proto.pb_pb2 as protobuf
 
 @total_ordering
@@ -31,10 +29,13 @@ class TradeCurrency(ABC):
     
     @staticmethod
     def from_proto(proto: protobuf.TradeCurrency) -> 'TradeCurrency':
+        from bisq.core.locale.fiat_currency import FiatCurrency
+        from bisq.core.locale.crypto_currency import CryptoCurrency
+
         if proto.HasField('fiat_currency'):
-            return bisq.core.locale.fiat_currency.FiatCurrency.from_proto(proto)
+            return FiatCurrency.from_proto(proto)
         elif proto.HasField('crypto_currency'):
-            return bisq.core.locale.crypto_currency.CryptoCurrency.from_proto(proto)
+            return CryptoCurrency.from_proto(proto)
         else:
             raise RuntimeError(f"Unknown message case: {proto.WhichOneof('message')}")
     
