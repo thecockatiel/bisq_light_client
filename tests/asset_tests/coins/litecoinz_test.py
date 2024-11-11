@@ -1,5 +1,5 @@
 import unittest
-from bisq.asset.coins.litecoin_z import LitecoinZ
+from bisq.asset.coins.litecoinz import LitecoinZ
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
 
 
