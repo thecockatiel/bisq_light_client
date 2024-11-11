@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
 
