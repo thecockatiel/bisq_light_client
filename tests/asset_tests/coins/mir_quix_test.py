@@ -1,5 +1,5 @@
 import unittest
-from bisq.asset.coins.mir_qui_x import MirQuiX
+from bisq.asset.coins.mir_quix import MirQuiX
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
 
 
