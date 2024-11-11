@@ -50,7 +50,12 @@ class NetworkParameters(ABC):
     def __init__(self):
         self.address_header: int = 0
         self.p2sh_header: int = 0
+        self.segwit_address_hrp: int = 0
         self.id: str = None
+        self.bip32_header_P2PKH_pub = None
+        self.bip32_header_P2PKH_priv = None
+        self.bip32_header_P2WPKH_pub = None
+        self.bip32_header_P2WPKH_priv = None
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, NetworkParameters):
@@ -99,3 +104,72 @@ class NetworkParameters(ABC):
     def get_protocol_version_num(self, version: ProtocolVersion) -> int:
         """Get protocol version number for the given protocol version."""
         pass
+
+class MainNetParams(NetworkParameters):
+    def __init__(self):
+        super().__init__()
+        self.address_header = 0
+        self.p2sh_header = 5
+        self.segwit_address_hrp = "bc"
+        self.id = self.ID_MAINNET
+        self.bip32_header_P2PKH_pub = 0x0488b21e; # The 4 byte header that serializes in base58 to "xpub".
+        self.bip32_header_P2PKH_priv = 0x0488ade4; # The 4 byte header that serializes in base58 to "xprv"
+        self.bip32_header_P2WPKH_pub = 0x04b24746; # The 4 byte header that serializes in base58 to "zpub".
+        self.bip32_header_P2WPKH_priv = 0x04b2430c; # The 4 byte header that serializes in base58 to "zprv"
+
+    def get_max_money(self) -> Coin:
+        return Coin.COIN().multiply(21000000)
+
+    def get_min_non_dust_output(self) -> Coin:
+        return Coin.value_of(546) # satoshis
+
+    def get_monetary_format(self) -> MonetaryFormat:
+        return MonetaryFormat.BTC()
+
+    def get_uri_scheme(self) -> str:
+        return "bitcoin"
+
+    def has_max_money(self) -> bool:
+        return True
+
+    def get_serializer(self, parse_retain: bool) -> Any:
+        return None
+
+    def get_protocol_version_num(self, version: NetworkParameters.ProtocolVersion) -> int:
+        return version.get_bitcoin_protocol_version()
+    
+class RegTestParams(MainNetParams):
+    def __init__(self):
+        super().__init__()
+        self.address_header = 111
+        self.p2sh_header = 196
+        self.segwit_address_hrp = "bcrt"
+        self.id = self.ID_REGTEST
+        self.bip32_header_P2PKH_pub = 0x043587cf # The 4 byte header that serializes in base58 to "tpub".
+        self.bip32_header_P2PKH_priv = 0x04358394 # The 4 byte header that serializes in base58 to "tprv"
+        self.bip32_header_P2WPKH_pub = 0x045f1cf6 # The 4 byte header that serializes in base58 to "vpub".
+        self.bip32_header_P2WPKH_priv = 0x045f18bc # The 4 byte header that serializes in base58 to "vprv"
+
+class TestNet3Params(MainNetParams):
+    def __init__(self):
+        super().__init__()
+        self.address_header = 111
+        self.p2sh_header = 196
+        self.segwit_address_hrp = "tb"
+        self.id = self.ID_TESTNET
+        self.bip32_header_P2PKH_pub = 0x043587cf # The 4 byte header that serializes in base58 to "tpub".
+        self.bip32_header_P2PKH_priv = 0x04358394 # The 4 byte header that serializes in base58 to "tprv"
+        self.bip32_header_P2WPKH_pub = 0x045f1cf6 # The 4 byte header that serializes in base58 to "vpub".
+        self.bip32_header_P2WPKH_priv = 0x045f18bc # The 4 byte header that serializes in base58 to "vprv"
+
+class UnitTestParams(MainNetParams):
+    def __init__(self):
+        super().__init__()
+        self.address_header = 111
+        self.p2sh_header = 196
+        self.segwit_address_hrp = "tb"
+        self.id = self.ID_UNITTESTNET
+        self.bip32_header_P2PKH_pub = 0x043587cf # The 4 byte header that serializes in base58 to "tpub".
+        self.bip32_header_P2PKH_priv = 0x04358394 # The 4 byte header that serializes in base58 to "tprv"
+        self.bip32_header_P2WPKH_pub = 0x045f1cf6 # The 4 byte header that serializes in base58 to "vpub".
+        self.bip32_header_P2WPKH_priv = 0x045f18bc # The 4 byte header that serializes in base58 to "vprv"

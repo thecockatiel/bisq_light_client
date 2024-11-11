@@ -4,7 +4,7 @@ from bitcoinj.core.network_parameters import NetworkParameters
 from electrum_min.bitcoin import b58_address_to_hash160
 
 # a slightly modified version of electrum's, to work with NetworkParameters:
-def is_b58_address(addr: str, network_params: NetworkParameters) -> bool:
+def is_b58_address_compat(addr: str, network_params: NetworkParameters) -> bool:
     if network_params is None:
         raise ValueError("network_params must be provided")
     try:
@@ -16,7 +16,6 @@ def is_b58_address(addr: str, network_params: NetworkParameters) -> bool:
         return False
     return True
 
-
 class Base58AddressValidator(AddressValidator):
     
     def __init__(self, network_parameters: NetworkParameters = None):
@@ -25,7 +24,7 @@ class Base58AddressValidator(AddressValidator):
 
     def validate(self, address: str):
         try: 
-            result = is_b58_address(address, self.network_parameters)
+            result = is_b58_address_compat(address, self.network_parameters)
             if result:
                 return AddressValidationResult.valid_address()
             else:
