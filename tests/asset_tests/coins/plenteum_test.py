@@ -1,5 +1,5 @@
 import unittest
-from bisq.asset.coins.plentum import Plenteum 
+from bisq.asset.coins.plenteum import Plenteum 
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
 class PlenteumTest(AbstractAssetTest):
