@@ -1,12 +1,11 @@
 from bisq.asset.address_validation_result import AddressValidationResult
 from bisq.asset.address_validator import AddressValidator
-from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.core.network_parameters import MainNetParams, NetworkParameters
 from electrum_min.bitcoin import b58_address_to_hash160
 
 # a slightly modified version of electrum's, to work with NetworkParameters:
 def is_b58_address_compat(addr: str, network_params: NetworkParameters) -> bool:
-    if network_params is None:
-        raise ValueError("network_params must be provided")
+    if network_parameters is None: network_parameters = MainNetParams()
     try:
         # test length, checksum, encoding:
         addrtype, h = b58_address_to_hash160(addr)
