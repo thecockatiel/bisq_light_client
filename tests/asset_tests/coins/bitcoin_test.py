@@ -3,7 +3,7 @@ import unittest
 from bisq.asset.coins.bitcoin import Bitcoin
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
-class CoinsTest(AbstractAssetTest):
+class BitcoinTest(AbstractAssetTest):
 
     def __init__(self, methodName='runTest'):
         super().__init__(methodName, Bitcoin.Mainnet())
