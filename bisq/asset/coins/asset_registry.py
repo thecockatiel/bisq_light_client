@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
 from bisq.asset.tokens import TOKENS
 from bisq.asset.coins import COINS
 
+if TYPE_CHECKING:
+    from bisq.asset.asset import Asset
 
 class AssetRegistry:
-    registered_assets = []
+    registered_assets: list[Asset] = []
 
 
 for asset in list(TOKENS.__dict__.values()):
