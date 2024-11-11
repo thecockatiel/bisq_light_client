@@ -1,6 +1,6 @@
 import unittest
 
-from bisq.asset.tokens.tether_usd_erc20 import TetherUSDERC20
+from bisq.asset.tokens.tether_usderc20 import TetherUSDERC20
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
 class TetherUSDERC20Test(AbstractAssetTest):
