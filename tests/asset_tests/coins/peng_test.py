@@ -1,11 +1,11 @@
 import unittest
-from bisq.asset.coins.peng import Peng
+from bisq.asset.coins.peng import PENG
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
-class PengTest(AbstractAssetTest):
+class PENGTest(AbstractAssetTest):
 
     def __init__(self, methodName='runTest'):
-        super().__init__(methodName, Peng())
+        super().__init__(methodName, PENG())
     
     def test_valid_addresses(self):
         self.assert_valid_address("P9KqnVS9UpcJmLtCF1j4SV3fcccMuGEbhs")
