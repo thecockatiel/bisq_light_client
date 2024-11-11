@@ -1,4 +1,5 @@
 
+from functools import total_ordering
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.monetary_wrapper import MonetaryWrapper
@@ -7,6 +8,7 @@ from bitcoinj.base.monetary import Monetary
 from bitcoinj.base.utils.fiat import Fiat
 
 
+@total_ordering
 class Volume(MonetaryWrapper):
     def __init__(self, monetary: Monetary) -> None:
         super().__init__(monetary)
