@@ -2,7 +2,7 @@ from bisq.asset.alt_coin_account_disclaimer import alt_coin_account_disclaimer
 from bisq.asset.coin import Coin
 from bisq.asset.crypto_note_address_validator import CryptoNoteAddressValidator
 
-@alt_coin_account_disclaimer(message="account.altcoin.popup.arq.msg")
+@alt_coin_account_disclaimer("account.altcoin.popup.arq.msg")
 class Arqma(Coin):
     
     def __init__(self):
