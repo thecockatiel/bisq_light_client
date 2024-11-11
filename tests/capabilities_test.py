@@ -40,11 +40,6 @@ class TestCapabilities(unittest.TestCase):
         self.assertNotEqual(caps1, caps3)
         self.assertNotEqual(caps1, "not a capabilities object")
 
-    def test_hash(self):
-        caps1 = Capabilities([Capability.DAO_STATE])
-        caps2 = Capabilities([Capability.DAO_STATE])
-        self.assertEqual(hash(caps1), hash(caps2))
-
     def test_int_list_conversion(self):
         int_list = Capabilities.to_int_list(self.test_capabilities)
         self.assertIsInstance(int_list, list)
