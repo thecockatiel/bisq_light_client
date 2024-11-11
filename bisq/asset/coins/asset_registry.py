@@ -17,3 +17,5 @@ for asset in COINS.__dict__:
         AssetRegistry.registered_assets.append(COINS.__dict__[asset].Mainnet())
     else:
         AssetRegistry.registered_assets.append(COINS.__dict__[asset]())
+
+AssetRegistry.registered_assets.sort(key=lambda asset: asset.get_name())
