@@ -8,5 +8,5 @@ class Amitycoin(Coin):
         super().__init__(
             name="Amitycoin",
             ticker_symbol="AMIT",
-            address_validator=RegexAddressValidator("^amit[1-9A-Za-z^OIl]{{94}}"),
+            address_validator=RegexAddressValidator("^amit[1-9A-Za-z^OIl]{94}$"),
         )
