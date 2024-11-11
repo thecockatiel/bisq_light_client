@@ -1,6 +1,6 @@
 import unittest
 
-from bisq.asset.coins.fourtytwo import FourtyTwo
+from bisq.asset.coins.fourty_two import FourtyTwo
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
 class FourtyTwoTest(AbstractAssetTest):

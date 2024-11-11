@@ -1,5 +1,5 @@
 import unittest
-from bisq.asset.coins.qmcoin import QMCoin 
+from bisq.asset.coins.qm_coin import QMCoin 
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
 class QMCoinTest(AbstractAssetTest):
