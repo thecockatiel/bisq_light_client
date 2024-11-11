@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from bisq.asset.asset import Asset
 
 class AssetRegistry:
-    registered_assets: list[Asset] = []
+    registered_assets: list["Asset"] = []
 
 
 for asset in list(TOKENS.__dict__.values()):
