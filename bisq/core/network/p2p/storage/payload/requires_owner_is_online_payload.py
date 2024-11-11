@@ -9,5 +9,5 @@ if TYPE_CHECKING:
 
 class RequiresOwnerIsOnlinePayload(NetworkPayload, ABC):
     @abstractmethod
-    def get_owner_node_address(self) -> NodeAddress:
+    def get_owner_node_address(self) -> "NodeAddress":
         pass
