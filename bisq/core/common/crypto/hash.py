@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.backends import default_backend
 from Crypto.Hash import RIPEMD160
 from Crypto.Hash import keccak
+import zlib
 
 import struct
 
@@ -41,3 +42,6 @@ def get_keccak1600_hash(data: bytes):
     k = keccak.new(digest_bits=256)
     k.update(data)
     return k.digest()
+
+def get_crc32_hash(data: bytes):
+    return zlib.crc32(data)
