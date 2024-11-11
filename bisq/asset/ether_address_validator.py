@@ -16,4 +16,4 @@ class EtherAddressValidator(RegexAddressValidator):
     """
     
     def __init__(self, error_msg_i18n_key: str = None):
-        super().__init__(r'^(0x)?[0-9a-fA-F]{40}$', error_msg_i18n_key)
+        super().__init__('^(0x)?[0-9a-fA-F]{40}$', error_msg_i18n_key)
