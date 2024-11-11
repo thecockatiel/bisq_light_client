@@ -3,7 +3,7 @@ import unittest
 from bisq.asset.coins.actinium import Actinium
 from tests.asset_tests.abstract_asset_test import AbstractAssetTest
  
-class CoinsTest(AbstractAssetTest):
+class ActeniumTest(AbstractAssetTest):
 
     def __init__(self, methodName='runTest'):
         super().__init__(methodName, Actinium())
