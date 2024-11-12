@@ -8,7 +8,7 @@ import re
 from bisq.logging import get_logger
 from utils.network import download_file 
 import tarfile
-from utils.dir import user_dir
+from utils.dir import user_data_dir
 from utils.aio import get_asyncio_loop
 
 # Global variables
@@ -111,7 +111,7 @@ def __detect_tor_socks_proxy() -> Optional[Tuple[str, int]]:
     return None
 
 def __create_and_get_tor_dir():
-    path = user_dir().joinpath("tor")
+    path = user_data_dir().joinpath("tor")
     path.mkdir(parents=True, exist_ok=True)
     return path
 
