@@ -7,7 +7,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeAddressMessage):
     sender_node_address: NodeAddress
     trade_id: str
@@ -51,5 +51,12 @@ class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeA
     def get_sender_node_address(self) -> NodeAddress:
         return self.sender_node_address
 
-    def __str__(self):
-        return f"FileTransferPart{{\n     senderNodeAddress='{self.sender_node_address.get_host_name_for_display()}',\n     uid='{self.uid}',\n     tradeId='{self.trade_id}',\n     traderId='{self.trader_id}',\n     seqNumOrFileLength={self.seq_num_or_file_length}\n}} {super().__str__()}"
+    def __str__(self) -> str:
+        return (f"FileTransferPart{{\n"
+                f"     senderNodeAddress='{self.sender_node_address.get_host_name_for_display()}',\n"
+                f"     uid='{self.uid}',\n"
+                f"     tradeId='{self.trade_id}',\n"
+                f"     traderId='{self.trader_id}',\n"
+                f"     seqNumOrFileLength={self.seq_num_or_file_length}\n"
+                f"}} {super().__str__()}")
+
