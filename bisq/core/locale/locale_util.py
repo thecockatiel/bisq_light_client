@@ -193,7 +193,7 @@ ALL_LOCALES = {
     LocaleData('pt', 'Portuguese', 'PT', 'Portugal'),
     LocaleData('es', 'Spanish', 'PR', 'Puerto Rico'),
     LocaleData('ar', 'Arabic', 'QA', 'Qatar'),
-    LocaleData('sq', 'Albanian', 'XK', 'Kosovo'),
+    LocaleData('sq', 'Albanian', 'XK', 'Republic of Kosovo'),
     LocaleData('fr', 'French', 'RE', 'Réunion'),
     LocaleData('ro', 'Romanian', 'RO', 'Romania'),
     LocaleData('ru', 'Russian', 'RU', 'Russia'),
