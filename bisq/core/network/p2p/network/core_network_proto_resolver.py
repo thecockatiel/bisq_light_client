@@ -31,8 +31,12 @@ from bisq.core.offer.availability.messages.offer_availability_request import Off
 from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
+from bisq.core.support.dispute.arbitration.messages.open_new_dispute_message import OpenNewDisputeMessage
 from bisq.core.support.dispute.arbitration.messages.peer_published_dispute_payout_tx_message import PeerPublishedDisputePayoutTxMessage
 from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
+from bisq.core.support.dispute.messages.dispute_result_message import DisputeResultMessage
+from bisq.core.support.dispute.messages.peer_opened_dispute_message import PeerOpenedDisputeMessage
+from bisq.core.support.messages.chat_messsage import ChatMessage
 from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
 from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import CounterCurrencyTransferStartedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_request import DelayedPayoutTxSignatureRequest
