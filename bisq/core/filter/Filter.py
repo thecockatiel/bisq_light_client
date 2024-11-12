@@ -2,6 +2,7 @@ import base64
 from datetime import timedelta
 from typing import Dict, List, Optional, Set
 from bisq.core.common.crypto.sig import Sig, dsa
+from bisq.core.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
 from bisq.core.common.protocol.proto_util import ProtoUtil
 from bisq.core.common.util.extra_data_map_validator import ExtraDataMapValidator
@@ -11,7 +12,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import Prot
 import proto.pb_pb2 as protobuf
 from utils.time import get_time_ms
 
-class Filter(ProtectedStoragePayload, ExpirablePayload):
+class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto):
     TTL = int(timedelta(days=180).total_seconds() * 1000)
 
     def __init__(self,
@@ -153,9 +154,6 @@ class Filter(ProtectedStoragePayload, ExpirablePayload):
         return self.to_proto(False)
 
     def to_proto(self, serialize_for_hash: bool = False) -> 'protobuf.StoragePayload':
-        return self.get_builder(serialize_for_hash)
-
-    def get_builder(self, serialize_for_hash: bool = False):
         return protobuf.StoragePayload(
             filter=self.to_filter_proto(serialize_for_hash)
         )
