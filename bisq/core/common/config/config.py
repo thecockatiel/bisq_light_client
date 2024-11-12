@@ -12,5 +12,5 @@ class Config:
     app_data_dir: str = field(default_factory=str)
 
 CONFIG = Config(
-    app_data_dir=user_data_dir()
+    app_data_dir=str(user_data_dir())
 )
