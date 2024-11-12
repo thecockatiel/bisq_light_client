@@ -61,7 +61,7 @@ class ProtoUtil:
             message = e.to_proto_message()
             try:
                 result.append(message_type.FromString(message.SerializeToString()))
-            except Exception as ex:
+            except Exception as e:
                 logger.error(f"Message could not be cast. message={message}, message_type={message_type}")
         return result
 

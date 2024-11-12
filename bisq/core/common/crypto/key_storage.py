@@ -56,5 +56,5 @@ class KeyStorage:
             with open(file_path, 'wb') as fos:
                 fos.write(pem)
         except Exception as e:
-            logger.error(f"Could not save key {name}", exc_info=True)
+            logger.error(f"Could not save key {name}", exc_info=e)
             raise RuntimeError(f"Could not save key {name}", e) from e
