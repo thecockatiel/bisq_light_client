@@ -4,7 +4,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage
 import proto.pb_pb2 as protobuf
  
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class MediatedPayoutTxSignatureMessage(TradeMailboxMessage):
     tx_signature: bytes
     sender_node_address: NodeAddress

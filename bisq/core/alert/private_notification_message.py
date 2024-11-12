@@ -9,7 +9,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class PrivateNotificationMessage(NetworkEnvelope, MailboxMessage):
     TTL: ClassVar[int] = int(timedelta(days=30).total_seconds() * 1000)
 

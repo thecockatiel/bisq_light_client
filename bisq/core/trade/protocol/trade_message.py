@@ -6,7 +6,7 @@ from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.uid_message import UidMessage
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class TradeMessage(NetworkEnvelope, UidMessage, ABC):
     trade_id: str
     uid: str

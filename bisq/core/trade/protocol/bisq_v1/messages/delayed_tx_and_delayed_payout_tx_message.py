@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 # It is the last message in the take offer phase. We use MailboxMessage instead of DirectMessage to add more tolerance
 # in case of network issues and as the message does not trigger further protocol execution.
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class DepositTxAndDelayedPayoutTxMessage(TradeMailboxMessage):
     sender_node_address: NodeAddress
     deposit_tx: bytes

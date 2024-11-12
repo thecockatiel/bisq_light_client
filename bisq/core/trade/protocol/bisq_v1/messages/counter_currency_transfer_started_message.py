@@ -6,7 +6,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import Trad
 import proto.pb_pb2 as protobuf
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class CounterCurrencyTransferStartedMessage(TradeMailboxMessage):
     buyer_payout_address: str
     sender_node_address: NodeAddress

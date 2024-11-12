@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class RefreshOfferMessage(BroadcastMessage):
     hash_of_data_and_seq_nr: bytes    # 32 bytes
     signature: bytes                  # 46 bytes
