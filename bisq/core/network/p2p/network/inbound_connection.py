@@ -1,5 +1,5 @@
 from typing import Optional, TYPE_CHECKING
-from .connection import Connection
+from bisq.core.network.p2p.network.connection import Connection
 
 if TYPE_CHECKING:
     from socket import socket as Socket

@@ -7,7 +7,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_entry import Protec
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class AddDataMessage(BroadcastMessage):
     protected_storage_entry: ProtectedStorageEntry
 

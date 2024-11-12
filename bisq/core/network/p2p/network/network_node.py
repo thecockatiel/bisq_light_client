@@ -12,7 +12,6 @@ from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-from bisq.core.network.p2p.network.connection import Connection
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.outbound_connection import OutboundConnection
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
@@ -25,12 +24,13 @@ from bisq.logging import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
+from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.setup_listener import SetupListener
     from bisq.core.network.p2p.network.inbound_connection import InboundConnection
-    from bisq.core.network.p2p.network.connection_listener import ConnectionListener
     from bisq.core.common.capabilities import Capabilities
+    from bisq.core.network.p2p.network.connection import Connection
 
 logger = get_logger(__name__)
 
@@ -66,7 +66,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     def start(self, setup_listener: Optional["SetupListener"] = None):
         pass
 
-    def _send_message(self, connection: Connection, network_envelope: NetworkEnvelope):
+    def _send_message(self, connection: "Connection", network_envelope: NetworkEnvelope):
         if connection is None:
             logger.error("Connection is null. We can not send the message.")
             return
@@ -248,7 +248,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
     def get_inbound_connection(
         self, peers_node_address: NodeAddress
-    ) -> Optional[InboundConnection]:
+    ) -> Optional['InboundConnection']:
         inbound_connection_optional = self.lookup_inbound_connection(
             str(peers_node_address)
         )

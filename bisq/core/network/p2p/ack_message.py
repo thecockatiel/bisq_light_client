@@ -13,7 +13,7 @@ from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class AckMessage(NetworkEnvelope):
     TTL: int = 7 * 24 * 60 * 60 * 1000 # 604800000 ms or 7 days
 
