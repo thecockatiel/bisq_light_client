@@ -3,10 +3,10 @@ from pathlib import Path
 
 # taken from Electrum with modifications
 
-def user_dir():
+def user_data_dir():
     path = None
-    if "BISQLIGHTDIR" in os.environ:
-        path = os.environ["BISQLIGHTDIR"]
+    if "BISQ_LIGHT_DIR" in os.environ:
+        path = os.environ["BISQ_LIGHT_DIR"]
     elif 'ANDROID_DATA' in os.environ:
         raise Exception ("Android not supported yet")
     elif os.name == 'posix':

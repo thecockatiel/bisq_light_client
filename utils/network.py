@@ -3,12 +3,12 @@ import io
 from urllib.parse import urlparse
 from tqdm import tqdm
 import aiohttp
-from utils.dir import user_dir
+from utils.dir import user_data_dir
 
 HTTP_HEADERS = {'User-Agent': 'Electrum-Bisq/1.0'}
 
 async def download_file(url: str, skip_if_exists=True):
-    download_dir = user_dir().joinpath('downloads')
+    download_dir = user_data_dir().joinpath('downloads')
     download_dir.mkdir(parents=True, exist_ok=True)
     filename: str = os.path.basename(urlparse(url).path)
     download_path = download_dir.joinpath(filename)
