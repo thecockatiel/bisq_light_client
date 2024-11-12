@@ -43,6 +43,8 @@ from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_reque
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_response import DelayedPayoutTxSignatureResponse
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_message import DepositTxAndDelayedPayoutTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.deposit_tx_message import DepositTxMessage
+from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_request import InputsForDepositTxRequest
+from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response import InputsForDepositTxResponse
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import MediatedPayoutTxPublishedMessage
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
 from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import PayoutTxPublishedMessage
