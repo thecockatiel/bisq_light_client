@@ -6,7 +6,7 @@ from bisq.core.support.messages.support_message import SupportMessage
 from bisq.core.support.support_type import SupportType
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class DisputeMessage(SupportMessage, ABC):
     TTL = int(timedelta(days=15).total_seconds() * 1000)
 

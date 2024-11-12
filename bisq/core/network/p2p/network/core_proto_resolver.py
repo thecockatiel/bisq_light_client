@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Union
 
 from bisq.core.common.protocol.proto_resolver import ProtoResolver
 from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
@@ -14,7 +15,7 @@ logger = get_logger(__name__)
 class CoreProtoResolver(ProtoResolver):
     clock: Clock
     
-    def from_proto(self, proto: 'protobuf.PaymentAccountPayload' | 'protobuf.PersistableNetworkPayload'):
+    def from_proto(self, proto: Union['protobuf.PaymentAccountPayload','protobuf.PersistableNetworkPayload']):
         if proto is None:
             logger.error("CoreProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
