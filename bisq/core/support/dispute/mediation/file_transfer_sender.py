@@ -32,7 +32,7 @@ class FileTransferSender(FileTransferSession):
         super().__init__(
             network_node, peer_node_address, trade_id, trader_id, trader_role, callback
         )
-        self.zip_file_path = Path(CONFIG.app_data_dir).joinpath(self.zip_id + ".zip")
+        self.zip_file_path = CONFIG.app_data_dir.joinpath(self.zip_id + ".zip")
         self.is_test = is_test
     
     def create_zip_file_to_send(self):
@@ -41,10 +41,8 @@ class FileTransferSender(FileTransferSession):
     def create_zip_file_of_logs(self, zip_file_path: Path, zip_id: str, trade_id: str):
         try:
             with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                app_data_dir = Path(CONFIG.app_data_dir)
-
                 # Get all .log files in app data directory
-                log_files = [f for f in app_data_dir.iterdir() if f.is_file()]
+                log_files = [f for f in CONFIG.app_data_dir.iterdir() if f.is_file()]
                 
                 for log_file in log_files:
                     filename = log_file.name
