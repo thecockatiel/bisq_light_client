@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ResultHandler(ABC):
+class BroadcastResultHandler(ABC):
     @abstractmethod
     def on_completed(self, broadcast_handler: "BroadcastHandler") -> None:
         pass
@@ -48,7 +48,7 @@ class BroadcastHandler:
         self,
         network_node: "NetworkNode",
         peer_manager: "PeerManager",
-        result_handler: "ResultHandler",
+        result_handler: "BroadcastResultHandler",
     ):
         self.network_node = network_node
         self.peer_manager = peer_manager

@@ -6,6 +6,7 @@ from copy import copy
 
 from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
+from bisq.core.network.p2p.peers.broadcast_handler import BroadcastResultHandler
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.logging import get_logger
 from proto.pb_pb2 import NodeAddress
@@ -23,7 +24,7 @@ class BroadcastRequest:
     sender: Optional['NodeAddress'] = None
     listener: Optional['BroadcastListener'] = None
 
-class Broadcaster:
+class Broadcaster(BroadcastResultHandler):
     BROADCAST_INTERVAL_MS = 2000
 
     def __init__(self, network_node: 'NetworkNode', peer_manager: 'PeerManager', max_connections: int):
@@ -91,7 +92,7 @@ class Broadcaster:
             self.timer = None
 
     ###########################################################################################
-    # BroadcastHandler.ResultHandler implementation
+    # BroadcastResultHandler implementation
     ###########################################################################################
 
     def on_completed(self, broadcast_handler: 'BroadcastHandler') -> None:
