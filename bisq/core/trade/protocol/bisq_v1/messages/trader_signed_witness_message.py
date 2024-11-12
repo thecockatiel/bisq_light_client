@@ -9,7 +9,7 @@ import proto.pb_pb2 as protobuf
 
 
 # "Not used anymore since v1.4.0"
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class TraderSignedWitnessMessage(TradeMailboxMessage):
     sender_node_address: NodeAddress
     signed_witness: SignedWitness

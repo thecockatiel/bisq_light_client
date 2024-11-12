@@ -4,7 +4,7 @@ from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMe
 import proto.pb_pb2 as protobuf
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Ping(NetworkEnvelope, KeepAliveMessage):
     nonce: int
     last_round_trip_time: int

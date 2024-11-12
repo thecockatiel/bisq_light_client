@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from bisq.core.trade.protocol.trade_message import TradeMessage
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class TradeMailboxMessage(TradeMessage, ABC):
     # 15 days in milliseconds
     TTL: int = field(init=False, hash=False, compare=False, repr=False, default=int(timedelta(days=15).total_seconds() * 1000)) 

@@ -12,7 +12,7 @@ from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMessage, SupportedCapabilitiesMessage):
     sender_node_address: NodeAddress
     nonce: int

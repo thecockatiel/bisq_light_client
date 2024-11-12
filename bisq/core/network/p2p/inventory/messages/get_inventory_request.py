@@ -4,7 +4,7 @@ import proto.pb_pb2 as protobuf
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GetInventoryRequest(NetworkEnvelope):
     version: str
 

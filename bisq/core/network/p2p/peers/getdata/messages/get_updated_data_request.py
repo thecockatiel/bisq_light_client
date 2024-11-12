@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
     sender_node_address: 'NodeAddress'
 
-    def to_proto_network_envelope(self) -> NetworkEnvelope:
+    def to_proto_network_envelope(self) -> "NetworkEnvelope":
         get_updated_data_request = protobuf.GetUpdatedDataRequest(
             sender_node_address=self.sender_node_address.to_proto_message(),
             nonce=self.nonce,

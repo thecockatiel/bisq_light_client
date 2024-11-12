@@ -4,7 +4,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.trade_message import TradeMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class DelayedPayoutTxSignatureResponse(TradeMessage, DirectMessage):
     sender_node_address: NodeAddress
     delayed_payout_tx_buyer_signature: bytes

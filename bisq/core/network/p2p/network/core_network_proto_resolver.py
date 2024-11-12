@@ -1,5 +1,5 @@
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
@@ -61,7 +61,7 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
     def __init__(self, clock: Clock):
         self.clock = clock
 
-    def from_proto(self, proto: 'protobuf.NetworkEnvelope' | 'protobuf.StorageEntryWrapper' | 'protobuf.StoragePayload') -> 'NetworkPayload':
+    def from_proto(self, proto: Union['protobuf.NetworkEnvelope', 'protobuf.StorageEntryWrapper', 'protobuf.StoragePayload']) -> 'NetworkPayload':
         """
         DAO related stuff and BTC node related stuff are not implemented.
         """

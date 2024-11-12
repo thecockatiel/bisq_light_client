@@ -4,7 +4,7 @@ from bisq.core.support.dispute.arbitration.messages.arbitration_message import A
 from bisq.core.support.support_type import SupportType
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class PeerPublishedDisputePayoutTxMessage(ArbitrationMessage):
     transaction: bytes
     trade_id: str

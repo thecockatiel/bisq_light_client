@@ -8,7 +8,7 @@ from bisq.core.offer.availability.availability_result import AvailabilityResult
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class OfferAvailabilityResponse(OfferMessage, SupportedCapabilitiesMessage):
     offer_id: str
     availability_result: AvailabilityResult

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDataSizePermission, InitialDataResponse):
     # Set of ProtectedStorageEntry objects
     data_set: frozenset['ProtectedStorageEntry'] = field(default_factory=frozenset)

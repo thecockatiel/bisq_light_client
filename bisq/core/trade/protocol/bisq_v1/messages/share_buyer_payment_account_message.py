@@ -10,7 +10,7 @@ import proto.pb_pb2 as protobuf
 
 
 # Added at v1.7.0
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class ShareBuyerPaymentAccountMessage(TradeMailboxMessage):
     sender_node_address: NodeAddress
     buyer_payment_account_payload: PaymentAccountPayload

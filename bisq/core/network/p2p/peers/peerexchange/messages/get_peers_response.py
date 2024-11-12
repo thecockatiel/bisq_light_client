@@ -8,7 +8,7 @@ from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabilitiesMessage):
     request_nonce: int
     reported_peers: Set[Peer]
