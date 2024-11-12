@@ -25,7 +25,7 @@ class ChatMessageListener(ABC):
 
 # TODO: refactor setters
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, eq=True)
 class ChatMessage(SupportMessage):
     """
     Message for direct communication between two nodes. Originally built for trader to
@@ -64,7 +64,7 @@ class ChatMessage(SupportMessage):
     send_message_error: Optional[str] = field(default=None)
     ack_error: Optional[str] = field(default=None)
 
-    _listener: Optional[ref[ChatMessageListener]] = field(default=None)
+    _listener: Optional[ref[ChatMessageListener]] = field(default=None, compare=False) # transient
 
     def __post_init__(self):
         super().__post_init__()
