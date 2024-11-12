@@ -22,7 +22,7 @@ class Sig:
             public_key = private_key.public_key()
             return KeyPair(private_key, public_key)
         except ValueError as e:
-            logger.error("Could not create key.", exc_info=True)
+            logger.error("Could not create key.", exc_info=e)
             raise RuntimeError("Could not create key.") from e
 
     @staticmethod
@@ -74,7 +74,7 @@ class Sig:
             public_key = serialization.load_der_public_key(sig_public_key_bytes)
             return public_key
         except Exception as e:
-            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex={sig_public_key_bytes.hex()}, error={e}", exc_info=True)
+            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex={sig_public_key_bytes.hex()}, error={e}", exc_info=e)
             raise KeyConversionException(e) from e
 
     @staticmethod
@@ -83,7 +83,7 @@ class Sig:
             private_key = serialization.load_der_private_key(sig_private_key_bytes, password=None)
             return private_key
         except Exception as e:
-            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex=REDACTED, error={e}", exc_info=True)
+            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex=REDACTED, error={e}", exc_info=e)
             raise KeyConversionException(e) from e
 
     @staticmethod
@@ -94,7 +94,7 @@ class Sig:
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
         except Exception as e:
-            logger.error("Error encoding public key to bytes.", exc_info=True)
+            logger.error("Error encoding public key to bytes.", exc_info=e)
             raise KeyConversionException(e) from e
 
     @staticmethod
@@ -106,7 +106,7 @@ class Sig:
                 encryption_algorithm=serialization.NoEncryption()
             )
         except Exception as e:
-            logger.error("Error encoding private key to bytes.", exc_info=True)
+            logger.error("Error encoding private key to bytes.", exc_info=e)
             raise KeyConversionException(e) from e
 
     @staticmethod

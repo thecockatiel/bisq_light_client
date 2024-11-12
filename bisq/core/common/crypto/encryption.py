@@ -32,7 +32,7 @@ class Encryption:
             public_key = private_key.public_key()
             return KeyPair(private_key, public_key)
         except Exception as e:
-            logger.error("Could not create key.", exc_info=True)
+            logger.error("Could not create key.", exc_info=e)
             raise RuntimeError("Could not create key.") from e
 
     ##########################################################################################
@@ -49,7 +49,7 @@ class Encryption:
             ciphertext = encryptor.update(padded_data) + encryptor.finalize()
             return ciphertext
         except Exception as e:
-            logger.error("error in encrypt", exc_info=True)
+            logger.error("error in encrypt", exc_info=e)
             raise CryptoException(e) from e
 
     @staticmethod
@@ -135,7 +135,7 @@ class Encryption:
             )
             return encrypted
         except Exception as e:
-            logger.error("Couldn't encrypt payload", exc_info=True)
+            logger.error("Couldn't encrypt payload", exc_info=e)
             raise CryptoException("Couldn't encrypt payload") from e
 
     @staticmethod

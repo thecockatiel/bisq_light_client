@@ -307,7 +307,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
 
             time.sleep(0.2)
         except Exception as e:
-            logger.error(e, exc_info=True)
+            logger.error(e, exc_info=e)
         finally:
             self.stopped = True
             UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))

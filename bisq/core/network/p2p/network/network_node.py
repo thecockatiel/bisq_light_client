@@ -125,9 +125,9 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             )
             try:
                 socket.close()
-            except:
+            except Exception as e:
                 if not self.shut_down_in_progress:
-                    logger.error("Error at closing socket", exc_info=True)
+                    logger.error("Error at closing socket", exc_info=e)
 
             existing_connection.send_message(network_envelope)
             return existing_connection
