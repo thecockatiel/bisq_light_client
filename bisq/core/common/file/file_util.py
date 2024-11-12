@@ -55,3 +55,17 @@ def prune_backup(backup_dir_path: str, num_max_backup_files: int) -> None:
                         prune_backup(backup_dir_path, num_max_backup_files)
                 elif file_to_delete.is_dir():
                     prune_backup(str(file_to_delete), num_max_backup_files)
+
+def does_file_contain_keyword(file_path: str, keyword: str) -> bool:
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                if keyword in line:
+                    return True
+        return False
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
+        raise
+    except Exception as e:
+        logger.error(f"Error searching file {file_path}: {str(e)}")
+        raise
