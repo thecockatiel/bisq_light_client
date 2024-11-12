@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 import proto.pb_pb2 as protobuf
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class CloseConnectionMessage(NetworkEnvelope):
     reason: str
 

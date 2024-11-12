@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.backends import default_backend
@@ -7,6 +8,8 @@ import zlib
 
 import struct
 
+if TYPE_CHECKING:
+    from bisq.core.common.protocol.network.network_payload import NetworkPayload
 
 def get_sha256_hash(data: bytes):
     hasher = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -45,3 +48,6 @@ def get_keccak1600_hash(data: bytes):
 
 def get_crc32_hash(data: bytes):
     return zlib.crc32(data)
+
+def get_32_byte_hash(data: "NetworkPayload") -> bytes:
+    return get_sha256_hash(data.serialize_for_hash())

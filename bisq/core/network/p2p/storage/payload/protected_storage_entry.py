@@ -1,15 +1,14 @@
 from dataclasses import dataclass
 from google.protobuf import message as Message
 
-import time
-
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from bisq.core.common.crypto.crypto_exception import CryptoException
+from bisq.core.common.crypto.hash import get_32_byte_hash
 from bisq.core.common.crypto.sig import Sig, dsa
 from bisq.core.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
+from bisq.core.network.p2p.storage.data_and_seq_nr_pair import DataAndSeqNrPair
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
@@ -67,7 +66,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         return self.to_proto_message()
 
     @staticmethod
-    def from_proto(proto: 'protobuf.ProtectedStorageEntry', resolver: NetworkProtoResolver) -> 'ProtectedStorageEntry':
+    def from_proto(proto: 'protobuf.ProtectedStorageEntry', resolver: 'NetworkProtoResolver') -> 'ProtectedStorageEntry':
         return ProtectedStorageEntry(
             ProtectedStoragePayload.from_proto(proto.storagePayload, resolver),
             Sig.get_public_key_from_bytes(proto.owner_pub_key_bytes),
@@ -87,7 +86,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         return isinstance(self.protected_storage_payload, ExpirablePayload) and \
                (clock.millis() - self.creation_time_stamp) > self.protected_storage_payload.get_ttl()
 
-    def get_data_response_priority(self) -> GetDataResponsePriority:
+    def get_data_response_priority(self) -> 'GetDataResponsePriority':
         return self.protected_storage_payload.get_data_response_priority()
 
     def is_valid_for_add_operation(self) -> bool:
@@ -134,8 +133,8 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         Returns true if the signature for the Entry is valid for the payload, sequence number, and ownerPubKey
         """
         try:
-            hash_of_data_and_seq_nr = P2PDataStorage.get_32_byte_hash(
-                P2PDataStorage.DataAndSeqNrPair(self.protected_storage_payload, self.sequence_number)
+            hash_of_data_and_seq_nr = get_32_byte_hash(
+                DataAndSeqNrPair(self.protected_storage_payload, self.sequence_number)
             )
             result = Sig.verify(self.owner_pub_key, hash_of_data_and_seq_nr, self.signature)
             if not result:

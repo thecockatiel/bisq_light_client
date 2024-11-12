@@ -1,17 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from typing import Optional, Set, List, Callable
+from typing import TYPE_CHECKING, Optional, Set, List, Callable
 from dataclasses import dataclass
 from copy import copy
 
 from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
-from bisq.core.network.p2p.network.network_node import NetworkNode
-from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler, BroadcastListener
-from bisq.core.network.p2p.peers.peer_manager import PeerManager
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.logging import get_logger
 from proto.pb_pb2 import NodeAddress
+
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.network.network_node import NetworkNode
+    from bisq.core.network.p2p.peers.broadcast_handler import BroadcastListener, BroadcastHandler
+    from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
 logger = get_logger(__name__)
 
@@ -27,8 +29,8 @@ class Broadcaster:
     def __init__(self, network_node: 'NetworkNode', peer_manager: 'PeerManager', max_connections: int):
         self.network_node = network_node
         self.peer_manager = peer_manager
-        self.broadcast_handlers: Set[BroadcastHandler] = set()
-        self.broadcast_requests: List[BroadcastRequest] = []
+        self.broadcast_handlers: Set["BroadcastHandler"] = set()
+        self.broadcast_requests: List["BroadcastRequest"] = []
         self.timer: Optional[Timer] = None
         self.shut_down_requested = False
         self.shut_down_result_handler: Optional[Callable] = None
@@ -78,6 +80,7 @@ class Broadcaster:
 
     def maybe_broadcast_bundle(self) -> None:
         if self.broadcast_requests:
+            from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler
             broadcast_handler = BroadcastHandler(self.network_node, self.peer_manager, self)
             self.broadcast_handlers.add(broadcast_handler)
             broadcast_handler.broadcast(copy(self.broadcast_requests), self.shut_down_requested, self.executor)

@@ -3,11 +3,8 @@
 from threading import RLock
 import time
 from typing import TYPE_CHECKING
-
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
-
-from .connection import Connection
 from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
 from bisq.logging import get_logger
 
@@ -64,6 +61,7 @@ class ProtoOutputStream:
         if not isinstance(envelope, KeepAliveMessage):
             self.statistic.update_last_activity_timestamp()
 
-    def try_to_acquire_lock(self) -> bool: 
+    def try_to_acquire_lock(self) -> bool:
+        from bisq.core.network.p2p.network.connection import Connection
         return self.lock.acquire(False, Connection.SHUTDOWN_TIMEOUT / 1000)
         

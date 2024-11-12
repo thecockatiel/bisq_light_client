@@ -11,5 +11,5 @@ if TYPE_CHECKING:
 class MailboxMessage(DirectMessage, UidMessage, ExpirablePayload, ABC):
     
     @abstractmethod
-    def get_sender_node_address(self) -> NodeAddress:
+    def get_sender_node_address(self) -> "NodeAddress":
         pass

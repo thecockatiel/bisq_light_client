@@ -26,7 +26,6 @@ from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection_state import ConnectionState
 from bisq.core.network.p2p.network.connection_statistics import ConnectionStatistics
-from bisq.core.network.p2p.network.inbound_connection import InboundConnection
 from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.network.statistic import Statistic
 from bisq.core.network.p2p.network.supported_capabilities_listener import SupportedCapabilitiesListener
@@ -66,7 +65,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
                 network_proto_resolver: 'NetworkProtoResolver',
-                peers_node_address: Optional[NodeAddress] = None,
+                peers_node_address: Optional['NodeAddress'] = None,
                 ban_filter: Optional[BanFilter] = None):
         self.last_send_timestamp = 0
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
@@ -96,7 +95,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         self.connection_statistics = ConnectionStatistics(self, self.connection_state)
         self.init(peers_node_address)
 
-    def init(self, peers_node_address: Optional[NodeAddress]):
+    def init(self, peers_node_address: Optional['NodeAddress']):
         try:
             self.socket.settimeout(Connection.SOCKET_TIMEOUT)
             
@@ -291,6 +290,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         if peerNodeAddress is None:
             raise ValueError("peerNodeAddress must not be null")
         self.peers_node_address = peerNodeAddress
+        from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         if isinstance(self, InboundConnection):
             logger.debug("\n\n############################################################\n" +
                          "We got the peers node address set.\n" +
@@ -372,6 +372,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         return hash(self.uid)
 
     def __str__(self) -> str:
+        from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         connection_type = "InboundConnection" if isinstance(self, InboundConnection) else "OutboundConnection"
         return (f"Connection{{"
             f"peerAddress={self.peers_node_address}, "

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.initial_data_request import InitialDataRequest
 from bisq.core.network.p2p.initial_data_response import InitialDataResponse
-from bisq.core.network.p2p.network.inbound_connection import InboundConnection
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.formatting import format_duration_as_words, readable_file_size
 from utils.time import get_time_ms
@@ -35,6 +34,7 @@ class ConnectionStatistics(MessageListener):
         self.connection.remove_message_listener(self)
 
     def get_info(self):
+        from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         ls = "\n"
         now = get_time_ms()
         con_instance = "Inbound" if isinstance(self.connection, InboundConnection) else "Outbound"

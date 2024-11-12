@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class AddPersistableNetworkPayloadMessage(BroadcastMessage):
     persistable_network_payload: 'PersistableNetworkPayload'
 

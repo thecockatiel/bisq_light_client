@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
     sender_node_address: 'NodeAddress'
 
