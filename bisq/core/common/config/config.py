@@ -10,6 +10,11 @@ class Config:
     filter_provided_seed_nodes: list = field(default_factory=list)
     banned_seed_nodes: list = field(default_factory=list)
     app_data_dir: str = field(default_factory=str)
+    msg_throttle_per_sec: int = field(default=200)
+    msg_throttle_per_10_sec: int = field(default=1000)
+    send_msg_throttle_trigger: int = field(default=20)
+    send_msg_throttle_sleep: int = field(default=50)
+    
 
 CONFIG = Config(
     app_data_dir=str(user_data_dir())

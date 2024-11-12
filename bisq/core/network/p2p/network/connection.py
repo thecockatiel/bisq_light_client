@@ -16,7 +16,7 @@ from google.protobuf.message import Error as InvalidProtocolBufferException
 import concurrent
 
 from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.config.config import config
+from bisq.core.common.config.config import CONFIG
 from bisq.core.common.has_capabilities import HasCapabilities
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.common.user_thread import UserThread
@@ -209,26 +209,26 @@ class Connection(HasCapabilities, Callable, MessageListener):
                 self._violates_throttle_limit(now, 10, Connection.get_msg_throttle_per_10_sec()))
 
     def get_msg_throttle_per_sec(self):
-        if config:
-            return config.msg_throttle_per_sec
+        if CONFIG:
+            return CONFIG.msg_throttle_per_sec
         else:
             return 200
 
     def get_msg_throttle_per_10_sec(self):
-        if config:
-            return config.msg_throttle_per_10_sec
+        if CONFIG:
+            return CONFIG.msg_throttle_per_10_sec
         else:
             return 1000
 
     def get_send_msg_throttle_sleep(self):
-        if config:
-            return config.send_msg_throttle_sleep
+        if CONFIG:
+            return CONFIG.send_msg_throttle_sleep
         else:
             return 50
 
     def get_send_msg_throttle_trigger(self):
-        if config:
-            return config.send_msg_throttle_trigger
+        if CONFIG:
+            return CONFIG.send_msg_throttle_trigger
         else:
             return 20
 
