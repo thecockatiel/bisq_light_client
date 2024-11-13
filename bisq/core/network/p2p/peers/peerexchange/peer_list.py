@@ -9,7 +9,7 @@ from .peer import Peer
 
 @dataclass
 class PeerList(PersistableEnvelope):
-    set: frozenset[Peer] = field(default=frozenset())
+    set: Set[Peer] = field(default_factory=set)
 
     def size(self) -> int:
         return len(self.set)
@@ -30,7 +30,7 @@ class PeerList(PersistableEnvelope):
         return PeerList(peers)
 
     def set_all(self, collection: Iterable[Peer]) -> None:
-        self.set = frozenset(collection)
+        self.set = set(collection)
 
     def __str__(self) -> str:
         return f"PeerList{{\n     set={self.set}\n}}"

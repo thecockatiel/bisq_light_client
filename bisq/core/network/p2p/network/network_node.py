@@ -306,7 +306,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         # as connection hashcode is using uid and port info
         return {conn for conn in self.get_all_connections() if conn.peers_node_address}
 
-    def get_node_address_of_confirmed_connections(self):
+    def get_node_addresses_of_confirmed_connections(self):
         # Does not contain inbound and outbound connection with the same peer node address
         return {conn.peers_node_address for conn in self.get_confirmed_connections()}
 

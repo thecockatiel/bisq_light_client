@@ -10,13 +10,13 @@ import random
 from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
-from bisq.core.network.p2p.peers.broadcaster import BroadcastRequest
-from bisq.core.network.p2p.peers.peer_manager import PeerManager
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.network.connection import Connection
+    from bisq.core.network.p2p.peers.broadcaster import BroadcastRequest
+    from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
 logger = logging.getLogger(__name__)
 
