@@ -92,9 +92,13 @@ class Capabilities:
     def __len__(self):
         return len(self.capabilities)
 
+    # We return true if our capabilities have less capabilities than the parameter value
     def has_less(self, other: 'Capabilities') -> bool:
         return self.find_highest_capability() < other.find_highest_capability()
 
+    # We use the sum of all capabilities. Alternatively we could use the highest entry.
+    # Neither would support removal of past capabilities, a use case we never had so far and which might have
+    # backward compatibility issues, so we should treat capabilities as an append-only data structure.
     def find_highest_capability(self) -> int:
         return sum(cap.value for cap in self.capabilities)
 
