@@ -32,7 +32,7 @@ class Capabilities:
     def contains_all(self, required_items: Set[Capability]) -> bool:
         return self.capabilities.issuperset(required_items)
 
-    def contains(self, capability: Capability) -> bool:
+    def __contains__(self, capability):
         return capability in self.capabilities
 
     def is_empty(self) -> bool:
