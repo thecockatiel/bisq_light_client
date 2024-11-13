@@ -2,6 +2,8 @@ from pathlib import Path
 import platform
 import shutil
 from datetime import datetime
+import tempfile
+from typing import Optional
 
 from bisq.logging import get_logger
 
@@ -94,3 +96,10 @@ def remove_and_backup_file(db_dir: Path, storate_file: Path, file_name: str, bac
     corrupted_file = corrupted_backup_dir.joinpath(file_name)
     if corrupted_file.exists():
         rename_file(storate_file, corrupted_file)
+
+def create_new_file(path: Path):
+    path.touch(exist_ok=False)
+    return path
+
+def create_temp_file(prefix: Optional[str] = None, suffix: Optional[str] = None, dir: Optional[Path] = None):
+    return Path(tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=dir)[1])
