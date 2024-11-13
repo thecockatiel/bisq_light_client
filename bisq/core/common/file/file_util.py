@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 import shutil
 from datetime import datetime
 
@@ -69,3 +70,27 @@ def does_file_contain_keyword(file_path: str, keyword: str) -> bool:
     except Exception as e:
         logger.error(f"Error searching file {file_path}: {str(e)}")
         raise
+    
+def rename_file(file: Path, new_file: Path) -> None:
+    if file == new_file: return
+    
+    canonical = new_file.resolve()
+    try:
+        if (platform.system().lower() == "windows" and canonical.exists()):
+            canonical.unlink(missing_ok=True)
+        file.rename(canonical)
+    except Exception as e:
+        logger.error(f"Failed to rename {file} to {new_file}: {str(e)}")
+        raise
+
+def remove_and_backup_file(db_dir: Path, storate_file: Path, file_name: str, backup_folder_name: str):
+    corrupted_backup_dir = db_dir.joinpath(backup_folder_name)
+    if not corrupted_backup_dir.exists():
+        try:
+            corrupted_backup_dir.mkdir(parents=True, exist_ok=True)
+        except:
+            logger.error(f"Failed to create corrupted backup dir: {corrupted_backup_dir}")
+        return
+    corrupted_file = corrupted_backup_dir.joinpath(file_name)
+    if corrupted_file.exists():
+        rename_file(storate_file, corrupted_file)
