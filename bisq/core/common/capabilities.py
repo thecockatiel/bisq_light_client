@@ -89,7 +89,7 @@ class Capabilities:
     def pretty_print(self) -> str:
         return ", ".join([f"{cap.name} [{cap.value}]" for cap in sorted(self.capabilities, key=lambda x: x.value)])
 
-    def size(self) -> int:
+    def __len__(self):
         return len(self.capabilities)
 
     def has_less(self, other: 'Capabilities') -> bool:
