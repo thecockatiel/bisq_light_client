@@ -62,8 +62,8 @@ class TestCapabilities(unittest.TestCase):
         self.assertIn("DAO_STATE", result)
 
     def test_size(self):
-        self.assertEqual(self.empty_capabilities.size(), 0)
-        self.assertEqual(self.test_capabilities.size(), 2)
+        self.assertEqual(len(self.empty_capabilities), 0)
+        self.assertEqual(len(self.test_capabilities), 2)
 
     def test_has_less(self):
         caps1 = Capabilities([Capability.DAO_STATE])
