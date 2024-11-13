@@ -24,9 +24,9 @@ class TestCapabilities(unittest.TestCase):
         self.assertTrue(caps.contains(Capability.TRADE_STATISTICS_3))
 
     def test_contains_methods(self):
-        self.assertTrue(self.test_capabilities.contains(Capability.DAO_STATE))
+        self.assertTrue(Capability.DAO_STATE in self.test_capabilities)
         self.assertTrue(self.test_capabilities.contains_all({Capability.DAO_STATE}))
-        self.assertFalse(self.empty_capabilities.contains(Capability.DAO_STATE))
+        self.assertFalse(Capability.DAO_STATE in self.empty_capabilities)
 
     def test_is_empty(self):
         self.assertTrue(self.empty_capabilities.is_empty())
