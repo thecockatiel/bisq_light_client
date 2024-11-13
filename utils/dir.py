@@ -19,7 +19,7 @@ def user_data_dir():
         raise Exception("No home directory found in environment variables.")
     return Path(path)
 
-def check_dir(dir_path):
+def check_dir(dir_path: str):
     """
     Ensures that `dir_path` is a non-null, existing and read-writeable directory.
     
