@@ -14,10 +14,10 @@ T = TypeVar(
     "T", bound=PersistableEnvelope
 ) 
 R = TypeVar(
-    "T", bound=PersistablePayload
+    "R", bound=PersistablePayload
 ) 
 
-class MapStoreService(Generic[T, R], StoreService, ABC):
+class MapStoreService(Generic[T, R], StoreService[T], ABC):
     """Handles persisted data which is stored in a map."""
     
     def __init__(self, storage_dir: Path, persistence_manager: T):

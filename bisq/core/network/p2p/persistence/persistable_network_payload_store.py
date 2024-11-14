@@ -22,6 +22,9 @@ class PersistableNetworkPayloadStore(PersistableEnvelope, ABC):
         if collection is not None:
             for payload in collection:
                 self.map[StorageByteArray(payload.get_hash())] = payload
+    
+    def get_map(self):
+        return self.map
 
     def __contains__(self, hash: "StorageByteArray") -> bool:
         return hash in self.map
