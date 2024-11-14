@@ -14,19 +14,19 @@ class StorageByteArray(PersistablePayload):
     """
     
     # That object is saved to disc. We need to take care of changes to not break deserialization.
-    _bytes: bytes
+    bytes: bytes
     
     def __post_init__(self):
         self.verify_bytes_not_empty()
     
     def verify_bytes_not_empty(self):
-        if self._bytes is None:
+        if self.bytes is None:
             raise ValueError("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with None bytes argument.")
-        if len(self._bytes) == 0:
+        if len(self.bytes) == 0:
             raise ValueError("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with empty bytes argument.")
 
     def __post_init__(self):
-        if not self._bytes:
+        if not self.bytes:
             raise ValueError("ByteArray cannot be empty")
         
     def __str__(self):
@@ -35,21 +35,21 @@ class StorageByteArray(PersistablePayload):
     def __eq__(self, other):
         if not isinstance(other, StorageByteArray):
             return False
-        return self._bytes == other._bytes
+        return self.bytes == other.bytes
     
     def __hash__(self):
-        return hash(self._bytes)
+        return hash(self.bytes)
 
     def to_proto_message(self):
-        return protobuf.ByteArray(bytes=self._bytes)
+        return protobuf.ByteArray(bytes=self.bytes)
 
     @staticmethod
     def from_proto(proto: protobuf.ByteArray):
         return StorageByteArray(proto.bytes)
 
     def get_hex(self):
-        return self._bytes.hex()
+        return self.bytes.hex()
 
     @staticmethod
-    def convert_bytes_set_to_bytearray_set(byte_set: Set[bytes]):
+    def convert_bytes_set_to_bytearray_set(byte_set: Set["bytes"]):
         return {StorageByteArray(b) for b in byte_set} if byte_set else set()
