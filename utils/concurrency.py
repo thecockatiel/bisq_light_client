@@ -94,6 +94,10 @@ class ConcurrentDict(Generic[K, V]):
     def remove(self, key: K) -> V:
         with self._lock:
             return self._dict.pop(key, None)
+    
+    def update(self, other: Dict[K, V]):
+        with self._lock:
+            self._dict.update(other)
         
 class ConcurrentList(Generic[T]):
     def __init__(self):
