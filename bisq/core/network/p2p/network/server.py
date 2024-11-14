@@ -1,6 +1,7 @@
 from socket import socket as Socket, error as SocketError
 import threading
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.inbound_connection import InboundConnection
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class Server(Callable):
+class Server(Callable[[], None]):
     def __init__(
         self,
         server_socket: Socket,

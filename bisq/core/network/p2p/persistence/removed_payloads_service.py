@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 from bisq.core.common.persistence.persistence_manager import PersistenceManager
 from bisq.core.common.protocol.persistable.persistable_data_host import (
     PersistedDataHost,
@@ -35,7 +36,7 @@ class RemovedPayloadsService(PersistedDataHost):
     # PersistedDataHost
     ###########################
 
-    def read_persisted(self, complete_handler: Callable) -> None:
+    def read_persisted(self, complete_handler: Callable[[], None]) -> None:
         cut_off_date = get_time_ms() - MailboxStoragePayload.TTL
 
         def on_persisted(persisted: RemovedPayloadsMap) -> None:

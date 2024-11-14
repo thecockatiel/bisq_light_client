@@ -4,10 +4,12 @@ import socket as Socket
 import threading
 import time
 import uuid
-from typing import TYPE_CHECKING, Callable, List, Optional, Set, Dict
+from typing import TYPE_CHECKING, Optional
+from collections.abc import Callable
 from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
+from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
 from proto.delimited_protobuf import read_delimited
 import bisq.core.common.version as Version
@@ -51,7 +53,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-class Connection(HasCapabilities, Callable, MessageListener):
+class Connection(HasCapabilities, Callable[[], None], MessageListener):
     """
     Connection is created by the server thread or by send_message from NetworkNode.
     """
@@ -77,7 +79,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
         self.rule_violations: ConcurrentDict[str, int] = ConcurrentDict()
         self.rule_violation: RuleViolation = None
         self.capabilities = Capabilities()
-        self.message_time_stamps: List[int] = []
+        self.message_time_stamps: list[int] = []
 
         self.socket = socket
         self.connection_listener = connection_listener
@@ -258,8 +260,8 @@ class Connection(HasCapabilities, Callable, MessageListener):
         pass
 
     def on_bundle_of_envelopes(self, bundle_of_envelopes: 'BundleOfEnvelopes', connection: 'Connection'):
-        items_by_hash: Dict[P2PDataStorage.ByteArray, Set['NetworkEnvelope']] = {}
-        envelopes_to_process: Set[NetworkEnvelope] = set()
+        items_by_hash: dict["StorageByteArray", set['NetworkEnvelope']] = {}
+        envelopes_to_process: set[NetworkEnvelope] = set()
         network_envelopes = bundle_of_envelopes.envelopes
         for network_envelope in network_envelopes:
             if isinstance(network_envelope, SendersNodeAddressMessage):
@@ -271,7 +273,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                 persistable_network_payload = network_envelope.persistable_network_payload
                 hash_value = persistable_network_payload.get_hash()
                 item_name = persistable_network_payload.__class__.__name__
-                byte_array = P2PDataStorage.ByteArray(hash_value)
+                byte_array = StorageByteArray(hash_value)
                 items_by_hash[byte_array] = items_by_hash.setdefault(byte_array, set())
                 envelopes_by_hash = items_by_hash[byte_array]
                 if not network_envelope in envelopes_by_hash:
@@ -298,7 +300,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
     
-    def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
+    def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         try:
             reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
             self.send_message(CloseConnectionMessage(reason))
@@ -313,7 +315,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
             UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
  
     
-    def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
+    def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
         if not self.stopped:
@@ -335,7 +337,7 @@ class Connection(HasCapabilities, Callable, MessageListener):
             logger.debug("stopped was already at shutDown call")
             UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
 
-    def do_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable] = None):
+    def do_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         # Use UserThread.execute as it's not clear if that is called from a non-UserThread
         UserThread.execute(lambda: self.connection_listener.on_disconnect(close_connection_reason, self))
         try:

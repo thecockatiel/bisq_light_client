@@ -3,7 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from socket import socket as Socket
 import threading
-from typing import TYPE_CHECKING, Callable, Optional, Set
+from typing import TYPE_CHECKING, Optional
+from collections.abc import Callable
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.common.protocol.network.network_proto_resolver import (
     NetworkProtoResolver,
@@ -310,7 +311,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         # Does not contain inbound and outbound connection with the same peer node address
         return {conn.peers_node_address for conn in self.get_confirmed_connections()}
 
-    def shut_down(self, shutdown_complete_handler: Optional[Callable] = None) -> None:
+    def shut_down(self, shutdown_complete_handler: Optional[Callable[[], None]] = None) -> None:
         logger.info("NetworkNode shutdown started")
 
         if not self.shutdown_in_progress:

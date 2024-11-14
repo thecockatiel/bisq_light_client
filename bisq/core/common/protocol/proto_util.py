@@ -1,6 +1,7 @@
 from enum import Enum
 from google.protobuf.internal.enum_type_wrapper import EnumTypeWrapper
-from typing import List, Set, Optional, Type, TypeVar, Iterable, Collection, Callable
+from typing import List, Set, Optional, Type, TypeVar, Iterable, Collection
+from collections.abc import Callable
 from google.protobuf import message
 from google.protobuf.any_pb2 import Any
 

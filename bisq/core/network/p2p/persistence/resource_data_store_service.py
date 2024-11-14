@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 if TYPE_CHECKING:
     from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
@@ -13,7 +14,7 @@ class ResourceDataStoreService:
     def add_service(self, service: "StoreService[PersistableEnvelope]"):
         self.services.append(service)
     
-    def read_from_resources(self, post_fix: str, complete_handler: Callable):
+    def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
         if not self.services:
             complete_handler()
             return

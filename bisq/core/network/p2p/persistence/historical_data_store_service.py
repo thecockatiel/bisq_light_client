@@ -1,6 +1,8 @@
 from abc import ABC
 from pathlib import Path
-from typing import Callable, Generic, TypeVar, Optional
+from typing import Generic, TypeVar, Optional
+from collections.abc import Callable
+
 import logging
 import bisq.core.common.version as Version
 from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
@@ -99,7 +101,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         self.put(hash, payload)
         return None
     
-    def read_from_resources(self, post_fix: str, complete_handler: Callable) -> None:
+    def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]) -> None:
         def on_persisted(persisted):
             logging.debug(
                 f"We have created the {self.get_file_name()} store for the live data and "
@@ -143,7 +145,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         post_fix: str,
         all_historical_payloads: dict,
         stores_by_version: dict,
-        complete_handler: Callable
+        complete_handler: Callable[[], None]
     ) -> None:
         file_name = f"{self.get_file_name()}_{version}"
         self.make_file_from_resource_file(file_name, post_fix)

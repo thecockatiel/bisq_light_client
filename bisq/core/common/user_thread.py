@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 import random
-from typing import Callable, Type
+from collections.abc import Callable
 from bisq.core.common.frame_rate_timer import FrameRateTimer
 from bisq.core.common.timer import Timer
 from bisq.logging import get_logger
@@ -16,28 +16,28 @@ class UserThread:
     
     Provides also methods for delayed and periodic executions.
     """
-    timer_class: Type[Timer] = FrameRateTimer
+    timer_class: Timer = FrameRateTimer
     executor = ThreadPoolExecutor(max_workers=1)
 
     @classmethod
-    def set_timer_class(cls, timer_class: Type[Timer]):
+    def set_timer_class(cls, timer_class: Timer):
         cls.timer_class = timer_class
 
     @classmethod
-    def execute(cls, command: Callable):
+    def execute(cls, command: Callable[[], None]):
         cls.executor.submit(command)
 
     @classmethod
-    def run_after_random_delay(cls, runnable: Callable, min_delay_in_sec: int, max_delay_in_sec: int) -> Timer:
+    def run_after_random_delay(cls, runnable: Callable[[], None], min_delay_in_sec: int, max_delay_in_sec: int) -> Timer:
         delay = random.randint(min_delay_in_sec, max_delay_in_sec)
-        return cls.run_after(runnable, delay)
+        return cls.run_after(runnable, timedelta(seconds=delay))
 
     @classmethod
-    def run_after(cls, runnable: Callable, delay: timedelta) -> Timer:
+    def run_after(cls, runnable: Callable[[], None], delay: timedelta) -> Timer:
         return cls.get_timer().run_later(delay, runnable)
 
     @classmethod
-    def run_periodically(cls, runnable: Callable, interval: timedelta) -> Timer:
+    def run_periodically(cls, runnable: Callable[[], None], interval: timedelta) -> Timer:
         return cls.get_timer().run_periodically(interval, runnable)
 
     @classmethod

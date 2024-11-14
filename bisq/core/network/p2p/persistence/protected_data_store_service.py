@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, List, Dict, Any, Callable
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 from threading import Lock
 
 
@@ -12,13 +13,13 @@ class ProtectedDataStoreService:
     """Used for data which can be added and removed. ProtectedStorageEntry is used for verifying ownership."""
     
     def __init__(self):
-        self.services: List["MapStoreService[PersistableEnvelope,ProtectedStorageEntry]"] = []
+        self.services: list["MapStoreService[PersistableEnvelope,ProtectedStorageEntry]"] = []
         self._lock = Lock()
 
     def add_service(self, service: "MapStoreService[PersistableEnvelope,ProtectedStorageEntry]") -> None:
         self.services.append(service)
 
-    def read_from_resources(self, post_fix: str, complete_handler: Callable) -> None:
+    def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]) -> None:
         if not self.services:
             complete_handler()
             return
