@@ -1,14 +1,14 @@
 import threading
 import logging
 import time
-from typing import Callable, Set
+from collections.abc import Callable
 
 # Runs all listener objects periodically in a short interval.
 class MasterTimer:
     log = logging.getLogger('MasterTimer')
     FRAME_INTERVAL_MS = 100  # frame rate of 60 fps is about 16 ms but we don't need such a short interval, 100 ms should be good enough
 
-    listeners: Set[Callable] = set()
+    listeners: set[Callable[[], None]] = set()
     listeners_lock = threading.Lock()
 
     @staticmethod
@@ -17,9 +17,9 @@ class MasterTimer:
             while True:
                 MasterTimer.log.debug("Executing listeners")
                 with MasterTimer.listeners_lock:
-                    for listener in MasterTimer.listeners:
+                    for callable in MasterTimer.listeners:
                         try:
-                            listener()
+                            callable()
                         except Exception as e:
                             MasterTimer.log.error(f"Error executing listener: {e}")
                 time.sleep(MasterTimer.FRAME_INTERVAL_MS / 1000.0)
@@ -28,13 +28,13 @@ class MasterTimer:
         timer_thread.start()
 
     @staticmethod
-    def add_listener(runnable: Callable):
+    def add_listener(runnable: Callable[[], None]):
         with MasterTimer.listeners_lock:
             MasterTimer.listeners.add(runnable)
             MasterTimer.log.debug(f"Listener added: {runnable}")
 
     @staticmethod
-    def remove_listener(runnable: Callable):
+    def remove_listener(runnable: Callable[[], None]):
         with MasterTimer.listeners_lock:
             MasterTimer.listeners.discard(runnable)
             MasterTimer.log.debug(f"Listener removed: {runnable}")

@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from bisq.core.network.p2p.persistence.historical_data_store_service import HistoricalDataStoreService
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
@@ -18,7 +19,7 @@ class AppendOnlyDataStoreService():
     def add_service(self, service: "MapStoreService[PersistableNetworkPayloadStore[PersistableNetworkPayload], PersistableNetworkPayload]") -> None:
         self.services.append(service)
         
-    def read_from_resources(self, postfix: str, complete_handler: Callable):
+    def read_from_resources(self, postfix: str, complete_handler: Callable[[], None]):
         if not self.services:
             complete_handler()
             return

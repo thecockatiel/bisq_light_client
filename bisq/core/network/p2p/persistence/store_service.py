@@ -2,7 +2,8 @@
  
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
+from collections.abc import Callable
 from bisq.core.common.file.file_util import resource_to_file
 from bisq.core.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
@@ -42,7 +43,7 @@ class StoreService(Generic[T], ABC):
     def get_file_name(self):
         pass
     
-    def read_from_resources(self, postfix: str, complete_handler: Callable):
+    def read_from_resources(self, postfix: str, complete_handler: Callable[[], None]):
         file_name = self.get_file_name()
         self.make_file_from_resource_file(file_name, postfix)
         try:

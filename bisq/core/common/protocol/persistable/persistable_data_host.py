@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar
+from typing import TypeVar
+from collections.abc import Callable
 
 from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 

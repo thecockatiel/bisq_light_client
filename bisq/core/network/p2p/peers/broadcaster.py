@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional, Set, List, Callable
+from typing import TYPE_CHECKING, Optional
+from collections.abc import Callable
 from dataclasses import dataclass
 from copy import copy
 
@@ -30,11 +31,11 @@ class Broadcaster(BroadcastResultHandler):
     def __init__(self, network_node: 'NetworkNode', peer_manager: 'PeerManager', max_connections: int):
         self.network_node = network_node
         self.peer_manager = peer_manager
-        self.broadcast_handlers: Set["BroadcastHandler"] = set()
-        self.broadcast_requests: List["BroadcastRequest"] = []
+        self.broadcast_handlers: set["BroadcastHandler"] = set()
+        self.broadcast_requests: list["BroadcastRequest"] = []
         self.timer: Optional[Timer] = None
         self.shut_down_requested = False
-        self.shut_down_result_handler: Optional[Callable] = None
+        self.shut_down_result_handler: Optional[Callable[[], None]] = None
         
         # Create thread pool executor
         self.executor = ThreadPoolExecutor(
@@ -42,7 +43,7 @@ class Broadcaster(BroadcastResultHandler):
             thread_name_prefix="Broadcaster"
         )
 
-    def shut_down(self, result_handler: Callable) -> None:
+    def shut_down(self, result_handler: Callable[[], None]) -> None:
         logger.info("Broadcaster shutdown started")
         self.shut_down_requested = True
         self.shut_down_result_handler = result_handler

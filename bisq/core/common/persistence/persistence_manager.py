@@ -4,7 +4,8 @@ import threading
 import os
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar, Generic, Callable, Optional, Dict, cast
+from typing import TYPE_CHECKING, TypeVar, Generic, Optional, cast
+from collections.abc import Callable
 from bisq.core.common.config.config import CONFIG
 from bisq.core.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
 from bisq.core.common.protocol.persistable.persistable_envelope import (
@@ -37,7 +38,7 @@ T = TypeVar(
 class PersistenceManager(Generic[T]):
     """Responsible for reading persisted data and writing it on disk."""
 
-    ALL_PERSISTENCE_MANAGERS: Dict[str, "PersistenceManager"] = {}
+    ALL_PERSISTENCE_MANAGERS: dict[str, "PersistenceManager"] = {}
     flush_at_shutdown_called = False
     all_services_initialized = False
 
@@ -237,7 +238,7 @@ class PersistenceManager(Generic[T]):
     def read_persisted(
         self,
         result_handler: Callable[[T], None],
-        or_else: Callable,
+        or_else: Callable[[], None],
         file_name: str = None,
     ):
         if file_name == None:
@@ -339,7 +340,7 @@ class PersistenceManager(Generic[T]):
         self.persist_now(force=True)
 
     def persist_now(
-        self, complete_handler: Optional[Callable] = None, force: bool = False
+        self, complete_handler: Optional[Callable[[], None]] = None, force: bool = False
     ):
         ts = get_time_ms()
         try:
@@ -360,7 +361,7 @@ class PersistenceManager(Generic[T]):
             raise RuntimeError(e)
 
     def write_to_disk(
-        self, serialized: protobuf.PersistableEnvelope, complete_handler: Optional[Callable], force: bool
+        self, serialized: protobuf.PersistableEnvelope, complete_handler: Optional[Callable[[], None]], force: bool
     ):
         if not PersistenceManager.all_services_initialized and not force:
             logger.warning("Application has not completed start up yet so we do not permit writing data to disk.")
