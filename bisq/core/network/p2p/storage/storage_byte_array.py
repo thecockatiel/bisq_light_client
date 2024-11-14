@@ -32,6 +32,13 @@ class StorageByteArray(PersistablePayload):
     def __str__(self):
         return f"ByteArray{{bytes as Hex={self.get_hex()}}}"
     
+    def __eq__(self, other):
+        if not isinstance(other, StorageByteArray):
+            return False
+        return self._bytes == other._bytes
+    
+    def __hash__(self):
+        return hash(self._bytes)
 
     def to_proto_message(self):
         return protobuf.ByteArray(bytes=self._bytes)
