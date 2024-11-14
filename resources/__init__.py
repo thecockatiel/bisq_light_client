@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 __resource_dir = os.path.split(os.path.realpath(__file__))[0]
 
@@ -11,4 +12,6 @@ def resource_readlines(resource_name: str) -> str:
             return f.readlines()
     except FileNotFoundError:
             return None
-    
+
+def get_resource_path():
+    return Path(__resource_dir)
