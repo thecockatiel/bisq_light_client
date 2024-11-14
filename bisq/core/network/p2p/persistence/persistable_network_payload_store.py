@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Collection, Optional, TypeVar
+from typing import Collection, Generic, Optional, TypeVar
 from bisq.core.common.protocol.persistable.persistable_envelope import (
     PersistableEnvelope,
 )
@@ -11,7 +11,7 @@ from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 T = TypeVar("T", bound=PersistableNetworkPayload)
 
 
-class PersistableNetworkPayloadStore(PersistableEnvelope, ABC):
+class PersistableNetworkPayloadStore(Generic[T], PersistableEnvelope, ABC):
     """Store for PersistableNetworkPayload map entries with it's data hash as key."""
 
     def __init__(self, collection: Optional[Collection[T]] = None) -> None:
