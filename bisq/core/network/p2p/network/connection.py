@@ -34,7 +34,6 @@ from bisq.core.network.p2p.network.supported_capabilities_listener import Suppor
 from bisq.core.network.p2p.storage.messages.add_data_message import AddDataMessage
 from bisq.core.network.p2p.storage.messages.add_persistable_network_payload_message import AddPersistableNetworkPayloadMessage
 from bisq.core.network.p2p.storage.messages.remove_data_message import RemoveDataMessage
-from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.core.network.p2p.network.message_listener import MessageListener
