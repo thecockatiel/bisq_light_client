@@ -1,8 +1,8 @@
+from collections.abc import Callable, ItemsView
 import threading
 import weakref
 
-from typing import Iterator, List, Set, TypeVar, Generic
-from typing import Dict, TypeVar, Generic
+from typing import Iterator, Dict, List, Set, TypeVar, Generic
 
 T = TypeVar('T')
 
@@ -65,7 +65,7 @@ class ThreadSafeWeakSet(Generic[T]):
     def __iter__(self) -> Iterator[T]:
         with self._read_lock:
             # Create new set with only valid references
-            return (ref() for ref in self._set.copy() if ref() is not None)
+            return iter([ref() for ref in self._set.copy() if ref() is not None])
 
     def __contains__(self, item: T):
         with self._read_lock:
@@ -77,6 +77,7 @@ class ThreadSafeWeakSet(Generic[T]):
 
 K = TypeVar('K')
 V = TypeVar('V')
+R = TypeVar('R')  # Return type for callback
 
 class ConcurrentDict(Generic[K, V]):
     def __init__(self):
@@ -98,6 +99,14 @@ class ConcurrentDict(Generic[K, V]):
     def update(self, other: Dict[K, V]):
         with self._lock:
             self._dict.update(other)
+            
+    def items(self):
+        with self._lock:
+            return list(self._dict.items())
+    
+    def with_items(self, callback: Callable[[ItemsView[K, V]], R]) -> R:
+        with self._lock:
+            return callback(self._dict.items())
         
 class ConcurrentList(Generic[T]):
     def __init__(self):
