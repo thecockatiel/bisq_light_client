@@ -5,7 +5,9 @@ from datetime import datetime
 import tempfile
 from typing import Optional
 
+from bisq.core.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.logging import get_logger
+from resources import get_resource_path
 
 logger = get_logger(__name__)
 
@@ -34,7 +36,8 @@ def rolling_backup(dir_path: str, file_name: str, num_max_backup_files: int) -> 
             backup_file = backup_file_dir.joinpath(f"{datetime.now().timestamp()}_{file_name}") 
             
             try:
-                shutil.copy(str(orig_file), str(backup_file))
+                # Path supported on python 3.8+
+                shutil.copy(orig_file, backup_file)
                 
                 prune_backup(backup_file_dir, num_max_backup_files)
             except Exception as e:
@@ -103,3 +106,10 @@ def create_new_file(path: Path):
 
 def create_temp_file(prefix: Optional[str] = None, suffix: Optional[str] = None, dir: Optional[Path] = None):
     return Path(tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=dir)[1])
+
+def resource_to_file(resource_path: str, destination_path: Path):
+    # we dont have resources like java does, so we just copy the file from our resources directory in the root of the project
+    from_path = get_resource_path().joinpath(resource_path)
+    if not from_path.exists():
+        raise ResourceNotFoundException(str(from_path))
+    return shutil.copy(from_path, destination_path)
