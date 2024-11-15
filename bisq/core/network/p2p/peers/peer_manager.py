@@ -520,7 +520,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             for peer in peers_to_remove:
                 self.remove_reported_peer(peer)
         else:
-            logger.info(f"No need to purge reported peers.\n\tWe don't have more then {self.MAX_REPORTED_PEERS} reported peers yet.")
+            logger.trace(f"No need to purge reported peers.\n\tWe don't have more then {self.MAX_REPORTED_PEERS} reported peers yet.")
 
     def print_reported_peers(self):
         if self.reported_peers:
@@ -532,13 +532,13 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                     result += f"\n{peer}"
 
                 result += "\n------------------------------------------------------------\n"
-                logger.info(result)
+                logger.trace(result)
             logger.debug(f"Number of reported peers: {len(self.reported_peers)}")
 
     def print_new_reported_peers(self, reported_peers: Set["Peer"]):
         if self.PRINT_REPORTED_PEERS_DETAILS:
             peers_details = "\n\t".join(str(peer) for peer in reported_peers)
-            logger.info(f"We received new reportedPeers:\n\t{peers_details}")
+            logger.trace(f"We received new reportedPeers:\n\t{peers_details}")
         logger.debug(f"Number of new arrived reported peers: {len(reported_peers)}")
 
     def remove_persisted_peer(self, persisted_peer: "Peer") -> bool:
@@ -571,12 +571,14 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def purge_persisted_peers_if_exceeds(self):
         size = len(self.get_persisted_peers())
         if size > self.MAX_PERSISTED_PEERS:
-            logger.info(f"We have already {size} persisted peers which exceeds our limit of {self.MAX_PERSISTED_PEERS}." +
+            logger.trace(f"We have already {size} persisted peers which exceeds our limit of {self.MAX_PERSISTED_PEERS}." +
                     "We remove random peers from the persisted peers list.")
             # we don't use sorting by lastActivityDate to avoid attack vectors and keep it more random
             peers_to_remove = random.sample(self.get_persisted_peers(), size - self.MAX_PERSISTED_PEERS)
             for peer in peers_to_remove:
                 self.remove_persisted_peer(peer)
+        else:
+            logger.trace(f"No need to purge persisted peers.\n\tWe don't have more then {self.MAX_PERSISTED_PEERS} persisted peers yet.")
     
     ######################################################################################
     ######################################################################################
