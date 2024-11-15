@@ -65,6 +65,9 @@ class OfferPayloadBase(
 
     def get_ttl(self):
         return self.TTL
+    
+    def get_owner_node_address(self):
+        return self.owner_node_address
 
     def __str__(self) -> str:
         return (
