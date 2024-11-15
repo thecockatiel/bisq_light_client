@@ -157,4 +157,92 @@ class ConcurrentList(Generic[T]):
     def __contains__(self, item: T) -> bool:
         with self._read_lock:
             return item in self._list
-        
+
+class AtomicBoolean:
+    def __init__(self, initial: bool = False):
+        self._value = initial
+        self._lock = threading.Lock()
+
+    def get(self) -> bool:
+        with self._lock:
+            return self._value
+
+    def set(self, new_value: bool) -> None:
+        with self._lock:
+            self._value = new_value
+
+    def get_and_set(self, new_value: bool) -> bool:
+        """Atomically sets new value and returns the old value"""
+        with self._lock:
+            old_value = self._value
+            self._value = new_value
+            return old_value
+
+    def compare_and_set(self, expected: bool, new_value: bool) -> bool:
+        """Atomically sets the value to new_value if the current value equals expected"""
+        with self._lock:
+            if self._value == expected:
+                self._value = new_value
+                return True
+            return False
+
+    def __bool__(self) -> bool:
+        return self.get()
+
+class AtomicInt:
+    def __init__(self, initial: int = 0):
+        self._value = initial
+        self._lock = threading.Lock()
+
+    def get(self) -> int:
+        with self._lock:
+            return self._value
+
+    def set(self, new_value: int) -> None:
+        with self._lock:
+            self._value = new_value
+
+    def get_and_set(self, new_value: int) -> int:
+        """Atomically sets new value and returns the old value"""
+        with self._lock:
+            old_value = self._value
+            self._value = new_value
+            return old_value
+
+    def compare_and_set(self, expected: int, new_value: int) -> bool:
+        """Atomically sets the value to new_value if the current value equals expected"""
+        with self._lock:
+            if self._value == expected:
+                self._value = new_value
+                return True
+            return False
+
+    def add_and_get(self, delta: int) -> int:
+        """Atomically adds delta and returns the new value"""
+        with self._lock:
+            self._value += delta
+            return self._value
+
+    def get_and_add(self, delta: int) -> int:
+        """Atomically adds delta and returns the previous value"""
+        with self._lock:
+            old_value = self._value
+            self._value += delta
+            return old_value
+
+    def increment_and_get(self) -> int:
+        """Atomically increments by one and returns the new value"""
+        return self.add_and_get(1)
+
+    def decrement_and_get(self) -> int:
+        """Atomically decrements by one and returns the new value"""
+        return self.add_and_get(-1)
+
+    def get_and_increment(self) -> int:
+        """Atomically increments by one and returns the previous value"""
+        return self.get_and_add(1)
+
+    def get_and_decrement(self) -> int:
+        """Atomically decrements by one and returns the previous value"""
+        return self.get_and_add(-1)
+
