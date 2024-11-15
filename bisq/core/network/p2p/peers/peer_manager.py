@@ -232,7 +232,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         return node_address in self.seed_node_addresses if node_address else False
 
     def is_self(self, node_address: "NodeAddress") -> bool:
-        return node_address == self.network_node.node_address
+        return node_address == self.network_node.node_address.value
 
     def is_peer_banned(self, reason: "CloseConnectionReason", connection: "Connection") -> bool:
         return reason == CloseConnectionReason.PEER_BANNED and connection.peers_node_address is not None
@@ -625,7 +625,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         confirmed = self.network_node.get_confirmed_connections()
         if confirmed:
             result = "\n\n------------------------------------------------------------\n" \
-                    f"Connected peers for node {self.network_node.node_address}:"
+                    f"Connected peers for node {self.network_node.node_address.value}:"
             
             for connection in confirmed:
                 result += f"\n{connection.peers_node_address} {connection.connection_state.peer_type.name}"

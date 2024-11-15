@@ -23,6 +23,7 @@ from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
+from utils.data import SimpleObjectProperty
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
@@ -60,7 +61,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         self.shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
-        self.node_address: NodeAddress = None
+        self.node_address: SimpleObjectProperty[NodeAddress] = SimpleObjectProperty()
         self.server: Server = None
 
     @abstractmethod
@@ -94,7 +95,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         threading.current_thread().setName(
             f"NetworkNode.connectionExecutor:SendMessage-to-{to_truncated_string(peers_node_address.get_full_address(), 15)}"
         )
-        if peers_node_address == self.node_address:
+        if peers_node_address == self.node_address.value:
             logger.warning("We are sending a message to ourselves")
 
         startTs = get_time_ms()
@@ -145,7 +146,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 logger.debug(
                     f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                     + "NetworkNode created new outbound connection:"
-                    + "\nmy_node_address=" + self.node_address
+                    + "\nmy_node_address=" + self.node_address.value
                     + "\npeers_node_address=" + peers_node_address
                     + "\nuid=" + outbound_connection.uid
                     + "\nmessage=" + network_envelope
