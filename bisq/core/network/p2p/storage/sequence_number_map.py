@@ -41,17 +41,17 @@ class SequenceNumberMap(PersistableEnvelope):
     def __len__(self):
         return self.map.__len__()
     
-    def __contains__(self, key):
-        return self.map.__contains__(key)
+    def __contains__(self, key: StorageByteArray):
+        return key in self.map
     
-    def __getitem__(self, key):
-        return self.map.__getitem__(key)
+    def __getitem__(self, key: StorageByteArray) -> StorageMapValue:
+        return self.map[key]
     
-    def __setitem__(self, key, value):
-        self.map.__setitem__(key, value)
+    def __setitem__(self, key: StorageByteArray, value: StorageMapValue):
+        self.map[key] = value
             
-    def __delitem__(self, key) -> None:
-        self.map.__delitem__(key)
+    def __delitem__(self, key: StorageByteArray) -> None:
+        del self.map[key]
             
     def __iter__(self):
         return self.map.__iter__()
