@@ -12,8 +12,6 @@ from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.log_setup import get_logger
-from utils.dir import user_data_dir
-from utils.formatting import get_short_id
 
 logger = get_logger(__name__)
 
@@ -68,7 +66,7 @@ class FileTransferSender(FileTransferSession):
         
         # an empty block is sent as request to initiate file transfer, peer must ACK for transfer to continue
         self.data_awaiting_ack = FileTransferPart(
-            self.network_node.node_address,
+            self.network_node.node_address.value,
             self.full_trade_id,
             self.trader_id,
             str(uuid.uuid4()),
@@ -98,7 +96,7 @@ class FileTransferSender(FileTransferSession):
             return
 
         self.data_awaiting_ack = FileTransferPart(
-            self.network_node.node_address,
+            self.network_node.node_address.value,
             self.full_trade_id,
             self.trader_id,
             str(uuid.uuid4()),

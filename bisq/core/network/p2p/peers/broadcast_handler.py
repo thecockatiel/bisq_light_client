@@ -154,7 +154,7 @@ class BroadcastHandler:
 
     # Check if we have at least one message originated by ourselves
     def _requests_contain_own_message(self, broadcast_requests: List["BroadcastRequest"]):
-        my_address = self.network_node.node_address
+        my_address = self.network_node.node_address.value
         if not my_address:
             return False
 
