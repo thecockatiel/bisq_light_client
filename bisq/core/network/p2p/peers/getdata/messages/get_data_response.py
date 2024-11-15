@@ -38,7 +38,7 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
     # Added at v1.9.6
     was_truncated: bool
 
-    def to_proto_network_envelope(self) -> NetworkEnvelope:
+    def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         get_data_response = protobuf.GetDataResponse()
         get_data_response.data_set = [entry.to_proto_message() for entry in self.data_set]
         get_data_response.persistable_network_payload_items = [payload.to_proto_message() for payload in self.persistable_network_payload_set]
