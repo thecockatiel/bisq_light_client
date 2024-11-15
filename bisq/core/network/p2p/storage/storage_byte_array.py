@@ -51,5 +51,5 @@ class StorageByteArray(PersistablePayload):
         return self.bytes.hex()
 
     @staticmethod
-    def convert_bytes_set_to_bytearray_set(byte_set: Set["bytes"]):
+    def convert_bytes_set_to_bytearray_set(byte_set: Set["bytes"]) -> set["StorageByteArray"]:
         return {StorageByteArray(b) for b in byte_set} if byte_set else set()
