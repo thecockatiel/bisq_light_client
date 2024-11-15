@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Protocol
 
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 
-class DateSortedTruncatablePayload(PersistableNetworkPayload, Protocol, ABC):
+class DateSortedTruncatablePayload(PersistableNetworkPayload, ABC):
     """
     Marker interface for PersistableNetworkPayloads which get truncated at initial data response in case we exceed
     the max items defined for that type of object. The truncation happens on a sorted list where we use the date for
