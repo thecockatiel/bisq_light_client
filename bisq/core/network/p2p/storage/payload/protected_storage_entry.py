@@ -13,7 +13,7 @@ from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePay
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 from utils.clock import Clock
 

@@ -8,7 +8,7 @@ from bisq.core.network.p2p.file_transfer_part import FileTransferPart
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 
 from utils.formatting import get_short_id
 

@@ -6,7 +6,7 @@ from httpx_socks import SyncProxyTransport
 import bisq.core.common.version as Version
 from bisq.core.network.http.http_client import HttpClient
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from utils.time import get_time_ms
 
 logger = get_logger(__name__)

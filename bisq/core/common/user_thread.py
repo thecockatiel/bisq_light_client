@@ -4,7 +4,7 @@ import random
 from collections.abc import Callable
 from bisq.core.common.frame_rate_timer import FrameRateTimer
 from bisq.core.common.timer import Timer
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
  
 logger = get_logger(__name__)
 
