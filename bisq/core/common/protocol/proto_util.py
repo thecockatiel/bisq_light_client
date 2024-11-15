@@ -6,7 +6,7 @@ from google.protobuf import message
 from google.protobuf.any_pb2 import Any
 
 from bisq.core.common.proto import Proto
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 
 T = TypeVar('T', bound=message.Message)
 

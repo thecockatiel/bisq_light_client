@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from bisq.core.common.user_thread import UserThread
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from utils.time import get_time_ms
 
 logger = get_logger(__name__)

@@ -13,7 +13,7 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.string_utils import string_difference
 from bisq.core.util.volume_util import VolumeUtil
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 import proto.pb_pb2 as protobuf
 import re

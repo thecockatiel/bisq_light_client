@@ -1,6 +1,6 @@
 from typing import List, Set, Optional
 
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from .capability import Capability
 
 logger = get_logger(__name__)

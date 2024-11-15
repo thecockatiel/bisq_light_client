@@ -9,7 +9,7 @@ from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
 )
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)

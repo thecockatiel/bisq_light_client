@@ -13,7 +13,7 @@ from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

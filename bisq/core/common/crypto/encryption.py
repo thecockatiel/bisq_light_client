@@ -8,7 +8,7 @@ from cryptography.hazmat.backends import default_backend
 from bisq.core.common.crypto.crypto_exception import CryptoException
 from bisq.core.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.core.common.crypto.key_pair import KeyPair
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 
 logger = get_logger(__name__)
 

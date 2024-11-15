@@ -6,7 +6,7 @@ import tempfile
 from typing import Optional
 
 from bisq.core.common.file.resource_not_found_exception import ResourceNotFoundException
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from resources import get_resource_path
 
 logger = get_logger(__name__)

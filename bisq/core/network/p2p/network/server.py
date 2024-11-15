@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.inbound_connection import InboundConnection
-from bisq.logging import get_logger
+from bisq.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
