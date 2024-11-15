@@ -3,6 +3,6 @@ from dataclasses import dataclass
 
 from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 
-@dataclass
+@dataclass(kw_only=True)
 class BroadcastMessage(NetworkEnvelope, ABC):
     pass
