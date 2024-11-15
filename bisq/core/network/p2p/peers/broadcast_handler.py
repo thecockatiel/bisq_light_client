@@ -27,7 +27,7 @@ class BroadcastResultHandler(ABC):
         pass
 
 
-class BroadcastListener(ABC):
+class BroadcastHandlerListener(ABC):
     @abstractmethod
     def on_sufficiently_broadcast(
         self, broadcast_requests: List["BroadcastRequest"]
