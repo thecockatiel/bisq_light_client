@@ -343,7 +343,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             self.proto_output_stream.on_connection_shutdown()
             self.socket.close()
         except Socket.error as e:
-            logger.error(f"SocketException at shutdown might be expected. {e}")
+            logger.trace(f"SocketException at shutdown might be expected. {e}")
         except Exception as e:
             logger.error(f"Exception at shutdown. {e}")
         finally:

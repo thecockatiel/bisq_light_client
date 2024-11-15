@@ -52,7 +52,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
                 if is_new_version
                 else "As the requester version is not older as our historical store we do not add the data to the result map."
             )
-            logging.debug(
+            logging.trace(
                 f"The requester had version {requesters_version}. Our historical data store has version {store_version}.\n{details}"
             )
             

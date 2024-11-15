@@ -44,7 +44,7 @@ class RemovedPayloadsService(PersistedDataHost):
                 if date > cut_off_date:
                     self.removed_payloads_map.date_by_hashes[hash_key] = date
 
-            logger.debug(
+            logger.trace(
                 f"## read_persisted: removedPayloadsMap size={len(self.removed_payloads_map.date_by_hashes)}"
             )
             self.persistence_manager.request_persistence()
@@ -53,13 +53,13 @@ class RemovedPayloadsService(PersistedDataHost):
         self.persistence_manager.read_persisted(on_persisted, complete_handler)
 
     def was_removed(self, hash_of_payload: "StorageByteArray") -> bool:
-        logger.debug(
+        logger.trace(
             f"## called was_removed: hash_of_payload={hash_of_payload}, removed_payloads_map={self.removed_payloads_map}"
         )
         return hash_of_payload in self.removed_payloads_map.date_by_hashes
 
     def add_hash(self, hash_of_payload: "StorageByteArray") -> None:
-        logger.debug(
+        logger.trace(
             f"## called add_hash: hash_of_payload={hash_of_payload}, removed_payloads_map={self.removed_payloads_map}"
         )
         if hash_of_payload not in self.removed_payloads_map.date_by_hashes:

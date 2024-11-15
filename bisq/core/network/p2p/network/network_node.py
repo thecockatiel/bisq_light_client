@@ -248,11 +248,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
         if inbound_connection_optional is not None:
             connection = inbound_connection_optional
-            logger.info(
+            logger.trace(
                 f"We have found a connection in inBoundConnections. Connection.uid={connection.uid}"
             )
             if connection.stopped:
-                logger.info(
+                logger.trace(
                     f"We have a connection which is already stopped in inBoundConnections. Connection.uid={connection.uid}"
                 )
                 self.inbound_connections.remove(connection)
