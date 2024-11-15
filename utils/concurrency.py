@@ -103,6 +103,10 @@ class ConcurrentDict(Generic[K, V]):
     def items(self):
         with self._lock:
             return list(self._dict.items())
+            
+    def values(self):
+        with self._lock:
+            return list(self._dict.values())
     
     def with_items(self, callback: Callable[[ItemsView[K, V]], R]) -> R:
         with self._lock:
