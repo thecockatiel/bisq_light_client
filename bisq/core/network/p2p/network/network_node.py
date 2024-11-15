@@ -141,23 +141,16 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 network_proto_resolver=self.network_proto_resolver,
                 ban_filter=self.ban_filter,
             )
-            logger.debug(
-                f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                + "NetworkNode created new outbound connection:\n"
-                + "my_node_address="
-                + self.node_address
-                + "\n"
-                + "peers_node_address="
-                + peers_node_address
-                + "\n"
-                + "uid="
-                + outbound_connection.uid
-                + "\n"
-                + "message="
-                + network_envelope
-                + "\n"
-                + f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-            )
+            if logger.isEnabledFor("DEBUG"):
+                logger.debug(
+                    f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                    + "NetworkNode created new outbound connection:"
+                    + "\nmy_node_address=" + self.node_address
+                    + "\npeers_node_address=" + peers_node_address
+                    + "\nuid=" + outbound_connection.uid
+                    + "\nmessage=" + network_envelope
+                    + f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                )
             # can take a while when using tor
             outbound_connection.send_message(network_envelope)
             return outbound_connection
