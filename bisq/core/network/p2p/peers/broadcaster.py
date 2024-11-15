@@ -14,7 +14,7 @@ from proto.pb_pb2 import NodeAddress
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
-    from bisq.core.network.p2p.peers.broadcast_handler import BroadcastListener, BroadcastHandler
+    from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandlerListener, BroadcastHandler
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
 logger = get_logger(__name__)
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class BroadcastRequest:
     message: 'BroadcastMessage'
     sender: Optional['NodeAddress'] = None
-    listener: Optional['BroadcastListener'] = None
+    listener: Optional['BroadcastHandlerListener'] = None
 
 class Broadcaster(BroadcastResultHandler):
     BROADCAST_INTERVAL_MS = 2000
