@@ -69,11 +69,17 @@ class ThreadSafeWeakSet(Generic[T]):
 
     def __contains__(self, item: T):
         with self._read_lock:
-            return item in self._set
+            return weakref.ref(item) in self._set
 
     def __len__(self):
         with self._read_lock:
             return len(self._set)
+        
+    def cleanup(self):
+        """Remove dead references"""
+        with self._write_lock:
+            dead = {ref for ref in self._set if ref() is None}
+            self._set.difference_update(dead)
 
 K = TypeVar('K')
 V = TypeVar('V')
