@@ -9,7 +9,6 @@ from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.common.protocol.network.network_proto_resolver import (
     NetworkProtoResolver,
 )
-from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
@@ -22,7 +21,7 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.log_setup import get_logger
-from utils.concurrency import ThreadSafeSet
+from utils.concurrency import AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
@@ -324,32 +323,30 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             logger.info(f"Shutdown {num_connections} connections")
 
-            completed_count = threading.Lock()
-            count = 0
+            shutdown_completed = AtomicInt()
 
             def timeout_handler():
                 logger.info("Shutdown completed due timeout")
                 if shutdown_complete_handler:
                     shutdown_complete_handler()
 
-            timer: Timer = UserThread.run_after(
+            timer = UserThread.run_after(
                 timeout_handler, timedelta(milliseconds=1500)
             )
 
             def on_connection_shutdown(connection: "Connection"):
-                nonlocal count
-                with completed_count:
-                    count += 1
-                    logger.info(
-                        f"Shutdown of node {connection.peers_node_address} completed"
-                    )
-                    if count == num_connections:
-                        logger.info("Shutdown completed with all connections closed")
-                        timer.stop()
-                        self.connection_executor.shutdown(wait=False)
-                        self.send_message_executor.shutdown(wait=False)
-                        if shutdown_complete_handler:
-                            shutdown_complete_handler()
+                nonlocal shutdown_completed
+                shutdown_completed.get_and_increment()
+                logger.info(
+                    f"Shutdown of node {connection.peers_node_address} completed"
+                )
+                if shutdown_completed.get() == num_connections:
+                    logger.info("Shutdown completed with all connections closed")
+                    timer.stop()
+                    self.connection_executor.shutdown(wait=False)
+                    self.send_message_executor.shutdown(wait=False)
+                    if shutdown_complete_handler:
+                        shutdown_complete_handler()
 
             for connection in all_connections:
                 connection.shut_down(
