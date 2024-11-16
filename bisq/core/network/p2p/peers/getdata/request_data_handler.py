@@ -26,23 +26,22 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class RequestDataHandlerListener:
-    def on_complete(self, was_truncated: bool):
-        pass
-
-    def on_fault(self, error_message: str, connection: Optional["Connection"]):
-        pass
-
-
 class RequestDataHandler(MessageListener):
     TIMEOUT = 240
+    
+    class Listener:
+        def on_complete(self, was_truncated: bool):
+            pass
+
+        def on_fault(self, error_message: str, connection: Optional["Connection"]):
+            pass
 
     def __init__(
         self,
         network_node: "NetworkNode",
         data_storage: "P2PDataStorage",
         peer_manager: "PeerManager",
-        listener: "RequestDataHandlerListener",
+        listener: "Listener",
     ):
         self.network_node = network_node
         self.data_storage = data_storage
