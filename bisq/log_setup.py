@@ -1,4 +1,11 @@
 import logging
+from logging.handlers import RotatingFileHandler
+import os
+import re
+
+from bisq.core.common.config.config import CONFIG
+
+DEFAULT_LOG_LEVEL=logging.INFO
 
 def addLoggingLevel(levelName, levelNum, methodName=None):
     """
@@ -51,18 +58,46 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 
 addLoggingLevel('TRACE', logging.DEBUG - 5)
 
-# TODO: setup proper logging.
-
 bisq_logger = logging.getLogger("bisq_light")
-bisq_logger.setLevel(logging.DEBUG)
 
 def get_logger(name: str) -> logging.Logger:
     if name.startswith("bisq_light."):
         name = name[11:]
     return bisq_logger.getChild(name)
 
-_logger = get_logger(__name__)
-_logger.setLevel(logging.INFO)
+_rolling_ext_re = re.compile(r"^\.(\d+)+$")
+class CustomRotatingFileHandler(RotatingFileHandler):
+    def rotation_filename(self, default_name):
+        """Modify the rotation filename to generate name.count.ext instead of name.ext.count"""
+        file_root, file_ext = os.path.splitext(default_name)
+        if _rolling_ext_re.match(file_ext):
+            rotation_num = file_ext.lstrip(".")
+            file_root, file_ext = file_root.rsplit(".", 1)
+        if rotation_num:
+            return f"{file_root}_{rotation_num}.{file_ext}"
+        return default_name
 
-def configurelogging():
-    pass
+def configurelogging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
+    # Create formatter with pattern matching Java configuration
+    formatter = logging.Formatter(
+        fmt="%(asctime)s [%(threadName)s] %(levelname)-5s %(name)-15s: %(message)s%(exc_info)s",
+        datefmt="%b-%d %H:%M:%S"
+    )
+    
+    # Create and configure rotating file handler with custom class
+    file_handler = CustomRotatingFileHandler(
+        filename=log_file,
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=20,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(DEFAULT_LOG_LEVEL)
+
+    bisq_logger.addHandler(file_handler)
+    bisq_logger.setLevel(logging.DEBUG)
+
+    # Set specific logger levels
+    get_logger("utils.tor").setLevel(logging.WARN)
+
+configurelogging()
