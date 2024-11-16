@@ -124,6 +124,29 @@ class ThreadSafeDict(Generic[K, V]):
             self._dict[key] = result
             return result
         
+    def __contains__(self, key: K) -> bool:
+        with self._lock:
+            return key in self._dict
+        
+    def __len__(self):
+        with self._lock:
+            return len(self._dict)
+    
+    def __getitem__(self, key: K) -> V:
+        with self._lock:
+            return self._dict[key]
+    
+    def __setitem__(self, key: K, value: V):
+        return self.put(key, value)
+            
+    def __delitem__(self, key: K) -> None:
+        with self._lock:
+            del self._dict[key]
+            
+    def __iter__(self):
+        with self._lock:
+            return iter(self._dict.copy())
+        
 class ThreadSafeList(Generic[T]):
     def __init__(self):
         self._list: List[T] = []
@@ -262,3 +285,5 @@ class AtomicInt:
         """Atomically decrements by one and returns the previous value"""
         return self.get_and_add(-1)
 
+    def __bool__(self) -> bool:
+        return bool(self.get())
