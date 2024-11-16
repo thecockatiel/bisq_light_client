@@ -56,7 +56,7 @@ class ProtoOutputStream:
         duration = (time.time_ns() - ts) // 1_000_000
         if duration > 10_000:
             logger.info(f"Sending {envelope.__class__.__name__} to peer took {duration / 1000.0} sec.")
-        self.statistic.add_sent_bytes(proto.get_serialized_size())
+        self.statistic.add_sent_bytes(proto.ByteSize())
         self.statistic.add_sent_message(envelope)
         if not isinstance(envelope, KeepAliveMessage):
             self.statistic.update_last_activity_timestamp()
