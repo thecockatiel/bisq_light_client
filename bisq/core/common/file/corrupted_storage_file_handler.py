@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 

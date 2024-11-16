@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from bisq.core.common.crypto.key_entry import KeyEntry
 from bisq.core.common.crypto.key_pair import KeyPair
 from bisq.core.common.file.file_util import rolling_backup
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.dir import check_dir
 
 if TYPE_CHECKING:

@@ -20,7 +20,7 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 )
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string

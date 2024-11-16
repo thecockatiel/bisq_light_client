@@ -7,7 +7,7 @@ from collections.abc import Callable
 from bisq.core.common.file.file_util import resource_to_file
 from bisq.core.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 
 if TYPE_CHECKING:
     from bisq.core.common.persistence.persistence_manager import PersistenceManager

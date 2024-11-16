@@ -10,7 +10,7 @@ from bisq.core.common.protocol.proto_util import ProtoUtil
 from bisq.core.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 from utils.formatting import get_short_id
 

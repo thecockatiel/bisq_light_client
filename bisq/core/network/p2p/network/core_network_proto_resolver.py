@@ -53,7 +53,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request impor
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
 from bisq.core.filter.Filter import Filter
 from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import proto.pb_pb2 as protobuf
 

@@ -3,7 +3,7 @@ from typing import Union
 
 from bisq.core.common.protocol.proto_resolver import ProtoResolver
 from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.clock import Clock
 from utils.dummy import DummyProtobufHolder
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from bisq.core.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
 
