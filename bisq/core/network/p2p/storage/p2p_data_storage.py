@@ -39,7 +39,7 @@ from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload impo
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
 from bisq.log_setup import get_logger
-from utils.concurrency import AtomicBoolean, AtomicInt, ConcurrentDict, ThreadSafeSet
+from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
 from bisq.core.common.persistence.persistence_manager import PersistenceManager
 from utils.formatting import to_truncated_string
 from bisq.core.common.protocol.network.network_payload import NetworkPayload
@@ -84,7 +84,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         self.protected_data_store_service = protected_data_store_service
         self.resource_data_store_service = resource_data_store_service
         
-        self.map: ConcurrentDict["StorageByteArray", "ProtectedStorageEntry"] = ConcurrentDict()
+        self.map: ThreadSafeDict["StorageByteArray", "ProtectedStorageEntry"] = ThreadSafeDict()
         self.hash_map_changed_listeners: ThreadSafeSet["HashMapChangedListener"] = ThreadSafeSet()
         self.remove_expired_entries_timer: Timer = None
         
