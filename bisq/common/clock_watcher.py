@@ -3,8 +3,8 @@ import threading
 from abc import ABC, abstractmethod
 from typing import List
 
-from bisq.core.common.user_thread import UserThread
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.user_thread import UserThread
+from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
 logger = get_logger(__name__)

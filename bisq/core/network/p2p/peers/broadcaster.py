@@ -5,10 +5,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from copy import copy
 
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from proto.pb_pb2 import NodeAddress
 from utils.concurrency import ThreadSafeSet
 from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler

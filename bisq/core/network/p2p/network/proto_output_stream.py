@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
 from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
 
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.network.statistic import Statistic
     from google.protobuf.message import Message
     from io import BufferedWriter

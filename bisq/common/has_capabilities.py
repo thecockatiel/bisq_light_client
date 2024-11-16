@@ -1,7 +1,7 @@
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bisq.core.common.capabilities import Capabilities
+    from bisq.common.capabilities import Capabilities
 
 class HasCapabilities():
     def __init__(self, *args, **kwargs):

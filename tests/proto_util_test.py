@@ -2,7 +2,7 @@ from enum import Enum
 import unittest
 from google.protobuf.internal.enum_type_wrapper import EnumTypeWrapper
 
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 
 class TestProtoUtil(unittest.TestCase):
     class MockProtoEnum:

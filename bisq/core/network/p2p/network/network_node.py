@@ -5,11 +5,11 @@ from socket import socket as Socket
 import threading
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.protocol.network.network_proto_resolver import (
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_proto_resolver import (
     NetworkProtoResolver,
 )
-from bisq.core.common.user_thread import UserThread
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.message_listener import MessageListener
@@ -20,7 +20,7 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 )
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string
@@ -30,7 +30,7 @@ from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.setup_listener import SetupListener
     from bisq.core.network.p2p.network.inbound_connection import InboundConnection
-    from bisq.core.common.capabilities import Capabilities
+    from bisq.common.capabilities import Capabilities
     from bisq.core.network.p2p.network.connection import Connection
 
 logger = get_logger(__name__)

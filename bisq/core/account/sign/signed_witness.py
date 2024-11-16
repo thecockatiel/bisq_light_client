@@ -4,11 +4,11 @@ from datetime import timedelta
 from enum import IntEnum
 from typing import ClassVar
 import time
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.capability import Capability
-from bisq.core.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.capabilities import Capabilities
+from bisq.common.capability import Capability
+from bisq.common.crypto.hash import get_sha256_ripemd160_hash
+from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
 )

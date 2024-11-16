@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Set
 
-from bisq.core.common.protocol.network.network_payload import NetworkPayload 
+from bisq.common.protocol.network.network_payload import NetworkPayload 
 
 if TYPE_CHECKING:
-    from bisq.core.common.capability import Capability
+    from bisq.common.capability import Capability
 
 class CapabilityRequiringPayload(NetworkPayload, ABC):
     """

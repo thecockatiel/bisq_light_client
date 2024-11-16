@@ -4,19 +4,19 @@ import random
 import threading
 from typing import TYPE_CHECKING, Optional
 
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.formatting import readable_file_size
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-    from bisq.core.common.protocol.network.network_payload import NetworkPayload
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_payload import NetworkPayload
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.network.connection import Connection

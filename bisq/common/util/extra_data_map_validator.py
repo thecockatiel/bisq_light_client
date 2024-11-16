@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 

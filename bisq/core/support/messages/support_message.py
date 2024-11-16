@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.uid_message import UidMessage
 

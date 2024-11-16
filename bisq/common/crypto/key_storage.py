@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.backends import default_backend
-from bisq.core.common.crypto.key_entry import KeyEntry
-from bisq.core.common.crypto.key_pair import KeyPair
-from bisq.core.common.file.file_util import rolling_backup
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.crypto.key_entry import KeyEntry
+from bisq.common.crypto.key_pair import KeyPair
+from bisq.common.file.file_util import rolling_backup
+from bisq.common.setup.log_setup import get_logger
 from utils.dir import check_dir
 
 if TYPE_CHECKING:
-    from bisq.core.common.crypto.key_ring import KeyRing
+    from bisq.common.crypto.key_ring import KeyRing
 
 logger = get_logger(__name__)
 

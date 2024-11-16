@@ -2,16 +2,16 @@ from datetime import timedelta
 from pathlib import Path
 import zipfile
 import uuid
-from bisq.core.common.config.config import CONFIG
-from bisq.core.common.file.file_util import does_file_contain_keyword
-from bisq.core.common.user_thread import UserThread
+from bisq.common.config.config import CONFIG
+from bisq.common.file.file_util import does_file_contain_keyword
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 

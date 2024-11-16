@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.uid_message import UidMessage
 

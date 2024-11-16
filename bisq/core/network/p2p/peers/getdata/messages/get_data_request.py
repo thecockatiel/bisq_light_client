@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Set, Optional
 
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.initial_data_request import InitialDataRequest
-import bisq.core.common.version as Version
+import bisq.common.version as Version
 
 @dataclass(kw_only=True)
 class GetDataRequest(NetworkEnvelope, ExtendedDataSizePermission, InitialDataRequest):

@@ -2,8 +2,8 @@
 from typing import TYPE_CHECKING, Union
 from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
-from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
-from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.close_connection_message import CloseConnectionMessage
@@ -53,12 +53,12 @@ from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request impor
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
 from bisq.core.filter.Filter import Filter
 from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_payload import NetworkPayload
+    from bisq.common.protocol.network.network_payload import NetworkPayload
 
 logger = get_logger(__name__)
 

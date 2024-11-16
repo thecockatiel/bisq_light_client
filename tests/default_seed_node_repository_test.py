@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from typing import List, Optional
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.seed.default_seed_node_repository import DefaultSeedNodeRepository
-from bisq.core.common.config.config import Config
+from bisq.common.config.config import Config
 
 class TestDefaultSeedNodeRepository(unittest.TestCase):
     def setUp(self):

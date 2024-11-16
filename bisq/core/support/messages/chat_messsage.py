@@ -6,7 +6,7 @@ from typing import ClassVar, List, Optional
 from uuid import uuid4
 from weakref import ref
 
-from bisq.core.common.user_thread import UserThread
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.attachment import Attachment
 from bisq.core.support.dispute.dispute import Dispute

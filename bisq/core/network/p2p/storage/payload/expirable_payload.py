@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.network.network_payload import NetworkPayload
 
 class ExpirablePayload(NetworkPayload, ABC):
     """

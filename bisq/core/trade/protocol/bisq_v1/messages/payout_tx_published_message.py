@@ -3,7 +3,7 @@ from typing import Optional
 import uuid
 
 from bisq.core.account.sign.signed_witness import SignedWitness
-import bisq.core.common.version as Version
+import bisq.common.version as Version
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
     TradeMailboxMessage,

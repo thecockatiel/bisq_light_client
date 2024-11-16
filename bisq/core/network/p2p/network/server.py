@@ -5,13 +5,13 @@ from collections.abc import Callable
 
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.inbound_connection import InboundConnection
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.message_listener import MessageListener
     from bisq.core.network.p2p.network.connection_listener import ConnectionListener
-    from bisq.core.common.protocol.network.network_proto_resolver import (
+    from bisq.common.protocol.network.network_proto_resolver import (
         NetworkProtoResolver,
     )
     from bisq.core.network.p2p.network.ban_filter import BanFilter

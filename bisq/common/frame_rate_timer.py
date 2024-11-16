@@ -2,8 +2,8 @@ import uuid
 from collections.abc import Callable
 from datetime import timedelta
 
-from bisq.core.common.master_timer import MasterTimer
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.master_timer import MasterTimer
+from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 from .timer import Timer
 

@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 import json
 from typing import List, Optional
 
-from bisq.core.common.crypto.hash import get_sha256_hash
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.crypto.hash import get_sha256_hash
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_payload_base import OfferPayloadBase

@@ -9,7 +9,7 @@ import zlib
 import struct
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_payload import NetworkPayload
+    from bisq.common.protocol.network.network_payload import NetworkPayload
 
 def get_sha256_hash(data: bytes):
     hasher = hashes.Hash(hashes.SHA256(), backend=default_backend())

@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, List, Optional
 from abc import ABC, abstractmethod
 import random
 
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeSet
 

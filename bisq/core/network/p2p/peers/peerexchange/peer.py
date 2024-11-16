@@ -3,10 +3,10 @@ from google.protobuf.message import Message
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.has_capabilities import HasCapabilities
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.capabilities import Capabilities
+from bisq.common.has_capabilities import HasCapabilities
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.network.p2p.network.supported_capabilities_listener import SupportedCapabilitiesListener
 from bisq.core.network.p2p.node_address import NodeAddress
 

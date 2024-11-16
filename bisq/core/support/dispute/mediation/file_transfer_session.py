@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from datetime import timedelta, datetime 
 from typing import Optional
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.user_thread import UserThread
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
@@ -11,7 +11,7 @@ from bisq.core.network.p2p.network.connection import Connection
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.formatting import get_short_id
 from utils.time import get_time_ms
 

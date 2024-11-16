@@ -1,4 +1,4 @@
-from bisq.core.common.crypto.hash import get_keccak1600_hash
+from bisq.common.crypto.hash import get_keccak1600_hash
 
 
 class CryptoNoteException(Exception):

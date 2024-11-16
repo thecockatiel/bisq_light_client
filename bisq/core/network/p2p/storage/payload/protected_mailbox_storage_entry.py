@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
-from bisq.core.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, dsa
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
 logger = get_logger(__name__)
 

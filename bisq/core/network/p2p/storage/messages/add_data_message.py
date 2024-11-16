@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import cast
-from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry

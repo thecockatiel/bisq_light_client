@@ -9,7 +9,7 @@ import proto.pb_pb2 as protobuf
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import (
+    from bisq.common.protocol.network.network_proto_resolver import (
         NetworkProtoResolver,
     )
 

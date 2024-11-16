@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Union
-from bisq.core.common.payload import Payload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.payload import Payload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:

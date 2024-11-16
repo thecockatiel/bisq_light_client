@@ -3,15 +3,15 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
-from bisq.core.common.user_thread import UserThread
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.user_thread import UserThread
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict
 from utils.data import SimpleProperty
 from utils.formatting import readable_file_size
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 logger = get_logger(__name__)
 

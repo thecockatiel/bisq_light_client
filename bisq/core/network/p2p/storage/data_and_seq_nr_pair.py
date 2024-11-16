@@ -1,8 +1,8 @@
 
 # extracted from P2PDataStorage into its own file
 from dataclasses import dataclass
-from bisq.core.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
+from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 import proto.pb_pb2 as protobuf
 

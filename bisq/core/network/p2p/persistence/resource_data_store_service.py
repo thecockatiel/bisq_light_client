@@ -4,7 +4,7 @@ from collections.abc import Callable
 from utils.concurrency import AtomicInt
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+    from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
     from bisq.core.network.p2p.persistence.store_service import StoreService 
  
 class ResourceDataStoreService:

@@ -1,6 +1,6 @@
 import unittest
 
-from bisq.core.common.crypto.encryption import Encryption 
+from bisq.common.crypto.encryption import Encryption 
 
 class TestEncryption(unittest.TestCase):
     def setUp(self):

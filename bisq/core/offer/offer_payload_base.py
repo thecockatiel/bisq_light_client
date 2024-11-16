@@ -9,7 +9,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import Prot
 from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload import RequiresOwnerIsOnlinePayload
 
 if TYPE_CHECKING:
-    from bisq.core.common.crypto.pub_key_ring import PubKeyRing
+    from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.offer.offer_direction import OfferDirection
 

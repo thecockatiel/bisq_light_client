@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field 
 from typing import TYPE_CHECKING, Optional
 from google.protobuf.message import Message
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.price import Price
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -13,7 +13,7 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.string_utils import string_difference
 from bisq.core.util.volume_util import VolumeUtil
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 import proto.pb_pb2 as protobuf
 import re

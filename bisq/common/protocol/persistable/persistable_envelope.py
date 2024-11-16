@@ -1,4 +1,4 @@
-from bisq.core.common.envelope import Envelope
+from bisq.common.envelope import Envelope
 from google.protobuf.message import Message
 
 class PersistableEnvelope(Envelope):

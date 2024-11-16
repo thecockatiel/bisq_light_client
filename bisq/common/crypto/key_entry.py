@@ -1,7 +1,7 @@
 from enum import Enum
 
-from bisq.core.common.crypto.encryption import Encryption
-from bisq.core.common.crypto.sig import Sig
+from bisq.common.crypto.encryption import Encryption
+from bisq.common.crypto.sig import Sig
 
 
 class KeyEntry(Enum):

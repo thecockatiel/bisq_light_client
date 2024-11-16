@@ -1,5 +1,5 @@
 import unittest
-from bisq.core.common.crypto.hash import (
+from bisq.common.crypto.hash import (
     get_keccak1600_hash,
     get_sha256_hash,
     get_sha256_hash_from_integer,

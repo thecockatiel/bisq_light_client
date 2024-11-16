@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 import proto.pb_pb2 as protobuf
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.network.network_payload import NetworkPayload
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

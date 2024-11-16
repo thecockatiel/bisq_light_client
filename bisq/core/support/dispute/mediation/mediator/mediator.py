@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
 import proto.pb_pb2 as protobuf

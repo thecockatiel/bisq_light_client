@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage
 import proto.pb_pb2 as protobuf

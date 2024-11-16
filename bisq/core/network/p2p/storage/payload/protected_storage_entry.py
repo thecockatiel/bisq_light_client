@@ -3,24 +3,24 @@ from google.protobuf import message as Message
 
 from typing import TYPE_CHECKING
 
-from bisq.core.common.crypto.crypto_exception import CryptoException
-from bisq.core.common.crypto.hash import get_32_byte_hash
-from bisq.core.common.crypto.sig import Sig, dsa
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.crypto.crypto_exception import CryptoException
+from bisq.common.crypto.hash import get_32_byte_hash
+from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.network.p2p.storage.data_and_seq_nr_pair import DataAndSeqNrPair
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 from utils.clock import Clock
 
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
 logger = get_logger(__name__)
 

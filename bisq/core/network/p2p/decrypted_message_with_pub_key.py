@@ -1,12 +1,12 @@
 
 from typing import TYPE_CHECKING
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.common.crypto.sig import Sig, dsa
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.crypto.sig import Sig, dsa
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 class DecryptedMessageWithPubKey(PersistablePayload):
     def __init__(self, network_envelope: 'NetworkEnvelope', signature_pub_key: dsa.DSAPublicKey = None, signature_pub_key_bytes: bytes = None):

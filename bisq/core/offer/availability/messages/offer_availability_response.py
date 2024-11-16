@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from bisq.core.common.capabilities import Capabilities
+from bisq.common.capabilities import Capabilities
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.offer.availability.availability_result import AvailabilityResult

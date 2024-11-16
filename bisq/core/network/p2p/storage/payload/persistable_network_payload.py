@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload 
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload 
 
 if TYPE_CHECKING:
     import proto.pb_pb2 as protobuf
-    from bisq.core.common.protocol.proto_resolver import ProtoResolver
+    from bisq.common.protocol.proto_resolver import ProtoResolver
 
 class PersistableNetworkPayload(NetworkPayload, PersistablePayload, ABC):
     """

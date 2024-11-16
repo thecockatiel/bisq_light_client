@@ -1,5 +1,5 @@
 from enum import Enum, IntEnum
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 import proto.pb_pb2 as protobuf
 
 class OfferDirection(IntEnum):

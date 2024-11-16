@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 from bitcoinj.script.script import ScriptType
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 
 # TODO: incomplete
 @dataclass(kw_only=True)

@@ -1,6 +1,6 @@
 import unittest
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.capability import Capability
+from bisq.common.capabilities import Capabilities
+from bisq.common.capability import Capability
 
 class TestCapabilities(unittest.TestCase):
     def setUp(self):

@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 from typing import ClassVar
 import uuid
-from bisq.core.common.crypto.sealed_and_signed import SealedAndSigned
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.crypto.sealed_and_signed import SealedAndSigned
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 logger =  get_logger(__name__)

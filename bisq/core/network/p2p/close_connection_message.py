@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 import proto.pb_pb2 as protobuf
 
 @dataclass(kw_only=True)

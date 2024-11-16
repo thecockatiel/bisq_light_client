@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, Optional, Dict
 from dataclasses import dataclass
 
-from bisq.core.common.util.extra_data_map_validator import ExtraDataMapValidator
+from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.network.p2p.storage.messages.add_once_payload import AddOncePayload
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
-from bisq.core.common.setup.log_setup import get_logger
-from bisq.core.common.crypto.sig import Sig, dsa
+from bisq.common.setup.log_setup import get_logger
+from bisq.common.crypto.sig import Sig, dsa
 
 import proto.pb_pb2 as protobuf
 
