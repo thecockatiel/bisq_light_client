@@ -332,7 +332,7 @@ class PersistenceManager(Generic[T]):
         if not self.timer:
             def run():
                 self.persist_now()
-                UserThread.execute(lambda: self._clear_timer())
+                UserThread.execute(self._clear_timer)
             self.timer = UserThread.run_after(run, timedelta(milliseconds=self.source.delay))
 
     def force_persist_now(self):
