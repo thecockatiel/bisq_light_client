@@ -7,6 +7,8 @@ from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMe
 from proto.delimited_protobuf import write_delimited
 from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
 from bisq.log_setup import get_logger
+from utils.concurrency import AtomicBoolean
+from utils.time import get_time_ms
 
 logger = get_logger(__name__)
 
@@ -22,7 +24,7 @@ class ProtoOutputStream:
         self.socket = socket
         self.output_stream = output_stream
         self.statistic = statistic
-        self.is_connection_active = True
+        self.is_connection_active = AtomicBoolean(True)
         self.lock = RLock()
 
     def write_envelope(self, envelope: 'NetworkEnvelope'):
@@ -30,14 +32,14 @@ class ProtoOutputStream:
             try:
                 self.write_envelope_or_throw(envelope)
             except IOError as e:
-                if not self.is_connection_active:
+                if not self.is_connection_active.get():
                     # Connection was closed by us.
                     return
                 logger.error("Failed to write envelope", e)
                 raise BisqRuntimeException("Failed to write envelope", e)
 
     def on_connection_shutdown(self):
-        self.is_connection_active = False
+        self.is_connection_active.set(False)
         acquired_lock = self.try_to_acquire_lock()
         if not acquired_lock:
             return
@@ -49,11 +51,11 @@ class ProtoOutputStream:
             self.lock.release()
 
     def write_envelope_or_throw(self, envelope: 'NetworkEnvelope'):
-        ts = time.time_ns()
+        ts = get_time_ms()
         proto = envelope.to_proto_network_envelope()
         write_delimited(self.output_stream, proto)
         self.output_stream.flush()
-        duration = (time.time_ns() - ts) // 1_000_000
+        duration = get_time_ms() - ts
         if duration > 10_000:
             logger.info(f"Sending {envelope.__class__.__name__} to peer took {duration / 1000.0} sec.")
         self.statistic.add_sent_bytes(proto.ByteSize())
