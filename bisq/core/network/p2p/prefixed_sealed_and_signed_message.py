@@ -21,6 +21,9 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
     # We cannot make it nullable as not updated nodes would get a nullPointer exception at protobuf serialisation.
     address_prefix_hash: bytes = field(default_factory=lambda: b'')
     uid: str = field(default_factory=lambda: str(uuid.uuid4()))
+    
+    def __post_init__(self):
+        assert self.sender_node_address, "sender_node_address must not be null at PrefixedSealedAndSignedMessage"
 
     def to_proto_network_envelope(self) -> NetworkEnvelope:
         proto_message = protobuf.PrefixedSealedAndSignedMessage(

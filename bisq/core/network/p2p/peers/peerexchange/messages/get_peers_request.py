@@ -20,8 +20,7 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def __post_init__(self):
-        if self.sender_node_address is None:
-            raise ValueError("sender_node_address must not be null at GetPeersRequest")
+        assert self.sender_node_address, "sender_node_address must not be null at GetPeersRequest"
 
     # PROTO BUFFER
 

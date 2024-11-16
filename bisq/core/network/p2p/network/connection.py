@@ -288,8 +288,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     ####################################
 
     def set_peers_node_address(self, peerNodeAddress: 'NodeAddress'):
-        if peerNodeAddress is None:
-            raise ValueError("peerNodeAddress must not be null")
+        assert peerNodeAddress, "peerNodeAddress must not be null"
         self.peers_node_address = peerNodeAddress
         from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         if isinstance(self, InboundConnection):
@@ -455,8 +454,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def process_senders_node_address_message(self, senders_node_address_message: SendersNodeAddressMessage) -> bool:
         sender_node_address = senders_node_address_message.get_sender_node_address()
-        if sender_node_address is None:
-            raise ValueError("sender_node_address must not be null at SendersNodeAddressMessage")
+        assert sender_node_address, "sender_node_address must not be null at SendersNodeAddressMessage"
         
         if self.peers_node_address:
             if self.peers_node_address != sender_node_address:

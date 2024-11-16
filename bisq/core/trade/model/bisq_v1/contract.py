@@ -71,9 +71,9 @@ class Contract(NetworkPayload):
         taker_payment_method_id = (
             self.taker_payment_method_id or self.offer_payload.payment_method_id
         )
-
-        if not maker_payment_method_id or not taker_payment_method_id:
-            raise ValueError("Payment method IDs cannot be None")
+        
+        assert maker_payment_method_id, "makerPaymentMethodId must not be null"
+        assert taker_payment_method_id, "takerPaymentMethodId must not be null"
 
         # For SEPA offers we accept also SEPA_INSTANT takers
         # Otherwise both ids need to be the same
