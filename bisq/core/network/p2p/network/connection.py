@@ -38,7 +38,7 @@ from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabi
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms

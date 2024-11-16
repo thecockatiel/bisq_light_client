@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 from bisq.core.common.user_thread import UserThread
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict
 from utils.data import SimpleProperty
 from utils.formatting import readable_file_size

@@ -5,7 +5,7 @@ import platform
 import os
 import re
 
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.network import download_file 
 import tarfile
 from utils.dir import user_data_dir

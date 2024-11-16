@@ -15,7 +15,7 @@ from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 from proto.delimited_protobuf import read_delimited, write_delimited
 import proto.pb_pb2 as protobuf
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import check_dir
 from utils.time import get_time_ms

@@ -14,7 +14,7 @@ from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
 from bisq.core.common.config.config import CONFIG
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeList
 from utils.time import get_time_ms
 

@@ -38,7 +38,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import Prot
 from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload import RequiresOwnerIsOnlinePayload
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
 from bisq.core.common.persistence.persistence_manager import PersistenceManager
 from utils.formatting import to_truncated_string

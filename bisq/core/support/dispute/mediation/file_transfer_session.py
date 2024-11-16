@@ -11,7 +11,7 @@ from bisq.core.network.p2p.network.connection import Connection
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.formatting import get_short_id
 from utils.time import get_time_ms
 

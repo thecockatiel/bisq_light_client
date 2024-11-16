@@ -9,7 +9,7 @@ from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 
 from utils.formatting import readable_file_size
 import proto.pb_pb2 as protobuf

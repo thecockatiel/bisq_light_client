@@ -10,7 +10,7 @@ from bisq.core.network.p2p.network.close_connection_reason import CloseConnectio
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.formatting import readable_file_size
 from utils.time import get_time_ms
 

@@ -5,7 +5,7 @@ from bisq.core.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.anonymous_message import AnonymousMessage
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 
 import proto.pb_pb2 as protobuf
 

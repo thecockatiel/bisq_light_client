@@ -8,7 +8,7 @@ from bisq.core.network.p2p.persistence.removed_payloads_map import RemovedPayloa
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import (
     MailboxStoragePayload,
 )
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

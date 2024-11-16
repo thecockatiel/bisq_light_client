@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 from bisq.core.common.crypto.sig import Sig, dsa
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
-from bisq.log_setup import get_logger
+from bisq.core.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import proto.pb_pb2 as protobuf
 
