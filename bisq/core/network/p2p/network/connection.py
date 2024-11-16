@@ -60,7 +60,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     PERMITTED_MESSAGE_SIZE = 200 * 1024  # 200 kb
     MAX_PERMITTED_MESSAGE_SIZE = 10 * 1024 * 1024  # 10 MB (425 offers resulted in about 660 kb, mailbox msg will add more to it) offer has usually 2 kb, mailbox 3kb.
     # TODO decrease limits again after testing
-    SOCKET_TIMEOUT = int(timedelta(seconds=240).total_seconds() * 1000)
+    SOCKET_TIMEOUT_SEC = 240
     SHUTDOWN_TIMEOUT = 100 # ms
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
@@ -98,7 +98,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def init(self, peers_node_address: Optional['NodeAddress']):
         try:
-            self.socket.settimeout(Connection.SOCKET_TIMEOUT)
+            self.socket.settimeout(Connection.SOCKET_TIMEOUT_SEC)
             
             self.proto_output_stream = ProtoOutputStream(self.socket.makefile('wb'), self.statistic)
             self.proto_input_stream = self.socket.makefile('rb')
