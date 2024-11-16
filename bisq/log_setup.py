@@ -7,6 +7,7 @@ from bisq.core.common.config.config import CONFIG
 
 DEFAULT_LOG_LEVEL=logging.INFO
 
+# https://stackoverflow.com/a/35804945
 def addLoggingLevel(levelName, levelNum, methodName=None):
     """
     Comprehensively adds a new logging level to the `logging` module and the
