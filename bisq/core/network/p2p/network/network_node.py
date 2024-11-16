@@ -90,8 +90,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     def _make_connection(
         self, peers_node_address: NodeAddress, network_envelope: NetworkEnvelope
     ):
-        if peers_node_address is None:
-            raise ValueError("peers_node_address must not be null")
+        assert peers_node_address, "peers_node_address must not be null"
         threading.current_thread().setName(
             f"NetworkNode.connectionExecutor:SendMessage-to-{to_truncated_string(peers_node_address.get_full_address(), 15)}"
         )
@@ -163,8 +162,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             f"Send {network_envelope.__class__.__name__} to {peers_node_address}. Message details: {network_envelope}"
         )
 
-        if not isinstance(peers_node_address, NodeAddress):
-            raise ValueError("peerAddress must not be null")
+        assert peers_node_address, "peerAddress must not be null"
 
         connection = self.get_outbound_connection(peers_node_address)
 

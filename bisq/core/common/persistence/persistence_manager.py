@@ -243,8 +243,7 @@ class PersistenceManager(Generic[T]):
     ):
         if file_name == None:
             file_name = self.file_name
-        if file_name is None:
-            raise ValueError("file_name is required")
+        assert file_name, "file_name cannot be null"
 
         if self.flush_at_shutdown_called:
             logger.warning(
@@ -279,6 +278,7 @@ class PersistenceManager(Generic[T]):
         self.read_called = True
 
         file_name = file_name or self.file_name
+        assert file_name, "file_name cannot be null"
 
         storage_file = self.dir.joinpath(file_name)
         if not storage_file.exists():
