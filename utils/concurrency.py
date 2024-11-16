@@ -118,6 +118,12 @@ class ThreadSafeDict(Generic[K, V]):
         with self._lock:
             return callback(self._dict.items())
         
+    def get_and_put(self, key: K, callback: Callable[[V], R]) -> R:
+        with self._lock:
+            result = callback(self._dict.get(key))
+            self._dict[key] = result
+            return result
+        
 class ThreadSafeList(Generic[T]):
     def __init__(self):
         self._list: List[T] = []
