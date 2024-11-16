@@ -21,7 +21,7 @@ class TestCapabilities(unittest.TestCase):
         caps = Capabilities([Capability.DAO_STATE])
         caps.add_all([Capability.TRADE_STATISTICS_3])
         self.assertEqual(len(caps.capabilities), 2)
-        self.assertTrue(caps.contains(Capability.TRADE_STATISTICS_3))
+        self.assertTrue(Capability.TRADE_STATISTICS_3 in caps)
 
     def test_contains_methods(self):
         self.assertTrue(Capability.DAO_STATE in self.test_capabilities)
