@@ -63,5 +63,5 @@ class ProtoOutputStream:
 
     def try_to_acquire_lock(self) -> bool:
         from bisq.core.network.p2p.network.connection import Connection
-        return self.lock.acquire(False, Connection.SHUTDOWN_TIMEOUT / 1000)
+        return self.lock.acquire(False, Connection.SHUTDOWN_TIMEOUT_SEC)
         

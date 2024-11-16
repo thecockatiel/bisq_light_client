@@ -61,7 +61,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     MAX_PERMITTED_MESSAGE_SIZE = 10 * 1024 * 1024  # 10 MB (425 offers resulted in about 660 kb, mailbox msg will add more to it) offer has usually 2 kb, mailbox 3kb.
     # TODO decrease limits again after testing
     SOCKET_TIMEOUT_SEC = 240
-    SHUTDOWN_TIMEOUT = 100 # ms
+    SHUTDOWN_TIMEOUT_SEC = 0.1
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
