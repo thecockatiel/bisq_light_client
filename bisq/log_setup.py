@@ -102,3 +102,6 @@ def configurelogging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     get_logger("utils.tor").setLevel(logging.WARN)
 
 configurelogging()
+
+def set_custom_log_level(level):
+    bisq_logger.setLevel(level)
