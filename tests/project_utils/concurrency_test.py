@@ -53,6 +53,30 @@ class TestThreadSafeSet(unittest.TestCase):
             self.safe_set.add(item)
         self.assertEqual(set(iter(self.safe_set)), items)
 
+    def test_concurrent_iteration(self):
+        # Test that iteration is safe while modifications occur
+        def modifier():
+            for i in range(100):
+                self.safe_set.add(i)
+                if i % 2 == 0:
+                    self.safe_set.discard(i)
+                time.sleep(0.001)
+
+        def iterator():
+            for _ in range(50):
+                # This should not raise any exceptions
+                list(iter(self.safe_set))
+                time.sleep(0.001)
+
+        threads = [
+            threading.Thread(target=modifier),
+            threading.Thread(target=iterator)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
 class TestThreadSafeWeakSet(unittest.TestCase):
     def setUp(self):
         self.weak_set = ThreadSafeWeakSet()
@@ -112,6 +136,37 @@ class TestThreadSafeWeakSet(unittest.TestCase):
         # Should not raise exception
         self.weak_set.discard(obj)
 
+    def test_concurrent_cleanup(self):
+        class TestObj:
+            pass
+
+        live_objects = []
+        for _ in range(100):
+            obj = TestObj()
+            live_objects.append(obj)
+            self.weak_set.add(obj)
+
+        def cleanup_thread():
+            for _ in range(10):
+                self.weak_set.cleanup()
+                time.sleep(0.001)
+
+        def iterator_thread():
+            for _ in range(10):
+                list(iter(self.weak_set))
+                time.sleep(0.001)
+
+        threads = [
+            threading.Thread(target=cleanup_thread),
+            threading.Thread(target=iterator_thread)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(list(iter(self.weak_set))), 100)
+
 class TestConcurrentDict(unittest.TestCase):
     def setUp(self):
         self.concurrent_dict = ThreadSafeDict()
@@ -163,6 +218,34 @@ class TestConcurrentDict(unittest.TestCase):
         result = self.concurrent_dict.with_items(lambda items: {k: v for k, v in items})
         self.assertEqual(result, test_dict)
 
+    def test_get_and_put(self):
+        def increment_value(value):
+            return (value or 0) + 1
+
+        threads = []
+        for _ in range(10):
+            t = threading.Thread(
+                target=lambda: self.concurrent_dict.get_and_put('counter', increment_value)
+            )
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        self.assertEqual(self.concurrent_dict.get('counter'), 10)
+
+    def test_dict_operations(self):
+        # Test dict-like operations
+        self.concurrent_dict['key'] = 'value'
+        self.assertEqual(self.concurrent_dict['key'], 'value')
+        
+        del self.concurrent_dict['key']
+        self.assertFalse('key' in self.concurrent_dict)
+        
+        with self.assertRaises(KeyError):
+            _ = self.concurrent_dict['nonexistent']
+
 class TestConcurrentList(unittest.TestCase):
     def setUp(self):
         self.concurrent_list = ThreadSafeList()
@@ -204,6 +287,33 @@ class TestConcurrentList(unittest.TestCase):
             t.join()
 
         self.assertEqual(len(self.concurrent_list), 300)
+
+    def test_concurrent_iteration(self):
+        # Fill list with initial values
+        self.concurrent_list.extend(range(100))
+
+        def modifier():
+            for i in range(50):
+                self.concurrent_list.append(i)
+                if len(self.concurrent_list) > 0:
+                    self.concurrent_list.pop(0)
+                time.sleep(0.001)
+
+        def iterator():
+            for _ in range(50):
+                # Should not raise any exceptions
+                for item in self.concurrent_list:
+                    _ = item
+                time.sleep(0.001)
+
+        threads = [
+            threading.Thread(target=modifier),
+            threading.Thread(target=iterator)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
 class TestAtomicBoolean(unittest.TestCase):
     def setUp(self):
