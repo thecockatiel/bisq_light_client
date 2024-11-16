@@ -14,14 +14,14 @@ from bisq.core.network.p2p.peers.getdata.get_data_request_handler import (
 from bisq.core.network.p2p.peers.getdata.request_data_handler import RequestDataHandler
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
-import bisq.core.common.version as Version
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
+import bisq.common.version as Version
 from utils.concurrency import ThreadSafeList
 from utils.data import SimplePropertyChangeEvent
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.network.network_node import NetworkNode

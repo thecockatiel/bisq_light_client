@@ -3,7 +3,7 @@ from bisq.core.network.p2p.network.connection import Connection
 
 if TYPE_CHECKING:
     from socket import socket as Socket
-    from bisq.core.common.protocol.network.network_proto_resolver import (
+    from bisq.common.protocol.network.network_proto_resolver import (
         NetworkProtoResolver,
     )
     from bisq.core.network.p2p.network.ban_filter import BanFilter

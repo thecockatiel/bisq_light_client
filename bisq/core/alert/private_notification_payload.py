@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional 
-from bisq.core.common.crypto.sig import Sig,dsa
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.crypto.sig import Sig,dsa
+from bisq.common.protocol.network.network_payload import NetworkPayload
 import proto.pb_pb2 as protobuf
 
 

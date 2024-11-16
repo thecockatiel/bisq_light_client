@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TypeVar
 from collections.abc import Callable
 
-from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 
 T = TypeVar(
     "T", bound=PersistableEnvelope

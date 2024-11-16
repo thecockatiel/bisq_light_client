@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric import dsa
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 @dataclass(frozen=True)
 class DecryptedDataTuple:

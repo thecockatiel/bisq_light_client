@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 import proto.pb_pb2 as protobuf
 from bisq.core.locale.region import Region
 

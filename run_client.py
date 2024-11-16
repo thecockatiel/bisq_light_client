@@ -21,7 +21,7 @@ import asyncio
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
-from bisq.core.common.setup.log_setup import configure_logging
+from bisq.common.setup.log_setup import configure_logging
 
 from utils.tor import setup_tor
 

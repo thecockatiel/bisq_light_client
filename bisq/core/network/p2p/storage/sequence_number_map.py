@@ -1,4 +1,4 @@
-from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, Set
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.capabilities import Capabilities
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.peers.peerexchange.messages.peer_exchange_message import PeerExchangeMessage
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer

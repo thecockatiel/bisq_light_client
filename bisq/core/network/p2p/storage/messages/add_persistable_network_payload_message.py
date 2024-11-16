@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
 @dataclass(kw_only=True)
 class AddPersistableNetworkPayloadMessage(BroadcastMessage):

@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
-from bisq.core.common.crypto.sig import Sig
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.crypto.sig import Sig
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.trade_message import TradeMessage
 from google.protobuf.message import Message
 import proto.pb_pb2 as protobuf
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.node_address import NodeAddress
 
 if TYPE_CHECKING:

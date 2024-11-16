@@ -4,9 +4,9 @@ from datetime import timedelta
 import time
 from typing import TYPE_CHECKING
 
-from bisq.core.common.user_thread import UserThread
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.getdata.messages.get_data_response import (
         GetDataResponse,
     )
-    from bisq.core.common.timer import Timer
+    from bisq.common.timer import Timer
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
     from bisq.core.network.p2p.network.connection import Connection

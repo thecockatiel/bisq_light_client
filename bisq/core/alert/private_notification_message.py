@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import ClassVar
 
 from bisq.core.alert.private_notification_payload import PrivateNotificationPayload
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage 
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf

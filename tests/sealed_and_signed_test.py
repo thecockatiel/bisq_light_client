@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
-from bisq.core.common.crypto.sealed_and_signed import SealedAndSigned
+from bisq.common.crypto.sealed_and_signed import SealedAndSigned
 from proto import pb_pb2 as protobuf
 
 class TestSealedAndSigned(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestSealedAndSigned(unittest.TestCase):
         self.test_signature = b'test_signature'
         self.test_public_key_bytes = b'test_public_key_bytes'
 
-    @patch('bisq.core.common.crypto.sealed_and_signed.Sig')
+    @patch('bisq.common.crypto.sealed_and_signed.Sig')
     def test_init_with_public_key(self, mock_sig):
         mock_sig.get_public_key_bytes.return_value = self.test_public_key_bytes
         
@@ -29,7 +29,7 @@ class TestSealedAndSigned(unittest.TestCase):
         self.assertEqual(sealed.sig_public_key_bytes, self.test_public_key_bytes)
         mock_sig.get_public_key_bytes.assert_called_once_with(self.mock_public_key)
 
-    @patch('bisq.core.common.crypto.sealed_and_signed.Sig')
+    @patch('bisq.common.crypto.sealed_and_signed.Sig')
     def test_init_with_public_key_bytes(self, mock_sig):
         mock_sig.get_public_key_from_bytes.return_value = self.mock_public_key
         
@@ -54,7 +54,7 @@ class TestSealedAndSigned(unittest.TestCase):
         self.assertEqual(str(context.exception), 
                         "Either sig_public_key or sig_public_key_bytes must be provided.")
 
-    @patch('bisq.core.common.crypto.sealed_and_signed.Sig')
+    @patch('bisq.common.crypto.sealed_and_signed.Sig')
     def test_from_proto(self, mock_sig):
         mock_proto = Mock(spec=protobuf.SealedAndSigned)
         mock_proto.encrypted_secret_key = self.test_secret_key

@@ -6,22 +6,22 @@ import time
 import uuid
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
-from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
 from proto.delimited_protobuf import read_delimited
-import bisq.core.common.version as Version
+import bisq.common.version as Version
 from google.protobuf.message import Error as InvalidProtocolBufferException  
 
 import concurrent
 
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.config.config import CONFIG
-from bisq.core.common.has_capabilities import HasCapabilities
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.user_thread import UserThread
+from bisq.common.capabilities import Capabilities
+from bisq.common.config.config import CONFIG
+from bisq.common.has_capabilities import HasCapabilities
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.close_connection_message import CloseConnectionMessage
 from bisq.core.network.p2p.network.ban_filter import BanFilter
@@ -38,17 +38,17 @@ from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabi
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection_listener import ConnectionListener
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
-    from bisq.core.common.proto import Proto
+    from bisq.common.proto import Proto
 
 logger = get_logger(__name__)
 

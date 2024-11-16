@@ -1,7 +1,7 @@
 import base64
 import unittest
 
-from bisq.core.common.crypto.sig import Sig
+from bisq.common.crypto.sig import Sig
 
 class TestEncryption(unittest.TestCase):
     def setUp(self):

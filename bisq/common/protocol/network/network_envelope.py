@@ -1,9 +1,9 @@
 from abc import ABC
 from dataclasses import dataclass, field 
 from google.protobuf.message import Message
-from bisq.core.common.envelope import Envelope
+from bisq.common.envelope import Envelope
 import proto.pb_pb2 as protobuf
-import bisq.core.common.version as Version
+import bisq.common.version as Version
 
 @dataclass(kw_only=True)
 class NetworkEnvelope(Envelope, ABC):

@@ -3,8 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, Set
 
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.capabilities import Capabilities
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.peers.peerexchange.messages.peer_exchange_message import PeerExchangeMessage
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage

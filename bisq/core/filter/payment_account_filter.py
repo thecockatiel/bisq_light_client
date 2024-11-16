@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)

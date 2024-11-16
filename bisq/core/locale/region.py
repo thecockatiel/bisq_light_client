@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from google.protobuf.message import Message
 import proto.pb_pb2 as protobuf
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 
 
 @dataclass(frozen=True)

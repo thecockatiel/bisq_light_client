@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional, Dict
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.network.network_payload import NetworkPayload
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
 class ProtectedStoragePayload(NetworkPayload, ABC):
     """

@@ -2,7 +2,7 @@ from bisq.asset.address_validation_result import AddressValidationResult
 from bisq.asset.address_validator import AddressValidator
 from bisq.asset.coin import Coin
 from bisq.asset.network_parameters_adapter import NetworkParametersAdapter
-from bisq.core.common.crypto.hash import get_crc32_hash
+from bisq.common.crypto.hash import get_crc32_hash
 from electrum_min.bitcoin import base_decode
 from electrum_min.util import to_bytes
 

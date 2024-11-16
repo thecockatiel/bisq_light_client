@@ -1,7 +1,7 @@
 import re
 import logging
 from typing import Optional, List, Set, Collection
-from bisq.core.common.config.config import Config 
+from bisq.common.config.config import Config 
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
 from resources import resource_readlines

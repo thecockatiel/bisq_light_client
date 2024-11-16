@@ -4,16 +4,16 @@ import time
 import threading
 from typing import TYPE_CHECKING, Optional
 
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.initial_data_request import InitialDataRequest
 from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

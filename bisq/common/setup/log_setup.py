@@ -3,7 +3,7 @@ from logging.handlers import RotatingFileHandler
 import os
 import re
 
-from bisq.core.common.config.config import CONFIG
+from bisq.common.config.config import CONFIG
 
 DEFAULT_LOG_LEVEL=logging.INFO
 

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING
 from collections.abc import Callable
-from bisq.core.common.persistence.persistence_manager import PersistenceManager
-from bisq.core.common.protocol.persistable.persistable_data_host import (
+from bisq.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.protocol.persistable.persistable_data_host import (
     PersistedDataHost,
 )
 from bisq.core.network.p2p.persistence.removed_payloads_map import RemovedPayloadsMap
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import (
     MailboxStoragePayload,
 )
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

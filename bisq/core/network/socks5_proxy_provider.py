@@ -2,7 +2,7 @@ import socket
 from typing import Optional
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.p2p.network.socks5_proxy_internal_factory import Socks5ProxyInternalFactory
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 

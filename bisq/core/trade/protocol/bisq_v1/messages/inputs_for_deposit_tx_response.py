@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.node_address import NodeAddress

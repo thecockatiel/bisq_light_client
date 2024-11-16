@@ -3,14 +3,14 @@ from datetime import datetime
 from enum import IntEnum
 from typing import TYPE_CHECKING, Dict, List, Optional
 from uuid import uuid4
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.common.protocol.proto_util import ProtoUtil
-from bisq.core.common.util.extra_data_map_validator import ExtraDataMapValidator
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 from utils.formatting import get_short_id
 

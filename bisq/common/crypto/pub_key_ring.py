@@ -2,8 +2,8 @@
 import base64
 from dataclasses import dataclass, field
 
-from bisq.core.common.crypto.encryption import Encryption
-from bisq.core.common.crypto.sig import Sig
+from bisq.common.crypto.encryption import Encryption
+from bisq.common.crypto.sig import Sig
 from cryptography.hazmat.primitives.asymmetric import rsa, dsa
 import proto.pb_pb2 as protobuf
 

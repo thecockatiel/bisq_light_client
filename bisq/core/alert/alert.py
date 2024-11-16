@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from datetime import timedelta
-from bisq.core.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, dsa
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
     ProtectedStoragePayload,
 )
-from bisq.core.common.protocol.network.get_data_response_priority import (
+from bisq.common.protocol.network.get_data_response_priority import (
     GetDataResponsePriority,
 )
 import proto.pb_pb2 as protobuf

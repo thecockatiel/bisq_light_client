@@ -5,8 +5,8 @@ import logging
 import binascii
 import proto.pb_pb2 as protobuf
 
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.used_for_trade_contract_json import UsedForTradeContractJson
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 
 logger = logging.getLogger(__name__)
 

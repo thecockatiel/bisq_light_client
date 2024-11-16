@@ -2,14 +2,14 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.capabilities import Capabilities
+from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 @dataclass(kw_only=True)
 class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):

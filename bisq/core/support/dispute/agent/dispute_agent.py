@@ -2,9 +2,9 @@ from abc import ABC
 from datetime import timedelta
 from typing import List, Dict, Optional, Any
 
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
-from bisq.core.common.util.extra_data_map_validator import ExtraDataMapValidator
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
+from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload

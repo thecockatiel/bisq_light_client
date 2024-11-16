@@ -2,14 +2,14 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional, TypeVar, cast
 from collections.abc import Callable
-from bisq.core.common.crypto.hash import get_32_byte_hash
-from bisq.core.common.crypto.key_pair import KeyPair
-from bisq.core.common.crypto.sig import Sig, dsa
-from bisq.core.common.protocol.network.get_data_response_priority import GetDataResponsePriority
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.common.user_thread import UserThread
+from bisq.common.crypto.hash import get_32_byte_hash
+from bisq.common.crypto.key_pair import KeyPair
+from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.connection import Connection
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 from bisq.core.network.p2p.network.message_listener import MessageListener
@@ -38,15 +38,15 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import Prot
 from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload import RequiresOwnerIsOnlinePayload
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
-from bisq.core.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.persistence.persistence_manager import PersistenceManager
 from utils.formatting import to_truncated_string
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.network.network_payload import NetworkPayload
 
 if TYPE_CHECKING: 
     from utils.clock import Clock
-    from bisq.core.common.timer import Timer
+    from bisq.common.timer import Timer
     from bisq.core.network.p2p.persistence.append_only_data_store_listener import AppendOnlyDataStoreListener
     from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
     from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.broadcaster import Broadcaster
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
-    from bisq.core.common.capabilities import Capabilities
+    from bisq.common.capabilities import Capabilities
     from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
     from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
 

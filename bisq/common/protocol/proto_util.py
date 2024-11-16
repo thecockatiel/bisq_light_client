@@ -5,8 +5,8 @@ from collections.abc import Callable
 from google.protobuf import message
 from google.protobuf.any_pb2 import Any
 
-from bisq.core.common.proto import Proto
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.proto import Proto
+from bisq.common.setup.log_setup import get_logger
 
 T = TypeVar('T', bound=message.Message)
 

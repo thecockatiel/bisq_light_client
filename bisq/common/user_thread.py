@@ -2,9 +2,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 import random
 from collections.abc import Callable
-from bisq.core.common.frame_rate_timer import FrameRateTimer
-from bisq.core.common.timer import Timer
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.frame_rate_timer import FrameRateTimer
+from bisq.common.timer import Timer
+from bisq.common.setup.log_setup import get_logger
  
 logger = get_logger(__name__)
 

@@ -12,7 +12,7 @@ from utils.time import get_time_ms
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.network.connection_state import ConnectionState
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 class ConnectionStatistics(MessageListener):
     def __init__(self, connection: 'Connection', connection_state: 'ConnectionState'):

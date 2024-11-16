@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import Collection, Generic, Optional, TypeVar
-from bisq.core.common.protocol.persistable.persistable_envelope import (
+from bisq.common.protocol.persistable.persistable_envelope import (
     PersistableEnvelope,
 )
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import (

@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.network.p2p.persistence.store_service import StoreService
 
 if TYPE_CHECKING:

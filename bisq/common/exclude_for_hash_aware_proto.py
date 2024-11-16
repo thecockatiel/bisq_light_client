@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from bisq.core.common.proto import Proto
+from bisq.common.proto import Proto
 if TYPE_CHECKING:
     import proto.pb_pb2 as protobuf
  

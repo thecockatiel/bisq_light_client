@@ -1,15 +1,15 @@
 from typing import List, Optional, Dict
 
-from bisq.core.common.capabilities import Capabilities
-from bisq.core.common.capability import Capability
-from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.capabilities import Capabilities
+from bisq.common.capability import Capability
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
 )
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)

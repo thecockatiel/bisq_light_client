@@ -6,26 +6,26 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, Generic, Optional, cast
 from collections.abc import Callable
-from bisq.core.common.config.config import CONFIG
-from bisq.core.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
-from bisq.core.common.protocol.persistable.persistable_envelope import (
+from bisq.common.config.config import CONFIG
+from bisq.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
+from bisq.common.protocol.persistable.persistable_envelope import (
     PersistableEnvelope,
 )
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from proto.delimited_protobuf import read_delimited, write_delimited
 import proto.pb_pb2 as protobuf
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import check_dir
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
-    from bisq.core.common.handlers.result_handler import ResultHandler
-    from bisq.core.common.protocol.persistable.persistence_proto_resolver import (
+    from bisq.common.handlers.result_handler import ResultHandler
+    from bisq.common.protocol.persistable.persistence_proto_resolver import (
         PersistenceProtoResolver,
     )
-    from bisq.core.common.file.corrupted_storage_file_handler import (
+    from bisq.common.file.corrupted_storage_file_handler import (
         CorruptedStorageFileHandler,
     )
 

@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bisq.core.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
-    from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.node_address import NodeAddress
 
 logger = get_logger(__name__)

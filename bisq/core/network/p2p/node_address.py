@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 import hashlib
-from bisq.core.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.core.common.used_for_trade_contract_json import UsedForTradeContractJson
+from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 import proto.pb_pb2 as protobuf
 
 

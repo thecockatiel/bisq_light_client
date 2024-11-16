@@ -1,22 +1,22 @@
 from typing import TYPE_CHECKING
 
-from bisq.core.common.crypto.crypto_exception import CryptoException
-from bisq.core.common.crypto.encryption import Encryption, rsa
-from bisq.core.common.crypto.hash import get_sha256_hash
-from bisq.core.common.crypto.sealed_and_signed import SealedAndSigned
-from bisq.core.common.crypto.sig import Sig, dsa
-from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.common.crypto.crypto_exception import CryptoException
+from bisq.common.crypto.encryption import Encryption, rsa
+from bisq.common.crypto.hash import get_sha256_hash
+from bisq.common.crypto.sealed_and_signed import SealedAndSigned
+from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.crypto.decrypted_data_tuple import DecryptedDataTuple
 from bisq.core.network.p2p.decrypted_message_with_pub_key import DecryptedMessageWithPubKey
 import proto.pb_pb2 as protobuf
 from google.protobuf import message
 
 if TYPE_CHECKING:
-    from bisq.core.common.crypto.key_pair import KeyPair
-    from bisq.core.common.crypto.key_ring import KeyRing
-    from bisq.core.common.crypto.pub_key_ring import PubKeyRing
-    from bisq.core.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.common.crypto.key_pair import KeyPair
+    from bisq.common.crypto.key_ring import KeyRing
+    from bisq.common.crypto.pub_key_ring import PubKeyRing
+    from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
 class EncryptionService:
     def __init__(self, key_ring: 'KeyRing', network_proto_resolver: 'NetworkProtoResolver'):

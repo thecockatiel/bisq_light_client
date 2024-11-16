@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Set, Iterable
 from google.protobuf.message import Message
 
-from bisq.core.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 import proto.pb_pb2 as protobuf 
 
 from .peer import Peer

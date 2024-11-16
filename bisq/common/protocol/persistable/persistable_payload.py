@@ -1,5 +1,5 @@
 from abc import ABC
-from bisq.core.common.payload import Payload
+from bisq.common.payload import Payload
 
 class PersistablePayload(Payload, ABC):
     """

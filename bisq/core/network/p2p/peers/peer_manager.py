@@ -3,31 +3,31 @@ import random
 from datetime import timedelta
 from typing import Optional, Set, TYPE_CHECKING
 
-from bisq.core.common.capability import Capability
-from bisq.core.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.core.common.timer import Timer
-from bisq.core.common.user_thread import UserThread
+from bisq.common.capability import Capability
+from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 from bisq.core.network.p2p.network.inbound_connection import InboundConnection
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
-from bisq.core.common.config.config import CONFIG
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.config.config import CONFIG
+from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeList
 from utils.time import get_time_ms
 
 
 if TYPE_CHECKING:
-    from bisq.core.common.clock_watcher import ClockWatcher
+    from bisq.common.clock_watcher import ClockWatcher
     from bisq.core.network.p2p.peers.peerexchange.peer import Peer
     from bisq.core.network.p2p.network.network_node import NetworkNode
-    from bisq.core.common.persistence.persistence_manager import PersistenceManager
+    from bisq.common.persistence.persistence_manager import PersistenceManager
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.common.capabilities import Capabilities
+    from bisq.common.capabilities import Capabilities
 
 logger = get_logger(__name__)
 

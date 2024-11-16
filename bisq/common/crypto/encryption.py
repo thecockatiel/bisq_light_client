@@ -5,10 +5,10 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
 from cryptography.hazmat.backends import default_backend
-from bisq.core.common.crypto.crypto_exception import CryptoException
-from bisq.core.common.crypto.key_conversion_exception import KeyConversionException
-from bisq.core.common.crypto.key_pair import KeyPair
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.crypto.crypto_exception import CryptoException
+from bisq.common.crypto.key_conversion_exception import KeyConversionException
+from bisq.common.crypto.key_pair import KeyPair
+from bisq.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 

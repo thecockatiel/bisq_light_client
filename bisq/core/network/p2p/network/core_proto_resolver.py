@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Union
 
-from bisq.core.common.protocol.proto_resolver import ProtoResolver
-from bisq.core.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.core.common.setup.log_setup import get_logger
+from bisq.common.protocol.proto_resolver import ProtoResolver
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 from utils.dummy import DummyProtobufHolder
 
