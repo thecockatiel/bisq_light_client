@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import random
-import os
 from datetime import timedelta
 from typing import Optional, Set, TYPE_CHECKING
 
@@ -607,8 +606,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             self.check_max_connections_timer = None
 
     def print_statistics(self):
-        ls = os.linesep
-        result = f"Connection statistics:{ls}"
+        result = f"Connection statistics:\n"
         # Sort connections by creation timestamp
         sorted_connections = sorted(
             self.network_node.get_all_connections(),
@@ -618,8 +616,8 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         # Build the stats string
         for i, conn in enumerate(sorted_connections, 1):
             result += (
-                f"{ls}Connection {i}{ls}"
-                f"{conn.connection_statistics.get_info()}{ls}"
+                f"\nConnection {i}\n"
+                f"{conn.connection_statistics.get_info()}\n"
             )
 
         logger.info(result)
