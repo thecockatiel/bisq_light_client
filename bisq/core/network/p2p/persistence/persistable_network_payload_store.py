@@ -7,6 +7,7 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import (
     PersistableNetworkPayload,
 )
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
+from utils.concurrency import ThreadSafeDict
 
 T = TypeVar("T", bound=PersistableNetworkPayload)
 
@@ -17,7 +18,7 @@ class PersistableNetworkPayloadStore(Generic[T], PersistableEnvelope, ABC):
     def __init__(self, collection: Optional[Collection[T]] = None) -> None:
         super().__init__()
         
-        self.map: dict["StorageByteArray", "PersistableNetworkPayload"] = {}
+        self.map: ThreadSafeDict["StorageByteArray", "PersistableNetworkPayload"] = {}
         
         if collection is not None:
             for payload in collection:
