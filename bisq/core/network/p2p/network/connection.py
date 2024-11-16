@@ -75,7 +75,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         # We use a weak reference here to ensure that no connection causes a memory leak in case it get closed without
         # the shutDown being called.
         self.capabilities_listeners: ThreadSafeWeakSet[SupportedCapabilitiesListener] = ThreadSafeWeakSet()
-        self.rule_violations: ThreadSafeDict[str, int] = ThreadSafeDict()
+        self.rule_violations: ThreadSafeDict[RuleViolation, int] = ThreadSafeDict()
         self.rule_violation: RuleViolation = None
         self.capabilities = Capabilities()
         self.message_time_stamps: list[int] = []
