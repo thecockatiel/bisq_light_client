@@ -118,6 +118,10 @@ class ThreadSafeDict(Generic[K, V]):
         with self._lock:
             return list(self._dict.items())
             
+    def keys(self):
+        with self._lock:
+            return list(self._dict.keys())
+            
     def values(self):
         with self._lock:
             return list(self._dict.values())

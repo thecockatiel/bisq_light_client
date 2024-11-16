@@ -9,6 +9,7 @@ from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
+from utils.concurrency import AtomicInt
 from utils.immutables import ImmutableMap
 
 T = TypeVar(
@@ -111,13 +112,13 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
             # Now we add our historical data stores
             all_historical_payloads: dict["StorageByteArray", "PersistableNetworkPayload"] = {}
             stores_by_version: dict[str, "PersistableNetworkPayloadStore[PersistableNetworkPayload]"] = {}
-            num_files = len(Version.HISTORICAL_RESOURCE_FILE_VERSION_TAGS)
+            num_files = AtomicInt(len(Version.HISTORICAL_RESOURCE_FILE_VERSION_TAGS))
 
             def process_version(version: str):
                 def on_complete():
                     nonlocal num_files
-                    num_files -= 1
-                    if num_files == 0:
+                    num_files.decrement_and_get()
+                    if num_files.get() == 0:
                         # At last iteration we set the immutable map
                         self.all_historical_payloads = ImmutableMap(all_historical_payloads)
                         self.stores_by_version = ImmutableMap(stores_by_version)

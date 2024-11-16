@@ -16,6 +16,7 @@ from bisq.core.common.user_thread import UserThread
 from proto.delimited_protobuf import read_delimited, write_delimited
 import proto.pb_pb2 as protobuf
 from bisq.log_setup import get_logger
+from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import check_dir
 from utils.time import get_time_ms
 
@@ -40,7 +41,7 @@ class PersistenceManager(Generic[T]):
 
     ALL_PERSISTENCE_MANAGERS: dict[str, "PersistenceManager"] = {}
     flush_at_shutdown_called = False
-    all_services_initialized = False
+    all_services_initialized = AtomicBoolean(False)
 
     def __init__(
         self,
@@ -69,7 +70,7 @@ class PersistenceManager(Generic[T]):
 
     @staticmethod
     def on_all_services_initialized():
-        PersistenceManager.all_services_initialized = True
+        PersistenceManager.all_services_initialized.set(True)
         for manager in PersistenceManager.ALL_PERSISTENCE_MANAGERS.values():
             # In case we got a requestPersistence call before we got initialized we trigger the timer for the
             # persist call
@@ -90,7 +91,7 @@ class PersistenceManager(Generic[T]):
     # We add a guard to prevent repeated calls.
     @staticmethod
     def flush_all_data_to_disk(complete_handler: "ResultHandler", do_shutdown: bool):
-        if not PersistenceManager.all_services_initialized:
+        if not PersistenceManager.all_services_initialized.get():
             logger.warning(
                 "Application has not completed start up yet so we do not flush data to disk."
             )
@@ -106,9 +107,9 @@ class PersistenceManager(Generic[T]):
                     PersistenceManager.flush_at_shutdown_called = True
 
             logger.info("Start flushAllDataToDisk")
-            open_instances = len(PersistenceManager.ALL_PERSISTENCE_MANAGERS)
+            open_instances = AtomicInt(len(PersistenceManager.ALL_PERSISTENCE_MANAGERS))
 
-            if open_instances == 0:
+            if open_instances.get() == 0:
                 logger.info("No PersistenceManager instances have been created yet.")
                 complete_handler.handle_result()
                 return
@@ -151,14 +152,13 @@ class PersistenceManager(Generic[T]):
     @staticmethod
     def on_write_completed(
         complete_handler: "ResultHandler",
-        open_instances: int,
+        open_instances: "AtomicInt",
         persistence_manager: "PersistenceManager",
         do_shutdown: bool,
     ):
         if do_shutdown:
             persistence_manager.shutdown()
-        open_instances -= 1
-        if open_instances == 0:
+        if open_instances.decrement_and_get() == 0:
             logger.info("flushAllDataToDisk completed")
             complete_handler.handle_result()
 
@@ -318,7 +318,7 @@ class PersistenceManager(Generic[T]):
 
         # If we have not initialized yet we postpone the start of the timer and call maybeStartTimerForPersistence at
         # onAllServicesInitialized
-        if not self.all_services_initialized:
+        if not self.all_services_initialized.get():
             return
 
         self.maybe_start_timer_for_persistence()
@@ -363,7 +363,7 @@ class PersistenceManager(Generic[T]):
     def write_to_disk(
         self, serialized: protobuf.PersistableEnvelope, complete_handler: Optional[Callable[[], None]], force: bool
     ):
-        if not PersistenceManager.all_services_initialized and not force:
+        if not PersistenceManager.all_services_initialized.get() and not force:
             logger.warning("Application has not completed start up yet so we do not permit writing data to disk.")
             if complete_handler:
                 UserThread.execute(complete_handler)
