@@ -262,6 +262,9 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def get_all_peers(self):
         return self.get_live_peers().union(self.get_persisted_peers()).union(self.reported_peers)
 
+    def get_reported_peers(self):
+        return self.reported_peers
+
     def get_persisted_peers(self):
         return self.peer_list.set
 
