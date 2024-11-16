@@ -23,7 +23,7 @@ from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
-from utils.data import SimpleObjectProperty
+from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
@@ -61,7 +61,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         self.shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
-        self.node_address: SimpleObjectProperty[NodeAddress] = SimpleObjectProperty()
+        self.node_address: SimpleProperty[NodeAddress] = SimpleProperty()
         self.server: Server = None
 
     @abstractmethod

@@ -18,7 +18,7 @@ from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 import bisq.core.common.version as Version
 from utils.concurrency import ThreadSafeList
-from utils.data import PropertyChangeEvent
+from utils.data import SimplePropertyChangeEvent
 
 if TYPE_CHECKING:
     from bisq.core.common.protocol.network.network_envelope import NetworkEnvelope
@@ -117,7 +117,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
 
         self.network_node.node_address.add_listener(self._on_node_address_changed)
 
-    def _on_node_address_changed(self, e: "PropertyChangeEvent"):
+    def _on_node_address_changed(self, e: "SimplePropertyChangeEvent"):
         if e.new_value is not None:
             if e.new_value in self.seed_node_addresses:
                 self.seed_node_addresses.remove(e.new_value)

@@ -6,12 +6,12 @@ T = TypeVar("T")
 
 
 @dataclass
-class PropertyChangeEvent(Generic[T]):
+class SimplePropertyChangeEvent(Generic[T]):
     old_value: T
     new_value: T
 
 
-class SimpleObjectProperty(Generic[T]):
+class SimpleProperty(Generic[T]):
     def __init__(self, initial_value: T = None):
         self._value = initial_value
         self._listeners = []
@@ -23,15 +23,15 @@ class SimpleObjectProperty(Generic[T]):
         if self._value != value:
             old_value = self._value
             self._value = value
-            self._notify_listeners(PropertyChangeEvent(old_value, value))
+            self._notify_listeners(SimplePropertyChangeEvent(old_value, value))
 
-    def add_listener(self, listener: Callable[[PropertyChangeEvent[T]], None]) -> None:
+    def add_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
         self._listeners.append(listener)
 
-    def remove_listener(self, listener: Callable[[PropertyChangeEvent[T]], None]) -> None:
+    def remove_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
         self._listeners.remove(listener)
 
-    def _notify_listeners(self, event: PropertyChangeEvent[T]) -> None:
+    def _notify_listeners(self, event: SimplePropertyChangeEvent[T]) -> None:
         for listener in self._listeners:
             listener(event)
 
