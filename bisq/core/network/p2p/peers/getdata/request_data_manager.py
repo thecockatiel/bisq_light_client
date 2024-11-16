@@ -17,7 +17,7 @@ from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.common.timer import Timer
 from bisq.core.common.user_thread import UserThread
 import bisq.core.common.version as Version
-from utils.concurrency import ConcurrentList
+from utils.concurrency import ThreadSafeList
 from utils.data import PropertyChangeEvent
 
 if TYPE_CHECKING:
@@ -88,9 +88,9 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         self.peer_manager = peer_manager
         self.seed_node_repository = seed_node_repository
 
-        self.response_listeners: ConcurrentList[
+        self.response_listeners: ThreadSafeList[
             "RequestDataManager.ResponseListener"
-        ] = ConcurrentList()
+        ] = ThreadSafeList()
 
         self.is_preliminary_data_request = True
 

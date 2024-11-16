@@ -39,7 +39,7 @@ from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddres
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
 from bisq.log_setup import get_logger
-from utils.concurrency import ConcurrentDict, ThreadSafeSet, ThreadSafeWeakSet
+from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 
@@ -75,7 +75,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         # We use a weak reference here to ensure that no connection causes a memory leak in case it get closed without
         # the shutDown being called.
         self.capabilities_listeners: ThreadSafeWeakSet[SupportedCapabilitiesListener] = ThreadSafeWeakSet()
-        self.rule_violations: ConcurrentDict[str, int] = ConcurrentDict()
+        self.rule_violations: ThreadSafeDict[str, int] = ThreadSafeDict()
         self.rule_violation: RuleViolation = None
         self.capabilities = Capabilities()
         self.message_time_stamps: list[int] = []

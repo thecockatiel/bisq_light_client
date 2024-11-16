@@ -85,7 +85,7 @@ K = TypeVar('K')
 V = TypeVar('V')
 R = TypeVar('R')  # Return type for callback
 
-class ConcurrentDict(Generic[K, V]):
+class ThreadSafeDict(Generic[K, V]):
     def __init__(self):
         self._dict: Dict[K, V] = {}
         self._lock = threading.RLock()
@@ -118,7 +118,7 @@ class ConcurrentDict(Generic[K, V]):
         with self._lock:
             return callback(self._dict.items())
         
-class ConcurrentList(Generic[T]):
+class ThreadSafeList(Generic[T]):
     def __init__(self):
         self._list: List[T] = []
         self._read_lock = threading.RLock()

@@ -1,6 +1,6 @@
 import unittest
 import weakref
-from utils.concurrency import ConcurrentDict, ThreadSafeSet, ThreadSafeWeakSet, ConcurrentList, AtomicBoolean, AtomicInt
+from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet, ThreadSafeList, AtomicBoolean, AtomicInt
 import threading
 import time
 
@@ -114,7 +114,7 @@ class TestThreadSafeWeakSet(unittest.TestCase):
 
 class TestConcurrentDict(unittest.TestCase):
     def setUp(self):
-        self.concurrent_dict = ConcurrentDict()
+        self.concurrent_dict = ThreadSafeDict()
 
     def test_put_and_get(self):
         self.concurrent_dict.put('key1', 'value1')
@@ -165,7 +165,7 @@ class TestConcurrentDict(unittest.TestCase):
 
 class TestConcurrentList(unittest.TestCase):
     def setUp(self):
-        self.concurrent_list = ConcurrentList()
+        self.concurrent_list = ThreadSafeList()
 
     def test_append_and_extend(self):
         self.concurrent_list.append(1)
@@ -264,8 +264,8 @@ class TestDeadlocks(unittest.TestCase):
     def setUp(self):
         self.safe_set = ThreadSafeSet()
         self.weak_set = ThreadSafeWeakSet()
-        self.concurrent_dict = ConcurrentDict()
-        self.concurrent_list = ConcurrentList()
+        self.concurrent_dict = ThreadSafeDict()
+        self.concurrent_list = ThreadSafeList()
         self.event = threading.Event()
         self.timeout = 2  # seconds
 

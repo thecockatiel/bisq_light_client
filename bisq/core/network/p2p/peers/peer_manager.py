@@ -16,7 +16,7 @@ from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
 from bisq.core.common.config.config import CONFIG
 from bisq.log_setup import get_logger
-from utils.concurrency import ConcurrentList
+from utils.concurrency import ThreadSafeList
 from utils.time import get_time_ms
 
 
@@ -87,7 +87,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self.clock_watcher = clock_watcher
         self.seed_node_addresses: Set["NodeAddress"] = set(seed_node_repository.get_seed_node_addresses())
         self.persistence_manager = persistence_manager
-        self.listeners: ConcurrentList['PeerManager.Listener'] = ConcurrentList()
+        self.listeners: ThreadSafeList['PeerManager.Listener'] = ThreadSafeList()
         
         # Persistable peerList
         self.peer_list = PeerList()
