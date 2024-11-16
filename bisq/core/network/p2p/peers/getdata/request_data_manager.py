@@ -8,7 +8,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 from bisq.core.network.p2p.network.message_listener import MessageListener
-from bisq.core.network.p2p.peers.getdata.get_data_request_data_handler import (
+from bisq.core.network.p2p.peers.getdata.get_data_request_handler import (
     GetDataRequestHandler,
 )
 from bisq.core.network.p2p.peers.getdata.request_data_handler import RequestDataHandler
