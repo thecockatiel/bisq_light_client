@@ -11,6 +11,7 @@ from bisq.core.network.p2p.peers.broadcast_handler import BroadcastResultHandler
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.log_setup import get_logger
 from proto.pb_pb2 import NodeAddress
+from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
@@ -31,7 +32,7 @@ class Broadcaster(BroadcastResultHandler):
     def __init__(self, network_node: 'NetworkNode', peer_manager: 'PeerManager', max_connections: int):
         self.network_node = network_node
         self.peer_manager = peer_manager
-        self.broadcast_handlers: set["BroadcastHandler"] = set()
+        self.broadcast_handlers: ThreadSafeSet["BroadcastHandler"] = ThreadSafeSet()
         self.broadcast_requests: list["BroadcastRequest"] = []
         self.timer: Optional[Timer] = None
         self.shut_down_requested = False
