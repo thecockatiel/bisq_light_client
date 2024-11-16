@@ -40,6 +40,10 @@ class ThreadSafeSet(Set[T]):
         with self._read_lock:
             return len(self._set)
 
+    def __str__(self):
+        with self._read_lock:
+            return str(self._set)
+
 
 class ThreadSafeWeakSet(Generic[T]):
     def __init__(self):
@@ -80,6 +84,10 @@ class ThreadSafeWeakSet(Generic[T]):
         with self._write_lock:
             dead = {ref for ref in self._set if ref() is None}
             self._set.difference_update(dead)
+            
+    def __str__(self):
+        with self._read_lock:
+            return str(self._set)
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -146,6 +154,10 @@ class ThreadSafeDict(Generic[K, V]):
     def __iter__(self):
         with self._lock:
             return iter(self._dict.copy())
+    
+    def __str__(self):
+        with self._lock:
+            return str(self._dict)
         
 class ThreadSafeList(Generic[T]):
     def __init__(self):
@@ -196,6 +208,10 @@ class ThreadSafeList(Generic[T]):
     def __contains__(self, item: T) -> bool:
         with self._read_lock:
             return item in self._list
+        
+    def __str__(self):
+        with self._read_lock:
+            return str(self._list)
 
 class AtomicBoolean:
     def __init__(self, initial: bool = False):
@@ -227,6 +243,10 @@ class AtomicBoolean:
 
     def __bool__(self) -> bool:
         return self.get()
+
+    def __str__(self) -> str:
+        with self._lock:
+            return str(self._value)
 
 class AtomicInt:
     def __init__(self, initial: int = 0):
@@ -287,3 +307,7 @@ class AtomicInt:
 
     def __bool__(self) -> bool:
         return bool(self.get())
+    
+    def __str__(self) -> str:
+        with self._lock:
+            return str(self._value)
