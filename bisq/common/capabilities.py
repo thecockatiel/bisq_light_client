@@ -13,7 +13,7 @@ class Capabilities:
     """
 
     # The global set of capabilities, i.e. the capabilities of the local app.
-    app = None  # Will be initialized after the class definition
+    app: "Capabilities" = None  # Will be initialized after the class definition
 
     # Defines which most recent capability any node need to support.
     # This helps to clean network from very old inactive but still running nodes.
