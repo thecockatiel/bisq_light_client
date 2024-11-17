@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
+from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from utils.dir import user_data_dir
 
 
@@ -18,6 +19,7 @@ class Config:
     max_connections: int = field(default=12)
     filter_provided_seed_nodes: list = field(default_factory=list)
     banned_seed_nodes: list = field(default_factory=list)
+    baseCurrencyNetwork: BaseCurrencyNetwork = field(default=BaseCurrencyNetwork.BTC_MAINNET)
     app_data_dir: Path = field(default_factory=user_data_dir)
     log_level: str = field(default="INFO")
     msg_throttle_per_sec: int = field(default=200)
