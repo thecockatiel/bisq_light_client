@@ -79,7 +79,7 @@ class CustomRotatingFileHandler(RotatingFileHandler):
             return f"{file_root}_{rotation_num}.{file_ext}"
         return default_name
 
-def configurelogging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
+def configure_logging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     # Create formatter with pattern matching Java configuration
     formatter = logging.Formatter(
         fmt="%(asctime)s [%(threadName)s] %(levelname)-5s %(name)-15s: %(message)s%(exc_info)s",
@@ -104,8 +104,6 @@ def configurelogging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     
     # Set specific logger levels
     get_logger("utils.tor").setLevel(logging.WARN)
-
-configurelogging()
 
 def set_custom_log_level(level):
     bisq_logger.setLevel(level)
