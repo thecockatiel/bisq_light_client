@@ -3,10 +3,10 @@ twisted~=24.7
 tqdm~=4.66
 grpcio~=1.67
 grpcio-tools~=1.67
-aiohttp>=3
-cryptography>=43.0
-pycryptodome>=3.21
-httpx~=0.27
-httpx-socks~=0.9
+aiohttp~=3.8
+cryptography~=38.0
+pycryptodome~=3.11
+psutil~=5.9
+PySocks~=1.7
 
 pypiwin32; platform_system == "Windows"
