@@ -1,10 +1,10 @@
 from typing import Literal
-import httpx
 import uuid
-from httpx_socks import SyncProxyTransport
+from requests import Session, Response
 
 import bisq.common.version as Version
 from bisq.core.network.http.http_client import HttpClient
+from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
@@ -18,20 +18,19 @@ class HttpClientImpl(HttpClient):
     def __init__(
         self, base_url: str = None, socks5_proxy_provider: Socks5ProxyProvider = None
     ):
-        self.base_url = base_url
+        self.base_url = base_url.rstrip("/") if base_url else None
         self.socks5_proxy_provider = socks5_proxy_provider
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
-        self._client = None
         super().__init__()
+        self.session = Session()
 
     def shut_down(self):
         try:
-            if self._client:
-                self._client.close()
-        except:
-            pass
+            self.session.close()
+        except Exception as e:
+            logger.error(f"Error while closing http client session: {e}")
 
     def get(
         self,
@@ -66,10 +65,17 @@ class HttpClientImpl(HttpClient):
             )
         self.has_pending_request = True
 
-        socks5_proxy = None
+        socks5_proxy: Socks5Proxy = None
+        proxies = None
 
         if not self.ignore_socks5_proxy:
             socks5_proxy = self._get_socks5_proxy()
+            
+        if socks5_proxy:
+            proxies = {
+                'http': f'socks5h://{socks5_proxy.host}:{socks5_proxy.port}',
+                'https': f'socks5h://{socks5_proxy.host}:{socks5_proxy.port}',
+            }
 
         logger.debug(
             f"_do_request: base_url={self.base_url}, url={url}, params={params}, httpMethod={http_method}, proxy={socks5_proxy}"
@@ -78,44 +84,33 @@ class HttpClientImpl(HttpClient):
         ts = get_time_ms()
 
         try:
-            transport: SyncProxyTransport = None
-            if socks5_proxy:
-                transport = SyncProxyTransport.from_url(
-                    socks5_proxy.url,
-                    verify=False if ".onion" in self.base_url else True,
+            response: Response = self.session.request(
+                http_method,
+                self.base_url + url,
+                data=data,
+                params=params,
+                headers=headers,
+                allow_redirects=True,
+                proxies=proxies,
+                verify=False if ".onion" in self.base_url else True,
+            )
+            self.session.cookies.clear()
+
+            if response.status_code != 200:
+                raise Exception(
+                    f"Received errorMsg '{response.text}' with responseCode {response.status_code} from {self.base_url} {url}. Response took: {get_time_ms() - ts} ms. params: {params}"
                 )
 
-            with httpx.Client(
-                base_url=self.base_url,
-                transport=transport,
-                timeout=httpx.Timeout(connect=120, read=120, write=None, pool=None),
-            ) as client:
-                self._client = client
-                response = client.request(
-                    http_method,
-                    url,
-                    data=data,
-                    params=params,
-                    headers=headers,
-                    follow_redirects=True,
-                )
+            response = response.text
 
-                if response.status_code != 200:
-                    raise Exception(
-                        f"Received errorMsg '{response.text}' with responseCode {response.status_code} from {self.base_url} {url}. Response took: {get_time_ms() - ts} ms. params: {params}"
-                    )
+            logger.debug(
+                f"Response from {self.base_url} {url} took {(get_time_ms() - ts)} ms. Data size:{len(response)}, response: {response}, param: {params}"
+            )
 
-                response = response.text
-
-                logger.debug(
-                    f"Response from {self.base_url} {url} took {(get_time_ms() - ts)} ms. Data size:{len(response)}, response: {response}, param: {params}"
-                )
-
-                return response
+            return response
         finally:
             self.has_pending_request = False
-            self._client = None
-
+    
     def _get_socks5_proxy(self):
         if not self.socks5_proxy_provider:
             return None
