@@ -23,7 +23,7 @@ class CommonSetup:
         def signal_handler(sig: int, frame):
             logger.info(f"Received signal {sig}")
             # Assuming UserThread.execute is implemented elsewhere or not needed in Python
-            UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
+            UserThread.execute(lambda: graceful_shutdown_handler(lambda: None))
 
         signal(SIGINT, signal_handler)
         signal(SIGTERM, signal_handler)
@@ -35,7 +35,7 @@ class CommonSetup:
             if isinstance(exc_value, MemoryError):
                 logger.error("OutOfMemoryError occurred. We shut down.", exc_info=(exc_type, exc_value, exc_traceback))
                 # Leave it to the handleUncaughtException to shut down or not.
-                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, False))
+                UserThread.execute(lambda: uncaught_exception_handler(exc_value, False))
 
             else:
                 logger.error(f"Uncaught Exception from thread {threading.current_thread().name}")
@@ -43,7 +43,7 @@ class CommonSetup:
                 logger.error(f"throwableClass= {exc_type.__name__}")
                 logger.error(f"Stack trace:\n{''.join(traceback.format_tb(exc_traceback))}")
                 traceback.print_exc()
-                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, False))
+                UserThread.execute(lambda: uncaught_exception_handler(exc_value, False))
 
         sys.excepthook = exception_handler
         threading.excepthook = lambda args: exception_handler(args.exc_type, args.exc_value, args.exc_traceback, args.thread)

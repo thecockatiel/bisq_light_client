@@ -95,7 +95,7 @@ class PersistenceManager(Generic[T]):
             logger.warning(
                 "Application has not completed start up yet so we do not flush data to disk."
             )
-            complete_handler.handle_result()
+            complete_handler()
             return
 
         def flush():
@@ -111,7 +111,7 @@ class PersistenceManager(Generic[T]):
 
             if open_instances.get() == 0:
                 logger.info("No PersistenceManager instances have been created yet.")
-                complete_handler.handle_result()
+                complete_handler()
                 return
 
             for persistence_manager in list(
@@ -160,7 +160,7 @@ class PersistenceManager(Generic[T]):
             persistence_manager.shutdown()
         if open_instances.decrement_and_get() == 0:
             logger.info("flushAllDataToDisk completed")
-            complete_handler.handle_result()
+            complete_handler()
 
     ###############################################################################
 
