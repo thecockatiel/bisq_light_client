@@ -4,6 +4,7 @@ import os
 import re
 
 from bisq.common.config.config import CONFIG
+from bisq.common.util.utilities import get_sys_info
 
 DEFAULT_LOG_LEVEL=logging.INFO
 
@@ -96,8 +97,11 @@ def configurelogging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     file_handler.setLevel(DEFAULT_LOG_LEVEL)
 
     bisq_logger.addHandler(file_handler)
-    bisq_logger.setLevel(logging.DEBUG)
-
+    bisq_logger.setLevel(CONFIG.log_level) # default is info
+    
+    bisq_logger.info("Log file at: {log_file}")
+    bisq_logger.info(get_sys_info())
+    
     # Set specific logger levels
     get_logger("utils.tor").setLevel(logging.WARN)
 
