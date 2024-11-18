@@ -19,6 +19,7 @@ class Config:
     max_connections: int = field(default=12)
     filter_provided_seed_nodes: list = field(default_factory=list)
     banned_seed_nodes: list = field(default_factory=list)
+    banned_price_relay_nodes: list = field(default_factory=list)
     base_currency_network: BaseCurrencyNetwork = field(default=BaseCurrencyNetwork.BTC_MAINNET)
     app_data_dir: Path = field(default_factory=user_data_dir)
     log_level: str = field(default="INFO")
