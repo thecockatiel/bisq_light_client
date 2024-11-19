@@ -12,6 +12,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.common.setup.log_setup import get_logger
 from utils.formatting import readable_file_size
+from utils.random import next_random_int
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -48,7 +49,7 @@ class RequestDataHandler(MessageListener):
         self.peer_manager = peer_manager
         self.listener = listener
         self.timeout_timer: Optional[Timer] = None
-        self.nonce = random.randint(-(2**31), 2**31 - 1)
+        self.nonce = next_random_int()
         self.stopped = False
         self.peers_node_address: Optional["NodeAddress"] = None
         self.get_data_request_type = ""
