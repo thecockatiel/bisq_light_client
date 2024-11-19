@@ -7,6 +7,14 @@ from utils.time import get_time_ms
 from bisq.common.persistence.persistence_manager import PersistenceManager
 
 class IgnoredMailboxService(PersistedDataHost):
+    """
+    NOTE: Need to check this in python implementation, the following comment is from java implementation:
+    We persist failed attempts to decrypt mailbox messages (expected if mailbox message was not addressed to us).
+    This improves performance at processing mailbox messages.
+    On a fast 4 core machine 1000 mailbox messages take about 1.5 second. At second start-up using the persisted data
+    it only takes about 30 ms.
+    """
+    
     def __init__(self, persistence_manager: "PersistenceManager[IgnoredMailboxMap]") -> None:
         self.persistence_manager = persistence_manager
         self.ignored_mailbox_map = IgnoredMailboxMap()
