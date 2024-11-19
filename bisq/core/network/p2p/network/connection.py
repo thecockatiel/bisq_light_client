@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
-from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
+from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
 from proto.delimited_protobuf import read_delimited

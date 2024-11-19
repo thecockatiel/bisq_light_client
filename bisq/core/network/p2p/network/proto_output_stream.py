@@ -3,7 +3,7 @@
 from threading import RLock
 import time
 from typing import TYPE_CHECKING
-from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
+from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
 from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
 from bisq.common.setup.log_setup import get_logger
