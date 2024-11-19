@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import TYPE_CHECKING, Optional, Dict
 from dataclasses import dataclass
 
@@ -24,7 +25,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
     Typical payloads are trade or dispute network_messages to be stored when the peer is offline.\n
     Size depends on payload but typical size is 2000-3000 bytes
     """
-    TTL = 15 * 24 * 60 * 60 * 1000  # 15 days in milliseconds
+    TTL = int(timedelta(days=15).total_seconds()*1000)  # 15 days in milliseconds
 
     # Added in 1.5.5
     EXTRA_MAP_KEY_TTL = "ttl"
