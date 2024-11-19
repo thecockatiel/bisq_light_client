@@ -198,7 +198,8 @@ class BroadcastHandler:
         future.add_done_callback(lambda: self._on_send_to_peer_completed(connection, broadcast_requests_for_connection, future))
     
     def _on_send_to_peer_completed(self, connection: "Connection", broadcast_requests_for_connection: List["BroadcastRequest"], future: Future):
-        if future.done() and not future.cancelled():
+        try:
+            future.result() # check for success
             self.num_completed_broadcasts.increment_and_get()
             
             if self.stopped:
@@ -206,13 +207,8 @@ class BroadcastHandler:
             
             self._maybe_notify_listeners(broadcast_requests_for_connection)
             self._check_for_completion()
-        else:
-            exc_info = None
-            try:
-                exc_info=future.exception()
-            except:
-                pass
-            logger.warning("Broadcast to " + connection.peers_node_address + " failed. ", exc_info=exc_info)
+        except Exception as e:
+            logger.warning("Broadcast to " + connection.peers_node_address + " failed. ", exc_info=e)
             self.num_failed_broadcasts.increment_and_get()
             
             if self.stopped:
@@ -220,6 +216,7 @@ class BroadcastHandler:
             
             self._maybe_notify_listeners(broadcast_requests_for_connection)
             self._check_for_completion()
+
             
         
     def _get_message(self, broadcast_requests: List["BroadcastRequest"]):

@@ -103,7 +103,7 @@ class RequestDataHandler(MessageListener):
         try:
             connection = future.result()
             if connection is None:
-                raise future.exception()
+                raise Exception("Future returned None, connection was expected")
             if not self.stopped:
                 logger.trace(f"Send {get_data_request} to {node_address} succeeded.")
             else:
