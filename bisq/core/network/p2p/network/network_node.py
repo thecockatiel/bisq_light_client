@@ -60,7 +60,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         self.shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
-        self.node_address: SimpleProperty[NodeAddress] = SimpleProperty()
+        self.node_address_property: SimpleProperty[NodeAddress] = SimpleProperty()
         self.server: Server = None
 
     @abstractmethod
@@ -93,7 +93,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         threading.current_thread().setName(
             f"NetworkNode.connectionExecutor:SendMessage-to-{to_truncated_string(peers_node_address.get_full_address(), 15)}"
         )
-        if peers_node_address == self.node_address.value:
+        if peers_node_address == self.node_address_property.value:
             logger.warning("We are sending a message to ourselves")
 
         startTs = get_time_ms()
@@ -144,7 +144,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 logger.debug(
                     f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                     + "NetworkNode created new outbound connection:"
-                    + "\nmy_node_address=" + self.node_address.value
+                    + "\nmy_node_address=" + self.node_address_property.value
                     + "\npeers_node_address=" + peers_node_address
                     + "\nuid=" + outbound_connection.uid
                     + "\nmessage=" + network_envelope

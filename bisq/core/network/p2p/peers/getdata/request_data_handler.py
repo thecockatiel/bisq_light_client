@@ -67,7 +67,7 @@ class RequestDataHandler(MessageListener):
                 )
             else:
                 get_data_request = self.data_storage.build_get_updated_data_request(
-                    self.network_node.node_address.value, self.nonce
+                    self.network_node.node_address_property.value, self.nonce
                 )
 
             if self.timeout_timer is None:

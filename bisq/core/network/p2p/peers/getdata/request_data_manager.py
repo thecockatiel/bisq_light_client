@@ -115,7 +115,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         # We shuffle only once so that we use the same seed nodes for preliminary and updated data requests.
         random.shuffle(self.seed_node_addresses)
 
-        self.network_node.node_address.add_listener(self._on_node_address_changed)
+        self.network_node.node_address_property.add_listener(self._on_node_address_changed)
 
     def _on_node_address_changed(self, e: "SimplePropertyChangeEvent"):
         if e.new_value is not None:
