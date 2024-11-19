@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.core.network.p2p.peers.keepalive.keep_alive_message import KeepAliveMessage
+from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 import proto.pb_pb2 as protobuf
 
 
