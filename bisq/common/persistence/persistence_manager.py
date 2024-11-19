@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 
 T = TypeVar(
     "T", bound=PersistableEnvelope
-)  # Update the TypeVar definition to include the bound
+)
 
 
 class PersistenceManager(Generic[T]):
