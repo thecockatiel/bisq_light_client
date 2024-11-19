@@ -66,7 +66,7 @@ class FileTransferSender(FileTransferSession):
         
         # an empty block is sent as request to initiate file transfer, peer must ACK for transfer to continue
         self.data_awaiting_ack = FileTransferPart(
-            self.network_node.node_address.value,
+            self.network_node.node_address_property.value,
             self.full_trade_id,
             self.trader_id,
             str(uuid.uuid4()),
@@ -96,7 +96,7 @@ class FileTransferSender(FileTransferSession):
             return
 
         self.data_awaiting_ack = FileTransferPart(
-            self.network_node.node_address.value,
+            self.network_node.node_address_property.value,
             self.full_trade_id,
             self.trader_id,
             str(uuid.uuid4()),
