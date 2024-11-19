@@ -135,7 +135,7 @@ class BroadcastHandler:
                     logger.error(f"Exception at broadcast: {e}")
                     self._cleanup()
 
-            UserThread.run_after_random_delay(send_after_delay, min_delay, max_delay)
+            UserThread.run_after_random_delay(send_after_delay, timedelta(milliseconds=min_delay), timedelta(milliseconds=max_delay))
 
     def cancel(self) -> None:
         self._cleanup()

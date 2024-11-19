@@ -28,8 +28,8 @@ class UserThread:
         cls.executor.submit(command)
 
     @classmethod
-    def run_after_random_delay(cls, runnable: Callable[[], None], min_delay_in_sec: int, max_delay_in_sec: int) -> Timer:
-        delay = random.randint(min_delay_in_sec, max_delay_in_sec)
+    def run_after_random_delay(cls, runnable: Callable[[], None], min_delay: timedelta, max_delay: timedelta) -> Timer:
+        delay = random.uniform(min_delay.total_seconds(), max_delay.total_seconds())
         return cls.run_after(runnable, timedelta(seconds=delay))
 
     @classmethod
