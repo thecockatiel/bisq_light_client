@@ -1,8 +1,9 @@
 from typing import Dict, Optional
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 import proto.pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeDict
 
-class IgnoredMailboxMap:
+class IgnoredMailboxMap(PersistableEnvelope):
     def __init__(self, ignored: Optional[Dict[str, int]] = None): 
         self.data_map: ThreadSafeDict[str, int] = ThreadSafeDict(ignored if ignored is not None else {})
 
