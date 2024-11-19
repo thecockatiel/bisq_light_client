@@ -1,8 +1,8 @@
 from datetime import timedelta
-import threading
 from abc import ABC, abstractmethod
 from typing import List
 
+from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
@@ -34,7 +34,7 @@ class ClockWatcher:
             pass
 
     def __init__(self):
-        self._timer: threading.Timer = None
+        self._timer: "Timer" = None
         self._listeners: List["ClockWatcher.Listener"] = []
         self._counter = 0
         self._last_second_tick = 0
@@ -74,7 +74,7 @@ class ClockWatcher:
 
     def shut_down(self):
         if self._timer is not None:
-            self._timer.cancel()
+            self._timer.stop()
         self._timer = None
         self._counter = 0
 
