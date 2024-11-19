@@ -40,6 +40,25 @@ class TestSimpleProperty(unittest.TestCase):
         
         self.assertEqual(len(self.changes), 0)
 
+    def test_remove_all_listeners(self):
+        def listener1(event):
+            self.changes.append(1)
+        def listener2(event):
+            self.changes.append(2)
+        
+        self.property.add_listener(listener1)
+        self.property.add_listener(listener2)
+        
+        self.property.set(50)
+        self.assertEqual(len(self.changes), 2)
+        
+        self.property.remove_all_listeners()
+        self.property.set(60)
+        
+        # No new changes should be recorded
+        self.assertEqual(len(self.changes), 2)
+        self.assertEqual(len(self.property._listeners), 0)
+
 class TestCombineSimpleProperties(unittest.TestCase):
     def setUp(self):
         self.prop1 = SimpleProperty[int](1)
