@@ -106,16 +106,12 @@ class FileTransferSession(MessageListener, ABC):
         
     def _on_send_message_finished(self, future: Future, message: NetworkEnvelope, node_address: NodeAddress):
         try:
-            error = future.exception()
-            if not error and future.cancelled():
-                error = RuntimeError("Cancelled")
-        except:
-            error = RuntimeError("Cancelled")
-        if error:
+            future.result()
+        except Exception as e:
             error_send = (f"Sending {message.__class__.__name__} "
                          f"to {node_address.get_full_address()} "
                          f"failed. That is expected if the peer is offline.\n\t"
-                         f".\n\tException={str(error)}")
+                         f".\n\tException={str(e)}")
             logger.warning(error_send)
             if self.ftp_callback:
                 self.ftp_callback.on_ftp_timeout("Peer offline", self)

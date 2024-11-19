@@ -109,7 +109,7 @@ class GetDataRequestHandler:
         try:
             connection = future.result()
             if not connection:
-                raise future.exception()
+                raise Exception("Future returned None, connection was expected")
             if not self.stopped:
                 logger.trace(
                     f"Send DataResponse to {connection.peers_node_address} succeeded. getDataResponse={data_response}"
