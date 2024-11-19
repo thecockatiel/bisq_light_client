@@ -2,7 +2,7 @@ from collections.abc import Callable, ItemsView
 import threading
 import weakref
 
-from typing import Iterator, Dict, List, Set, TypeVar, Generic
+from typing import Iterator, Dict, List, Optional, Set, TypeVar, Generic
 
 T = TypeVar('T')
 
@@ -94,8 +94,8 @@ V = TypeVar('V')
 R = TypeVar('R')  # Return type for callback
 
 class ThreadSafeDict(Generic[K, V]):
-    def __init__(self):
-        self._dict: Dict[K, V] = {}
+    def __init__(self, initial: Optional[Dict[K, V]] = None):
+        self._dict: dict[K, V] = dict(initial) if initial is not None else {}
         self._lock = threading.RLock()
     
     def get(self, key: K, default: V = None) -> V:
@@ -164,8 +164,8 @@ class ThreadSafeDict(Generic[K, V]):
             return str(self._dict)
         
 class ThreadSafeList(Generic[T]):
-    def __init__(self):
-        self._list: List[T] = []
+    def __init__(self, initial: Optional[List[T]] = None):
+        self._list: List[T] = list(initial) if initial is not None else []
         self._read_lock = threading.RLock()
         self._write_lock = threading.Lock()
     
