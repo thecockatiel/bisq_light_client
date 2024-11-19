@@ -41,6 +41,7 @@ from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
 from bisq.common.persistence.persistence_manager import PersistenceManager
+from utils.data import SimpleProperty, combine_simple_properties
 from utils.formatting import to_truncated_string
 from bisq.common.protocol.network.network_payload import NetworkPayload
 
@@ -98,6 +99,8 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         # The maximum number of items that must exist in the SequenceNumberMap before it is scheduled for a purge
         # which removes entries after PURGE_AGE_DAYS.
         self.max_sequence_number_map_size_before_purge = max_sequence_number_map_size_before_purge
+        
+        self.read_from_resources_complete_property = SimpleProperty(False)
 
         self.filter_predicate: Optional[Callable[[ProtectedStoragePayload], bool]] = None # Set from FilterManager
 
@@ -125,32 +128,20 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
     
     # Threading is done on the persistenceManager level
     def read_from_resources(self, postfix: str, complete_handler: Callable[[], None]):
-        service_ready_states = {
-            'append_only': False,
-            'protected': False,
-            'resource': False
-        }
-        
-        def check_complete():
-            if all(service_ready_states.values()):
-                complete_handler()
-        
-        def on_append_only_ready():
-            service_ready_states['append_only'] = True
-            check_complete()
+        append_only_data_store_service_ready = SimpleProperty(False)
+        protected_data_store_service_ready = SimpleProperty(False)
+        resource_data_store_service_ready = SimpleProperty(False)
             
-        def on_protected_ready():
-            self.map.update(self.protected_data_store_service.get_map())
-            service_ready_states['protected'] = True
-            check_complete()
-            
-        def on_resource_ready():
-            service_ready_states['resource'] = True
-            check_complete()
+        self.read_from_resources_complete_property = combine_simple_properties(append_only_data_store_service_ready,
+                                  protected_data_store_service_ready,
+                                  resource_data_store_service_ready,
+                                  transform=lambda x: all(x))
         
-        self.append_only_data_store_service.read_from_resources(postfix, on_append_only_ready)
-        self.protected_data_store_service.read_from_resources(postfix, on_protected_ready)
-        self.resource_data_store_service.read_from_resources(postfix, on_resource_ready)
+        self.read_from_resources_complete_property.add_listener(lambda all_ready: complete_handler() if all_ready else None)
+        
+        self.append_only_data_store_service.read_from_resources(postfix, lambda: append_only_data_store_service_ready.set(True))
+        self.protected_data_store_service.read_from_resources(postfix, lambda: protected_data_store_service_ready.set(True))
+        self.resource_data_store_service.read_from_resources(postfix, lambda: resource_data_store_service_ready.set(True))
     
     # Uses synchronous execution on the userThread. Only used by tests. The async methods should be used by app code.
     def read_from_resources_sync(self, postfix: str):
