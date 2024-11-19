@@ -1,20 +1,21 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from datetime import timedelta
-import random
-from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
-from typing import Optional
-from bisq.core.network.p2p.network.network_node import NetworkNode
+from typing import TYPE_CHECKING, Optional
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
-from bisq.core.network.p2p.peers.peer_manager import PeerManager
-from bisq.core.network.p2p.network.connection import Connection
 from utils.random import next_random_int
 from utils.time import get_time_ms
+
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.network.network_node import NetworkNode
+    from bisq.common.timer import Timer
+    from bisq.core.network.p2p.network.connection import Connection
+    from bisq.core.network.p2p.peers.peer_manager import PeerManager
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 logger = get_logger(__name__)
 
@@ -32,13 +33,13 @@ class KeepAliveHandler(MessageListener):
     
     def __init__(self, network_node: "NetworkNode", peer_manager: "PeerManager", listener: "Listener") -> None:
         super().__init__()
-        self.network_node: NetworkNode = network_node
-        self.peer_manager: PeerManager = peer_manager
-        self.listener: KeepAliveHandler.Listener = listener
+        self.network_node: "NetworkNode" = network_node
+        self.peer_manager: "PeerManager" = peer_manager
+        self.listener: "KeepAliveHandler.Listener" = listener
         self.nonce: int = next_random_int()
-        self.connection: Optional[Connection] = None
+        self.connection: Optional["Connection"] = None
         self.stopped: bool = False
-        self.delay_timer: Optional[Timer] = None
+        self.delay_timer: Optional["Timer"] = None
         self.send_ts: int = 0
 
     def cancel(self) -> None:
