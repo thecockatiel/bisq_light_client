@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from socket import socket as Socket
 import threading
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 from collections.abc import Callable
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.network.network_proto_resolver import (
@@ -65,15 +65,13 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
     @abstractmethod
     def start(self, setup_listener: Optional["SetupListener"] = None):
+        # Calls this (and other registered) setup listener's ``onTorNodeReady()`` and ``onHiddenServicePublished``
+        # when the events happen.
         pass
 
-    def _send_message(self, connection: "Connection", network_envelope: NetworkEnvelope):
-        if connection is None:
-            logger.error("Connection is null. We can not send the message.")
-            return
-        if network_envelope is None:
-            logger.error("NetworkEnvelope is null. We can not send the message.")
-            return
+    def _send_message_using_connection(self, connection: "Connection", network_envelope: NetworkEnvelope):
+        assert connection, "Connection is null. We can not send the message."
+        assert network_envelope, "NetworkEnvelope is null. We can not send the message."
         id = (
             connection.peers_node_address.get_full_address()
             if connection.peers_node_address
@@ -155,46 +153,55 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             return outbound_connection
 
     def send_message(
-        self, peers_node_address: NodeAddress, network_envelope: NetworkEnvelope
+        self, peers_node_address_or_connection: Union["NodeAddress", "Connection"], network_envelope: NetworkEnvelope
     ):
-        logger.debug(
-            f"Send {network_envelope.__class__.__name__} to {peers_node_address}. Message details: {network_envelope}"
-        )
-
-        assert peers_node_address, "peerAddress must not be null"
-
-        connection = self.get_outbound_connection(peers_node_address)
-
-        if not connection:
-            connection = self.get_inbound_connection(peers_node_address)
-
-        if connection:
-            try:
-                return self.send_message_executor.submit(
-                    self._send_message, connection, network_envelope
-                )
-            except Exception as e:
-                logger.error(
-                    "Error when submitting _send_message task to send_message_executor",
-                    exc_info=e,
-                )
-                raise
-        else:
+        assert peers_node_address_or_connection, "peers_node_address_or_connection must not be null"
+            
+        if isinstance(peers_node_address_or_connection, NodeAddress):
+            peers_node_address: NodeAddress = peers_node_address_or_connection
+        
             logger.debug(
-                f"We have not found any connection for peerAddress {peers_node_address}.\n\t"
-                "We will create a new outbound connection."
+                f"Send {network_envelope.__class__.__name__} to {peers_node_address}. Message details: {network_envelope}"
             )
 
-            try:
-                return self.connection_executor.submit(
-                    self._make_connection, peers_node_address, network_envelope
+            assert peers_node_address, "peerAddress must not be null"
+
+            connection = self.get_outbound_connection(peers_node_address)
+
+            if not connection:
+                connection = self.get_inbound_connection(peers_node_address)
+
+            if connection:
+                try:
+                    return self.send_message_executor.submit(
+                        self._send_message_using_connection, connection, network_envelope
+                    )
+                except Exception as e:
+                    logger.error(
+                        "Error when submitting _send_message task to send_message_executor",
+                        exc_info=e,
+                    )
+                    raise
+            else:
+                logger.debug(
+                    f"We have not found any connection for peerAddress {peers_node_address}.\n\t"
+                    "We will create a new outbound connection."
                 )
-            except Exception as e:
-                logger.error(
-                    "Error when submitting _make_connection task to connection_executor",
-                    exc_info=e,
-                )
-                raise
+
+                try:
+                    return self.connection_executor.submit(
+                        self._make_connection, peers_node_address, network_envelope
+                    )
+                except Exception as e:
+                    logger.error(
+                        "Error when submitting _make_connection task to connection_executor",
+                        exc_info=e,
+                    )
+                    raise
+        else:
+            return self.send_message_executor.submit(
+                        self._send_message_using_connection, peers_node_address_or_connection, network_envelope
+                    )
 
     def lookup_outbound_connection(self, peers_node_address: NodeAddress):
         logger.debug(
