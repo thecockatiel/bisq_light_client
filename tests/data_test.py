@@ -56,6 +56,7 @@ class TestCombineSimpleProperties(unittest.TestCase):
         
         self.assertIsNone(combined.value)
         
+        self.prop1.set(62)
         self.prop1.set(42)
         self.assertEqual(results, [])
         
