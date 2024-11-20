@@ -14,7 +14,14 @@ class PriceProvider(HttpClientProvider):
 
     def get_all(self) -> "PricenodeDto":
         if self.shut_down_requested:
-            return PricenodeDto()
+            return {
+                "data": [],
+                "bitcoinFeesTs": 0,
+                "bitcoinFeeInfo": {
+                    "btcTxFee": 0,
+                    "btcMinTxFee": 0,
+                }
+            }
 
         hs_version = ""
         if P2PService.get_my_node_address() is not None:
