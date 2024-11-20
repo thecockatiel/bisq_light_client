@@ -19,10 +19,10 @@ from bisq.common.user_thread import UserThread
 import bisq.common.version as Version
 from utils.concurrency import ThreadSafeList
 from utils.data import SimplePropertyChangeEvent
+from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-    from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
