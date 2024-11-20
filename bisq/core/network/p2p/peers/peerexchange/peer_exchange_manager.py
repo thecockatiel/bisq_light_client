@@ -44,7 +44,7 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
         
         self.seed_node_addresses: set["NodeAddress"] = set(seed_node_repository.get_seed_node_addresses())
 
-    def shutdown(self):
+    def shut_down(self):
         self.stopped = True
         self.network_node.remove_message_listener(self)
         self.network_node.remove_connection_listener(self)
