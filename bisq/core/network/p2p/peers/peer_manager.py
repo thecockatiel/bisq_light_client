@@ -121,7 +121,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self.initial_data_exchange_trigger = max(8, round(max_connections * 1.7))       # app node 20; seedNode 34
         self.max_connections_absolute = max(12, round(max_connections * 2.5))           # app node 30; seedNode 50
     
-    def shutdown(self):
+    def shut_down(self):
         self.shut_down_requested = True
         self.network_node.remove_connection_listener(self)
         self.clock_watcher.remove_listener(self.clock_watcher_listener)

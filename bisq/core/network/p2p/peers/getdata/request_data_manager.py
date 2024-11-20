@@ -126,7 +126,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 RequestDataManager.NUM_ADDITIONAL_SEEDS_FOR_UPDATE_REQUEST = 2
                 RequestDataManager.MAX_REPEATED_REQUESTS = 100
 
-    def shutdown(self):
+    def shut_down(self):
         self.stopped = True
         self.stop_retry_timer()
         self.network_node.remove_message_listener(self)
