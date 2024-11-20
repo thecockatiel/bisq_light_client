@@ -11,7 +11,7 @@ class SetupListener(ABC):
         pass
 
     def on_setup_failed(self, raisable: Optional[Exception] = None) -> None:
-        """Default implementation does nothing"""
+        pass
 
-    def request_custom_bridges(self) -> None:
-        """Default implementation does nothing"""
+    def on_request_custom_bridges(self) -> None:
+        pass
