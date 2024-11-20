@@ -2,6 +2,11 @@ from abc import ABC, abstractmethod
 
 
 class HttpClient(ABC):
+    uid: str
+    base_url: str
+    has_pending_request: bool
+    ignore_socks5_proxy: bool
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         required_attributes = [
