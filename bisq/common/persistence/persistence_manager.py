@@ -6,6 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, Generic, Optional, cast
 from collections.abc import Callable
+from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import CONFIG
 from bisq.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
 from bisq.common.protocol.persistable.persistable_envelope import (
@@ -298,6 +299,7 @@ class PersistenceManager(Generic[T]):
                 remove_and_backup_file(
                     self.dir, storage_file, file_name, "backup_of_corrupted_data"
                 )
+                DevEnv.log_error_and_throw_if_dev_mode(str(e))
             except Exception as backup_e:
                 logger.error(str(e), exc_info=backup_e)
                 #  We swallow Exception if backup fails
