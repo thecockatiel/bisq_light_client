@@ -3,6 +3,7 @@ import sys
 import traceback
 import threading
 from types import TracebackType
+from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 
@@ -57,7 +58,7 @@ class CommonSetup:
         Version.print_version()
         Profiler.print_system_load()
         CommonSetup.setup_sig_int_handlers(graceful_shutdown_handler)
-        # TODO: setup devenv and check for usages in original code?
+        DevEnv.setup(CONFIG)
 
     @staticmethod
     def start_periodic_tasks():
