@@ -14,9 +14,22 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
 
     @staticmethod
     def from_full_address(full_address: str) -> "NodeAddress":
-        split = full_address.split(":")
-        assert len(split) == 2, "fullAddress must contain ':'"
-        return NodeAddress(host_name=split[0], port=int(split[1]))
+        # Handle IPv6 addresses
+        if full_address.startswith("["):
+            split = full_address.split("]")
+            if len(split) != 2:
+                raise AssertionError("Invalid IPv6 address format")
+            host_name = split[0][1:]  # Remove the leading '['
+            port = int(split[1].replace(":", ""))
+        else:
+            # Handle IPv4 addresses and hostnames
+            split = full_address.split(":")
+            if len(split) != 2:
+                raise AssertionError("fullAddress must contain ':'")
+            host_name = split[0]
+            port = int(split[1])
+        
+        return NodeAddress(host_name=host_name, port=port)
 
     def to_proto_message(self):
         return protobuf.NodeAddress(host_name=self.host_name, port=self.port)
