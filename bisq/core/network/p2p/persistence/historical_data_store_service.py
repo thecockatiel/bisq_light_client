@@ -4,6 +4,7 @@ from typing import Generic, TypeVar, Optional
 from collections.abc import Callable
 
 import logging
+from bisq.common.app.dev_env import DevEnv
 import bisq.common.version as Version
 from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
@@ -76,8 +77,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_map(self) -> dict["StorageByteArray", "PersistableNetworkPayload"]:
-        # TODO: Implement proper DevEnv equivalent for Python
-        logging.error("HistoricalDataStoreService.get_map should not be used by domain "
+        DevEnv.log_error_and_throw_if_dev_mode("HistoricalDataStoreService.get_map should not be used by domain "
                      "clients but rather the custom methods get_map_of_all_data, get_map_of_live_data "
                      "or get_map_since_version")
         return self.get_map_of_all_data()

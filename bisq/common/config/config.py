@@ -21,6 +21,7 @@ class Config:
     banned_seed_nodes: list = field(default_factory=list)
     banned_price_relay_nodes: list = field(default_factory=list)
     base_currency_network: BaseCurrencyNetwork = field(default=BaseCurrencyNetwork.BTC_MAINNET)
+    use_dev_mode: bool = field(default=False)
     app_data_dir: Path = field(default_factory=user_data_dir)
     log_level: str = field(default="INFO")
     msg_throttle_per_sec: int = field(default=200)
