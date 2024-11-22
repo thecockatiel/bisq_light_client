@@ -79,3 +79,15 @@ def set_base_currency_code(currency_code: str):
     
 def setup():
     set_base_currency_code(CONFIG.base_currency_network.currency_code)
+    
+MATURE_MARKET_CURRENCIES = tuple(sorted([
+    FiatCurrency("EUR"),
+    FiatCurrency("USD"), 
+    FiatCurrency("GBP"),
+    FiatCurrency("CAD"),
+    FiatCurrency("AUD"),
+    FiatCurrency("BRL")
+], key=lambda x: x.code))
+
+def get_mature_market_currencies():
+    return MATURE_MARKET_CURRENCIES
