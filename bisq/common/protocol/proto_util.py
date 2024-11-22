@@ -55,6 +55,7 @@ class ProtoUtil:
             except:
                 return None
 
+    # NOTE: check for improvements
     @staticmethod
     def collection_to_proto(collection: Collection['Proto'], message_type: Type[T]) -> Iterable[T]:
         result = []
