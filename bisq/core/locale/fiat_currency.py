@@ -17,6 +17,7 @@ class FiatCurrency(TradeCurrency):
             self.currency = CURRENCY_CODE_TO_DATA_MAP.get(code_or_currency_data)
         else:
             self.currency = code_or_currency_data
+        super().__init__(self.currency.currency_code, self.currency.display_name)
 
     def get_display_prefix(self):
         return self.PREFIX
