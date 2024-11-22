@@ -3,7 +3,7 @@ import hmac as builtin_hmac
 import secrets
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, ec
 from cryptography.hazmat.backends import default_backend
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
@@ -159,7 +159,6 @@ class Encryption:
     ##########################################################################################
     @staticmethod
     def generate_secret_key(bits: int) -> bytes:
-        """Generate a secret key of specified bit length for AES."""
         try:
             if bits not in [128, 192, 256]:  # Standard AES key sizes
                 raise ValueError("Key size must be 128, 192, or 256 bits")
@@ -172,7 +171,6 @@ class Encryption:
 
     @staticmethod
     def get_public_key_bytes(public_key: rsa.RSAPublicKey) -> bytes:
-        """Convert a public key object to X.509 encoded bytes"""
         return public_key.public_bytes(
             encoding=serialization.Encoding.DER,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -180,7 +178,6 @@ class Encryption:
 
     @staticmethod
     def get_public_key_from_bytes(public_key_bytes: bytes) -> rsa.RSAPublicKey:
-        """Convert DER encoded bytes to a public key object"""
         try:
             key = serialization.load_der_public_key(public_key_bytes, backend=default_backend())
             return key
@@ -192,12 +189,40 @@ class Encryption:
 
     @staticmethod
     def get_private_key_from_bytes(private_key_bytes: bytes) -> rsa.RSAPublicKey:
-        """Convert DER encoded bytes to a public key object"""
         try:
             key = serialization.load_der_private_key(private_key_bytes, password=None, backend=default_backend())
             return key
         except Exception as e:
             logger.error(
-                f"Error creating public key from bytes. Key bytes as hex=REDACTED, error={str(e)}"
+                f"Error creating private key from bytes. Key bytes as hex=REDACTED, error={str(e)}"
+            )
+            raise KeyConversionException(e) from e
+
+    ##########################################################################################
+    # EC
+    ##########################################################################################
+    
+    @staticmethod
+    def get_ec_private_key_from_bytes(private_key_bytes: bytes) -> ec.EllipticCurvePrivateKey:
+        try:
+            key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1(), default_backend())
+            return key
+        except Exception as e:
+            logger.error(
+                f"Error creating private key from bytes. Key bytes as hex=REDACTED, error={str(e)}"
+            )
+            raise KeyConversionException(e) from e
+    
+    @staticmethod
+    def get_ec_public_key_from_private_key(private_key: ec.EllipticCurvePrivateKey) -> bytes:
+        try:
+            public_pytes = private_key.public_key().public_bytes(
+                encoding=serialization.Encoding.X962,
+                format=serialization.PublicFormat.CompressedPoint
+            )
+            return public_pytes
+        except Exception as e:
+            logger.error(
+                f"Error creating bytes from ec private key. Key bytes as hex=REDACTED, error={str(e)}"
             )
             raise KeyConversionException(e) from e
