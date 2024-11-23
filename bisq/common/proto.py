@@ -15,4 +15,7 @@ class Proto(ABC):
     # If the class implements ExcludedFieldsProto this method will be overwritten so that
     # fields annotated with ExcludeForHash will be excluded.
     def serialize_for_hash(self) -> bytes:
-        return self.serialize()
+        return self.to_proto_message().SerializeToString(deterministic=True)
+    
+    def __hash__(self) -> int:
+        return hash(self.serialize_for_hash())
