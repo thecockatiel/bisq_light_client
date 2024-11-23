@@ -3,6 +3,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.monetary.price import Price
 from bisq.core.util.decimal_format import DecimalFormat
+from bisq.core.locale.currency_util import is_fiat_currency
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
@@ -140,6 +141,30 @@ class FormattingUtils:
         FormattingUtils.decimal_format.set_maximum_fraction_digits(precision)
         return FormattingUtils.decimal_format.format(
             MathUtils.round_double(value, precision)
+        ).replace(",", ".")
+
+    @staticmethod
+    def format_to_percent_with_symbol(value: float) -> str:
+        return FormattingUtils.format_to_percent(value) + "%"
+
+    @staticmethod
+    def format_to_rounded_percent_with_symbol(value: float) -> str:
+        rounded_format = DecimalFormat("#")
+        return FormattingUtils.format_to_percent(value, rounded_format) + "%"
+
+    @staticmethod
+    def format_percentage_price(value: float) -> str:
+        return FormattingUtils.format_to_percent_with_symbol(value)
+
+    @staticmethod
+    def format_to_percent(value: float, decimal_format: DecimalFormat = None) -> str:
+        if decimal_format is None:
+            decimal_format = DecimalFormat("#.##")
+            decimal_format.set_minimum_fraction_digits(2)
+            decimal_format.set_maximum_fraction_digits(2)
+        
+        return decimal_format.format(
+            MathUtils.round_double(value * 100.0, 2)
         ).replace(",", ".")
 
     # TODO: implement rest
