@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional 
 from bisq.common.crypto.sig import Sig,dsa
 from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.util.utilities import bytes_as_hex_string
 import proto.pb_pb2 as protobuf
 
 
@@ -43,4 +44,4 @@ class PrivateNotificationPayload(NetworkPayload):
         return (f"PrivateNotification("
                 f"message='{self.message}', "
                 f"signature_as_base64='{self.signature_as_base64}', "
-                f"public_key_bytes={self.sig_public_key_bytes.hex() if self.sig_public_key_bytes else None})")
+                f"public_key_bytes={bytes_as_hex_string(self.sig_public_key_bytes)})")

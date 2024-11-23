@@ -9,6 +9,7 @@ from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.utilities import bytes_as_hex_string
 
 logger = get_logger(__name__)
 
@@ -183,7 +184,7 @@ class Encryption:
             return key
         except Exception as e:
             logger.error(
-                f"Error creating public key from bytes. Key bytes as hex={public_key_bytes.hex()}, error={str(e)}"
+                f"Error creating public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
             )
             raise KeyConversionException(e) from e
 

@@ -7,6 +7,7 @@ import uuid
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
@@ -279,7 +280,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     envelopes_by_hash.add(network_envelope)
                     envelopes_to_process.add(network_envelope)
                 else:
-                    logger.debug(f"We got duplicated items for {item_name}. We ignore the duplicates. Hash: {hash_value.hex()}")
+                    logger.debug(f"We got duplicated items for {item_name}. We ignore the duplicates. Hash: {bytes_as_hex_string(hash_value)}")
             else:
                 envelopes_to_process.add(network_envelope)
 

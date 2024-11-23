@@ -6,6 +6,7 @@ from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.filter.payment_account_filter import PaymentAccountFilter
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
@@ -298,7 +299,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
                 f"     btc_nodes={self._btc_nodes},\n"
                 f"     signature_as_base64='{self._signature_as_base64}',\n"
                 f"     signer_pub_key_as_hex='{self._signer_pub_key_as_hex}',\n"
-                f"     owner_pub_key_bytes={self._owner_pub_key_bytes.hex() if self._owner_pub_key_bytes else None},\n"
+                f"     owner_pub_key_bytes={bytes_as_hex_string(self._owner_pub_key_bytes)},\n"
                 f"     disable_dao={self._disable_dao},\n"
                 f"     disable_dao_below_version='{self._disable_dao_below_version}',\n"
                 f"     disable_trade_below_version='{self._disable_trade_below_version}',\n"
