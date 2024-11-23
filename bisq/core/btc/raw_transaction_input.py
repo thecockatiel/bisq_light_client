@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from bisq.common.util.utilities import bytes_as_hex_string
 from bitcoinj.script.script import ScriptType
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
@@ -55,7 +56,7 @@ class RawTransactionInput(NetworkPayload, PersistablePayload):
     def __str__(self) -> str:
         return (f"RawTransactionInput("
                 f"index={self.index}, "
-                f"parent_transaction as HEX={self.parent_transaction.hex() if self.parent_transaction else None}, "
+                f"parent_transaction as HEX={bytes_as_hex_string(self.parent_transaction)}, "
                 f"value={self.value}, "
                 f"script_type_id={self.script_type_id})")
 

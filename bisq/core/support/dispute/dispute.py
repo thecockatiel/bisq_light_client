@@ -8,6 +8,7 @@ from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.common.setup.log_setup import get_logger
@@ -386,9 +387,9 @@ class Dispute(NetworkPayload, PersistablePayload):
                 f",\n     trade_date={self.trade_date}"
                 f",\n     trade_period_end={self.trade_period_end}"
                 f",\n     contract={self.contract}"
-                f",\n     contract_hash={self.contract_hash.hex() if self.contract_hash else None}"
-                f",\n     deposit_tx_serialized={self.deposit_tx_serialized.hex() if self.deposit_tx_serialized else None}"
-                f",\n     payout_tx_serialized={self.payout_tx_serialized.hex() if self.payout_tx_serialized else None}"
+                f",\n     contract_hash={bytes_as_hex_string(self.contract_hash)}"
+                f",\n     deposit_tx_serialized={bytes_as_hex_string(self.deposit_tx_serialized)}"
+                f",\n     payout_tx_serialized={bytes_as_hex_string(self.payout_tx_serialized)}"
                 f",\n     deposit_tx_id='{self.deposit_tx_id}'"
                 f",\n     payout_tx_id='{self.payout_tx_id}'"
                 f",\n     contract_as_json='{self.contract_as_json}'"

@@ -3,6 +3,7 @@ from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.util.utilities import bytes_as_hex_string
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from utils.time import get_time_ms
@@ -211,10 +212,10 @@ class DisputeResult(NetworkPayload):
             f"  screen_cast={self.screen_cast},\n"
             f"  summary_notes='{self.summary_notes}',\n"
             f"  chat_message={self.chat_message},\n"
-            f"  arbitrator_signature={self.arbitrator_signature.hex() if self.arbitrator_signature else None},\n"
+            f"  arbitrator_signature={bytes_as_hex_string(self.arbitrator_signature)},\n"
             f"  buyer_payout_amount={self.buyer_payout_amount},\n"
             f"  seller_payout_amount={self.seller_payout_amount},\n"
-            f"  arbitrator_pub_key={self.arbitrator_pub_key.hex() if self.arbitrator_pub_key else None},\n"
+            f"  arbitrator_pub_key={bytes_as_hex_string(self.arbitrator_pub_key)},\n"
             f"  close_date={self.close_date},\n"
             f"  is_loser_publisher={self.is_loser_publisher},\n"
             f"  payout_adjustment_percent='{self.payout_adjustment_percent}',\n"

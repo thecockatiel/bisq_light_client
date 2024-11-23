@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.direct_message import DirectMessage
@@ -112,17 +113,17 @@ class InputsForDepositTxResponse(TradeMessage, DirectMessage):
         return (
             f"InputsForDepositTxResponse(\n"
             f"    maker_account_id='{self.maker_account_id}',\n"
-            f"    maker_multi_sig_pub_key={self.maker_multi_sig_pub_key.hex() if self.maker_multi_sig_pub_key else None},\n"
+            f"    maker_multi_sig_pub_key={bytes_as_hex_string(self.maker_multi_sig_pub_key)},\n"
             f"    maker_contract_as_json='{self.maker_contract_as_json}',\n"
             f"    maker_contract_signature='{self.maker_contract_signature}',\n"
             f"    maker_payout_address_string='{self.maker_payout_address_string}',\n"
-            f"    prepared_deposit_tx={self.prepared_deposit_tx.hex() if self.prepared_deposit_tx else None},\n"
+            f"    prepared_deposit_tx={bytes_as_hex_string(self.prepared_deposit_tx)},\n"
             f"    maker_inputs={self.maker_inputs},\n"
             f"    sender_node_address={self.sender_node_address},\n"
-            f"    account_age_witness_signature={self.account_age_witness_signature_of_prepared_deposit_tx.hex() if self.account_age_witness_signature_of_prepared_deposit_tx else None},\n"
+            f"    account_age_witness_signature={bytes_as_hex_string(self.account_age_witness_signature_of_prepared_deposit_tx)},\n"
             f"    current_date={datetime.fromtimestamp(self.current_date/1000)},\n"
             f"    lock_time={self.lock_time},\n"
-            f"    hash_of_makers_payment_account_payload={self.hash_of_makers_payment_account_payload.hex() if self.hash_of_makers_payment_account_payload else None},\n"
+            f"    hash_of_makers_payment_account_payload={bytes_as_hex_string(self.hash_of_makers_payment_account_payload)},\n"
             f"    makers_payment_method_id={self.makers_payment_method_id}\n"
             f") {super().__str__()}"
         )

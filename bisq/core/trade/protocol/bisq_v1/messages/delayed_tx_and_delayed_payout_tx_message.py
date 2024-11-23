@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage 
@@ -57,6 +58,6 @@ class DepositTxAndDelayedPayoutTxMessage(TradeMailboxMessage):
     def __str__(self):
         return (f"DepositTxAndDelayedPayoutTxMessage("
                 f"\n     sender_node_address={self.sender_node_address},"
-                f"\n     deposit_tx={self.deposit_tx.hex()},"
-                f"\n     delayed_payout_tx={self.delayed_payout_tx.hex()}"
+                f"\n     deposit_tx={bytes_as_hex_string(self.deposit_tx)},"
+                f"\n     delayed_payout_tx={bytes_as_hex_string(self.delayed_payout_tx)}"
                 f"\n) {super().__str__()}")

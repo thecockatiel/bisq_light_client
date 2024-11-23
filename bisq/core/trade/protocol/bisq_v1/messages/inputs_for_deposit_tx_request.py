@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, List, Optional
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
 from bisq.common.crypto.sig import Sig
 from bisq.common.protocol.proto_util import ProtoUtil
@@ -152,7 +153,7 @@ class InputsForDepositTxRequest(TradeMessage):
                 f"     raw_transaction_inputs={self.raw_transaction_inputs},\n"
                 f"     change_output_value={self.change_output_value},\n"
                 f"     change_output_address='{self.change_output_address}',\n"
-                f"     taker_multi_sig_pub_key={self.taker_multi_sig_pub_key.hex() if self.taker_multi_sig_pub_key else None},\n"
+                f"     taker_multi_sig_pub_key={bytes_as_hex_string(self.taker_multi_sig_pub_key)},\n"
                 f"     taker_payout_address_string='{self.taker_payout_address_string}',\n"
                 f"     taker_pub_key_ring={self.taker_pub_key_ring},\n"
                 f"     taker_account_id='{self.taker_account_id}',\n"
@@ -163,9 +164,9 @@ class InputsForDepositTxRequest(TradeMessage):
                 f"     arbitrator_node_address={self.arbitrator_node_address},\n"
                 f"     mediator_node_address={self.mediator_node_address},\n"
                 f"     refund_agent_node_address={self.refund_agent_node_address},\n"
-                f"     account_age_witness_signature_of_offer_id={self.account_age_witness_signature_of_offer_id.hex() if self.account_age_witness_signature_of_offer_id else None},\n"
+                f"     account_age_witness_signature_of_offer_id={bytes_as_hex_string(self.account_age_witness_signature_of_offer_id)},\n"
                 f"     current_date={self.current_date},\n"
-                f"     hash_of_takers_payment_account_payload={self.hash_of_takers_payment_account_payload.hex() if self.hash_of_takers_payment_account_payload else None},\n"
+                f"     hash_of_takers_payment_account_payload={bytes_as_hex_string(self.hash_of_takers_payment_account_payload)},\n"
                 f"     takers_payment_method_id={self.takers_payment_method_id},\n"
                 f"     burning_man_selection_height={self.burning_man_selection_height}\n"
                 f"}} {super().__str__()}")

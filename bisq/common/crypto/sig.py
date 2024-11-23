@@ -8,6 +8,7 @@ from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.utilities import bytes_as_hex_string
 
 logger = get_logger(__name__)
 
@@ -74,7 +75,7 @@ class Sig:
             public_key = serialization.load_der_public_key(sig_public_key_bytes)
             return public_key
         except Exception as e:
-            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex={sig_public_key_bytes.hex()}, error={e}", exc_info=e)
+            logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex={bytes_as_hex_string(sig_public_key_bytes)}, error={e}", exc_info=e)
             raise KeyConversionException(e) from e
 
     @staticmethod

@@ -4,6 +4,7 @@ from google.protobuf.message import Message
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.price import Price
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -23,9 +24,6 @@ if TYPE_CHECKING:
     from bisq.core.monetary.volume import Volume
 
 logger = get_logger(__name__)
-
-def bytes_as_hex(b: Optional[bytes]) -> str:
-        return b.hex() if b else "None"
 
 @dataclass(kw_only=True)
 class Contract(NetworkPayload):
@@ -351,13 +349,13 @@ class Contract(NetworkPayload):
             f",\n     taker_pub_key_ring={self.taker_pub_key_ring}"
             f",\n     maker_payout_address_string='{self.maker_payout_address_string}'"
             f",\n     taker_payout_address_string='{self.taker_payout_address_string}'"
-            f",\n     maker_multi_sig_pub_key={bytes_as_hex(self.maker_multi_sig_pub_key)}"
-            f",\n     taker_multi_sig_pub_key={bytes_as_hex(self.taker_multi_sig_pub_key)}"
-            f",\n     buyer_multi_sig_pub_key={bytes_as_hex(self.buyer_multi_sig_pub_key)}"
-            f",\n     seller_multi_sig_pub_key={bytes_as_hex(self.seller_multi_sig_pub_key)}"
+            f",\n     maker_multi_sig_pub_key={bytes_as_hex_string(self.maker_multi_sig_pub_key)}"
+            f",\n     taker_multi_sig_pub_key={bytes_as_hex_string(self.taker_multi_sig_pub_key)}"
+            f",\n     buyer_multi_sig_pub_key={bytes_as_hex_string(self.buyer_multi_sig_pub_key)}"
+            f",\n     seller_multi_sig_pub_key={bytes_as_hex_string(self.seller_multi_sig_pub_key)}"
             f",\n     lock_time={self.lock_time}"
-            f",\n     hash_of_makers_payment_account_payload={bytes_as_hex(self.hash_of_makers_payment_account_payload)}"
-            f",\n     hash_of_takers_payment_account_payload={bytes_as_hex(self.hash_of_takers_payment_account_payload)}"
+            f",\n     hash_of_makers_payment_account_payload={bytes_as_hex_string(self.hash_of_makers_payment_account_payload)}"
+            f",\n     hash_of_takers_payment_account_payload={bytes_as_hex_string(self.hash_of_takers_payment_account_payload)}"
             f",\n     maker_payment_method_id={self.maker_payment_method_id}"
             f",\n     taker_payment_method_id={self.taker_payment_method_id}"
             "\n}"
