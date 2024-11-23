@@ -248,7 +248,7 @@ class PaymentMethod(PersistablePayload):
     def get_max_trade_limit_as_coin(self, currency_code: str) -> Coin:
         # We adjust the custom trade limits with the factor of the change of the DAO param. Initially it was set to 2 BTC.
         initial_trade_limit = 200000000
-        trade_limits = TradeLimits.getINSTANCE()
+        trade_limits = TradeLimits.INSTANCE
         if trade_limits is None:
             # is null in some tests...
             logger.warning("trade_limits was null")
