@@ -326,4 +326,7 @@ ALL_SEPA_COUNTRIES.sort(key=lambda e: e.name)
 def find_country_by_code(country_code: str) -> Optional[Country]:
     return ALL_COUNTRIES_BY_CODE.get(country_code)
 
+def get_all_sepa_countries():
+    return ALL_SEPA_COUNTRIES
+
     
