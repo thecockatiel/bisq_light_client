@@ -23,11 +23,15 @@ crypto_currency_map = {
     for asset in AssetRegistry.registered_assets
 }
 
+CURRENCY_CODE_TO_FIAT_CURRENCY_MAP = {
+    currency_code: FiatCurrency(currency_data) for currency_code, currency_data in CURRENCY_CODE_TO_DATA_MAP.items()
+}
+
 def get_currency_by_country_code(country_code: str):
-    currency_data = CURRENCY_CODE_TO_DATA_MAP.get(
+    currency_data = CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(
         COUNTRY_TO_CURRENCY_CODE_MAP.get(country_code)
     )
-    return FiatCurrency(currency_data)
+    return currency_data
 
 
 # along with the comments.
@@ -91,3 +95,7 @@ MATURE_MARKET_CURRENCIES = tuple(sorted([
 
 def get_mature_market_currencies():
     return MATURE_MARKET_CURRENCIES
+
+
+SORTED_BY_NAME_FIAT_CURRENCIES = sorted(list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: x.name)
+SORTED_BY_CODE_FIAT_CURRENCIES = sorted(SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: x.code)
