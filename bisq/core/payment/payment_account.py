@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
-from bisq.core.payment.payment_account_factory import PaymentAccountFactory
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.locale.trade_currency import TradeCurrency
@@ -67,6 +66,7 @@ class PaymentAccount(PersistablePayload, ABC):
         if ngn_tw:
             trade_currencies.remove(ngn_tw)
 
+        from bisq.core.payment.payment_account_factory import PaymentAccountFactory
         try:
             account = PaymentAccountFactory.get_payment_account(PaymentMethod.get_payment_method(payment_method_id))
             account.trade_currencies.clear()
