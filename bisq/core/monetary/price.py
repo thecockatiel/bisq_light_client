@@ -5,7 +5,7 @@ from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.altcoin_exchange_rate import AltcoinExchangeRate
 from bisq.core.monetary.monetary_wrapper import MonetaryWrapper
 from bisq.core.monetary.volume import Volume
-from bisq.core.util.parsing_util import convert_chars_for_number
+from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.monetary import Monetary
 from bitcoinj.base.utils.fiat import Fiat
@@ -38,7 +38,7 @@ class Price(MonetaryWrapper):
         Returns:
             Price: The parsed Price object
         """
-        cleaned = convert_chars_for_number(input_str)
+        cleaned = ParsingUtils.convert_chars_for_number(input_str)
         if is_fiat_currency(currency_code):
             return Price(Fiat.parse_fiat(currency_code, cleaned))
         else:

@@ -3,7 +3,7 @@ from functools import total_ordering
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.monetary_wrapper import MonetaryWrapper
-from bisq.core.util.parsing_util import convert_chars_for_number
+from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.monetary import Monetary
 from bitcoinj.base.utils.fiat import Fiat
 
@@ -15,7 +15,7 @@ class Volume(MonetaryWrapper):
 
     @staticmethod
     def parse(input_str: str, currency_code: str) -> 'Volume':
-        cleaned = convert_chars_for_number(input_str)
+        cleaned = ParsingUtils.convert_chars_for_number(input_str)
         if is_fiat_currency(currency_code):
             return Volume(Fiat.parse_fiat(currency_code, cleaned))
         else:
