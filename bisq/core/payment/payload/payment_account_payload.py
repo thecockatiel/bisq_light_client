@@ -91,8 +91,8 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         Any change would break validation of historical data!
         """
         pass
-
-    def get_age_witness_input_data_helper(self, data: bytes) -> bytes:
+    
+    def get_age_witness_input_data_with_data(self, data: bytes) -> bytes:
         return self.payment_method_id.encode('utf-8') + data
 
     def get_owner_id(self) -> Optional[str]:
