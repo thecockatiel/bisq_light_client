@@ -92,7 +92,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         """
         pass
     
-    def get_age_witness_input_data_with_data(self, data: bytes) -> bytes:
+    def get_age_witness_input_data_with_bytes(self, data: bytes) -> bytes:
         return self.payment_method_id.encode('utf-8') + data
 
     def get_owner_id(self) -> Optional[str]:

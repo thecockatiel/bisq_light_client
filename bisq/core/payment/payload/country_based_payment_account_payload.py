@@ -36,4 +36,4 @@ class CountryBasedPaymentAccountPayload(PaymentAccountPayload, ABC):
 
     def get_age_witness_input_data(self, data: bytes) -> bytes:
         country_code_bytes = self.country_code.encode("utf-8")
-        return super().get_age_witness_input_data_with_data(country_code_bytes + data)
+        return super().get_age_witness_input_data_with_bytes(country_code_bytes + data)
