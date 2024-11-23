@@ -1,5 +1,5 @@
 # TODO: complete ?
-from typing import Dict, List
+from typing import Dict, List, Optional
 from bisq.core.locale.country import Country
 from bisq.core.locale.locale_util import ALL_LOCALES
 from bisq.core.locale.region import Region
@@ -323,10 +323,7 @@ ALL_AMAZON_GIFT_CARD_COUNTRIES.sort(key=lambda e: e.name)
 ALL_SEPA_COUNTRIES.sort(key=lambda e: e.name)
 
 
-
-
-
-
-
+def find_country_by_code(country_code: str) -> Optional[Country]:
+    return ALL_COUNTRIES_BY_CODE.get(country_code)
 
     
