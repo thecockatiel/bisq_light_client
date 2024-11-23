@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
-import logging
 import random
 from typing import TYPE_CHECKING, Optional
 
+from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
     from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listener):

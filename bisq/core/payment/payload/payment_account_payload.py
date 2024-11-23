@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 import secrets
 from typing import Dict, Optional
-import logging
 import binascii
+from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # todo: double check impl
 class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):

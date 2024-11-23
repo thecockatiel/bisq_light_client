@@ -6,7 +6,6 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
-from logging import getLogger
 from utils.random import next_random_int
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_request import GetPeersRequest
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import GetPeersResponse
