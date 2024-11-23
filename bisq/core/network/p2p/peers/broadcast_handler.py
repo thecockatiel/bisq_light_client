@@ -1,5 +1,4 @@
 from datetime import timedelta
-import logging
 import uuid
 from threading import Lock
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -7,6 +6,7 @@ from typing import TYPE_CHECKING, List, Optional
 from abc import ABC, abstractmethod
 import random
 
+from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.broadcaster import BroadcastRequest
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class BroadcastHandler:
     BASE_TIMEOUT_MS = 120 * 1000  # 120 seconds in milliseconds
