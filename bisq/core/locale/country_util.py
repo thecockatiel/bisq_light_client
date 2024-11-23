@@ -329,4 +329,8 @@ def find_country_by_code(country_code: str) -> Optional[Country]:
 def get_all_sepa_countries():
     return ALL_SEPA_COUNTRIES
 
+def get_name_by_code(country_code: str):
+    country = find_country_by_code(country_code)
+    return country.name if country else "Unknown"
+
     
