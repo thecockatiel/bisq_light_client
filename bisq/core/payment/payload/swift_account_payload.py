@@ -1,4 +1,3 @@
-from google.protobuf.message import Message
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import proto.pb_pb2 as protobuf
 
