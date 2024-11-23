@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 # VERSION = 0.5.0 introduces proto buffer for the P2P network and local DB and is a not backward compatible update
 # Therefore all sub versions start again with 1
 # We use semantic versioning with major, minor and patch
-VERSION = "1.9.17"
+VERSION = "1.9.18"
 
 # Holds a list of the tagged resource files for optimizing the getData requests.
 # This must not contain each version but only those where we add new version-tagged resource files for
@@ -19,7 +19,7 @@ HISTORICAL_RESOURCE_FILE_VERSION_TAGS: List[str] = [
     "1.4.0", "1.5.0", "1.5.2", "1.5.5", "1.5.7", "1.6.0",
     "1.6.3", "1.6.5", "1.7.2", "1.7.4", "1.8.0", "1.8.1",
     "1.8.3", "1.9.0", "1.9.3", "1.9.5", "1.9.6", "1.9.7",
-    "1.9.10", "1.9.11", "1.9.13", "1.9.15", "1.9.16"
+    "1.9.10", "1.9.11", "1.9.13", "1.9.15", "1.9.16", "1.9.18"
 ]
 
 def get_major_version(version: str) -> int:
