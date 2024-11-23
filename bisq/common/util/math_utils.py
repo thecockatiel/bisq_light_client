@@ -1,4 +1,4 @@
-from math import isnan
+from math import isnan, pow
 from bisq.common.setup.log_setup import get_logger
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
@@ -22,4 +22,14 @@ class MathUtils:
         except (InvalidOperation, ValueError) as e:
             logger.error(str(e))
             return 0.0
+
+    @staticmethod
+    def scale_up_by_power_of_10(value: float, exponent: int) -> float:
+        factor = pow(10, exponent)
+        return value * factor
+
+    @staticmethod
+    def scale_down_by_power_of_10(value: float, exponent: int) -> float:
+        factor = pow(10, exponent)
+        return value / factor
 
