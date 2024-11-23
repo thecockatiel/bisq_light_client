@@ -26,3 +26,6 @@ class CountryBasedPaymentAccount(PaymentAccount, ABC):
     def set_country(self, country: Country) -> None:
         self.country = country
         cast(CountryBasedPaymentAccountPayload, self.payment_account_payload).country_code = country.code
+
+    def is_country_based_payment_account(self) -> bool:
+        return True
