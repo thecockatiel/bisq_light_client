@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Optional, TypeVar, Generic
+from typing import Any, Optional, Set, TypeVar, Generic
 from dataclasses import dataclass
 
 T = TypeVar("T")
@@ -90,3 +90,46 @@ def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[
     
     return result
     
+    
+class ObservableSet(set[T]):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._listeners: Set[Callable] = set()
+    
+    def add_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+        self._listeners.add(listener)
+        
+    def remove_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+        self._listeners.discard(listener)
+        
+    def remove_all_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+        self._listeners.discard(listener)
+        
+    def _notify(self, operation: str, element: Any = None):
+        for listener in self._listeners:
+            listener(self, operation, element)
+            
+    def add(self, element: T) -> bool:
+        """
+        returns true if the element was added, false if it was already present.
+        """
+        if element in self:
+            return False
+        super().add(element)
+        self._notify('add', element)
+        return True
+        
+    def remove(self, element: T) -> None:
+        """
+        returns true if the element was removed, false if it was NOT present.
+        This set does NOT raise KeyError for non-existing elements.
+        """
+        if element not in self:
+            return False
+        super().remove(element)
+        self._notify('remove', element)
+        return True
+        
+    def clear(self) -> None:
+        super().clear()
+        self._notify('clear')
