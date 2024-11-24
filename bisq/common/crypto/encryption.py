@@ -215,7 +215,7 @@ class Encryption:
             raise KeyConversionException(e) from e
     
     @staticmethod
-    def get_ec_public_key_from_private_key(private_key: ec.EllipticCurvePrivateKey) -> bytes:
+    def get_ec_public_key_bytes_from_private_key(private_key: ec.EllipticCurvePrivateKey) -> bytes:
         try:
             public_pytes = private_key.public_key().public_bytes(
                 encoding=serialization.Encoding.X962,
