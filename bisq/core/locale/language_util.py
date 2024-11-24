@@ -22,6 +22,12 @@ class LanguageUtil:
                     locale = locale_data
         return locale if locale else DEFAULT_LOCALE
     
+    def get_default_language_locale_as_code() -> str:
+        return LanguageUtil.get_default_language().language
+    
+    def get_english_language_locale_code() -> str:
+        return "en" # returned by runing the following code in java: new Locale(Locale.ENGLISH.getLanguage()).getLanguage()
+    
     user_language_codes = [
         "en",
     ]
