@@ -12,7 +12,7 @@ class EcKeyTest(unittest.TestCase):
         
     def test_private_key_to_public_key_validation(self):
         private_key = Encryption.get_ec_private_key_from_bytes(bytes.fromhex(self.dev_privileged_private_key_hex))
-        public_key_hex = Encryption.get_ec_public_key_from_private_key(private_key).hex()
+        public_key_hex = Encryption.get_ec_public_key_bytes_from_private_key(private_key).hex()
         self.assertEqual(self.dev_privileged_public_key_hex, public_key_hex)
 
 
