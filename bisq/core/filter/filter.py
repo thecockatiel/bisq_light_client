@@ -283,6 +283,14 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
 
     def get_ttl(self) -> int:
         return self.TTL
+    
+    @property
+    def seed_nodes(self):
+        return self._seed_nodes
+    
+    @property
+    def price_relay_nodes(self):
+        return self.price_relay_nodes
 
     def __str__(self):
         return (f"Filter{{\n"
