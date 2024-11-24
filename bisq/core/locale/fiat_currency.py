@@ -1,5 +1,5 @@
 from typing import Union
-from bisq.core.locale.language_util import LanguageUtil
+from bisq.core.locale.global_settings import GlobalSettings
 import proto.pb_pb2 as protobuf
 from bisq.core.locale.currency_data import CURRENCY_CODE_TO_DATA_MAP, CurrencyData
 from bisq.core.locale.trade_currency import TradeCurrency
@@ -38,5 +38,4 @@ class FiatCurrency(TradeCurrency):
     
     @staticmethod
     def get_locale():
-        # TODO: not implemented yet.
-        return LanguageUtil.get_default_language()
+        return GlobalSettings.locale
