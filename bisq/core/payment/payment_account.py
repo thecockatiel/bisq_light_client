@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 @dataclass
 class PaymentAccount(PersistablePayload, ABC):
     payment_method: 'PaymentMethod'
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    creation_date: int = field(default_factory=get_time_ms)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
+    creation_date: int = field(default_factory=get_time_ms, init=False)
     payment_account_payload: 'PaymentAccountPayload' = field(default=None)
     account_name: str = field(default=None)
     persisted_account_name: str = field(default=None, compare=False)
