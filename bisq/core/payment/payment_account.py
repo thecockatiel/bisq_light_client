@@ -34,7 +34,10 @@ class PaymentAccount(PersistablePayload, ABC):
     extra_data: Optional[dict[str, str]] = field(default=None)
 
     def __post_init__(self):
-        self.payment_account_payload = self.create_payload()
+        self.init()
+        
+    def init(self):
+        self.payment_account_payload = self.create_payload() 
 
     def to_proto_message(self) -> 'protobuf.PaymentAccount':
         assert self.account_name is not None, "account_name must not be null"
