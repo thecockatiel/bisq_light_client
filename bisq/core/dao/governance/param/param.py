@@ -20,6 +20,7 @@ from enum import Enum
 from bisq.common.config.config import CONFIG
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.locale.res import Res
 import proto.pb_pb2 as protobuf
 from bisq.core.dao.governance.param.param_type import ParamType
 
@@ -218,5 +219,4 @@ class Param(Enum):
             return Param.UNDEFINED
         
     def __str__(self) -> str:
-        # TODO: Res not implemented yet
-        return f"dao.phase.{self.name}" if self.name.startswith("PHASE_") else f"dao.param.{self.name}"
+        return Res.get(f"dao.phase.{self.name}") if self.name.startswith("PHASE_") else Res.get(f"dao.param.{self.name}")

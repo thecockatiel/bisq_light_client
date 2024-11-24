@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from bisq.core.locale.country_util import get_name_by_code
+from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
     CountryBasedPaymentAccountPayload,
 )
@@ -97,17 +98,15 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
         self.accepted_country_codes.extend(self.persisted_accepted_country_codes)
 
     def get_payment_details(self) -> str:
-        # TODO: Res
-        return (f"{self.payment_method_id} - payment.account.owner: {self.holder_name}, "
+        return (f"{Res.get(self.payment_method_id)} - {Res.get_with_col("payment.account.owner")}: {self.holder_name}, "
                 f"IBAN: {self.iban}, BIC: {self.bic}, "
-                f"payment.bank.country: {self.country_code}")
+                f"{Res.get_with_col("payment.bank.country")}: {self.country_code}")
 
     def get_payment_details_for_trade_popup(self) -> str:
-        # TODO: Res
-        return (f"payment.account.owner: {self.holder_name}\n"
+        return (f"{Res.get_with_col("payment.account.owner")}: {self.holder_name}\n"
                 f"IBAN: {self.iban}\n"
                 f"BIC: {self.bic}\n"
-                f"payment.bank.country: {get_name_by_code(self.country_code)}")
+                f"{Res.get_with_col("payment.bank.country")}: {get_name_by_code(self.country_code)}")
 
     def get_age_witness_input_data(self) -> bytes:
         # We don't add holder_name because we don't want to break age validation if the user recreates an account with

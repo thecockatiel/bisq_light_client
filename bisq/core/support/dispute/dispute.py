@@ -9,6 +9,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.common.util.utilities import bytes_as_hex_string
+from bisq.core.locale.res import Res
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.common.setup.log_setup import get_logger
@@ -348,17 +349,16 @@ class Dispute(NetworkPayload, PersistablePayload):
         self.refresh_alert_level(sender_flag)
         
     def get_role_string(self):
-        # TODO: Res.get not implemented
         if self.dispute_opener_is_maker:
             if self.dispute_opener_is_buyer:
-                return "support.buyerOfferer"
+                return Res.get("support.buyerOfferer")
             else:
-                return "support.sellerOfferer"
+                return Res.get("support.sellerOfferer")
         else:
             if self.dispute_opener_is_buyer:
-                return "support.buyerTaker"
+                return Res.get("support.buyerTaker")
             else:
-                return "support.sellerTaker"
+                return Res.get("support.sellerTaker")
     
     def get_role_string_for_log_file(self) -> str:
         return f"{'BUYER' if self.dispute_opener_is_buyer else 'SELLER'}_{'MAKER' if self.dispute_opener_is_maker else 'TAKER'}"

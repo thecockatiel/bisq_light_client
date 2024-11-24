@@ -2,6 +2,7 @@ from typing import Union
 from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.util.coin.coin_formatter import CoinFormatter
 from bisq.core.util.coin.immutable_coin_formatter import ImmutableCoinFormatter
@@ -66,7 +67,7 @@ class BsqFormatter(CoinFormatter):
         match param.param_type:
             case ParamType.UNDEFINED:
                 # In case we add a new param old clients will not know that enum and fall back to UNDEFINED.
-                return "shared.na"  # TODO: Res
+                return Res.get("shared.na")
             case ParamType.BSQ:
                 return self.format_coin_with_code(ParsingUtils.parse_to_coin(value, self))
             case ParamType.BTC:
@@ -74,11 +75,12 @@ class BsqFormatter(CoinFormatter):
             case ParamType.PERCENT:
                 return FormattingUtils.format_to_percent_with_symbol(ParsingUtils.parse_percent_string_to_double(value))
             case ParamType.BLOCK:
-                return "dao.param.blocks " + int(value)  # TODO: Res
+                return Res.get("dao.param.blocks", int(value))
             case ParamType.ADDRESS:
                 return value
             case _:
                 logger.warning(f"Param type {param.param_type} not handled at format_param_value")
+                return Res.get("shared.na")
 
     def parse_param_value_to_coin(self, param: "Param", input_value: str) -> "Coin":
         match param.param_type:
@@ -99,7 +101,7 @@ class BsqFormatter(CoinFormatter):
     def parse_param_value_to_string(self, param: "Param", input_value: str) -> str:
         match param.param_type:
             case ParamType.UNDEFINED:
-                return "shared.na"  # TODO: Res
+                return Res.get("shared.na")
             case ParamType.BSQ:
                 return self.format_coin(self.parse_param_value_to_coin(param, input_value))
             case ParamType.BTC:
@@ -117,7 +119,7 @@ class BsqFormatter(CoinFormatter):
             #         raise ProposalValidationException(validation_result.error_message)
             case _:
                 logger.warning(f"Param type {param.param_type} not handled at parse_param_value_to_string")
-                return "shared.na"  # TODO: Res
+                return Res.get("shared.na")
             
     def format_coin(self, coin_or_value, *, append_code=False, decimal_places=-1, decimal_aligned=False, max_number_of_digits=0):
         if append_code:
