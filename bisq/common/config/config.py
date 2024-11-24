@@ -15,6 +15,7 @@ class Config:
     DEFAULT_CONFIG_FILE_NAME = "bisq.properties"
 
     # Fields
+    config_file: Path = field(init=False, default=None)
     seed_nodes: list = field(default_factory=list)
     max_connections: int = field(default=12)
     filter_provided_seed_nodes: list = field(default_factory=list)
@@ -54,6 +55,7 @@ class Config:
         self.wallet_dir.mkdir(parents=True, exist_ok=True)
 
         Config.APP_DATA_DIR_VALUE = self.app_data_dir
+        Config.config_file = self.app_data_dir.joinpath(self.DEFAULT_CONFIG_FILE_NAME)
 
 
 CONFIG = Config()
