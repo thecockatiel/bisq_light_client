@@ -6,8 +6,13 @@ from bisq.common.crypto.encryption import Encryption
 from bisq.common.crypto.sig import Sig
 from cryptography.hazmat.primitives.asymmetric import rsa, dsa
 import proto.pb_pb2 as protobuf
+from utils.java_compat import java_arrays_byte_hashcode
 
 class PubKeyRing:
+    """
+    Same as KeyRing but with public keys only.
+    Used to send public keys over the wire to other peer.
+    """
     signature_pub_key_bytes: bytes
     encryption_pub_key_bytes: bytes
 
@@ -62,4 +67,6 @@ class PubKeyRing:
         return isinstance(other, PubKeyRing) and self.signature_pub_key_bytes == other.signature_pub_key_bytes and self.encryption_pub_key_bytes == other.encryption_pub_key_bytes
     
     def __hash__(self) -> int:
-        return hash((self.signature_pub_key_bytes, self.encryption_pub_key_bytes))
+        # lombok's generated hash function for this object
+        result = (1 * 59) + java_arrays_byte_hashcode(self.signature_pub_key_bytes)
+        return (result * 59) + java_arrays_byte_hashcode(self.encryption_pub_key_bytes)
