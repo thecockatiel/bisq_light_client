@@ -1,6 +1,6 @@
 import unittest
 
-from utils.data import SimpleProperty, combine_simple_properties
+from utils.data import ObservableSet, SimpleProperty, combine_simple_properties
 
 class TestSimpleProperty(unittest.TestCase):
     def setUp(self):
@@ -130,7 +130,80 @@ class TestCombineSimpleProperties(unittest.TestCase):
         self.assertEqual(len(combined._listeners), 0)
         self.assertEqual(len(prop1._listeners), 0)
         self.assertEqual(len(prop2._listeners), 0)
+
+class TestObservableSet(unittest.TestCase):
+    def setUp(self):
+        self.set = ObservableSet[int]()
+        self.events = []
+
+    def test_add(self):
+        def listener(set_obj, operation, element):
+            self.events.append((operation, element))
+
+        self.set.add_listener(listener)
         
+        # Test adding new element
+        result = self.set.add(1)
+        self.assertTrue(result)
+        self.assertEqual(len(self.set), 1)
+        self.assertEqual(self.events, [('add', 1)])
+
+        # Test adding existing element
+        result = self.set.add(1)
+        self.assertFalse(result)
+        self.assertEqual(len(self.set), 1)
+        self.assertEqual(len(self.events), 1)  # No new event
+
+    def test_remove(self):
+        def listener(set_obj, operation, element):
+            self.events.append((operation, element))
+
+        self.set.add(1)
+        self.set.add_listener(listener)
+        
+        result = self.set.remove(1)
+        self.assertTrue(result)
+        self.assertEqual(len(self.set), 0)
+        self.assertEqual(self.events, [('remove', 1)])
+        
+        result = self.set.remove(1)
+        self.assertFalse(result)
+        self.assertEqual(len(self.set), 0)
+        self.assertEqual(len(self.events), 1)   # No new event
+
+    def test_clear(self):
+        def listener(set_obj, operation, element):
+            self.events.append((operation, element))
+
+        self.set.add(1)
+        self.set.add(2)
+        self.set.add_listener(listener)
+        
+        self.set.clear()
+        self.assertEqual(len(self.set), 0)
+        self.assertEqual(self.events, [('clear', None)])
+
+    def test_listener_management(self):
+        events1 = []
+        events2 = []
+
+        def listener1(set_obj, operation, element):
+            events1.append((operation, element))
+
+        def listener2(set_obj, operation, element):
+            events2.append((operation, element))
+
+        self.set.add_listener(listener1)
+        self.set.add_listener(listener2)
+        
+        self.set.add(1)
+        self.assertEqual(events1, [('add', 1)])
+        self.assertEqual(events2, [('add', 1)])
+
+        self.set.remove_listener(listener1)
+        self.set.add(2)
+        self.assertEqual(len(events1), 1)  # No new events
+        self.assertEqual(events2, [('add', 1), ('add', 2)])
 
 if __name__ == '__main__':
     unittest.main()
