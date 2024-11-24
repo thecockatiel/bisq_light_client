@@ -209,5 +209,10 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(events1), 1)  # No new events
         self.assertEqual(events2, [('add', 1), ('add', 2)])
 
+    def test_contains(self):
+        self.set.add(1)
+        self.assertTrue(1 in self.set)
+        self.assertFalse(2 in self.set)
+
 if __name__ == '__main__':
     unittest.main()
