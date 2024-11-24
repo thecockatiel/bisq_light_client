@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.util.decimal_format import DecimalFormat
 from bisq.core.locale.currency_util import is_fiat_currency
@@ -74,9 +75,9 @@ class FormattingUtils:
                     return res
             except Exception as e:
                 logger.warning(f"Exception at format_fiat: {e}")
-                return "shared.na " + fiat.currency_code # TODO: Res
+                return Res.get("shared.na") + " " + fiat.currency_code
         else:
-            return "shared.na" # TODO: Res
+            return Res.get("shared.na")
 
     @staticmethod
     def format_altcoin(altcoin: "Altcoin", append_currency_code: bool) -> str:
@@ -89,9 +90,9 @@ class FormattingUtils:
                     return res
             except Exception as e:
                 logger.warning(f"Exception at format_altcoin: {e}")
-                return "shared.na " + altcoin.currency_code # TODO: Res
+                return Res.get("shared.na") + " " + altcoin.currency_code
         else:
-            return "shared.na" # TODO: Res
+            return Res.get("shared.na")
 
     @staticmethod
     def format_altcoin_volume(altcoin: "Altcoin", append_currency_code: bool) -> str:
@@ -108,9 +109,9 @@ class FormattingUtils:
                     return res
             except Exception as e:
                 logger.warning(f"Exception at format_altcoin_volume: {e}")
-                return "shared.na " + altcoin.currency_code # TODO: Res
+                return Res.get("shared.na") + " " + altcoin.currency_code
         else:
-            return "shared.na" # TODO: Res
+            return Res.get("shared.na")
 
     @staticmethod
     def format_price(price: "Price", price_format: "MonetaryFormat" = None, append_currency_code: bool = False) -> str:
@@ -124,7 +125,7 @@ class FormattingUtils:
             else:
                 return FormattingUtils.format_altcoin(monetary, append_currency_code)
         else:
-            return "shared.na"  # TODO: Res
+            return Res.get("shared.na")
 
     @staticmethod
     def format_market_price(price: float, currency_code: str = None, precision: int = None) -> str:

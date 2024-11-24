@@ -4,6 +4,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.currency_util import get_mature_market_currencies
+from bisq.core.locale.res import Res
 from bisq.core.payment.trade_limits import TradeLimits
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
@@ -235,7 +236,7 @@ class PaymentMethod(PersistablePayload):
     def get_payment_method(id: str):
         method = PaymentMethod.get_active_payment_method(id)
         if method is None:
-            return PaymentMethod("shared.na") # TODO: res implementation
+            return PaymentMethod(Res.get("shared.na"))
         return method 
     
     # We look up only our active payment methods not retired ones.
@@ -285,10 +286,10 @@ class PaymentMethod(PersistablePayload):
     def get_short_name(self) -> str:
         # in cases where translation is not found, Res.get() simply returns the key string
         # so no need for special error-handling code.
-        return self.id + "_SHORT" # TODO: Res
+        return Res.get(self.id + "_SHORT")
 
     def get_display_string(self) -> str:
-        return self.id # TODO: Res
+        return Res.get(self.id)
  
     def is_fiat(self) -> bool:
         return not self.is_altcoin()

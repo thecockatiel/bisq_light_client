@@ -4,6 +4,7 @@ from bisq.common.persistence.persistence_manager import PersistenceManager
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.language_util import LanguageUtil
+from bisq.core.locale.res import Res
 from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 
@@ -101,7 +102,7 @@ class User(PersistedDataHost):
         
         account = BsqSwapAccount()
         account.init()
-        account.account_name = "BSQ_SWAP" # TODO: Res.get("BSQ_SWAP")
+        account.account_name = Res.get("BSQ_SWAP")
         account.set_single_trade_currency(CryptoCurrency("BSQ", "BSQ"))
         self.add_payment_account(account)
 

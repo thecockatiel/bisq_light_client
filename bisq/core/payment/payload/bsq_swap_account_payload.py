@@ -1,4 +1,5 @@
 from typing import Dict
+from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import proto.pb_pb2 as protobuf
 
@@ -18,7 +19,7 @@ class BsqSwapAccountPayload(PaymentAccountPayload):
         return BsqSwapAccountPayload(proto.payment_method_id, proto.id)
 
     def get_payment_details(self) -> str:
-        return "shared.na" # TODO: Res
+        return Res.get_with_col("shared.na")
 
     def get_payment_details_for_trade_popup(self) -> str:
         return self.get_payment_details()

@@ -1,3 +1,4 @@
+from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import proto.pb_pb2 as protobuf
 
@@ -90,7 +91,7 @@ class SwiftAccountPayload(PaymentAccountPayload):
         )
 
     def get_payment_details(self) -> str:
-        return f"{self.payment_method_id} - {self.beneficiary_name}" # TODO: Res
+        return f"{Res.get("self.payment_method_id")} - {self.beneficiary_name}"
 
     def get_payment_details_for_trade_popup(self) -> str:
         return self.get_payment_details()
