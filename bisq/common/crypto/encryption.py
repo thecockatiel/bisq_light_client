@@ -4,7 +4,7 @@ import secrets
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, ec
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
@@ -28,7 +28,6 @@ class Encryption:
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=2048,
-                backend=default_backend()
             )
             public_key = private_key.public_key()
             return KeyPair(private_key, public_key)
@@ -43,7 +42,7 @@ class Encryption:
     @staticmethod
     def encrypt(payload: bytes, secret_key: bytes):
         try:
-            cipher = Cipher(algorithms.AES(secret_key), mode=modes.ECB(), backend=default_backend())
+            cipher = Cipher(algorithms.AES(secret_key), mode=modes.ECB())
             encryptor = cipher.encryptor()
             padder = padding.PKCS7(algorithms.AES.block_size).padder()
             padded_data = padder.update(payload) + padder.finalize()
@@ -56,7 +55,7 @@ class Encryption:
     @staticmethod
     def decrypt(encrypted_payload: bytes, secret_key: bytes):
         try:
-            cipher = Cipher(algorithms.AES(secret_key), mode=modes.ECB(), backend=default_backend())
+            cipher = Cipher(algorithms.AES(secret_key), mode=modes.ECB())
             decryptor = cipher.decryptor()
             padded_data = decryptor.update(encrypted_payload) + decryptor.finalize()
             unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
@@ -95,7 +94,7 @@ class Encryption:
     @staticmethod
     def get_hmac(payload: bytes, secret_key: bytes) -> bytes:
         """Generate HMAC for given payload and key"""
-        h = hmac.HMAC(secret_key, hashes.SHA256(), backend=default_backend())
+        h = hmac.HMAC(secret_key, hashes.SHA256())
         h.update(payload)
         return h.finalize()
 
@@ -180,7 +179,7 @@ class Encryption:
     @staticmethod
     def get_public_key_from_bytes(public_key_bytes: bytes) -> rsa.RSAPublicKey:
         try:
-            key = serialization.load_der_public_key(public_key_bytes, backend=default_backend())
+            key = serialization.load_der_public_key(public_key_bytes)
             return key
         except Exception as e:
             logger.error(
@@ -191,7 +190,7 @@ class Encryption:
     @staticmethod
     def get_private_key_from_bytes(private_key_bytes: bytes) -> rsa.RSAPublicKey:
         try:
-            key = serialization.load_der_private_key(private_key_bytes, password=None, backend=default_backend())
+            key = serialization.load_der_private_key(private_key_bytes, password=None)
             return key
         except Exception as e:
             logger.error(
@@ -200,13 +199,13 @@ class Encryption:
             raise KeyConversionException(e) from e
 
     ##########################################################################################
-    # EC
+    # EC (bitcoinj compatibility layer)
     ##########################################################################################
     
     @staticmethod
     def get_ec_private_key_from_bytes(private_key_bytes: bytes) -> ec.EllipticCurvePrivateKey:
         try:
-            key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1(), default_backend())
+            key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1())
             return key
         except Exception as e:
             logger.error(
@@ -227,3 +226,27 @@ class Encryption:
                 f"Error creating bytes from ec private key. Key bytes as hex=REDACTED, error={str(e)}"
             )
             raise KeyConversionException(e) from e
+    
+    @staticmethod
+    def get_ec_public_key_from_bytes(public_key_bytes: bytes) -> ec.EllipticCurvePublicKey:
+        try:
+            key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), public_key_bytes)
+            return key
+        except Exception as e:
+            logger.error(
+                f"Error creating ec public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
+            )
+            raise KeyConversionException(e) from e
+
+    @staticmethod
+    def sign_with_ec_private_key(private_key: ec.EllipticCurvePrivateKey, data: bytes) -> bytes:
+        return private_key.sign(data, ec.ECDSA(Prehashed(hashes.SHA256())))
+
+    @staticmethod
+    def verify_with_ec_public_key(public_key: ec.EllipticCurvePublicKey, data: bytes, signature: bytes) -> bool:
+        try:
+            public_key.verify(signature, data, ec.ECDSA(Prehashed(hashes.SHA256())))
+            return True
+        except:
+            return False
+            
