@@ -214,5 +214,14 @@ class TestObservableSet(unittest.TestCase):
         self.assertTrue(1 in self.set)
         self.assertFalse(2 in self.set)
 
+    def test_update(self):
+        def listener(set_obj, operation, element):
+            self.events.append((operation, element))
+            
+        self.set.add_listener(listener)
+        
+        self.set.update([2, 3, 4])
+        self.assertEqual(self.events, [('update', None)])
+
 if __name__ == '__main__':
     unittest.main()

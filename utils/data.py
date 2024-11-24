@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Optional, Set, TypeVar, Generic
+from typing import Any, Iterable, Optional, Set, TypeVar, Generic
 from dataclasses import dataclass
 
 T = TypeVar("T")
@@ -133,3 +133,11 @@ class ObservableSet(set[T]):
     def clear(self) -> None:
         super().clear()
         self._notify('clear')
+        
+    def update(self, *others: Iterable[T]) -> bool:
+        initial_size = len(self)
+        super().update(*others)
+        if len(self) > initial_size:
+            self._notify('update')
+            return True
+        return False
