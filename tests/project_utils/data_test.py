@@ -135,6 +135,10 @@ class TestObservableSet(unittest.TestCase):
     def setUp(self):
         self.set = ObservableSet[int]()
         self.events = []
+        
+    def test_constructor(self):
+        new_set = ObservableSet([1, 2, 3])
+        self.assertEqual(len(new_set), 3)
 
     def test_add(self):
         def listener(set_obj, operation, element):
