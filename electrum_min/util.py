@@ -1,5 +1,6 @@
 
-from typing import Set
+from typing import Optional, Set
+import secrets
 
 def to_bytes(something, encoding='utf8') -> bytes:
     """
@@ -25,5 +26,35 @@ def all_subclasses(cls) -> Set:
         res |= all_subclasses(sub)
     return res
 
+bfh = bytes.fromhex
+
+def assert_bytes(*args):
+    """
+    porting helper, assert args type
+    """
+    try:
+        for x in args:
+            assert isinstance(x, (bytes, bytearray))
+    except Exception:
+        print('assert bytes failed', list(map(type, args)))
+        raise
+
+def randrange(bound: int) -> int:
+    """Return a random integer k such that 1 <= k < bound, uniformly
+    distributed across that range."""
+    # secrets.randbelow(bound) returns a random int: 0 <= r < bound,
+    # hence transformations:
+    return secrets.randbelow(bound - 1) + 1
 
 class BitcoinException(Exception): pass
+
+
+class InvalidPassword(Exception):
+    def __init__(self, message: Optional[str] = None):
+        self.message = message
+
+    def __str__(self):
+        if self.message is None:
+            return _("Incorrect password")
+        else:
+            return str(self.message)
