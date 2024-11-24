@@ -96,16 +96,16 @@ class ObservableSet(set[T]):
         super().__init__(*args)
         self._listeners: Set[Callable] = set()
     
-    def add_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+    def add_listener(self, listener: Callable[['ObservableSet', str, T], None]):
         self._listeners.add(listener)
         
-    def remove_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+    def remove_listener(self, listener: Callable[['ObservableSet', str, T], None]):
         self._listeners.discard(listener)
         
-    def remove_all_listener(self, listener: Callable[['ObservableSet', str, Any], None]):
+    def remove_all_listener(self, listener: Callable[['ObservableSet', str, T], None]):
         self._listeners.discard(listener)
         
-    def _notify(self, operation: str, element: Any = None):
+    def _notify(self, operation: str, element: T = None):
         for listener in self._listeners:
             listener(self, operation, element)
             
