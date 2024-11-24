@@ -163,3 +163,8 @@ cython_debug/
 todo
 
 playground.py
+
+electrum_min/*.so
+electrum_min/*.so.*
+electrum_min/*.dll
+electrum_min/*.dylib
