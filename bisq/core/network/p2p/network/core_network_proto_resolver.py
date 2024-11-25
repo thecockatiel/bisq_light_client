@@ -14,8 +14,8 @@ from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
-from bisq.core.network.p2p.peers.keepalive.ping import Ping
-from bisq.core.network.p2p.peers.keepalive.pong import Pong
+from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
+from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_request import GetPeersRequest
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import GetPeersResponse
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
@@ -51,7 +51,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message impor
 from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import PeerPublishedDelayedPayoutTxMessage
 from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import RefreshTradeStateRequest
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
-from bisq.core.filter.Filter import Filter
+from bisq.core.filter.filter import Filter
 from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
 from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
