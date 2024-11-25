@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 T = TypeVar("T")
 
+K = TypeVar("K")
+V = TypeVar("V")
 
 @dataclass
 class SimplePropertyChangeEvent(Generic[T]):
@@ -141,3 +143,40 @@ class ObservableSet(set[T]):
             self._notify('update')
             return True
         return False
+
+
+class ObservableMap(dict[K, V]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._listeners: Set[Callable] = set()
+    
+    def add_listener(self, listener: Callable[['ObservableMap', str, K, V], None]):
+        self._listeners.add(listener)
+        
+    def remove_listener(self, listener: Callable[['ObservableMap', str, K, V], None]):
+        self._listeners.discard(listener)
+        
+    def remove_all_listeners(self):
+        self._listeners.clear()
+        
+    def _notify(self, operation: str, key: K = None, value: V = None):
+        for listener in self._listeners:
+            listener(self, operation, key, value)
+            
+    def __setitem__(self, key: K, value: V) -> None:
+        super().__setitem__(key, value)
+        self._notify('set', key, value)
+        
+    def __delitem__(self, key: K) -> None:
+        if key in self:
+            value = self[key]
+            super().__delitem__(key)
+            self._notify('delete', key, value)
+            
+    def clear(self) -> None:
+        super().clear()
+        self._notify('clear')
+        
+    def update(self, other=None, **kwargs) -> None:
+        super().update(other, **kwargs)
+        self._notify('update')
