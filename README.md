@@ -14,10 +14,18 @@ Minimum required python version is 3.10
 # in project root:
 python -m pip install -r requirements.txt
 # or on debian:
-sudo apt install python3-txtorcon python3-twisted python3-tqdm python3-grpcio python3-cryptography python3-pycryptodome python3-requests python3-socks python3-psutil
+sudo apt install python3-txtorcon python3-twisted python3-tqdm python3-grpcio python3-cryptography python3-pycryptodome python3-requests python3-socks python3-psutil libsecp256k1-dev
 ```
 
 It is a priority to make the project runnable without installing deps through pip. please let me know if something does not work.
+
+## Note about deps
+
+Since we use some parts of electrum and in part [libsecp256k1](https://github.com/bitcoin-core/secp256k1), you can follow the instructions for building or installing libsecp256k1 from [electrum's readme](https://github.com/spesmilo/electrum/blob/4.4.5/README.md)
+
+windows users can check [here](https://github.com/spesmilo/electrum/blob/4.4.5/contrib/build-wine/README_windows.md#2-install-libsecp256k1)
+
+compiled binary must be placed in `electrum_min` directory beside `ecc_fast.py` file.
 
 ## Run tests
 
