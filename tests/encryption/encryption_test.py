@@ -52,7 +52,7 @@ class TestEncryption(unittest.TestCase):
         self.assertTrue(Encryption.get_payload_with_hmac(payload, secret_key).hex(), self.text_message_payload_with_hmac_hex)
         
     def test_eckey(self):
-        privkey = Encryption.get_ec_private_key_from_bytes(bytes.fromhex("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"))
+        privkey = Encryption.get_ec_private_key_from_int_string_bytes(bytes.fromhex("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"))
         output_signature = Encryption.sign_with_ec_private_key(privkey, self.ZERO_HASH_BYTES)
         self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, output_signature))
         another_signature = bytes.fromhex("3045022100cfd454a1215fdea463201a7a32c146c1cec54b60b12d47e118a2add41366cec602203e7875d23cc80f958e45298bb8369d4422acfbc1c317353eebe02c89206b3e73")

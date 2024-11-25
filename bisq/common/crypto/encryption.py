@@ -205,7 +205,7 @@ class Encryption:
     ##########################################################################################
     
     @staticmethod
-    def get_ec_private_key_from_bytes(private_key_bytes: bytes) -> ec.EllipticCurvePrivateKey:
+    def get_ec_private_key_from_int_string_bytes(private_key_bytes: bytes) -> ec.EllipticCurvePrivateKey:
         try:
             key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1())
             return key
