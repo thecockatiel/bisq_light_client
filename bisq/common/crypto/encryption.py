@@ -172,7 +172,7 @@ class Encryption:
             raise RuntimeError("Couldn't generate key") from e
 
     @staticmethod
-    def get_public_key_bytes(public_key: rsa.RSAPublicKey) -> bytes:
+    def get_public_key_bytes(public_key: PUBLIC_KEY_TYPES) -> bytes:
         return public_key.public_bytes(
             encoding=serialization.Encoding.DER,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
@@ -230,6 +230,20 @@ class Encryption:
             raise KeyConversionException(e) from e
     
     @staticmethod
+    def get_ec_public_key_bytes_from_public_key(public_key: ec.EllipticCurvePublicKey) -> bytes:
+        try:
+            public_pytes = public_key.public_bytes(
+                encoding=serialization.Encoding.X962,
+                format=serialization.PublicFormat.CompressedPoint
+            )
+            return public_pytes
+        except Exception as e:
+            logger.error(
+                f"Error creating bytes from ec public key. error={str(e)}"
+            )
+            raise KeyConversionException(e) from e
+    
+    @staticmethod
     def get_ec_public_key_from_bytes(public_key_bytes: bytes) -> ec.EllipticCurvePublicKey:
         try:
             key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), public_key_bytes)
@@ -258,10 +272,4 @@ class Encryption:
             
     @staticmethod
     def is_pubkeys_equal(key1: PUBLIC_KEY_TYPES, key2: PUBLIC_KEY_TYPES):
-        return key1.public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ) == key2.public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+        return Encryption.get_public_key_bytes(key1) == Encryption.get_public_key_bytes(key2)
