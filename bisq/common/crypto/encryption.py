@@ -1,10 +1,12 @@
 from io import BytesIO
 import hmac as builtin_hmac
 import secrets
+from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, ec
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, ec, dsa
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
+from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
@@ -249,4 +251,17 @@ class Encryption:
             return True
         except:
             return False
+        
+    ##########################################################################################
+    # Helpers
+    ##########################################################################################
             
+    @staticmethod
+    def is_pubkeys_equal(key1: PUBLIC_KEY_TYPES, key2: PUBLIC_KEY_TYPES):
+        return key1.public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ) == key2.public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
