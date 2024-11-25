@@ -97,6 +97,15 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
 
     def get_owner_id(self) -> Optional[str]:
         return None
+    
+    # NOTE: we need to handle this for java compatiblity because of FilterManager calling the methods dynamically and name coming over the wire
+    
+    def __getattr__(self, name: str):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            snake_case = ''.join(['_' + c.lower() if c.isupper() else c for c in name]).lstrip('_')
+            return object.__getattribute__(self, snake_case)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PaymentAccountPayload):
