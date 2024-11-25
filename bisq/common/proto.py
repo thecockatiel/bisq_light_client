@@ -17,5 +17,8 @@ class Proto(ABC):
     def serialize_for_hash(self) -> bytes:
         return self.to_proto_message().SerializeToString()
     
+    def get_serialized_size(self):
+        return self.to_proto_message().ByteSize()
+    
     def __hash__(self) -> int:
         return hash(self.serialize_for_hash())
