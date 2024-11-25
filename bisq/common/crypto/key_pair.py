@@ -12,8 +12,7 @@ class KeyPair:
     def __eq__(self, other):
         return (
             isinstance(other, KeyPair)
-            and self.private_key == other.private_key
-            and self.public_key == other.public_key
+            and hash(self) == hash(other)
         )
 
     def __hash__(self):
