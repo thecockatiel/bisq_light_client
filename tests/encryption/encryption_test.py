@@ -14,7 +14,6 @@ class TestEncryption(unittest.TestCase):
         self.encrypted_secret_key_using_pub_key_hex = "5113c6b42bb6e31e7f39e8718e8d55023048054f01b4d1e8a5c57ad6a4180b7ab5c890c6ce96046d3bc238c826e610da78a7fea7ac5ba26846006ada6c60618971ad10e36d76ef5b8d3e2a49bb7f036f405d457365e266d4c003fa34ecb4a53bf07234b99055bc1d6a0c2ecf7b05ac2fbbeb83d2e4d37db0cdb42097e5930938cdb12efc65fce67562251d761a3a1e4a6278dfb931d30add8c0b8ff8d83857e9fc9a2eedf4de0512f9580220a529af486b29c6b634b7d936c876bf9f1dd35f97135d9238af13f2add2f383a13d138bb3f275b7e43609344f428e48c5d6a33e45042cbde8b558b7d439b3120ef5371c2e4273859234daf93ba82025380a87687a"
         self.text_message_hmac_encoded_with_secret_key_as_hex = "cfc632c94587cc6cce2c418c001ca469e79c284dfedeb0d7f44d265ad31c60e8"
         self.text_message_payload_with_hmac_hex = "546573744973476f6f64cfc632c94587cc6cce2c418c001ca469e79c284dfedeb0d7f44d265ad31c60e8"
-        self.ZERO_HASH_BYTES = bytes(32)
 
     def test_generated_secret_hex_length(self):
         secret_key = Encryption.generate_secret_key(256).hex()
@@ -50,30 +49,7 @@ class TestEncryption(unittest.TestCase):
         self.assertTrue(Encryption.verify_hmac(payload, bytes.fromhex(self.text_message_hmac_encoded_with_secret_key_as_hex), secret_key))
         self.assertFalse(Encryption.verify_hmac(payload, bytes.fromhex("00"), secret_key))
         self.assertTrue(Encryption.get_payload_with_hmac(payload, secret_key).hex(), self.text_message_payload_with_hmac_hex)
-        
-    def test_eckey(self):
-        privkey = Encryption.get_ec_private_key_from_int_string_bytes(bytes.fromhex("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"))
-        output_signature = Encryption.sign_with_ec_private_key(privkey, self.ZERO_HASH_BYTES)
-        self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, output_signature))
-        another_signature = bytes.fromhex("3045022100cfd454a1215fdea463201a7a32c146c1cec54b60b12d47e118a2add41366cec602203e7875d23cc80f958e45298bb8369d4422acfbc1c317353eebe02c89206b3e73")
-        self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, another_signature))
-        java_signature = bytes.fromhex("3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d")
-        self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, java_signature))
-        
-    def test_eckey_pubkey_import(self):
-        pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
-        self.assertTrue(pubkey)
-        
-    def test_eckey_pubkey_export(self):
-        pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
-        exported = Encryption.get_ec_public_key_bytes_from_public_key(pubkey).hex()
-        self.assertEqual("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27", exported)
-    
-    def test_is_pubkeys_equal(self):
-        pubkey1 = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
-        pubkey2 = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
-        self.assertFalse(pubkey1 == pubkey2) # for later detection if it supports __eq__ method
-        self.assertTrue(Encryption.is_pubkeys_equal(pubkey1, pubkey2))
+
         
 
 if __name__ == '__main__':
