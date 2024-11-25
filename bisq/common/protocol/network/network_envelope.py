@@ -29,6 +29,3 @@ class NetworkEnvelope(Envelope, ABC):
 
     def __str__(self):
         return f"NetworkEnvelope{{\n     messageVersion={self.message_version}\n}}"
-    
-    def __hash__(self) -> int:
-        return hash(self.to_proto_message().SerializeToString(deterministic=True))
