@@ -63,6 +63,11 @@ class TestEncryption(unittest.TestCase):
     def test_eckey_pubkey_import(self):
         pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
         self.assertTrue(pubkey)
+        
+    def test_eckey_pubkey_export(self):
+        pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
+        exported = Encryption.get_ec_public_key_bytes_from_public_key(pubkey).hex()
+        self.assertEqual("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27", exported)
     
     def test_is_pubkeys_equal(self):
         pubkey1 = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
