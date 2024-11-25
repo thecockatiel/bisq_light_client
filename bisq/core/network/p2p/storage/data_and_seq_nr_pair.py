@@ -16,9 +16,6 @@ class DataAndSeqNrPair(NetworkPayload, ExcludeForHashAwareProto):
     protected_storage_payload: ProtectedStoragePayload
     sequence_number: int
 
-    def to_proto_message(self):
-        return self.to_proto(False)
-
     def to_proto(self, serialize_for_hash: bool):
         return protobuf.DataAndSeqNrPair(
             payload=self.to_storage_payload_proto(serialize_for_hash),
