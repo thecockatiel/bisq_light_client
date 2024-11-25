@@ -283,14 +283,166 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
 
     def get_ttl(self) -> int:
         return self.TTL
-    
+
+    @property
+    def banned_offer_ids(self):
+        return self._banned_offer_ids
+
+    @property
+    def node_addresses_banned_from_trading(self):
+        return self._node_addresses_banned_from_trading
+
+    @property
+    def banned_auto_conf_explorers(self):
+        return self._banned_auto_conf_explorers
+
+    @property
+    def banned_payment_accounts(self):
+        return self._banned_payment_accounts
+
+    @property
+    def banned_currencies(self):
+        return self._banned_currencies
+
+    @property
+    def banned_payment_methods(self):
+        return self._banned_payment_methods
+
+    @property
+    def arbitrators(self):
+        return self._arbitrators
+
     @property
     def seed_nodes(self):
         return self._seed_nodes
-    
+
     @property
     def price_relay_nodes(self):
-        return self.price_relay_nodes
+        return self._price_relay_nodes
+
+    @property
+    def prevent_public_btc_network(self):
+        return self._prevent_public_btc_network
+
+    @property
+    def btc_nodes(self):
+        return self._btc_nodes
+
+    @property
+    def signature_as_base64(self):
+        return self._signature_as_base64
+
+    @property
+    def signer_pub_key_as_hex(self):
+        return self._signer_pub_key_as_hex
+
+    @property
+    def owner_pub_key_bytes(self):
+        return self._owner_pub_key_bytes
+
+    @property
+    def disable_dao(self):
+        return self._disable_dao
+
+    @property
+    def disable_dao_below_version(self):
+        return self._disable_dao_below_version
+
+    @property
+    def disable_trade_below_version(self):
+        return self._disable_trade_below_version
+
+    @property
+    def mediators(self):
+        return self._mediators
+
+    @property
+    def refund_agents(self):
+        return self._refund_agents
+
+    @property
+    def banned_account_witness_signer_pub_keys(self):
+        return self._banned_account_witness_signer_pub_keys
+
+    @property
+    def btc_fee_receiver_addresses(self):
+        return self._btc_fee_receiver_addresses
+
+    @property
+    def creation_date(self):
+        return self._creation_date
+
+    @property
+    def banned_privileged_dev_pub_keys(self):
+        return self._banned_privileged_dev_pub_keys
+
+    @property
+    def extra_data_map(self):
+        return self._extra_data_map
+
+    @property
+    def owner_pub_key(self):
+        return self._owner_pub_key
+
+    @property
+    def disable_auto_conf(self):
+        return self._disable_auto_conf
+
+    @property
+    def node_addresses_banned_from_network(self):
+        return self._node_addresses_banned_from_network
+
+    @property
+    def disable_mempool_validation(self):
+        return self._disable_mempool_validation
+
+    @property
+    def disable_api(self):
+        return self._disable_api
+
+    @property
+    def disable_pow_message(self):
+        return self._disable_pow_message
+
+    @property
+    def pow_difficulty(self):
+        return self._pow_difficulty
+
+    @property
+    def enabled_pow_versions(self):
+        return self._enabled_pow_versions
+
+    @property
+    def maker_fee_btc(self):
+        return self._maker_fee_btc
+
+    @property
+    def taker_fee_btc(self):
+        return self._taker_fee_btc
+
+    @property
+    def maker_fee_bsq(self):
+        return self._maker_fee_bsq
+
+    @property
+    def taker_fee_bsq(self):
+        return self._taker_fee_bsq
+
+    @property
+    def delayed_payout_payment_accounts(self):
+        return self._delayed_payout_payment_accounts
+
+    @property
+    def added_btc_nodes(self):
+        return self._added_btc_nodes
+
+    @property
+    def added_seed_nodes(self):
+        return self._added_seed_nodes
+
+    @property
+    def uid(self):
+        return self._uid
 
     def __str__(self):
         return (f"Filter{{\n"
