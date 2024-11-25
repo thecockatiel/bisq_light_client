@@ -1,6 +1,6 @@
 import unittest
 
-from utils.data import ObservableSet, SimpleProperty, combine_simple_properties
+from utils.data import ObservableSet, ObservableMap, SimpleProperty, combine_simple_properties
 
 class TestSimpleProperty(unittest.TestCase):
     def setUp(self):
@@ -222,6 +222,97 @@ class TestObservableSet(unittest.TestCase):
         
         self.set.update([2, 3, 4])
         self.assertEqual(self.events, [('update', None)])
+
+class TestObservableMap(unittest.TestCase):
+    def setUp(self):
+        self.map = ObservableMap[str, int]()
+        self.events = []
+        
+    def test_constructor(self):
+        new_map = ObservableMap({'a': 1, 'b': 2})
+        self.assertEqual(len(new_map), 2)
+        self.assertEqual(new_map['a'], 1)
+        self.assertEqual(new_map['b'], 2)
+
+    def test_set_item(self):
+        def listener(map_obj, operation, key, value):
+            self.events.append((operation, key, value))
+
+        self.map.add_listener(listener)
+        
+        # Test setting new item
+        self.map['a'] = 1
+        self.assertEqual(len(self.map), 1)
+        self.assertEqual(self.events, [('set', 'a', 1)])
+
+        # Test updating existing item
+        self.map['a'] = 2
+        self.assertEqual(len(self.map), 1)
+        self.assertEqual(self.events, [('set', 'a', 1), ('set', 'a', 2)])
+
+    def test_del_item(self):
+        def listener(map_obj, operation, key, value):
+            self.events.append((operation, key, value))
+
+        self.map['a'] = 1
+        self.map.add_listener(listener)
+        
+        del self.map['a']
+        self.assertEqual(len(self.map), 0)
+        self.assertEqual(self.events, [('delete', 'a', 1)])
+        
+        # Test deleting non-existent key
+        del self.map['a'] # Should not raise or trigger event
+        self.assertEqual(len(self.events), 1)  # No new event
+
+    def test_clear(self):
+        def listener(map_obj, operation, key, value):
+            self.events.append((operation, key, value))
+
+        self.map['a'] = 1
+        self.map['b'] = 2
+        self.map.add_listener(listener)
+        
+        self.map.clear()
+        self.assertEqual(len(self.map), 0)
+        self.assertEqual(self.events, [('clear', None, None)])
+
+    def test_update(self):
+        def listener(map_obj, operation, key, value):
+            self.events.append((operation, key, value))
+
+        self.map.add_listener(listener)
+        
+        self.map.update({'a': 1, 'b': 2})
+        self.assertEqual(len(self.map), 2)
+        self.assertEqual(self.events, [('update', None, None)])
+
+    def test_listener_management(self):
+        events1 = []
+        events2 = []
+
+        def listener1(map_obj, operation, key, value):
+            events1.append((operation, key, value))
+
+        def listener2(map_obj, operation, key, value):
+            events2.append((operation, key, value))
+
+        self.map.add_listener(listener1)
+        self.map.add_listener(listener2)
+        
+        self.map['a'] = 1
+        self.assertEqual(events1, [('set', 'a', 1)])
+        self.assertEqual(events2, [('set', 'a', 1)])
+
+        self.map.remove_listener(listener1)
+        self.map['b'] = 2
+        self.assertEqual(len(events1), 1)  # No new events
+        self.assertEqual(events2, [('set', 'a', 1), ('set', 'b', 2)])
+
+        self.map.remove_all_listeners()
+        self.map['c'] = 3
+        self.assertEqual(len(events1), 1)  # No new events
+        self.assertEqual(len(events2), 2)  # No new events
 
 if __name__ == '__main__':
     unittest.main()
