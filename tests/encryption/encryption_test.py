@@ -59,6 +59,10 @@ class TestEncryption(unittest.TestCase):
         self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, another_signature))
         java_signature = bytes.fromhex("3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d")
         self.assertTrue(Encryption.verify_with_ec_public_key(privkey.public_key(), self.ZERO_HASH_BYTES, java_signature))
+        
+    def test_eckey_pubkey_import(self):
+        pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))
+        self.assertTrue(pubkey)
  
         
 
