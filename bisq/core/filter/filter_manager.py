@@ -552,7 +552,7 @@ class FilterManager:
 
     def to_ec_key(self, priv_key_string: str) -> ec.EllipticCurvePrivateKey:
         priv_key_bytes = bytes.fromhex(priv_key_string)
-        return Encryption.get_ec_private_key_from_bytes(priv_key_bytes)
+        return Encryption.get_ec_private_key_from_int_string_bytes(priv_key_bytes)
     
     def get_filter_sha256_hash(self, filter: Filter) -> bytes:
         return get_sha256_hash(filter.serialize_for_hash())

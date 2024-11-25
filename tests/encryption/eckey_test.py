@@ -11,7 +11,7 @@ class EcKeyTest(unittest.TestCase):
         self.dev_privileged_public_key_hex = "027a381b5333a56e1cc3d90d3a7d07f26509adf7029ed06fc997c656621f8da1ee"
         
     def test_private_key_to_public_key_validation(self):
-        private_key = Encryption.get_ec_private_key_from_bytes(bytes.fromhex(self.dev_privileged_private_key_hex))
+        private_key = Encryption.get_ec_private_key_from_int_string_bytes(bytes.fromhex(self.dev_privileged_private_key_hex))
         public_key_hex = Encryption.get_ec_public_key_bytes_from_private_key(private_key).hex()
         self.assertEqual(self.dev_privileged_public_key_hex, public_key_hex)
 
