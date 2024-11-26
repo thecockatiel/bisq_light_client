@@ -17,7 +17,7 @@ class PriceRequest:
         self.provider: Optional["PriceProvider"] = None
         self.shut_down_requested = False
 
-    def request_all_prices(self, provider: "PriceProvider") -> Future:
+    def request_all_prices(self, provider: "PriceProvider") -> Future["PricenodeDto"]:
         self.provider = provider
         base_url = provider.base_url
         # NOTE: dangling future if shutdown requested?
