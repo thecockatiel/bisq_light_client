@@ -15,6 +15,7 @@ class MediatorManager(DisputeAgentManager[Mediator]):
     def __init__(self, key_ring: "KeyRing", mediator_service: "MediatorService", user: "User", filter_manager: "FilterManager", use_dev_privilege_keys: bool):
         super().__init__(key_ring, mediator_service, user, filter_manager, use_dev_privilege_keys)
 
+    # TODO: Keep this updated with java impl
     def get_pub_key_list(self):
         return [
             "03be5471ff9090d322110d87912eefe89871784b1754d0707fdb917be5d88d3809",
