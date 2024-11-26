@@ -183,7 +183,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             maker_contract_signature=self.maker_contract_signature,
             taker_contract_signature=self.taker_contract_signature,
             dispute_result=self.dispute_result.to_proto_message() if self.dispute_result else None,
-            support_type=self.support_type.to_proto_message() if self.support_type else None,
+            support_type=SupportType.to_proto_message(self.support_type) if self.support_type else None,
             mediators_dispute_result=self.mediators_dispute_result,
             delayed_payout_tx_id=self.delayed_payout_tx_id,
             donation_address_of_delayed_payout_tx=self.donation_address_of_delayed_payout_tx,

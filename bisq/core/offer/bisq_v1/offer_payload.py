@@ -92,7 +92,7 @@ class OfferPayload(OfferPayloadBase):
             date=self.date,
             owner_node_address=self.owner_node_address.to_proto_message(),
             pub_key_ring=self.pub_key_ring.to_proto_message(),
-            direction=self.direction.to_proto_message(),
+            direction=OfferDirection.to_proto_message(self.direction),
             price=self.price,
             market_price_margin=self.market_price_margin,
             use_market_based_price=self.use_market_based_price,

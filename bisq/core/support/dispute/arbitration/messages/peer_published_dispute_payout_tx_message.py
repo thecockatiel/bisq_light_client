@@ -18,7 +18,7 @@ class PeerPublishedDisputePayoutTxMessage(ArbitrationMessage):
                 trade_id=self.trade_id,
                 sender_node_address=self.sender_node_address.to_proto_message(),
                 uid=self.uid,
-                type=self.support_type.to_proto_message(),
+                type=SupportType.to_proto_message(self.support_type),
              )
         )
         return envelope
