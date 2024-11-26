@@ -19,7 +19,7 @@ class PriceRequest:
 
     def request_all_prices(self, provider: "PriceProvider") -> Future:
         self.provider = provider
-        base_url = provider.get_base_url()
+        base_url = provider.base_url
         # NOTE: dangling future if shutdown requested?
         result_future = Future()
 

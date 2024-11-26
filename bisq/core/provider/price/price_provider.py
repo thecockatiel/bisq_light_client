@@ -34,8 +34,9 @@ class PriceProvider(HttpClientProvider):
         )
 
         return json.loads(json_response)
-
-    def get_base_url(self):
+    
+    @property
+    def base_url(self):
         return self.http_client.base_url
 
     def shut_down(self):
