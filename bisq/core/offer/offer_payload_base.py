@@ -46,7 +46,8 @@ class OfferPayloadBase(
         return self.hash
     
     def __hash__(self) -> int:
-        return self.get_hash()
+        return hash(self.get_hash())
+        
 
     def get_owner_pub_key(self):
         return self.pub_key_ring.signature_pub_key
