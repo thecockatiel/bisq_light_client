@@ -60,7 +60,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         self.shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
-        self.node_address_property: SimpleProperty[NodeAddress] = SimpleProperty()
+        self.node_address_property: SimpleProperty[Optional["NodeAddress"]] = SimpleProperty()
         self.server: Server = None
 
     @abstractmethod
