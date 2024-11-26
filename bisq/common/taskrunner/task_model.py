@@ -1,7 +1,9 @@
 
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 # Same as TaskRunner.Model from java implementation
 class TaskModel(ABC):
-    pass
+    @abstractmethod
+    def on_complete(self):
+        pass
