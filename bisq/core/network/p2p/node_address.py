@@ -6,7 +6,7 @@ from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 import proto.pb_pb2 as protobuf
 
 
-@dataclass
+@dataclass(eq=False)
 class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     host_name: str
     port: int
@@ -67,3 +67,6 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
 
     def __hash__(self) -> int:
         return hash((self.host_name, self.port))
+    
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, NodeAddress) and self.host_name == value.host_name and self.port == value.port
