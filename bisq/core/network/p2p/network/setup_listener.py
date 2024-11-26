@@ -10,7 +10,7 @@ class SetupListener(ABC):
     def on_hidden_service_published(self) -> None:
         pass
 
-    def on_setup_failed(self, raisable: Optional[Exception] = None) -> None:
+    def on_setup_failed(self, exception: Optional[Exception] = None) -> None:
         pass
 
     def on_request_custom_bridges(self) -> None:
