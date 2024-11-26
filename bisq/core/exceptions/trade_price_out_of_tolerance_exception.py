@@ -1,0 +1,2 @@
+class TradePriceOutOfToleranceException(Exception):
+    pass

@@ -1,0 +1,3 @@
+
+class MarketPriceNotAvailableException(Exception):
+    pass
