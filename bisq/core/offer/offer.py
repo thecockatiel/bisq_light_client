@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional, cast, Any
 from decimal import Decimal
 
+from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
 import proto.pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -74,9 +75,7 @@ class Offer(NetworkPayload, PersistablePayload):
         if proto.HasField('offer_payload'):
             return Offer(OfferPayload.from_proto(proto.offer_payload))
         else:
-            raise NotImplementedError("BsqSwapOfferPayload not implemented yet")
-            # TODO: implement BsqSwapOfferPayload
-            # return Offer(BsqSwapOfferPayload.from_proto(proto.bsq_swap_offer_payload))
+            return Offer(BsqSwapOfferPayload.from_proto(proto.bsq_swap_offer_payload))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Availability
@@ -458,9 +457,7 @@ class Offer(NetworkPayload, PersistablePayload):
 
     @property
     def is_bsq_swap_offer(self) -> bool:
-        return False
-        # TODO: implement BsqSwapOfferPayload
-        # return isinstance(self.offer_payload_base, BsqSwapOfferPayload)
+        return isinstance(self.offer_payload_base, BsqSwapOfferPayload)
 
     @property
     def is_xmr_auto_conf(self) -> bool:
@@ -479,12 +476,11 @@ class Offer(NetworkPayload, PersistablePayload):
     def is_fiat_offer(self) -> bool:
         return is_fiat_currency(self.currency_code)
 
-    # TODO: Implement BsqSwapOfferPayload
-    # @property
-    # def bsq_swap_offer_payload(self) -> Optional['BsqSwapOfferPayload']:
-    #     if isinstance(self.offer_payload_base, 'BsqSwapOfferPayload'):
-    #         return self.offer_payload_base
-    #     return None
+    @property
+    def bsq_swap_offer_payload(self) -> Optional['BsqSwapOfferPayload']:
+        if isinstance(self.offer_payload_base, 'BsqSwapOfferPayload'):
+            return self.offer_payload_base
+        return None
 
     @property
     def offer_payload_hash(self) -> bytes:

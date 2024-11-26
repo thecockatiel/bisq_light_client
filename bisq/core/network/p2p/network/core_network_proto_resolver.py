@@ -30,6 +30,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_entry import Protec
 from bisq.core.offer.availability.messages.offer_availability_request import OfferAvailabilityRequest
 from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
+from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
 from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
 from bisq.core.support.dispute.arbitration.messages.open_new_dispute_message import OpenNewDisputeMessage
 from bisq.core.support.dispute.arbitration.messages.peer_published_dispute_payout_tx_message import PeerPublishedDisputePayoutTxMessage
@@ -229,8 +230,8 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
                     return MailboxStoragePayload.from_proto(proto.mailbox_storage_payload)
                 case "offer_payload":
                     return OfferPayload.from_proto(proto.offer_payload)
-                # case "bsq_swap_offer_payload":
-                #     return BsqSwapOfferPayload.from_proto(proto.bsq_swap_offer_payload)
+                case "bsq_swap_offer_payload":
+                    return BsqSwapOfferPayload.from_proto(proto.bsq_swap_offer_payload)
                 # case "temp_proposal_payload":
                 #     return TempProposalPayload.from_proto(proto.temp_proposal_payload)
                 case _:
