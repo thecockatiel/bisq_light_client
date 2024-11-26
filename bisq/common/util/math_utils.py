@@ -24,6 +24,19 @@ class MathUtils:
             return 0.0
 
     @staticmethod
+    def round_double_to_long(value: float, rounding_mode: int = ROUND_HALF_UP) -> int:
+        if not isinstance(value, (int, float)) or value in _infinities or isnan(value):
+            raise ValueError(f"Expected a finite float, but found {value}")
+            
+        try:
+            dec = Decimal(str(value))
+            rounded = dec.quantize(Decimal('1'), rounding=rounding_mode)
+            return int(rounded)
+        except (InvalidOperation, ValueError) as e:
+            logger.error(str(e))
+            return 0
+
+    @staticmethod
     def scale_up_by_power_of_10(value: float, exponent: int) -> float:
         factor = pow(10, exponent)
         return value * factor

@@ -15,6 +15,14 @@ class MathUtilsTest(unittest.TestCase):
         self.assertEqual(MathUtils.round_double(1.55, 1), 1.6)
         self.assertEqual(MathUtils.round_double(1.49, 1), 1.5)
         self.assertEqual(MathUtils.round_double(1.51, 1), 1.5)
+
+    def test_round_double_to_long(self):
+        self.assertEqual(MathUtils.round_double_to_long(1.99), 2)
+        self.assertEqual(MathUtils.round_double_to_long(1.51), 2)
+        self.assertEqual(MathUtils.round_double_to_long(1.49), 1)
+        self.assertEqual(MathUtils.round_double_to_long(0.01), 0)
+        self.assertEqual(MathUtils.round_double_to_long(0.9), 1)
+        self.assertEqual(MathUtils.round_double_to_long(-0.5), -1)
         
     def test_throw_on_infinities_or_nan(self):
         with self.assertRaises(ValueError):
