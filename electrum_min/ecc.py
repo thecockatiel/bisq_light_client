@@ -38,6 +38,9 @@ from .util import bfh, assert_bytes, to_bytes, InvalidPassword, randrange
 from .crypto import (sha256d)
 from . import constants
 from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 
 
 # Some unit tests need to create ECDSA sigs without grinding the R value (and just use RFC6979).
@@ -325,7 +328,13 @@ class ECPubkey(object):
     def verify_message_hash(self, sig_string: bytes, msg_hash: bytes) -> bool:
         assert_bytes(sig_string)
         if len(sig_string) != 64:
-            return False
+            # NOTE: we fallback to cryptography module due to some signatures not being 64 bytes long
+            pubkey = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), self.get_public_key_bytes(compressed=False))
+            try:
+                pubkey.verify(sig_string, msg_hash, ec.ECDSA(Prehashed(hashes.SHA256())))
+                return True
+            except:
+                return False 
         if not (isinstance(msg_hash, bytes) and len(msg_hash) == 32):
             return False
 

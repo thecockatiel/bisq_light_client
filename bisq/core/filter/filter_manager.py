@@ -6,7 +6,7 @@ import base64
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import CONFIG
 from bisq.common.config.config_file_editor import ConfigFileEditor
-from bisq.common.crypto.encryption import Encryption, ec
+from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
@@ -68,7 +68,7 @@ class FilterManager:
         self.listeners: List["FilterManager.Listener"] = []
         self.invalid_filters: Set["Filter"] = set()
         self.filter_warning_handler: Optional[Callable[[str], None]] = None
-        self.filter_signing_key: Optional[ec.EllipticCurvePrivateKey] = None
+        self.filter_signing_key: Optional[ECPrivkey] = None
         
         self.public_keys: List[str] = []
         
@@ -275,7 +275,7 @@ class FilterManager:
     def get_dev_filter(self) -> Optional[Filter]:
         return self.user.developers_filter
 
-    def get_owner_pub_key(self) -> ec.EllipticCurvePublicKey:
+    def get_owner_pub_key(self):
         return self.key_ring.signature_key_pair.public_key
     
     def is_currency_banned(self, currency_code: str) -> bool:
@@ -512,7 +512,7 @@ class FilterManager:
         
     def get_signature(self, filter_without_signature: "Filter"):
         hash_bytes = self.get_filter_sha256_hash(filter_without_signature)
-        signature = Encryption.sign_with_ec_private_key(self.filter_signing_key, hash_bytes) # der encoded by default
+        signature = self.filter_signing_key.sign(hash_bytes)
         return base64.b64encode(signature).decode("utf-8")
 
     def is_filter_public_key_in_list(self, filter: "Filter") -> bool:
@@ -540,23 +540,16 @@ class FilterManager:
             assert filter.signature_as_base64 is not None, "filter.signature_as_base64 must not be None"
             sigdata = base64.b64decode(filter.signature_as_base64)
             pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex(filter.signer_pub_key_as_hex))
-            # Verify the signature using crypto primitives from bisq.common.crypto
-            return Encryption.verify_with_ec_public_key(
-                pubkey,
-                sigdata,
-                hash_bytes
-            )
+            return pubkey.verify_message_hash(sigdata, hash_bytes)
         except Exception as e:
             logger.warning(f"verify_signature failed. filter={filter}")
             return False
 
-    def to_ec_key(self, priv_key_string: str) -> ec.EllipticCurvePrivateKey:
-        priv_key_bytes = bytes.fromhex(priv_key_string)
-        return Encryption.get_ec_private_key_from_int_string_bytes(priv_key_bytes)
+    def to_ec_key(self, priv_key_string: str) -> ECPrivkey:
+        return Encryption.get_ec_private_key_from_int_hex_string(priv_key_string)
     
     def get_filter_sha256_hash(self, filter: Filter) -> bytes:
         return get_sha256_hash(filter.serialize_for_hash())
 
-    def get_pub_key_as_hex(self, private_key: ec.EllipticCurvePrivateKey) -> str:
-        pub_key_bytes = Encryption.get_ec_public_key_bytes_from_private_key(private_key)
-        return pub_key_bytes.hex()
+    def get_pub_key_as_hex(self, private_key: ECPrivkey) -> str: 
+        return private_key.get_public_key_hex()
