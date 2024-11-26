@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum
+from enum import IntEnum
 from bisq.common.protocol.proto_util import ProtoUtil
 import proto.pb_pb2 as protobuf
 
