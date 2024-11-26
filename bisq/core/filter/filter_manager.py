@@ -76,6 +76,7 @@ class FilterManager:
         if use_dev_privilege_keys:
             self.public_keys = DevEnv.get_dev_privilege_pub_keys()
         else:
+            # TODO: Keep this updated with java impl
             self.public_keys = [
                 "0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27",
                 "029340c3e7d4bb0f9e651b5f590b434fecb6175aeaa57145c7804ff05d210e534f",
