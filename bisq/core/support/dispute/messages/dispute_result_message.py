@@ -18,7 +18,7 @@ class DisputeResultMessage(DisputeMessage):
             dispute_result=self.dispute_result.to_proto_message(),
             sender_node_address=self.sender_node_address.to_proto_message(),
             uid=self.uid,
-            type=self.support_type.to_proto_message(),
+            type=SupportType.to_proto_message(self.support_type),
         )) 
         return envelope
 
