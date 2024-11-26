@@ -4,8 +4,9 @@ import secrets
 from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, ec, dsa
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
+from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
 from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
@@ -201,13 +202,13 @@ class Encryption:
             raise KeyConversionException(e) from e
 
     ##########################################################################################
-    # EC (bitcoinj compatibility layer)
+    # EC (bitcoinj compatibility layer) - LowRSigningKey
     ##########################################################################################
     
     @staticmethod
-    def get_ec_private_key_from_int_string_bytes(private_key_bytes: bytes) -> ec.EllipticCurvePrivateKey:
+    def get_ec_private_key_from_int_hex_string(key: str) -> ECPrivkey:
         try:
-            key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1())
+            key = ECPrivkey.from_secret_scalar(string_to_number(bytes.fromhex(key)))
             return key
         except Exception as e:
             logger.error(
@@ -216,55 +217,15 @@ class Encryption:
             raise KeyConversionException(e) from e
     
     @staticmethod
-    def get_ec_public_key_bytes_from_private_key(private_key: ec.EllipticCurvePrivateKey) -> bytes:
+    def get_ec_public_key_from_bytes(public_key_bytes: bytes) -> ECPubkey:
         try:
-            public_pytes = private_key.public_key().public_bytes(
-                encoding=serialization.Encoding.X962,
-                format=serialization.PublicFormat.CompressedPoint
-            )
-            return public_pytes
-        except Exception as e:
-            logger.error(
-                f"Error creating bytes from ec private key. Key bytes as hex=REDACTED, error={str(e)}"
-            )
-            raise KeyConversionException(e) from e
-    
-    @staticmethod
-    def get_ec_public_key_bytes_from_public_key(public_key: ec.EllipticCurvePublicKey) -> bytes:
-        try:
-            public_pytes = public_key.public_bytes(
-                encoding=serialization.Encoding.X962,
-                format=serialization.PublicFormat.CompressedPoint
-            )
-            return public_pytes
-        except Exception as e:
-            logger.error(
-                f"Error creating bytes from ec public key. error={str(e)}"
-            )
-            raise KeyConversionException(e) from e
-    
-    @staticmethod
-    def get_ec_public_key_from_bytes(public_key_bytes: bytes) -> ec.EllipticCurvePublicKey:
-        try:
-            key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), public_key_bytes)
+            key = ECPubkey(public_key_bytes)
             return key
         except Exception as e:
             logger.error(
                 f"Error creating ec public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
             )
             raise KeyConversionException(e) from e
-
-    @staticmethod
-    def sign_with_ec_private_key(private_key: ec.EllipticCurvePrivateKey, data: bytes) -> bytes:
-        return private_key.sign(data, ec.ECDSA(Prehashed(hashes.SHA256())))
-
-    @staticmethod
-    def verify_with_ec_public_key(public_key: ec.EllipticCurvePublicKey, data: bytes, signature: bytes) -> bool:
-        try:
-            public_key.verify(signature, data, ec.ECDSA(Prehashed(hashes.SHA256())))
-            return True
-        except:
-            return False
         
     ##########################################################################################
     # Helpers
@@ -272,4 +233,6 @@ class Encryption:
             
     @staticmethod
     def is_pubkeys_equal(key1: PUBLIC_KEY_TYPES, key2: PUBLIC_KEY_TYPES):
+        if isinstance(key1, ECPubkey) and isinstance(key2, ECPubkey):
+            return key1 == key2
         return Encryption.get_public_key_bytes(key1) == Encryption.get_public_key_bytes(key2)
