@@ -272,7 +272,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
                 node_address = connection.peers_node_address
                 if node_address is not None:
                     for listener in self.decrypted_direct_message_listeners:
-                        listener.on_direct_message(decrypted_msg, node_address)
+                        listener(decrypted_msg, node_address)
                 else:
                     logger.error("peersNodeAddress is expected to be available at onMessage for "
                                "processing PrefixedSealedAndSignedMessage.")
