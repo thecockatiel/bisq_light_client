@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# TODO: cryptography usages needs double check.
 class FilterManager:
     # Class constants
     BANNED_PRICE_RELAY_NODES = "bannedPriceRelayNodes"
