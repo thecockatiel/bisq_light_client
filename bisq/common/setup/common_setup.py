@@ -23,7 +23,6 @@ class CommonSetup:
     def setup_sig_int_handlers(graceful_shutdown_handler: GracefulShutDownHandler):
         def signal_handler(sig: int, frame):
             logger.info(f"Received signal {sig}")
-            # Assuming UserThread.execute is implemented elsewhere or not needed in Python
             UserThread.execute(lambda: graceful_shutdown_handler(lambda: None))
 
         signal(SIGINT, signal_handler)
