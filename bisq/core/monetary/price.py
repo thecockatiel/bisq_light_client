@@ -1,16 +1,18 @@
 from functools import total_ordering
+from typing import TYPE_CHECKING
 
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.altcoin_exchange_rate import AltcoinExchangeRate
 from bisq.core.monetary.monetary_wrapper import MonetaryWrapper
-from bisq.core.monetary.volume import Volume
 from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.monetary import Monetary
 from bitcoinj.base.utils.fiat import Fiat
 from bitcoinj.util.exchange_rate import ExchangeRate
 
+if TYPE_CHECKING:
+    from bisq.core.monetary.volume import Volume
 
 @total_ordering
 class Price(MonetaryWrapper):
@@ -52,6 +54,7 @@ class Price(MonetaryWrapper):
             return Price(Altcoin.value_of(currency_code, value))
         
     def get_volume_by_amount(self, amount: Coin):
+        from bisq.core.monetary.volume import Volume
         if isinstance(self.monetary, Fiat):
             return Volume(self.coin_to_fiat(ExchangeRate(self.monetary), amount))
         elif isinstance(self.monetary, Altcoin):
@@ -69,7 +72,7 @@ class Price(MonetaryWrapper):
             
         return rate.coin_to_fiat(convert_coin)
     
-    def get_amount_by_volume(self, volume: Volume):
+    def get_amount_by_volume(self, volume: "Volume"):
         monetary = volume.monetary
         if isinstance(monetary, Fiat) and isinstance(self.monetary, Fiat):
             return self.fiat_to_coin(ExchangeRate(monetary), monetary.value)

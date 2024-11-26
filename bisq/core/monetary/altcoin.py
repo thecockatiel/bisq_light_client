@@ -1,4 +1,3 @@
-from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.utils.fiat import Fiat
 from bitcoinj.base.utils.monetary_format import (
     ALTCOIN_FRIENDLY_FORMAT,
@@ -13,6 +12,7 @@ class Altcoin(Fiat):
 
     @staticmethod
     def parse_altcoin(currency_code:str, input: str):
+        from bisq.core.util.parsing_utils import ParsingUtils
         cleaned = ParsingUtils.convert_chars_for_number(input)
         return Altcoin.parse_fiat(currency_code, cleaned)
     
