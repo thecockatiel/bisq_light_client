@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.taskrunner.task_model import TaskModel
 
 if TYPE_CHECKING:
+    from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import DelayedPayoutTxReceiverService
     from bisq.core.user.user import User
     from bisq.core.support.dispute.mediation.mediator.mediator_manager import MediatorManager
     from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
@@ -22,7 +23,7 @@ class OfferAvailabilityModel(TaskModel):
         user: 'User',
         mediator_manager: 'MediatorManager',
         # trade_statistics_manager: 'TradeStatisticsManager'
-        # delayed_payout_tx_receiver_service: 'DelayedPayoutTxReceiverService',
+        delayed_payout_tx_receiver_service: 'DelayedPayoutTxReceiverService',
         is_taker_api_user: bool
     ):
         super().__init__()
@@ -32,7 +33,7 @@ class OfferAvailabilityModel(TaskModel):
         self.user = user
         self.mediator_manager = mediator_manager
         # Added in v 1.9.7
-        # self.delayed_payout_tx_receiver_service = delayed_payout_tx_receiver_service
+        self.delayed_payout_tx_receiver_service = delayed_payout_tx_receiver_service
         # Added in v1.5.5
         self.is_taker_api_user = is_taker_api_user
         
