@@ -425,25 +425,25 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
     
-    def get_network_node(self) -> "NetworkNode":
+    def get_network_node(self):
         return self.network_node
 
-    def get_address(self) -> Optional["NodeAddress"]:
+    def get_address(self):
         return self.network_node.node_address_property.value
 
-    def get_num_connected_peers(self) -> SimpleProperty:
+    def get_num_connected_peers(self):
         return self.num_connected_peers
 
-    def get_data_map(self) -> dict:
+    def get_data_map(self):
         return self.p2p_data_storage.map
 
-    def get_p2p_data_storage(self) -> "P2PDataStorage":
+    def get_p2p_data_storage(self):
         return self.p2p_data_storage
 
-    def get_peer_manager(self) -> "PeerManager":
+    def get_peer_manager(self):
         return self.peer_manager
 
-    def get_key_ring(self) -> "KeyRing":
+    def get_key_ring(self):
         return self.key_ring
 
     def find_peers_capabilities(self, peer: "NodeAddress") -> Optional["Capabilities"]:
