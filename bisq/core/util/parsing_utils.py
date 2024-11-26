@@ -2,7 +2,6 @@ from typing import Union
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
-from bisq.core.monetary.price import Price
 from bisq.core.util.formatting_util import FormattingUtils
 from bitcoinj.base.coin import Coin
 from bisq.core.util.coin.coin_formatter import CoinFormatter
@@ -40,6 +39,7 @@ class ParsingUtils:
 
     @staticmethod
     def parse_price_string_to_long(currency_code: str, amount: str, precision: int) -> int:
+        from bisq.core.monetary.price import Price
         if not amount:
             return 0
 

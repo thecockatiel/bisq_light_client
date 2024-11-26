@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.res import Res
-from bisq.core.monetary.price import Price
 from bisq.core.util.decimal_format import DecimalFormat
 from bisq.core.locale.currency_util import is_fiat_currency
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
@@ -11,7 +10,8 @@ from bitcoinj.base.utils.fiat import Fiat
 
 if TYPE_CHECKING:
     from bisq.core.monetary.altcoin import Altcoin
-
+    from bisq.core.monetary.price import Price
+    
 logger = get_logger(__name__)
 
 class FormattingUtils:
