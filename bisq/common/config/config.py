@@ -16,6 +16,7 @@ class Config:
 
     # Fields
     config_file: Path = field(init=False, default=None)
+    ban_list: list[str] = field(default_factory=list)
     seed_nodes: list = field(default_factory=list)
     max_connections: int = field(default=12)
     filter_provided_seed_nodes: list = field(default_factory=list)
