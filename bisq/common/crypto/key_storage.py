@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.backends import default_backend
+from bisq.common.config.config import CONFIG
 from bisq.common.crypto.key_entry import KeyEntry
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.file.file_util import rolling_backup
@@ -16,11 +17,11 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 class KeyStorage:
-    def __init__(self, storage_dir: str):
+    def __init__(self, storage_dir = CONFIG.storage_dir):
         self.storage_dir = check_dir(storage_dir)
 
     def all_key_files_exist(self) -> bool:
-        return all([os.path.exists(os.path.join(self.storage_dir, f"{entry.file_name}.key")) for entry in [KeyEntry.MSG_SIGNATURE, KeyEntry.MSG_ENCRYPTION]])
+        return all([self.storage_dir.joinpath(f"{entry.file_name}.key").exists() for entry in [KeyEntry.MSG_SIGNATURE, KeyEntry.MSG_ENCRYPTION]])
 
     def load_key_pair(self, key_entry: KeyEntry):
         rolling_backup(self.storage_dir, key_entry.file_name, 20)
@@ -28,7 +29,7 @@ class KeyStorage:
         public_key = None
 
         try:
-            private_key_path = os.path.join(self.storage_dir, f"{key_entry.file_name}.key")
+            private_key_path = self.storage_dir.joinpath(f"{key_entry.file_name}.key")
             with open(private_key_path, 'rb') as f:
                 encoded_private_key_data = f.read()
                 private_key = serialization.load_pem_private_key(encoded_private_key_data, password=None, backend=default_backend())
@@ -43,10 +44,10 @@ class KeyStorage:
         self.save_private_key(key_ring.encryption_key_pair.private_key, KeyEntry.MSG_ENCRYPTION.file_name)
 
     def save_private_key(self, private_key: dsa.DSAPrivateKey | rsa.RSAPrivateKey, name: str):
-        if not os.path.exists(self.storage_dir):
-            os.makedirs(self.storage_dir, exist_ok=True)
+        if not self.storage_dir.exists():
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
         
-        file_path = os.path.join(self.storage_dir, f"{name}.key")
+        file_path = self.storage_dir.joinpath(f"{name}.key")
         try:
             pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
