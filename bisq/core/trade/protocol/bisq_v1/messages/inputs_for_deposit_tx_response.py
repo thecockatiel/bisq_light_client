@@ -5,7 +5,7 @@ from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.direct_message import DirectMessage
-from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.trade_message import TradeMessage

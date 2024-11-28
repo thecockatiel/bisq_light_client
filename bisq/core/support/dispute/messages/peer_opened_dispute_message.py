@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.dispute import Dispute
 from bisq.core.support.dispute.messages.dispute_message import DisputeMessage

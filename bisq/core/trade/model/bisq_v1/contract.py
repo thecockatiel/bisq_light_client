@@ -20,7 +20,7 @@ import proto.pb_pb2 as protobuf
 import re
 
 if TYPE_CHECKING:
-    from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+    from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.monetary.volume import Volume
 
 logger = get_logger(__name__)

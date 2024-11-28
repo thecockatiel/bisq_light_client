@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     )
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+    from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 
 class DisputeState(IntEnum):
