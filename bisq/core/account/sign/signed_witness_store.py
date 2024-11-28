@@ -1,9 +1,12 @@
-from typing import Collection, List, cast
+from typing import Collection, cast
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
 import proto.pb_pb2 as protobuf
 
 
+# We store only the payload in the PB file to save disc space. The hash of the payload can be created anyway and
+# is only used as key in the map. So we have a hybrid data structure which is represented as list in the protobuf
+# definition and provide a hashMap for the domain access.
 class SignedWitnessStore(PersistableNetworkPayloadStore[SignedWitness]):
     
     def __init__(self, collection: Collection[SignedWitness] | None = None) -> None:
