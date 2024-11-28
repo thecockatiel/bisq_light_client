@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, Generic, Optional, cast
 from collections.abc import Callable
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.config.config import CONFIG
 from bisq.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
 from bisq.common.protocol.persistable.persistable_envelope import (
     PersistableEnvelope,
@@ -50,8 +49,6 @@ class PersistenceManager(Generic[T]):
         persistence_proto_resolver: "PersistenceProtoResolver",
         corrupted_storage_file_handler: "CorruptedStorageFileHandler",
     ):
-        if dir is None:
-            dir = CONFIG.storage_dir
         self.dir = check_dir(dir)
         self.persistence_proto_resolver = persistence_proto_resolver
         self.corrupted_storage_file_handler = corrupted_storage_file_handler
