@@ -1,9 +1,8 @@
 from collections.abc import Callable
-from bisq.common.config.config import CONFIG
 from bisq.core.network.p2p.node_address import NodeAddress
 
 class CoreBanFilter:
-    def __init__(self, ban_list: list[str] = CONFIG.ban_list):
+    def __init__(self, ban_list: list[str]):
         self.banned_peers_from_options = set(NodeAddress(addr) for addr in ban_list)
         self.banned_node_predicate: Callable[[NodeAddress], bool] = None
 
