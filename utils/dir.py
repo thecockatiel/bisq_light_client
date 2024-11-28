@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Union
 
 # taken from Electrum with modifications
 
@@ -19,7 +20,7 @@ def user_data_dir():
         raise Exception("No home directory found in environment variables.")
     return Path(path)
 
-def check_dir(dir_path: str):
+def check_dir(dir_path: Union[str, Path]):
     """
     Ensures that `dir_path` is a non-null, existing and read-writeable directory.
     
@@ -27,13 +28,16 @@ def check_dir(dir_path: str):
     dir_path (str): The path to the directory to check.
     
     Returns:
-    str: The given directory path, now validated.
+    Path: The given directory path, now validated.
     
     Raises:
     ValueError: If the directory is not valid.
     """
     if dir_path is None:
         raise ValueError("Directory must not be None")
+    
+    if isinstance(dir_path, str):
+        dir_path = Path(dir_path)
     
     if not os.path.exists(dir_path):
         raise ValueError(f"Directory '{dir_path}' does not exist")
