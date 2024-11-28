@@ -47,7 +47,7 @@ class FileTransferSender(FileTransferSession):
                      # always include bisq.log; and other .log files if they contain the TradeId
                     if (filename == "bisq.log" or
                             (trade_id is None and filename.endswith('.log')) or
-                            (filename.endswith('.log') and does_file_contain_keyword(str(log_file), trade_id))):
+                            (filename.endswith('.log') and does_file_contain_keyword(log_file, trade_id))):
                         
                         archive_path = f"{zip_id}/{filename}"
                         logger.info(f"Adding {filename} to zip file {zip_file_path}")

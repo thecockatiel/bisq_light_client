@@ -52,7 +52,7 @@ class PersistenceManager(Generic[T]):
     ):
         if dir is None:
             dir = CONFIG.storage_dir
-        self.dir = Path(check_dir(dir))
+        self.dir = check_dir(dir)
         self.persistence_proto_resolver = persistence_proto_resolver
         self.corrupted_storage_file_handler = corrupted_storage_file_handler
 
@@ -377,7 +377,7 @@ class PersistenceManager(Generic[T]):
 
         try:
             # Before we write we backup existing file
-            rolling_backup(str(self.dir), self.file_name, self.source.num_max_backup_files)
+            rolling_backup(self.dir, self.file_name, self.source.num_max_backup_files)
 
             if not self.dir.exists():
                 try:

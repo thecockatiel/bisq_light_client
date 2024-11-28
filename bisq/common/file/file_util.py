@@ -11,17 +11,16 @@ from resources import get_resource_path
 
 logger = get_logger(__name__)
 
-def rolling_backup(dir_path: str, file_name: str, num_max_backup_files: int) -> None:
-    dir_obj = Path(dir_path)
+def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) -> None:
     
-    if dir_obj.exists():
-        backup_dir = dir_obj.joinpath("backup")
+    if dir_path.exists():
+        backup_dir = dir_path.joinpath("backup")
         
         if not backup_dir.exists():
             if not backup_dir.mkdir(exist_ok=True):
                 logger.warning("make dir failed.\nBackupDir=" + str(backup_dir))
         
-        orig_file = dir_obj.joinpath(file_name)
+        orig_file = dir_path.joinpath(file_name)
         
         if orig_file.exists():
             dir_name = f"backups_{file_name}"
@@ -43,11 +42,9 @@ def rolling_backup(dir_path: str, file_name: str, num_max_backup_files: int) -> 
             except Exception as e:
                 logger.error("Backup key failed: " + str(e))
 
-def prune_backup(backup_dir_path: str, num_max_backup_files: int) -> None:
-    backup_dir = Path(backup_dir_path)
-
-    if backup_dir.is_dir():
-        files = list(backup_dir.iterdir())
+def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
+    if backup_dir_path.is_dir():
+        files = list(backup_dir_path.iterdir())
         
         if files:
             if len(files) > num_max_backup_files:
@@ -60,9 +57,9 @@ def prune_backup(backup_dir_path: str, num_max_backup_files: int) -> None:
                     else:
                         prune_backup(backup_dir_path, num_max_backup_files)
                 elif file_to_delete.is_dir():
-                    prune_backup(str(file_to_delete), num_max_backup_files)
+                    prune_backup(file_to_delete, num_max_backup_files)
 
-def does_file_contain_keyword(file_path: str, keyword: str) -> bool:
+def does_file_contain_keyword(file_path: Path, keyword: str) -> bool:
     try:
         with open(file_path, 'r') as file:
             for line in file:
@@ -70,10 +67,10 @@ def does_file_contain_keyword(file_path: str, keyword: str) -> bool:
                     return True
         return False
     except FileNotFoundError:
-        logger.error(f"File not found: {file_path}")
+        logger.error(f"File not found: {str(file_path)}")
         raise
     except Exception as e:
-        logger.error(f"Error searching file {file_path}: {str(e)}")
+        logger.error(f"Error searching file {str(file_path)}: {str(e)}")
         raise
     
 def rename_file(file: Path, new_file: Path) -> None:
