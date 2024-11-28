@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 
 class AccountAgeWitness(
-    ProcessOncePersistableNetworkPayload, PersistableNetworkPayload, DateTolerantPayload
+    ProcessOncePersistableNetworkPayload,  DateTolerantPayload, PersistableNetworkPayload
 ):
     TOLERANCE_MS = int(timedelta(days=1).total_seconds() * 1000)
 
