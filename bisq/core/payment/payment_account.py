@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.core.payment.payload.payment_method import PaymentMethod
-    from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+    from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 
 @dataclass

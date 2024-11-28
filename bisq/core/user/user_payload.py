@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
     from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
     from bisq.core.payment.payment_account import PaymentAccount
-    from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+    from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 class UserPayload(PersistableEnvelope):
     def __init__(self,

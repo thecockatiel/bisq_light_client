@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List
 from bisq.core.payment.payment_account import PaymentAccount
 
 if TYPE_CHECKING:
-    from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+    from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 class MarketAlertFilter(PersistablePayload):
     def __init__(self, payment_account: "PaymentAccount", trigger_value: int, is_buy_offer: bool, alert_ids: List[str] = None):

@@ -10,7 +10,7 @@ from bisq.core.network.p2p.close_connection_message import CloseConnectionMessag
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
 from bisq.core.network.p2p.inventory.messages.get_inventory_request import GetInventoryRequest
 from bisq.core.network.p2p.inventory.messages.get_inventory_response import GetInventoryResponse
-from bisq.core.network.p2p.network.core_proto_resolver import CoreProtoResolver
+from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
