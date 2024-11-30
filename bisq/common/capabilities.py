@@ -1,7 +1,7 @@
 from typing import List, Set, Optional
 
+from bisq.common.capability import Capability
 from bisq.common.setup.log_setup import get_logger
-from .capability import Capability
 
 logger = get_logger(__name__)
 
@@ -76,12 +76,10 @@ class Capabilities:
         return ", ".join(map(str, self.to_int_list(self)))
 
     @staticmethod
-    def has_mandatory_capability(capabilities_obj: 'Capabilities') -> bool:
-        return Capabilities.has_mandatory_capability_specific(capabilities_obj, Capabilities.MANDATORY_CAPABILITY)
-
-    @staticmethod
-    def has_mandatory_capability_specific(capabilities_obj: 'Capabilities', mandatory_cap: Capability) -> bool:
-        return any(c == mandatory_cap for c in capabilities_obj.capabilities)
+    def has_mandatory_capability(capabilities: 'Capabilities', mandatory_capability: Optional['Capability'] = None) -> bool:
+        if mandatory_capability is None:
+            mandatory_capability = Capabilities.MANDATORY_CAPABILITY
+        return any(c == mandatory_capability for c in capabilities.capabilities)        
 
     def __str__(self) -> str:
         return str(self.to_int_list(self))
