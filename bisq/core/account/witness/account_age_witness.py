@@ -63,6 +63,10 @@ class AccountAgeWitness(
     def get_hash(self) -> bytes:
         return self._hash
     
+    @property
+    def date(self):
+        return self._date
+    
     def get_hash_as_byte_array(self):
         return StorageByteArray(self._hash)
     
