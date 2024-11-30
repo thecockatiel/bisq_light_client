@@ -2,12 +2,12 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 import threading
 import os
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar, Generic, Optional, cast
 from collections.abc import Callable
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.file.file_util import create_new_file, create_temp_file, remove_and_backup_file, rename_file, rolling_backup
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_envelope import (
     PersistableEnvelope,
 )
@@ -56,8 +56,8 @@ class PersistenceManager(Generic[T]):
         self.storage_file: Optional[Path] = None
         self.persistable: Optional[T] = None
         self.file_name: Optional[str] = None
-        self.source: PersistenceManager.Source = (
-            PersistenceManager.Source.PRIVATE_LOW_PRIO
+        self.source: PersistenceManagerSource = (
+            PersistenceManagerSource.PRIVATE_LOW_PRIO
         )
         self.used_temp_file_path: Optional[Path] = None
         self.persistence_requested: bool = False
@@ -159,35 +159,6 @@ class PersistenceManager(Generic[T]):
         if open_instances.decrement_and_get() == 0:
             logger.info("flushAllDataToDisk completed")
             complete_handler()
-
-    ###############################################################################
-
-    class Source(Enum):
-        # for data stores we received from the network and which could be rebuilt. We store only for avoiding too much network traffic.
-        NETWORK = (
-            1,
-            int(timedelta(minutes=5).total_seconds() * 1000),
-            False,
-        )  # 5 minutes
-
-        # For data stores which are created from private local data. This data could only be rebuilt from backup files.
-        PRIVATE = 10, 200, True
-
-        # For data stores which are created from private local data. Loss of that data would not have critical consequences.
-        PRIVATE_LOW_PRIO = 4, int(timedelta(minutes=1).total_seconds() * 1000), False
-
-        def __init__(
-            self, num_max_backup_files: int, delay: int, flush_at_shutdown: bool
-        ):
-            self.num_max_backup_files = num_max_backup_files
-            self.delay = delay
-            self.flush_at_shutdown = flush_at_shutdown
-
-        def __new__(cls, *args, **kwds):
-            value = len(cls.__members__)
-            obj = object.__new__(cls)
-            obj._value_ = value
-            return obj
 
     ###############################################################################
 

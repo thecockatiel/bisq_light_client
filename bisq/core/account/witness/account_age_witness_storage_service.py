@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from bisq.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.network.p2p.persistence.historical_data_store_service import T, HistoricalDataStoreService
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
@@ -19,7 +19,7 @@ class AccountAgeWitnessStorageService(HistoricalDataStoreService[AccountAgeWitne
         return AccountAgeWitnessStorageService.FILE_NAME
     
     def initialize_persistence_manager(self):
-        self.persistence_manager.initialize(self.store, PersistenceManager.Source.NETWORK)
+        self.persistence_manager.initialize(self.store, PersistenceManagerSource.NETWORK)
         
     def can_handle(self, payload: "PersistableNetworkPayload") -> bool:
         return isinstance(payload, "AccountAgeWitness")

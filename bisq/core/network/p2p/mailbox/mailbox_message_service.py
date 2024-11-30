@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.hash import get_32_byte_hash
-from bisq.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
@@ -28,6 +28,7 @@ from utils.time import get_time_ms
 
 
 if TYPE_CHECKING:
+    from bisq.common.persistence.persistence_manager import PersistenceManager
     from bisq.core.network.p2p.messaging.decrypted_mailbox_listener import (
         DecryptedMailboxListener,
     )
@@ -88,7 +89,7 @@ class MailboxMessageService:
         self._init_after_bootstrapped: bool = False
 
         self.persistence_manager.initialize(
-            self.mailbox_message_list, PersistenceManager.Source.PRIVATE_LOW_PRIO
+            self.mailbox_message_list, PersistenceManagerSource.PRIVATE_LOW_PRIO
         )
 
     

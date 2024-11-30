@@ -5,6 +5,7 @@ from collections.abc import Callable
 from bisq.common.crypto.hash import get_32_byte_hash
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
@@ -40,7 +41,6 @@ from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
-from bisq.common.persistence.persistence_manager import PersistenceManager
 from utils.data import SimpleProperty, combine_simple_properties
 from utils.formatting import to_truncated_string
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from bisq.common.capabilities import Capabilities
     from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
     from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
+    from bisq.common.persistence.persistence_manager import PersistenceManager
 
 
 logger = get_logger(__name__)
@@ -107,7 +108,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         network_node.add_message_listener(self)
         network_node.add_connection_listener(self)
         
-        self.persistence_manager.initialize(self.sequence_number_map, PersistenceManager.Source.PRIVATE_LOW_PRIO)
+        self.persistence_manager.initialize(self.sequence_number_map, PersistenceManagerSource.PRIVATE_LOW_PRIO)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PersistedDataHost
