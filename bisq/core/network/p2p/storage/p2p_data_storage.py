@@ -617,7 +617,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             was_added = self.append_only_data_store_service.put(hash_as_byte_array, payload)
             if was_added:
                 for listener in self.append_only_data_store_listeners:
-                    listener.on_added(payload)
+                    listener(payload)
 
         # Broadcast the payload if requested by caller
         if allow_broadcast and was_added:
