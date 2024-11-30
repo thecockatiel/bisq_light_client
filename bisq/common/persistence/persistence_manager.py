@@ -350,7 +350,7 @@ class PersistenceManager(Generic[T]):
             # For the write to disk task we use a thread. We do not have any issues anymore if the persistable objects
             # gets mutated while the thread is running as we have serialized it already and do not operate on the
             # reference to the persistable object.
-            self.get_write_to_disk_executor().submit(lambda: self.write_to_disk(serialized, complete_handler, force))
+            self.write_to_disk_executor.submit(lambda: self.write_to_disk(serialized, complete_handler, force))
             
             duration = get_time_ms() - ts
             if duration > 100:
