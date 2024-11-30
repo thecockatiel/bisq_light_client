@@ -1,10 +1,13 @@
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from utils.time import get_time_ms
-from bisq.common.persistence.persistence_manager import PersistenceManager
+
+if TYPE_CHECKING:
+    from bisq.common.persistence.persistence_manager import PersistenceManager
 
 class IgnoredMailboxService(PersistedDataHost):
     """
@@ -18,7 +21,7 @@ class IgnoredMailboxService(PersistedDataHost):
     def __init__(self, persistence_manager: "PersistenceManager[IgnoredMailboxMap]") -> None:
         self.persistence_manager = persistence_manager
         self.ignored_mailbox_map = IgnoredMailboxMap()
-        self.persistence_manager.initialize(self.ignored_mailbox_map, PersistenceManager.Source.PRIVATE_LOW_PRIO)
+        self.persistence_manager.initialize(self.ignored_mailbox_map, PersistenceManagerSource.PRIVATE_LOW_PRIO)
 
     def read_persisted(self, complete_handler: Callable[[], None]) -> None:
         def handle_persisted(persisted: IgnoredMailboxMap) -> None:

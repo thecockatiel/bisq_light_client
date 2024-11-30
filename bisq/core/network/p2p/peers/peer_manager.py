@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Optional, Set, TYPE_CHECKING
 
 from bisq.common.capability import Capability
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
@@ -104,7 +105,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self.peak_num_connections = 0
         self.num_all_connections_lost_events = 0
         
-        self.persistence_manager.initialize(self.peer_list,  PersistenceManager.Source.PRIVATE_LOW_PRIO)
+        self.persistence_manager.initialize(self.peer_list,  PersistenceManagerSource.PRIVATE_LOW_PRIO)
         self.network_node.add_connection_listener(self)
         # we check if app was idle for more then 5 sec. 
         self.clock_watcher_listener = PeerManager.ClockWatcherListener(self)

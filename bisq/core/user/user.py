@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.key_ring import KeyRing
-from bisq.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.language_util import LanguageUtil
@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
     from bisq.core.alert.alert import Alert
     from bisq.core.filter.filter import Filter
+    from bisq.common.persistence.persistence_manager import PersistenceManager
 
 
 class User(PersistedDataHost):
@@ -59,7 +60,7 @@ class User(PersistedDataHost):
 
     def _init(self):
         assert self.persistence_manager is not None
-        self.persistence_manager.initialize(self.user_payload, PersistenceManager.Source.PRIVATE)
+        self.persistence_manager.initialize(self.user_payload, PersistenceManagerSource.PRIVATE)
 
         assert self.user_payload.payment_accounts is not None, "userPayload.payment_accounts must not be null"
         assert self.user_payload.accepted_language_locale_codes is not None, "userPayload.accepted_language_locale_codes must not be null"

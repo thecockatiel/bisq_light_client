@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from collections.abc import Callable
-from bisq.common.persistence.persistence_manager import PersistenceManager
+from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import (
     PersistedDataHost,
 )
@@ -13,6 +13,7 @@ from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
+    from bisq.common.persistence.persistence_manager import PersistenceManager
 
 logger = get_logger(__name__)
 
@@ -29,7 +30,7 @@ class RemovedPayloadsService(PersistedDataHost):
         self.removed_payloads_map = RemovedPayloadsMap()
 
         self.persistence_manager.initialize(
-            self.removed_payloads_map, PersistenceManager.Source.PRIVATE_LOW_PRIO
+            self.removed_payloads_map, PersistenceManagerSource.PRIVATE_LOW_PRIO
         )
 
     ###########################
