@@ -1,14 +1,13 @@
 # Supports signatures made from EC key (arbitrators) and signature created with DSA key.
 from dataclasses import dataclass, field
 from datetime import timedelta
-from enum import IntEnum
 from typing import ClassVar
 import time
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
-from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.core.account.sign.signed_witness_verification_method import SignedWitnessVerificationMethod
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
 )
@@ -26,19 +25,6 @@ import proto.pb_pb2 as protobuf
 from utils.clock import Clock
 
 
-class VerificationMethod(IntEnum):
-    ARBITRATOR = 0
-    TRADE = 1
-
-    @staticmethod
-    def from_proto(proto: protobuf.SignedWitness.VerificationMethod):
-        return ProtoUtil.enum_from_proto(VerificationMethod, protobuf.SignedWitness.VerificationMethod, proto)
-
-    @staticmethod
-    def to_proto_message(method: "VerificationMethod"):
-        return ProtoUtil.proto_enum_from_enum(protobuf.SignedWitness.VerificationMethod, method)
-
-
 @dataclass
 class SignedWitness(
     ProcessOncePersistableNetworkPayload,
@@ -50,7 +36,7 @@ class SignedWitness(
         timedelta(days=1).total_seconds() * 1000
     )  # 1 day in milliseconds
 
-    verification_method: VerificationMethod
+    verification_method: SignedWitnessVerificationMethod
     account_age_witness_hash: bytes
     signature: bytes
     signer_pub_key: bytes
@@ -73,7 +59,7 @@ class SignedWitness(
 
     def to_proto_message(self):
         builder = protobuf.SignedWitness(
-            verification_method=VerificationMethod.to_proto_message(self.verification_method),
+            verification_method=SignedWitnessVerificationMethod.to_proto_message(self.verification_method),
             account_age_witness_hash=self.account_age_witness_hash,
             signature=self.signature,
             signer_pub_key=self.signer_pub_key,
@@ -89,7 +75,7 @@ class SignedWitness(
     @staticmethod
     def from_proto(proto: protobuf.SignedWitness):
         return SignedWitness(
-            verification_method=VerificationMethod.from_proto(
+            verification_method=SignedWitnessVerificationMethod.from_proto(
                 proto.verification_method
             ),
             account_age_witness_hash=proto.account_age_witness_hash,
@@ -119,7 +105,7 @@ class SignedWitness(
         return self.hash
 
     def is_signed_by_arbitrator(self):
-        return self.verification_method == VerificationMethod.ARBITRATOR
+        return self.verification_method == SignedWitnessVerificationMethod.ARBITRATOR
     
     def get_hash_as_byte_array(self):
         return StorageByteArray(self.hash)
