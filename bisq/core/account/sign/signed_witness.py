@@ -104,6 +104,7 @@ class SignedWitness(
     def get_hash(self):
         return self.hash
 
+    @property
     def is_signed_by_arbitrator(self):
         return self.verification_method == SignedWitnessVerificationMethod.ARBITRATOR
     
