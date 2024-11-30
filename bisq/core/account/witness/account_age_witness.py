@@ -70,6 +70,12 @@ class AccountAgeWitness(
     def get_hash_as_byte_array(self):
         return StorageByteArray(self._hash)
     
+    def __hash__(self) -> int:
+        return hash((self._hash, self._date))
+    
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, AccountAgeWitness) and self._hash == value._hash and self._date == value._date
+    
     def __str__(self):
         return (f"AccountAgeWitness{{\n"
                 f"     hash={bytes_as_hex_string(self._hash)},\n"
