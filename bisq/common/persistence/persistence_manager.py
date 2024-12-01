@@ -165,13 +165,13 @@ class PersistenceManager(Generic[T]):
     def initialize(
         self, persistable: T, source: "PersistenceManagerSource", file_name: Optional[str] = None
     ):
-        if self.flush_at_shutdown_called:
+        if PersistenceManager.flush_at_shutdown_called:
             logger.warning("Shutdown routine started. Ignoring initialize call.")
             return
 
         file_name = file_name or persistable.get_default_storage_file_name()
 
-        if self.file_name in self.ALL_PERSISTENCE_MANAGERS:
+        if self.file_name in PersistenceManager.ALL_PERSISTENCE_MANAGERS:
             e = RuntimeError(
                 f"We must not create multiple PersistenceManager instances for file {file_name}."
             )
@@ -191,10 +191,10 @@ class PersistenceManager(Generic[T]):
         self.file_name = file_name
         self.source = source
         self.storage_file = self.dir.joinpath(self.file_name)
-        self.ALL_PERSISTENCE_MANAGERS[self.file_name] = self
+        PersistenceManager.ALL_PERSISTENCE_MANAGERS[self.file_name] = self
 
     def shutdown(self):
-        self.ALL_PERSISTENCE_MANAGERS.pop(self.file_name, None)
+        PersistenceManager.ALL_PERSISTENCE_MANAGERS.pop(self.file_name, None)
 
         if self.timer:
             self.timer.stop()
@@ -214,7 +214,7 @@ class PersistenceManager(Generic[T]):
             file_name = self.file_name
         assert file_name, "file_name cannot be null"
 
-        if self.flush_at_shutdown_called:
+        if PersistenceManager.flush_at_shutdown_called:
             logger.warning(
                 "We have started the shut down routine already. We ignore that readPersisted call."
             )
@@ -238,7 +238,7 @@ class PersistenceManager(Generic[T]):
         ).start()
 
     def get_persisted(self, file_name: Optional[str] = None) -> Optional[T]:
-        if self.flush_at_shutdown_called:
+        if PersistenceManager.flush_at_shutdown_called:
             logger.warning(
                 "We have started the shut down routine already. We ignore that getPersisted call."
             )
@@ -278,7 +278,7 @@ class PersistenceManager(Generic[T]):
     ###########################################################################
 
     def request_persistence(self):
-        if self.flush_at_shutdown_called:
+        if PersistenceManager.flush_at_shutdown_called:
             logger.warning(
                 "We have started the shut down routine already. We ignore that requestPersistence call."
             )
@@ -288,7 +288,7 @@ class PersistenceManager(Generic[T]):
 
         # If we have not initialized yet we postpone the start of the timer and call maybeStartTimerForPersistence at
         # onAllServicesInitialized
-        if not self.all_services_initialized.get():
+        if not PersistenceManager.all_services_initialized.get():
             return
 
         self.maybe_start_timer_for_persistence()
