@@ -14,7 +14,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.connection import Connection
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 from bisq.core.network.p2p.network.message_listener import MessageListener
-from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler, BroadcastHandlerListener
+from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
@@ -640,12 +640,12 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def add_protected_storage_entry(self, protected_storage_entry: "ProtectedStorageEntry", 
                                   sender: Optional["NodeAddress"],
-                                  listener: Optional["BroadcastHandlerListener"]) -> bool:
+                                  listener: Optional["BroadcastHandler.Listener"]) -> bool:
         return self._add_protected_storage_entry_internal(protected_storage_entry, sender, listener, True)
 
     def _add_protected_storage_entry_internal(self, protected_storage_entry: "ProtectedStorageEntry",
                                            sender: Optional["NodeAddress"],
-                                           listener: Optional["BroadcastHandlerListener"],
+                                           listener: Optional["BroadcastHandler.Listener"],
                                            allow_broadcast: bool) -> bool:
         """
         Adds a ProtectedStorageEntry to the local P2P data storage and broadcast if all checks have been successful.
@@ -728,7 +728,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def republish_existing_protected_mailbox_storage_entry(self, protected_mailbox_storage_entry: "ProtectedMailboxStorageEntry",
                                                          sender: Optional["NodeAddress"],
-                                                         listener: Optional["BroadcastHandlerListener"]):
+                                                         listener: Optional["BroadcastHandler.Listener"]):
         """
         We do not do all checks as it is used for republishing existing mailbox messages from seed nodes which
         only got stored if they had been valid when we received them.
