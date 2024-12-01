@@ -180,3 +180,58 @@ class ObservableMap(dict[K, V]):
     def update(self, other=None, **kwargs) -> None:
         super().update(other, **kwargs)
         self._notify('update')
+
+
+class ObservableList(list[T]):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._listeners: Set[Callable] = set()
+    
+    def add_listener(self, listener: Callable[['ObservableList', str, T], None]):
+        self._listeners.add(listener)
+        
+    def remove_listener(self, listener: Callable[['ObservableList', str, T], None]):
+        self._listeners.discard(listener)
+        
+    def remove_all_listeners(self):
+        self._listeners.clear()
+        
+    def _notify(self, operation: str, element: T = None):
+        for listener in self._listeners:
+            listener(self, operation, element)
+            
+    def append(self, element: T) -> None:
+        super().append(element)
+        self._notify('append', element)
+        
+    def extend(self, iterable: Iterable[T]) -> None:
+        super().extend(iterable)
+        self._notify('extend')
+        
+    def insert(self, index: int, element: T) -> None:
+        super().insert(index, element)
+        self._notify('insert', element)
+        
+    def remove(self, element: T) -> None:
+        if element in self:
+            super().remove(element)
+            self._notify('remove', element)
+            
+    def pop(self, index: int = -1) -> T:
+        element = super().pop(index)
+        self._notify('pop', element)
+        return element
+        
+    def clear(self) -> None:
+        super().clear()
+        self._notify('clear')
+        
+    def __setitem__(self, index, element: T) -> None:
+        super().__setitem__(index, element)
+        self._notify('set', element)
+        
+    def __delitem__(self, index) -> None:
+        element = self[index]
+        super().__delitem__(index)
+        self._notify('delete', element)
+
