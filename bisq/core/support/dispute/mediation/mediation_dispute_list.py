@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 _T = TypeVar("T", bound="Dispute")
 
-class ArbitrationDisputeList(DisputeList[_T]):
+class MediationDisputeList(DisputeList[_T]):
     """
-    Holds a List of arbitration dispute objects.
+    Holds a List of mediation dispute objects.
     
     Calls to the List are delegated because this class intercepts the add/remove calls so changes
     can be saved to disc.
@@ -20,21 +20,21 @@ class ArbitrationDisputeList(DisputeList[_T]):
         
     def to_proto_message(self):
         for dispute in self.list:
-            assert dispute.support_type == SupportType.ARBITRATION, "Support type has to be ARBITRATION"
+            assert dispute.support_type == SupportType.MEDIATION, "Support type has to be MEDIATION"
 
         return protobuf.PersistableEnvelope(
-            arbitration_dispute_list=protobuf.ArbitrationDisputeList(
+            mediation_dispute_list=protobuf.MediationDisputeList(
                 dispute=ProtoUtil.collection_to_proto(self.list, protobuf.Dispute)
             )
         )
 
     @staticmethod
-    def from_proto(proto: protobuf.ArbitrationDisputeList, core_proto_resolver: "CoreProtoResolver") -> 'ArbitrationDisputeList':
+    def from_proto(proto: protobuf.MediationDisputeList, core_proto_resolver: "CoreProtoResolver") -> 'MediationDisputeList':
         disputes = [
             Dispute.from_proto(dispute_proto, core_proto_resolver)
             for dispute_proto in proto.dispute
-            if Dispute.from_proto(dispute_proto, core_proto_resolver).support_type == SupportType.ARBITRATION
+            if Dispute.from_proto(dispute_proto, core_proto_resolver).support_type == SupportType.MEDIATION
         ]
-        return ArbitrationDisputeList(disputes)
+        return MediationDisputeList(disputes)
 
 
