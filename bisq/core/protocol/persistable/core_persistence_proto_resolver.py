@@ -15,6 +15,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.support.dispute.arbitration.arbitration_dispute_list import ArbitrationDisputeList
 from bisq.core.support.dispute.mediation.mediation_dispute_list import MediationDisputeList
 from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
+from bisq.core.user.preferences_payload import PreferencesPayload
 from bisq.core.user.user_payload import UserPayload
 import proto.pb_pb2 as protobuf
 
@@ -52,8 +53,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             case "refund_dispute_list":
                 return RefundDisputeList.from_proto(proto.refund_dispute_list, self)
             case "preferences_payload":
-                raise NotImplementedError("preferences_payload not implemented yet") # TODO
-                # return PreferencesPayload.from_proto(proto.preferences_payload, self)
+                return PreferencesPayload.from_proto(proto.preferences_payload, self)
             case "user_payload":
                 return UserPayload.from_proto(proto.user_payload, self)
             case "navigation_path":
