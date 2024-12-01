@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Generic, Iterator, List, Optional, TypeVar
 from collections.abc import Collection
 
@@ -10,10 +10,12 @@ T = TypeVar(
 )
 
 class PersistableList(Generic[T], PersistableEnvelope, ABC):
-    list: List[T] = []
+    def _create_list(self) -> List[T]:
+        return []
     
     def __init__(self, collection: Optional[Collection[T]] = None) -> None:
         super().__init__()
+        self.list = self._create_list()
         if collection:
             self.set_all(collection)
     
