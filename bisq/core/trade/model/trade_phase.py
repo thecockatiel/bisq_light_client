@@ -1,20 +1,26 @@
-from abc import ABC, abstractmethod
-from enum import Enum
+from enum import IntEnum
+import proto.pb_pb2 as protobuf
+from bisq.common.protocol.proto_util import ProtoUtil
 
-class TradePhase(ABC):
-    @abstractmethod
-    def ordinal(self) -> int:
-        pass
+# NOTE: we removed the interface of java in favor of implementing the TradePhase directly as it seemed unnecessary
+class TradePhase(IntEnum):
+    INIT = 0
+    TAKER_FEE_PUBLISHED = 1
+    DEPOSIT_PUBLISHED = 2
+    DEPOSIT_CONFIRMED = 3
+    FIAT_SENT = 4
+    FIAT_RECEIVED = 5
+    PAYOUT_PUBLISHED = 6
+    WITHDRAWN = 7
     
-    @abstractmethod
-    def name(self) -> str:
-        pass
-    
-    class Phase(Enum):
-        DEFAULT = 0
+    @staticmethod
+    def from_proto(proto: protobuf.Trade.Phase) -> "TradePhase":
+        return ProtoUtil.enum_from_proto(TradePhase, protobuf.Trade.Phase, proto)
+
+    @staticmethod
+    def to_proto_message(phase: "TradePhase"):
+        return ProtoUtil.proto_enum_from_enum(protobuf.Trade.Phase, phase)
         
-        def ordinal(self) -> int:
-            return self.value
-            
-        def name(self) -> str:
-            return self._name_
+    def is_valid_transition_to(self, new_phase: "TradePhase"):
+        return new_phase.value > self.value
+
