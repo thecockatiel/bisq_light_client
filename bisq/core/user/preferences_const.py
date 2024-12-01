@@ -1,4 +1,4 @@
-from proto.pb_pb2 import BlockChainExplorer
+from bisq.core.user.block_chain_explorer import BlockChainExplorer
 
 BTC_MAIN_NET_EXPLORERS = [
     BlockChainExplorer("mempool.space (@wiz)", "https://mempool.space/tx/", "https://mempool.space/address/"),
