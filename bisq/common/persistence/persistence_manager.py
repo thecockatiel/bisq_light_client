@@ -163,7 +163,7 @@ class PersistenceManager(Generic[T]):
     ###############################################################################
 
     def initialize(
-        self, persistable: T, source: Source, file_name: Optional[str] = None
+        self, persistable: T, source: "PersistenceManagerSource", file_name: Optional[str] = None
     ):
         if self.flush_at_shutdown_called:
             logger.warning("Shutdown routine started. Ignoring initialize call.")
