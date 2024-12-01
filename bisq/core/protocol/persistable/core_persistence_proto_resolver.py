@@ -43,7 +43,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             # case "address_entry_list":
             #     return AddressEntryList.from_proto(proto.address_entry_list)
             case "tradable_list":
-                raise NotImplementedError() # TODO
+                raise NotImplementedError("tradable_list not implemented yet") # TODO
                 # return TradableList.from_proto(proto.tradable_list, self, btc_wallet_service.get())
             case "arbitration_dispute_list":
                 return ArbitrationDisputeList.from_proto(proto.arbitration_dispute_list, self)
@@ -52,7 +52,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             case "refund_dispute_list":
                 return RefundDisputeList.from_proto(proto.refund_dispute_list, self)
             case "preferences_payload":
-                raise NotImplementedError() # TODO
+                raise NotImplementedError("preferences_payload not implemented yet") # TODO
                 # return PreferencesPayload.from_proto(proto.preferences_payload, self)
             case "user_payload":
                 return UserPayload.from_proto(proto.user_payload, self)
