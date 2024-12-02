@@ -98,7 +98,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         logger.debug(f"Start create socket to {peers_node_address.get_full_address()}")
 
-        socket: Socket = self.createSocket(peers_node_address)
+        socket: Socket = self.create_socket(peers_node_address)
 
         duration = get_time_ms() - startTs
         logger.info(
@@ -410,7 +410,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.server.start()
 
     @abstractmethod
-    def createSocket(self, peers_node_address: NodeAddress) -> Socket:
+    def create_socket(self, peer_node_address: NodeAddress) -> Socket:
         pass
     
     def find_peers_capabilities(self, node_address: NodeAddress) -> Optional["Capabilities"]:
