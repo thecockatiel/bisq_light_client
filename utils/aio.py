@@ -1,11 +1,15 @@
 
 
 import asyncio
+from collections.abc import Callable
 import platform
 import threading
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, TypeVar
 from twisted.internet.defer import Deferred
 from typing import Union, Coroutine
+
+_T = TypeVar("T")
+_R = TypeVar("R")
 
 
 def get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
@@ -66,3 +70,7 @@ def as_future(d: Deferred):
 
 def as_deferred(f: Union[Coroutine, asyncio.Future]):
     return Deferred.fromFuture(asyncio.ensure_future(f))
+
+async def run_in_thread(func: Callable[...,_T], *args: _R):
+    '''Run a function in a separate thread, and await its completion.'''
+    return await get_running_loop().run_in_executor(None, func, *args)
