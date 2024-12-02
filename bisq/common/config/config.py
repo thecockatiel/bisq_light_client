@@ -13,6 +13,7 @@ class Config:
     # Constants
     APP_DATA_DIR_VALUE: ClassVar[Path] = None
     DEFAULT_CONFIG_FILE_NAME = "bisq.properties"
+    UNSPECIFIED_PORT = -1
 
     # Fields
     config_file: Path = field(init=False, default=None)
