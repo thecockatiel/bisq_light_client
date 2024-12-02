@@ -64,11 +64,11 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
     return loop
 
 
-def as_future(d: Deferred):
+def as_future(d: Deferred[_T]) -> asyncio.Future[_T]:
     return d.asFuture(get_asyncio_loop())
 
 
-def as_deferred(f: Union[Coroutine, asyncio.Future]):
+def as_deferred(f: Union[Coroutine[_T], asyncio.Future[_T]]) -> Deferred[_T]:
     return Deferred.fromFuture(asyncio.ensure_future(f))
 
 async def run_in_thread(func: Callable[...,_T], *args: _R):
