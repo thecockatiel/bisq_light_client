@@ -41,14 +41,14 @@ class Socks5ProxyProvider:
     
     def get_socks5_proxy(self):
         if self._socks5_proxy_internal_factory:
-            return self._socks5_proxy_internal_factory.get_socks5_proxy()
+            return self._socks5_proxy_internal_factory.get_socks_proxy()
         return None
     
     def get_socks5_proxy_http(self):
         return self.socks5_proxy_http_address
     
     def get_socks5_proxy_internal(self):
-        return self._socks5_proxy_internal_factory.get_socks5_proxy()
+        return self._socks5_proxy_internal_factory.get_socks_proxy()
     
     def set_socks5_proxy_internal(self, bisq_socks5_proxy_factory: Optional[Socks5ProxyInternalFactory]):
         self._socks5_proxy_internal_factory = bisq_socks5_proxy_factory
