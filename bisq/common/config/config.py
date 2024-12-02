@@ -36,6 +36,7 @@ class Config:
 
     # Properties derived from options but not exposed as options themselves
     tor_dir: Path = field(default=None, init=False)
+    tor_use_bridges_file: bool = field(default=True, init=False)
     storage_dir: Path = field(default=None, init=False)
     key_storage_dir: Path = field(default=None, init=False)
     wallet_dir: Path = field(default=None, init=False)
