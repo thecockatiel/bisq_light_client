@@ -289,9 +289,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         else:
             return None
 
-    @abstractmethod
-    def get_socks5_proxy(self) -> Socks5Proxy:
-        pass
+    def get_socks_proxy(self) -> Socks5Proxy:
+        return None
 
     def get_all_connections(self):
         # Can contain inbound and outbound connections with the same peer node address,
