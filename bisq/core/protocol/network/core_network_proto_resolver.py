@@ -67,6 +67,9 @@ logger = get_logger(__name__)
 class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
     def __init__(self, clock: Clock):
         self.clock = clock
+        
+    def get_clock(self):
+        return self.clock
 
     def from_proto(self, proto: Union['protobuf.NetworkEnvelope', 'protobuf.StorageEntryWrapper', 'protobuf.StoragePayload']) -> 'NetworkPayload':
         """
