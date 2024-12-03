@@ -74,3 +74,6 @@ def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
 async def run_in_thread(func: Callable[...,_T], *args: _R):
     '''Run a function in a separate thread, and await its completion.'''
     return await get_running_loop().run_in_executor(None, func, *args)
+
+from twisted.internet import asyncioreactor
+asyncioreactor.install(create_event_loop())
