@@ -311,8 +311,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     def shut_down(self, shutdown_complete_handler: Optional[Callable[[], None]] = None) -> None:
         logger.info("NetworkNode shutdown started")
 
-        if not self.shutdown_in_progress:
-            self.shutdown_in_progress = True
+        if not self.shut_down_in_progress:
+            self.shut_down_in_progress = True
 
             if self.server:
                 self.server.shut_down()
