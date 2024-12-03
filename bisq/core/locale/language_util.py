@@ -7,7 +7,7 @@ from bisq.core.locale.locale_util import ALL_LANGUAGE_CODES, ALL_LOCALES, DEFAUL
 class LanguageUtil:
     @staticmethod
     def get_default_language() -> 'LocaleData':
-        locale = default_locale()
+        locale = default_locale() or ("en", "US")
         language, country = locale[0], locale[1]
         locale = None
         # first check if the locale is in ALL_LOCALES by comparing the first element in the tuple with LocaleData.language,
