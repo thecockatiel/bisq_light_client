@@ -130,9 +130,9 @@ class ThreadSafeDict(Generic[K, V]):
         with self._lock:
             return callback(self._dict.items())
         
-    def get_and_put(self, key: K, callback: Callable[[V], R]) -> R:
+    def get_and_put(self, key: K, callback: Callable[[V], R], default = None) -> R:
         with self._lock:
-            result = callback(self._dict.get(key))
+            result = callback(self._dict.get(key, default))
             self._dict[key] = result
             return result
         
