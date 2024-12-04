@@ -68,7 +68,7 @@ class AutoConfirmSettings(PersistablePayload):
         self.listeners.add(listener)
 
     def remove_listener(self, listener: 'AutoConfirmSettings.Listener') -> None:
-        self.listeners.remove(listener)
+        self.listeners.discard(listener)
 
     def _notify_listeners(self) -> None:
         for listener in self.listeners:

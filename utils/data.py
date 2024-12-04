@@ -37,7 +37,7 @@ class SimpleProperty(Generic[T]):
 
     def remove_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
         if listener in self._listeners:
-            self._listeners.remove(listener)
+            self._listeners.discard(listener)
             if self.on_remove_listener:
                 self.on_remove_listener(len(self._listeners))
                 
