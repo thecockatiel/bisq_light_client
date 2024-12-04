@@ -1,4 +1,4 @@
-txtorcon~=24.8
+txtorcon~=22.0
 twisted~=24.7
 tqdm~=4.66
 grpcio~=1.67
