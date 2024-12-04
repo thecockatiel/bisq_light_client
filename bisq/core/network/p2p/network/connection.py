@@ -1,5 +1,6 @@
+from collections import defaultdict
 import concurrent.futures
-from datetime import timedelta
+from io import BufferedReader
 import socket as Socket
 import threading
 import time
@@ -43,12 +44,12 @@ from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
+from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection_listener import ConnectionListener
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
     from bisq.common.proto import Proto
 
 logger = get_logger(__name__)
@@ -70,6 +71,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 peers_node_address: Optional['NodeAddress'] = None,
                 ban_filter: Optional[BanFilter] = None):
         self.last_send_timestamp = 0
+        self.last_read_timestamp = 0
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
         self.stopped = False
         self.thread_name_set = False
@@ -95,6 +97,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.network_proto_resolver = network_proto_resolver
         self.connection_state = ConnectionState(self)
         self.connection_statistics = ConnectionStatistics(self, self.connection_state)
+        self.peers_node_address: Optional["NodeAddress"] = None
+        self.proto_output_stream: Optional["ProtoOutputStream"] = None
+        self.proto_input_stream: Optional["BufferedReader"] = None
         self.init(peers_node_address)
 
     def init(self, peers_node_address: Optional['NodeAddress']):
@@ -161,8 +166,8 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 return network_envelope.envelopes != []
             else:
                 capability_requiring_payload = self.extract_capability_requiring_payload(network_envelope)
-                if capability_requiring_payload.isPresent():
-                    return self.test_capability(capability_requiring_payload.get())
+                if capability_requiring_payload:
+                    return self.test_capability(capability_requiring_payload=capability_requiring_payload)
                 else:
                     return True
         else:
@@ -209,25 +214,29 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         return (self._violates_throttle_limit(now, 1, Connection.get_msg_throttle_per_sec()) or
                 self._violates_throttle_limit(now, 10, Connection.get_msg_throttle_per_10_sec()))
 
-    def get_msg_throttle_per_sec(self):
+    @staticmethod
+    def get_msg_throttle_per_sec():
         if CONFIG:
             return CONFIG.msg_throttle_per_sec
         else:
             return 200
-
-    def get_msg_throttle_per_10_sec(self):
+    
+    @staticmethod
+    def get_msg_throttle_per_10_sec():
         if CONFIG:
             return CONFIG.msg_throttle_per_10_sec
         else:
             return 1000
 
-    def get_send_msg_throttle_sleep(self):
+    @staticmethod
+    def get_send_msg_throttle_sleep():
         if CONFIG:
             return CONFIG.send_msg_throttle_sleep
         else:
             return 50
 
-    def get_send_msg_throttle_trigger(self):
+    @staticmethod
+    def get_send_msg_throttle_trigger():
         if CONFIG:
             return CONFIG.send_msg_throttle_trigger
         else:
@@ -472,10 +481,10 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def run(self):
         try:
-            threading.current_thread().setName(f"InputHandler-{to_truncated_string(self.uid, 15)}")
+            threading.current_thread().name = f"InputHandler-{to_truncated_string(self.uid, 15)}"
             while not self.stopped and threading.current_thread().is_alive():
                 if  not self.thread_name_set and self.peers_node_address:
-                    threading.current_thread().setName(f"InputHandler-{to_truncated_string(self.peers_node_address.get_full_address(), 15)}")
+                    threading.current_thread().name = f"InputHandler-{to_truncated_string(self.peers_node_address.get_full_address(), 15)}"
                     self.thread_name_set = True
 
                 if self.socket is not None and self.socket._closed:
