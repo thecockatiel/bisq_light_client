@@ -220,12 +220,12 @@ class TestConcurrentDict(unittest.TestCase):
 
     def test_get_and_put(self):
         def increment_value(value):
-            return (value or 0) + 1
+            return value + 1
 
         threads = []
         for _ in range(10):
             t = threading.Thread(
-                target=lambda: self.concurrent_dict.get_and_put('counter', increment_value)
+                target=lambda: self.concurrent_dict.get_and_put('counter', increment_value, 0)
             )
             threads.append(t)
             t.start()
