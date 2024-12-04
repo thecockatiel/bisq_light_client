@@ -66,7 +66,7 @@ class FilterManager:
         self.ignore_dev_msg: bool = ignore_dev_msg
         
         self.filter_property: SimpleProperty[Optional["Filter"]] = SimpleProperty(None)
-        self.listeners: List["FilterManager.Listener"] = []
+        self.listeners: Set["FilterManager.Listener"] = []
         self.invalid_filters: Set["Filter"] = set()
         self.filter_warning_handler: Optional[Callable[[str], None]] = None
         self.filter_signing_key: Optional[ECPrivkey] = None
@@ -269,7 +269,7 @@ class FilterManager:
 
     
     def add_listener(self, listener):
-        self.listeners.append(listener)
+        self.listeners.add(listener)
 
     def get_filter(self) -> Optional[Filter]:
         return self.filter_property.get()
