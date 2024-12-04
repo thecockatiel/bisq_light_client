@@ -22,7 +22,8 @@
       "console": "integratedTerminal",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
-      }
+      },
+      "justMyCode": false
     },
   ]
 }
