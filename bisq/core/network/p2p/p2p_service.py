@@ -405,13 +405,13 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
         self.decrypted_direct_message_listeners.add(listener)
 
     def remove_decrypted_direct_message_listener(self, listener: "DecryptedDirectMessageListener") -> None:
-        self.decrypted_direct_message_listeners.remove(listener)
+        self.decrypted_direct_message_listeners.discard(listener)
 
     def add_p2p_service_listener(self, listener: "P2PServiceListener") -> None:
         self.p2p_service_listeners.add(listener)
 
     def remove_p2p_service_listener(self, listener: "P2PServiceListener") -> None:
-        self.p2p_service_listeners.remove(listener)
+        self.p2p_service_listeners.discard(listener)
 
     def add_hash_set_changed_listener(self, hash_map_changed_listener: "HashMapChangedListener") -> None:
         self.p2p_data_storage.add_hash_map_changed_listener(hash_map_changed_listener)
