@@ -64,6 +64,7 @@ class TorNetworkNode(NetworkNode):
         assert self.tor, "Tor instance not ready"
         assert self.tor._config, "Tor config not ready"
         sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(240) # Connection.SOCKET_TIMEOUT_SEC
         sock.set_proxy(
             proxy_type=socks.SOCKS5,
             addr="127.0.0.1",
