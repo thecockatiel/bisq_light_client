@@ -1,10 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 import random
 from collections.abc import Callable
-from bisq.common.frame_rate_timer import FrameRateTimer
 from bisq.common.timer import Timer
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.twisted_timer import TwistedTimer
  
 logger = get_logger(__name__)
 
@@ -16,16 +15,15 @@ class UserThread:
     
     Provides also methods for delayed and periodic executions.
     """
-    timer_class: Timer = FrameRateTimer
-    executor = ThreadPoolExecutor(max_workers=1)
+    timer_class: Timer = TwistedTimer
 
     @classmethod
     def set_timer_class(cls, timer_class: Timer):
         cls.timer_class = timer_class
 
     @classmethod
-    def execute(cls, command: Callable[[], None]):
-        cls.executor.submit(command)
+    def execute(cls, runnable: Callable[[], None]):
+        cls.run_after(runnable, timedelta(microseconds=0))
 
     @classmethod
     def run_after_random_delay(cls, runnable: Callable[[], None], min_delay: timedelta, max_delay: timedelta) -> Timer:
