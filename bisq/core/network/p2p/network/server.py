@@ -39,7 +39,7 @@ class Server(Callable[[], None]):
         self.server_thread = threading.Thread(target=self)
 
     def start(self):
-        self.server_thread.setName(f"Server-{self.local_port}")
+        self.server_thread.name = f"Server-{self.local_port}"
         self.server_thread.start()
 
     def __call__(self):
