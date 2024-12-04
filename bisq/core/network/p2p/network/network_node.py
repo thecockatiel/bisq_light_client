@@ -85,7 +85,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         return connection
 
     def _make_connection(
-        self, peers_node_address: NodeAddress, network_envelope: NetworkEnvelope
+        self, peers_node_address: "NodeAddress", network_envelope: NetworkEnvelope
     ):
         assert peers_node_address, "peers_node_address must not be null"
         threading.current_thread().setName(
@@ -158,7 +158,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         assert peers_node_address_or_connection, "peers_node_address_or_connection must not be null"
             
         if isinstance(peers_node_address_or_connection, NodeAddress):
-            peers_node_address: NodeAddress = peers_node_address_or_connection
+            peers_node_address: "NodeAddress" = peers_node_address_or_connection
         
             logger.debug(
                 f"Send {network_envelope.__class__.__name__} to {peers_node_address}. Message details: {network_envelope}"
@@ -203,7 +203,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                         self._send_message_using_connection, peers_node_address_or_connection, network_envelope
                     )
 
-    def lookup_outbound_connection(self, peers_node_address: NodeAddress):
+    def lookup_outbound_connection(self, peers_node_address: "NodeAddress"):
         logger.debug(
             f"lookupOutboundConnection for peersNodeAddress={peers_node_address.get_full_address()}"
         )
@@ -218,7 +218,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
         return None
 
-    def lookup_inbound_connection(self, peers_node_address: NodeAddress):
+    def lookup_inbound_connection(self, peers_node_address: "NodeAddress"):
         full_address = peers_node_address.get_full_address()
         logger.debug("lookupInboundConnection for peersNodeAddress=", full_address)
         self.print_inbound_connections()
@@ -246,10 +246,10 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         logger.debug(sb)
 
     def get_inbound_connection(
-        self, peers_node_address: NodeAddress
+        self, peers_node_address: "NodeAddress"
     ) -> Optional['InboundConnection']:
         inbound_connection_optional = self.lookup_inbound_connection(
-            str(peers_node_address)
+            peers_node_address
         )
         if inbound_connection_optional is not None:
             connection = inbound_connection_optional
@@ -268,10 +268,10 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             return None
 
     def get_outbound_connection(
-        self, peers_node_address: NodeAddress
+        self, peers_node_address: "NodeAddress"
     ) -> Optional[OutboundConnection]:
         outbound_connection_optional = self.lookup_outbound_connection(
-            str(peers_node_address)
+            peers_node_address
         )
         if outbound_connection_optional is not None:
             connection = outbound_connection_optional
@@ -410,10 +410,10 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.server.start()
 
     @abstractmethod
-    def create_socket(self, peer_node_address: NodeAddress) -> Socket:
+    def create_socket(self, peer_node_address: "NodeAddress") -> Socket:
         pass
     
-    def find_peers_capabilities(self, node_address: NodeAddress) -> Optional["Capabilities"]:
+    def find_peers_capabilities(self, node_address: "NodeAddress") -> Optional["Capabilities"]:
         return next((connection.capabilities
                     for connection in self.get_confirmed_connections()
                     if connection.peers_node_address and connection.peers_node_address == node_address),
