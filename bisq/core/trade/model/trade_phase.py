@@ -20,7 +20,10 @@ class TradePhase(IntEnum):
     @staticmethod
     def to_proto_message(phase: "TradePhase"):
         return ProtoUtil.proto_enum_from_enum(protobuf.Trade.Phase, phase)
-        
+    
+    # We allow a phase change only if the phase a future phase (we cannot limit it to next phase as we have cases where
+    # we skip a phase as it is only relevant to one role -> states and phases need a redesign ;-( )
     def is_valid_transition_to(self, new_phase: "TradePhase"):
+        # self.value is current phase
         return new_phase.value > self.value
 
