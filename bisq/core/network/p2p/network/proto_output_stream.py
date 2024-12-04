@@ -15,13 +15,10 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.network.statistic import Statistic
-    from google.protobuf.message import Message
     from io import BufferedWriter
-    from socket import socket as Socket
 
 class ProtoOutputStream:
-    def __init__(self, socket: 'Socket', output_stream: 'BufferedWriter', statistic: 'Statistic'):
-        self.socket = socket
+    def __init__(self, output_stream: 'BufferedWriter', statistic: 'Statistic'):
         self.output_stream = output_stream
         self.statistic = statistic
         self.is_connection_active = AtomicBoolean(True)
@@ -65,5 +62,5 @@ class ProtoOutputStream:
 
     def try_to_acquire_lock(self) -> bool:
         from bisq.core.network.p2p.network.connection import Connection
-        return self.lock.acquire(False, Connection.SHUTDOWN_TIMEOUT_SEC)
+        return self.lock.acquire(True, Connection.SHUTDOWN_TIMEOUT_SEC)
         
