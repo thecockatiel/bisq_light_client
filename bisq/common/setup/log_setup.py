@@ -87,19 +87,21 @@ def configure_logging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     )
     
     # Create and configure rotating file handler with custom class
-    file_handler = CustomRotatingFileHandler(
-        filename=log_file,
-        maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=20,
-        encoding='utf-8'
-    )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(DEFAULT_LOG_LEVEL)
-
-    bisq_logger.addHandler(file_handler)
+    if log_file:
+        file_handler = CustomRotatingFileHandler(
+            filename=log_file,
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=20,
+            encoding='utf-8'
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(DEFAULT_LOG_LEVEL)
+        bisq_logger.addHandler(file_handler)
+        
     bisq_logger.setLevel(CONFIG.log_level) # default is info
     
-    bisq_logger.info(f"Log file at: {log_file}")
+    if log_file:
+        bisq_logger.info(f"Log file at: {log_file}")
     bisq_logger.info(get_sys_info())
     
     # Set specific logger levels
