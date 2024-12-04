@@ -17,7 +17,7 @@ T = TypeVar('T', bound=TradePeer)
 
 class ProtocolModel(Generic[T], TaskModel, PersistablePayload, ABC):
     @abstractmethod
-    def apply_transient(self, provider: 'Provider', trade_manager: "TradeManager", offer: Offer) -> None:
+    def apply_transient(self, provider: 'Provider', trade_manager: "TradeManager", offer: "Offer") -> None:
         pass
 
     @abstractmethod
