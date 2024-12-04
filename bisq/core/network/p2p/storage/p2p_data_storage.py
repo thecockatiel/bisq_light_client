@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
+import logging
 from typing import TYPE_CHECKING, Optional, TypeVar, cast
 from collections.abc import Callable
 from bisq.common.crypto.hash import get_32_byte_hash
@@ -482,7 +483,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         # Batch processing can cause performance issues, so do all of the removes first, then update the listeners
         # to let them know about the removes.
-        if logger.isEnabledFor("DEBUG"):
+        if logger.isEnabledFor(logging.DEBUG):
             for item in to_remove_list:
                 logger.debug(f"We found an expired data entry. We remove the protectedData:\n\t{to_truncated_string(item[1])}")
 
@@ -936,13 +937,13 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         self.hash_map_changed_listeners.add(hash_map_changed_listener)
 
     def remove_hash_map_changed_listener(self, hash_map_changed_listener: "HashMapChangedListener"):
-        self.hash_map_changed_listeners.remove(hash_map_changed_listener)
+        self.hash_map_changed_listeners.discard(hash_map_changed_listener)
 
     def add_append_only_data_store_listener(self, listener: "AppendOnlyDataStoreListener"):
         self.append_only_data_store_listeners.add(listener)
 
     def remove_append_only_data_store_listener(self, listener: "AppendOnlyDataStoreListener"):
-        self.append_only_data_store_listeners.remove(listener)
+        self.append_only_data_store_listeners.discard(listener)
         
     ########################################################################################
 
@@ -1009,7 +1010,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def print_data(self, info: str):
         """Print debug info about the current data set."""
-        if logger.isEnabledFor("TRACE"):
+        if logger.isEnabledFor(logging.TRACE):
             sb = ["\n\n------------------------------------------------------------\n"]
             sb.append(f"Data set {info} operation")
             

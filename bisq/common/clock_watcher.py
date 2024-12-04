@@ -35,7 +35,7 @@ class ClockWatcher:
 
     def __init__(self):
         self._timer: "Timer" = None
-        self._listeners: List["ClockWatcher.Listener"] = []
+        self._listeners: set["ClockWatcher.Listener"] = set()
         self._counter = 0
         self._last_second_tick = 0
 
@@ -79,7 +79,7 @@ class ClockWatcher:
         self._counter = 0
 
     def add_listener(self, listener: "ClockWatcher.Listener"):
-        self._listeners.append(listener)
+        self._listeners.add(listener)
 
     def remove_listener(self, listener: "ClockWatcher.Listener"):
-        self._listeners.remove(listener)
+        self._listeners.discard(listener)

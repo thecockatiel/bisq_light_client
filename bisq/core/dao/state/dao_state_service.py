@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Union
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.util.coin.bsq_formatter import BsqFormatter
-from utils.concurrency import ThreadSafeList
+from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_listener import DaoStateListener
@@ -11,14 +11,14 @@ if TYPE_CHECKING:
 class DaoStateService():
     
     def __init__(self, bsq_formatter: BsqFormatter) -> None:
-        self.dao_state_listeners: ThreadSafeList["DaoStateListener"] = ThreadSafeList()
+        self.dao_state_listeners: ThreadSafeSet["DaoStateListener"] = ThreadSafeSet()
         self.bsq_formatter = bsq_formatter
         
     def add_dao_state_listener(self, listener: "DaoStateListener") -> None:
-        self.dao_state_listeners.append(listener)
+        self.dao_state_listeners.add(listener)
     
     def remove_dao_state_listener(self, listener: "DaoStateListener") -> None:
-        self.dao_state_listeners.remove(listener)
+        self.dao_state_listeners.discard(listener)
         
     def get_chain_height(self) -> int:
         return 0
