@@ -24,8 +24,8 @@ class Statistic:
     start_time = get_time_ms()
     total_sent_bytes = SimpleProperty(0)
     total_received_bytes = SimpleProperty(0)
-    total_sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
-    total_received_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
+    total_sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict(defaultdict(int))
+    total_received_messages: ThreadSafeDict[str, int] = ThreadSafeDict(defaultdict(int))
     num_total_sent_messages = SimpleProperty(0)
     num_total_received_messages = SimpleProperty(0)
     total_sent_bytes_per_sec = SimpleProperty(0.0)
@@ -38,8 +38,8 @@ class Statistic:
         self.last_activity_timestamp = get_time_ms()
         self.sent_bytes = SimpleProperty(0)
         self.received_bytes = SimpleProperty(0)
-        self.sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
-        self.received_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
+        self.sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict(defaultdict(int))
+        self.received_messages: ThreadSafeDict[str, int] = ThreadSafeDict(defaultdict(int))
         self.round_trip_time = SimpleProperty(0)
         # Start periodic updates
         UserThread.run_periodically(self._update_statistics_periodically, timedelta(seconds=1))
@@ -88,15 +88,15 @@ class Statistic:
     def add_received_message(self, networkEnvelope: 'NetworkEnvelope'):
         message_class_name = networkEnvelope.__class__.__name__
         def update():
-            self.received_messages.get_and_put(message_class_name, lambda v: v+1)
-            Statistic.total_received_messages.get_and_put(message_class_name, lambda v: v+1)
+            self.received_messages.get_and_put(message_class_name, lambda v: v+1, 0)
+            Statistic.total_received_messages.get_and_put(message_class_name, lambda v: v+1, 0)
         UserThread.execute(update)
 
     def add_sent_message(self, networkEnvelope: 'NetworkEnvelope'):
         message_class_name = networkEnvelope.__class__.__name__
         def update():
-            self.sent_messages.get_and_put(message_class_name, lambda v: v+1)
-            Statistic.total_sent_messages.get_and_put(message_class_name, lambda v: v+1)
+            self.sent_messages.get_and_put(message_class_name, lambda v: v+1, 0)
+            Statistic.total_sent_messages.get_and_put(message_class_name, lambda v: v+1, 0)
         UserThread.execute(update)
 
     def set_round_trip_time(self, round_trip_time: int):
