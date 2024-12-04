@@ -1,13 +1,11 @@
 
-
 import asyncio
 from collections.abc import Callable
+from concurrent.futures import Future as ConcurrentFuture
 import platform
 import threading
-from typing import Any, Optional, Tuple, TypeVar
+from typing import Optional, Tuple, Union, Coroutine, TypeVar 
 from twisted.internet.defer import Deferred
-from typing import Union, Coroutine
-
 _T = TypeVar("T")
 _R = TypeVar("R")
 
@@ -64,7 +62,9 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
     return loop
 
 
-def as_future(d: Deferred[_T]) -> asyncio.Future[_T]:
+def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T]]) -> asyncio.Future[_T]:
+    if isinstance(d, ConcurrentFuture):
+        return asyncio.wrap_future(d, loop=get_asyncio_loop())
     return d.asFuture(get_asyncio_loop())
 
 
