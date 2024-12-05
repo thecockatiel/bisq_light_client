@@ -27,6 +27,8 @@ class BsqFormatter(CoinFormatter):
         self.btc_coin_format = CONFIG.base_currency_network.get_monetary_format()
         self.monetary_format = MonetaryFormat().with_shift(6).code(6, "BSQ").with_min_decimals(2)
         self.immutable_coin_formatter = ImmutableCoinFormatter(self.monetary_format)
+        self.amount_format: DecimalFormat = None
+        self.market_cap_format: DecimalFormat = None
         self.switch_locale()
 
     def switch_locale(self):
