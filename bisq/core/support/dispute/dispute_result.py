@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from bisq.common.util.utilities import bytes_as_hex_string
@@ -8,31 +7,51 @@ from bisq.core.support.dispute.dispute_result_reason import DisputeResultReason
 from bisq.core.support.dispute.dispute_result_winner import DisputeResultWinner
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.network.network_payload import NetworkPayload
+from utils.data import SimpleProperty
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.core.support.messages.chat_messsage import ChatMessage
 
-@dataclass
 class DisputeResult(NetworkPayload):
-    trade_id: str
-    trader_id: int
-    winner: Optional["DisputeResultWinner"] = field(default=None)
-    reason_ordinal: int = field(default=DisputeResultReason.OTHER.value)
-    tamper_proof_evidence: bool = field(default=False)
-    id_verification: bool = field(default=False)
-    screen_cast: bool = field(default=False)
-    summary_notes: str = field(default="")
-    chat_message: Optional["ChatMessage"] = field(default=None)
-    arbitrator_signature: Optional[bytes] = field(default=None)
-    buyer_payout_amount: int = field(default=0)
-    seller_payout_amount: int = field(default=0)
-    arbitrator_pub_key: Optional[bytes] = field(default=None)
-    close_date: int = field(default_factory=get_time_ms)
-    is_loser_publisher: bool = field(default=False)
-    payout_adjustment_percent: str = field(default="")
-    payout_suggestion: DisputeResultPayoutSuggestion = field(default=DisputeResultPayoutSuggestion.CUSTOM_PAYOUT)
-    
+    def __init__(
+        self,
+        trade_id: str,
+        trader_id: int,
+        winner: Optional["DisputeResultWinner"] = None,
+        reason_ordinal: int = DisputeResultReason.OTHER.value,
+        tamper_proof_evidence: bool = False,
+        id_verification: bool = False,
+        screen_cast: bool = False,
+        summary_notes: str = "",
+        chat_message: Optional["ChatMessage"] = None,
+        arbitrator_signature: Optional[bytes] = None,
+        buyer_payout_amount: int = 0,
+        seller_payout_amount: int = 0,
+        arbitrator_pub_key: Optional[bytes] = None,
+        close_date: int = None,
+        is_loser_publisher: bool = False,
+        payout_adjustment_percent: str = "",
+        payout_suggestion: DisputeResultPayoutSuggestion = DisputeResultPayoutSuggestion.CUSTOM_PAYOUT
+    ):
+        self.trade_id = trade_id
+        self.trader_id = trader_id
+        self.winner = winner
+        self.reason_ordinal = reason_ordinal
+        self.tamper_proof_evidence_property = SimpleProperty(tamper_proof_evidence)
+        self.id_verification_property = SimpleProperty(id_verification)
+        self.screen_cast_property = SimpleProperty(screen_cast)
+        self.summary_notes_property = SimpleProperty(summary_notes)
+        self.chat_message = chat_message
+        self.arbitrator_signature = arbitrator_signature
+        self.buyer_payout_amount = buyer_payout_amount
+        self.seller_payout_amount = seller_payout_amount
+        self.arbitrator_pub_key = arbitrator_pub_key
+        self.close_date = close_date if close_date is not None else get_time_ms()
+        self.is_loser_publisher = is_loser_publisher
+        self.payout_adjustment_percent = payout_adjustment_percent
+        self.payout_suggestion = payout_suggestion
+
     def from_proto(self, proto: protobuf.DisputeResult):
         from bisq.core.support.messages.chat_messsage import ChatMessage
         return DisputeResult(
@@ -60,10 +79,10 @@ class DisputeResult(NetworkPayload):
             trade_id=self.trade_id,
             trader_id=self.trader_id,
             reason_ordinal=self.reason_ordinal,
-            tamper_proof_evidence=self.tamper_proof_evidence,
-            id_verification=self.id_verification,
-            screen_cast=self.screen_cast,
-            summary_notes=self.summary_notes,
+            tamper_proof_evidence=self.tamper_proof_evidence_property.value,
+            id_verification=self.id_verification_property.value,
+            screen_cast=self.screen_cast_property.value,
+            summary_notes=self.summary_notes_property.value,
             buyer_payout_amount=self.buyer_payout_amount,
             seller_payout_amount=self.seller_payout_amount,
             close_date=self.close_date,
@@ -144,10 +163,10 @@ class DisputeResult(NetworkPayload):
             f"  trader_id={self.trader_id},\n"
             f"  winner={self.winner},\n"
             f"  reason_ordinal={self.reason_ordinal},\n"
-            f"  tamper_proof_evidence={self.tamper_proof_evidence},\n"
-            f"  id_verification={self.id_verification},\n"
-            f"  screen_cast={self.screen_cast},\n"
-            f"  summary_notes='{self.summary_notes}',\n"
+            f"  tamper_proof_evidence={self.tamper_proof_evidence_property},\n"
+            f"  id_verification={self.id_verification_property},\n"
+            f"  screen_cast={self.screen_cast_property},\n"
+            f"  summary_notes='{self.summary_notes_property}',\n"
             f"  chat_message={self.chat_message},\n"
             f"  arbitrator_signature={bytes_as_hex_string(self.arbitrator_signature)},\n"
             f"  buyer_payout_amount={self.buyer_payout_amount},\n"
