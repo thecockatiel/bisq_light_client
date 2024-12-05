@@ -28,11 +28,8 @@ CURRENCY_CODE_TO_FIAT_CURRENCY_MAP = {
 }
 
 def get_currency_by_country_code(country_code: str):
-    currency_data = CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(
-        COUNTRY_TO_CURRENCY_CODE_MAP.get(country_code)
-    )
+    currency_data = CURRENCY_CODE_TO_FIAT_CURRENCY_MAP[COUNTRY_TO_CURRENCY_CODE_MAP[country_code]]
     return currency_data
-
 
 # along with the comments.
 def is_crypto_currency(currency_code: str):
