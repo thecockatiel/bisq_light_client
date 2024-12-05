@@ -13,17 +13,18 @@ if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.p2p.network.connection import Connection
+    from bisq.core.user.preferences import Preferences
     
 logger = get_logger(__name__)
 
-# NOTE: we do not need Preferences here, so they are omitted in python implementation
 # TODO: WalletsSetup needs to be checked and implemented accordingly later if needed
 # TODO: Heavily tied to UI, need to investigate on how to make it UI agnostic.
 
 class P2PNetworkSetup:
-    def __init__(self, price_feed_service: "PriceFeedService", p2p_service: "P2PService", filter_manager: "FilterManager"):
+    def __init__(self, price_feed_service: "PriceFeedService", p2p_service: "P2PService", preferences: "Preferences", filter_manager: "FilterManager"):
         self.price_feed_service = price_feed_service
         self.p2p_service = p2p_service
+        self.preferences = preferences
         self.filter_manager = filter_manager
 
         
@@ -95,7 +96,8 @@ class P2PNetworkSetup:
                 bootstrap_state.set(Res.get("mainView.bootstrapState.torNodeCreated"))
                 outer.p2p_network_icon_id.set("image-connection-tor")
                 
-                # init_wallet_service_handler was used here with preferences
+                if outer.preferences.get_use_tor_for_bitcoin_j():
+                    init_wallet_service_handler()
                 
                 # We want to get early connected to the price relay so we call it already now
                 outer.price_feed_service.set_currency_code_on_init()
