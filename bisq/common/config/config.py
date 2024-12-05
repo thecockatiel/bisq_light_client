@@ -24,6 +24,7 @@ class Config:
     banned_seed_nodes: list = field(default_factory=list)
     banned_price_relay_nodes: list = field(default_factory=list)
     base_currency_network: BaseCurrencyNetwork = field(default=BaseCurrencyNetwork.BTC_MAINNET)
+    referral_id: str = field(default="")
     use_dev_mode: bool = field(default=False)
     use_dev_privilege_keys: bool = field(default=False)
     ignore_dev_msg: bool = field(default=False)
@@ -33,6 +34,9 @@ class Config:
     msg_throttle_per_10_sec: int = field(default=1000)
     send_msg_throttle_trigger: int = field(default=20)
     send_msg_throttle_sleep: int = field(default=50)
+    rpc_user: str = field(default="")
+    rpc_password: str = field(default="")
+    rpc_block_notification_port: int = field(default=UNSPECIFIED_PORT)
 
     # Properties derived from options but not exposed as options themselves
     tor_dir: Path = field(default=None, init=False)
