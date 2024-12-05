@@ -1,7 +1,7 @@
 
 
 from bisq.core.locale.babel_min import default_locale
-from bisq.core.locale.locale_util import ALL_LANGUAGE_CODES, ALL_LOCALES, DEFAULT_LOCALE, LocaleData
+from bisq.core.locale.locale_util import ALL_LANGUAGE_CODES, LocaleData, find_locale
 
 # TODO: complete ?
 class LanguageUtil:
@@ -9,18 +9,7 @@ class LanguageUtil:
     def get_default_language() -> 'LocaleData':
         locale = default_locale() or ("en", "US")
         language, country = locale[0], locale[1]
-        locale = None
-        # first check if the locale is in ALL_LOCALES by comparing the first element in the tuple with LocaleData.language,
-        # if true, checks the second element in the tuple with LocaleData.country, if also true returns
-        # otherwise continues search while taking note of the first match
-        # if no exact match is found, the first one that first element in the tuple matches LocaleData.language is returned
-        for locale_data in ALL_LOCALES:
-            if locale_data.language == language:
-                if locale_data.country == country:
-                    return locale_data
-                if not locale:
-                    locale = locale_data
-        return locale if locale else DEFAULT_LOCALE
+        return find_locale(language, country)
     
     def get_default_language_locale_as_code() -> str:
         return LanguageUtil.get_default_language().language
