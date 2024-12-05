@@ -345,6 +345,17 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [('extend', None)])
         self.assertEqual(list(self.list), [1, 2, 3])
 
+    def test_extend_one(self):
+        def listener(list_obj, operation, element):
+            self.events.append((operation, element))
+
+        self.list.add_listener(listener)
+        
+        self.list.extend([1])
+        self.assertEqual(len(self.list), 1)
+        self.assertEqual(self.events, [('append', 1)])
+        self.assertEqual(list(self.list), [1])
+
     def test_insert(self):
         def listener(list_obj, operation, element):
             self.events.append((operation, element))
