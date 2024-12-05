@@ -59,6 +59,23 @@ class TestSimpleProperty(unittest.TestCase):
         self.assertEqual(len(self.changes), 2)
         self.assertEqual(len(self.property._listeners), 0)
 
+    def test_equality(self):
+        prop1 = SimpleProperty[int](42)
+        prop2 = SimpleProperty[int](42)
+        prop3 = SimpleProperty[int](100)
+        
+        # Test equality between SimpleProperties
+        self.assertEqual(prop1, prop2)
+        self.assertNotEqual(prop1, prop3)
+        
+        # Test equality with raw values
+        self.assertEqual(prop1, 42)
+        self.assertNotEqual(prop1, 100)
+        
+        # Test hash equality
+        self.assertEqual(hash(prop1), hash(prop2))
+        self.assertNotEqual(hash(prop1), hash(prop3))
+
 class TestCombineSimpleProperties(unittest.TestCase):
     def setUp(self):
         self.prop1 = SimpleProperty[int](1)
