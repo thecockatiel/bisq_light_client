@@ -58,6 +58,15 @@ class SimpleProperty(Generic[T]):
     @value.setter
     def value(self, new_value: T) -> None:
         self.set(new_value)
+        
+    def __eq__(self, value: "SimpleProperty[T]") -> bool:
+        if isinstance(value, SimpleProperty):
+            return self._value == value._value
+        else:
+            return self._value == value
+    
+    def __hash__(self) -> int:
+        return hash(self._value)
 
 
 __unset_value = "UNSET"
