@@ -122,6 +122,7 @@ class PreferencesPayload(PersistableEnvelope):
         self.bitcoin_nodes = bitcoin_nodes
         self.ignore_traders_list = ignore_traders_list or []
         self.directory_chooser_path = directory_chooser_path
+        """don't use this in python implementation"""
         
         # Superseded by buyerSecurityDepositAsPercent
         self.buyer_security_deposit_as_long = buyer_security_deposit_as_long # Deprecated
