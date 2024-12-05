@@ -223,7 +223,7 @@ class ObservableList(list[T]):
             
     def pop(self, index: int = -1) -> T:
         element = super().pop(index)
-        self._notify('pop', element)
+        self._notify('remove', element)
         return element
         
     def clear(self) -> None:
@@ -237,5 +237,5 @@ class ObservableList(list[T]):
     def __delitem__(self, index) -> None:
         element = self[index]
         super().__delitem__(index)
-        self._notify('delete', element)
+        self._notify('remove', element)
 

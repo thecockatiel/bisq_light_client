@@ -392,12 +392,12 @@ class TestObservableList(unittest.TestCase):
         value = self.list.pop()
         self.assertEqual(value, 3)
         self.assertEqual(list(self.list), [1, 2])
-        self.assertEqual(self.events, [('pop', 3)])
+        self.assertEqual(self.events, [('remove', 3)])
         
         value = self.list.pop(0)
         self.assertEqual(value, 1)
         self.assertEqual(list(self.list), [2])
-        self.assertEqual(self.events, [('pop', 3), ('pop', 1)])
+        self.assertEqual(self.events, [('remove', 3), ('remove', 1)])
 
     def test_clear(self):
         def listener(list_obj, operation, element):
@@ -430,7 +430,7 @@ class TestObservableList(unittest.TestCase):
         
         del self.list[1]
         self.assertEqual(list(self.list), [1, 3])
-        self.assertEqual(self.events, [('delete', 2)])
+        self.assertEqual(self.events, [('remove', 2)])
 
     def test_listener_management(self):
         events1 = []
