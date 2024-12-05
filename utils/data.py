@@ -205,8 +205,12 @@ class ObservableList(list[T]):
         self._notify('append', element)
         
     def extend(self, iterable: Iterable[T]) -> None:
+        l = list(iterable)
         super().extend(iterable)
-        self._notify('extend')
+        if len(l) > 1:
+            self._notify('extend')
+        if len(l) == 1:
+            self._notify('append', l[0])
         
     def insert(self, index: int, element: T) -> None:
         super().insert(index, element)
