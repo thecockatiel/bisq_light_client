@@ -38,4 +38,4 @@ class FiatCurrency(TradeCurrency):
     
     @staticmethod
     def get_locale():
-        return GlobalSettings.locale
+        return GlobalSettings.locale_property.get()
