@@ -12,6 +12,7 @@ from bisq.core.support.dispute.attachment import Attachment
 from bisq.core.support.dispute.dispute import Dispute
 from bisq.core.support.messages.support_message import SupportMessage
 from bisq.core.support.support_type import SupportType
+from utils.data import SimpleProperty
 from utils.formatting import get_short_id
 from utils.time import get_time_ms
 import proto.pb_pb2 as protobuf
@@ -58,16 +59,25 @@ class ChatMessage(SupportMessage):
     was_displayed: bool = field(default=False)
 
     # JAVA TODO move to base class
-    arrived: bool = field(default=False)
-    stored_in_mailbox: bool = field(default=False)
-    acknowledged: bool = field(default=False)
-    send_message_error: Optional[str] = field(default=None)
-    ack_error: Optional[str] = field(default=None)
+    arrived_property: "SimpleProperty[bool]" = field(default_factory=lambda: SimpleProperty(False))
+    stored_in_mailbox_property: "SimpleProperty[bool]" = field(default_factory=lambda: SimpleProperty(False))
+    acknowledged_property: "SimpleProperty[bool]" = field(default_factory=lambda: SimpleProperty(False))
+    send_message_error_property: "SimpleProperty[Optional[str]]" = field(default_factory=lambda: SimpleProperty(None))
+    ack_error_property: "SimpleProperty[Optional[str]]" = field(default_factory=lambda: SimpleProperty(None))
 
     _listener: Optional[ref[ChatMessageListener]] = field(default=None, compare=False) # transient
 
     def __post_init__(self):
-        super().__post_init__()
+        if isinstance(self.arrived_property, bool):
+            self.arrived_property = SimpleProperty(self.arrived_property)
+        if isinstance(self.stored_in_mailbox_property, bool):
+            self.stored_in_mailbox_property = SimpleProperty(self.stored_in_mailbox_property)
+        if isinstance(self.acknowledged_property, bool):
+            self.acknowledged_property = SimpleProperty(self.acknowledged_property)
+        if isinstance(self.send_message_error_property, str):
+            self.send_message_error_property = SimpleProperty(self.send_message_error_property)
+        if isinstance(self.ack_error_property, str):
+            self.ack_error_property = SimpleProperty(self.ack_error_property)
         self.notify_change_listener()
 
     # We cannot rename protobuf definition because it would break backward compatibility (???)
@@ -83,16 +93,16 @@ class ChatMessage(SupportMessage):
             ],
             sender_node_address=self.sender_node_address.to_proto_message(),
             date=self.date,
-            arrived=self.arrived,
-            stored_in_mailbox=self.stored_in_mailbox,
+            arrived=self.arrived_property.value,
+            stored_in_mailbox=self.stored_in_mailbox_property.value,
             is_system_message=self.is_system_message,
             uid=self.uid,
-            acknowledged=self.acknowledged,
+            acknowledged=self.acknowledged_property.value,
             was_displayed=self.was_displayed,
             send_message_error=(
-                self.send_message_error if self.send_message_error else None
+                self.send_message_error_property.value if self.send_message_error_property.value else None
             ),
-            ack_error=self.ack_error if self.ack_error else None,
+            ack_error=self.ack_error_property.value if self.ack_error_property.value else None,
         )
         envelope = self.get_network_envelope_builder()
         envelope.chat_message.CopyFrom(message)
@@ -114,15 +124,15 @@ class ChatMessage(SupportMessage):
             ],
             sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
             date=proto.date,
-            arrived=proto.arrived,
-            stored_in_mailbox=proto.stored_in_mailbox,
+            arrived_property=proto.arrived,
+            stored_in_mailbox_property=proto.stored_in_mailbox,
             uid=proto.uid,
             message_version=message_version,
-            acknowledged=proto.acknowledged,
-            send_message_error=(
+            acknowledged_property=proto.acknowledged,
+            send_message_error_property=(
                 proto.send_message_error if proto.send_message_error else None
             ),
-            ack_error=proto.ack_error if proto.ack_error else None,
+            ack_error_property=proto.ack_error if proto.ack_error else None,
             is_system_message=proto.is_system_message,
             was_displayed=proto.was_displayed,
         )
@@ -139,19 +149,19 @@ class ChatMessage(SupportMessage):
         self.attachments.extend(attachments)
 
     def set_arrived(self, arrived: bool):
-        self.arrived = arrived
+        self.arrived_property.value = arrived
         self.notify_change_listener()
 
     def set_stored_in_mailbox(self, stored: bool):
-        self.stored_in_mailbox = stored
+        self.stored_in_mailbox_property.value = stored
         self.notify_change_listener()
 
     def set_acknowledged(self, acknowledged: bool):
-        self.acknowledged = acknowledged
+        self.acknowledged_property.value = acknowledged
         self.notify_change_listener()
 
     def _ack_timed_out(self):
-        if not self.acknowledged and not self.stored_in_mailbox:
+        if not self.acknowledged_property.value and not self.stored_in_mailbox_property.value:
             self.set_arrived(False)
             self.set_ack_error("support.errorTimeout")
 
@@ -160,15 +170,18 @@ class ChatMessage(SupportMessage):
         UserThread.run_after(self._ack_timed_out, timedelta(seconds=60))
 
     def set_send_message_error(self, error: str):
-        self.send_message_error = error
+        self.send_message_error_property.value = error
         self.notify_change_listener()
 
     def set_ack_error(self, error: str):
-        self.ack_error = error
+        self.ack_error_property.value = error
         self.notify_change_listener()
 
     def get_trade_id(self) -> str:
         return self.trade_id
+    
+    def get_sender_node_address(self):
+        return self.sender_node_address
 
     def get_short_id(self) -> str:
         return get_short_id(self.trade_id)
@@ -204,10 +217,10 @@ class ChatMessage(SupportMessage):
             f"     date={self.date},\n"
             f"     is_system_message={self.is_system_message},\n"
             f"     was_displayed={self.was_displayed},\n"
-            f"     arrived={self.arrived},\n"
-            f"     stored_in_mailbox={self.stored_in_mailbox},\n"
-            f"     acknowledged={self.acknowledged},\n"
-            f"     send_message_error={self.send_message_error},\n"
-            f"     ack_error={self.ack_error}\n"
+            f"     arrived={self.arrived_property.value},\n"
+            f"     stored_in_mailbox={self.stored_in_mailbox_property.value},\n"
+            f"     acknowledged={self.acknowledged_property.value},\n"
+            f"     send_message_error={self.send_message_error_property.value},\n"
+            f"     ack_error={self.ack_error_property.value}\n"
             f"}} {super().__str__()}"
         )
