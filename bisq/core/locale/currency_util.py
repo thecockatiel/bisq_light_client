@@ -1,5 +1,6 @@
 from bisq.asset.asset import Asset
 from bisq.asset.coins.asset_registry import AssetRegistry
+from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import CONFIG
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.currency_data import (
@@ -7,6 +8,7 @@ from bisq.core.locale.currency_data import (
     CURRENCY_CODE_TO_DATA_MAP,
 )
 from bisq.core.locale.fiat_currency import FiatCurrency
+from bisq.core.locale.trade_currency import TradeCurrency
 
 # NOTE: ported from https://github.com/bisq-network/bisq/blob/release/v1.9.17/core/src/main/java/bisq/core/locale/CurrencyUtil.java
 
@@ -96,3 +98,66 @@ def get_mature_market_currencies():
 
 SORTED_BY_NAME_FIAT_CURRENCIES = sorted(list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: x.name)
 SORTED_BY_CODE_FIAT_CURRENCIES = sorted(SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: x.code)
+
+def get_main_fiat_currencies() -> list["TradeCurrency"]:
+    from bisq.core.locale.global_settings import GlobalSettings
+    default_trade_currency = GlobalSettings.default_trade_currency
+    currencies = list["FiatCurrency"]()
+    # Top traded currencies
+    currencies.append(FiatCurrency("USD"))
+    currencies.append(FiatCurrency("EUR"))
+    currencies.append(FiatCurrency("GBP"))
+    currencies.append(FiatCurrency("CAD"))
+    currencies.append(FiatCurrency("AUD"))
+    currencies.append(FiatCurrency("RUB"))
+    currencies.append(FiatCurrency("INR"))
+    currencies.append(FiatCurrency("NGN"))
+    
+    currencies.sort(key=lambda x: x.name)
+    
+    default_fiat_currency = default_trade_currency if isinstance(default_trade_currency, FiatCurrency) else None
+    if default_fiat_currency is not None and default_fiat_currency in currencies:
+        currencies.remove(default_fiat_currency)
+        currencies.insert(0, default_fiat_currency)
+
+    return currencies
+
+def get_main_crypto_currencies() -> list["CryptoCurrency"]:
+    result = list["CryptoCurrency"]()
+    result.append(CryptoCurrency("XRC", "XRhodium"))
+    
+    if DevEnv.is_dao_trading_activated():
+        result.append(CryptoCurrency("BSQ", "BSQ"))
+    
+    result.append(CryptoCurrency("BEAM", "Beam"))
+    result.append(CryptoCurrency("DASH", "Dash"))
+    result.append(CryptoCurrency("DCR", "Decred"))
+    result.append(CryptoCurrency("ETH", "Ether"))
+    result.append(CryptoCurrency("GRIN", "Grin"))
+    result.append(CryptoCurrency("L-BTC", "Liquid Bitcoin"))
+    result.append(CryptoCurrency("LTC", "Litecoin"))
+    result.append(CryptoCurrency("XMR", "Monero"))
+    result.append(CryptoCurrency("NMC", "Namecoin"))
+    result.append(CryptoCurrency("R-BTC", "RSK Smart Bitcoin"))
+    result.append(CryptoCurrency("SF", "Siafund"))
+    result.append(CryptoCurrency("ZEC", "Zcash"))
+    result.sort(key=lambda x: x.name)
+    
+    return result
+
+def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
+    result = list["CryptoCurrency"]()
+    result.append(CryptoCurrency("BCH", "Bitcoin Cash"))
+    result.append(CryptoCurrency("BCHC", "Bitcoin Clashic"))
+    result.append(CryptoCurrency("ACH", "AchieveCoin"))
+    result.append(CryptoCurrency("SC", "Siacoin"))
+    result.append(CryptoCurrency("PPI", "PiedPiper Coin"))
+    result.append(CryptoCurrency("PEPECASH", "Pepe Cash"))
+    result.append(CryptoCurrency("GRC", "Gridcoin"))
+    result.append(CryptoCurrency("LTZ", "LitecoinZ"))
+    result.append(CryptoCurrency("ZOC", "01coin"))
+    result.append(CryptoCurrency("BURST", "Burstcoin"))
+    result.append(CryptoCurrency("STEEM", "Steem"))
+    result.append(CryptoCurrency("DAC", "DACash"))
+    result.append(CryptoCurrency("RDD", "ReddCoin"))
+    return result
