@@ -24,12 +24,9 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.common.handlers.fault_handler import FaultHandler
     from bisq.core.provider.price.pricenode_dto import PricenodeDto
+    from bisq.core.user.preferences import Preferences
 
 logger = get_logger(__name__)
-
-# TODO: implement preferences
-# right now we use "USD" as preferred currency code.
-
 
 class PriceFeedService:
     PERIOD_SEC = 90
@@ -39,9 +36,11 @@ class PriceFeedService:
         http_client: "HttpClient",
         fee_service: "FeeService",
         providers_repository: "ProvidersRepository",
+        preferences: "Preferences",
     ):
         self.http_client = http_client
         self.providers_repository = providers_repository
+        self.preferences = preferences
         self.fee_service = fee_service
 
         self.cache: dict[str, "MarketPrice"] = {}
@@ -87,9 +86,8 @@ class PriceFeedService:
 
     def set_currency_code_on_init(self) -> None:
         if self.currency_code is None:
-            # preferred_trade_currency = self.preferences.preferred_trade_currency
-            # code = preferred_trade_currency.code if preferred_trade_currency else "USD"
-            code = "USD"  # Default until preferences are implemented
+            preferred_trade_currency = self.preferences.pref_payload.preferred_trade_currency
+            code = preferred_trade_currency.code if preferred_trade_currency else "USD"
             self.currency_code = code
 
     def initial_request_price_feed(self) -> None:
