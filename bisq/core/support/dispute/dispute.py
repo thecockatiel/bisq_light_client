@@ -14,6 +14,7 @@ from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
+from utils.data import ObservableList, SimpleProperty
 from utils.formatting import get_short_id
 
 logger = get_logger(__name__)
@@ -74,8 +75,9 @@ class Dispute(NetworkPayload, PersistablePayload):
     taker_contract_signature: Optional[str] = field(default=None)
     agent_pub_key_ring: PubKeyRing  # dispute agent
     is_support_ticket: bool
-    chat_messages: List["ChatMessage"] = field(default_factory=list)
-    dispute_result: Optional["DisputeResult"] = field(default=None)
+    chat_messages: ObservableList["ChatMessage"] = field(default_factory=ObservableList)
+    dispute_result_property: SimpleProperty[Optional["DisputeResult"]] = field(default_factory=lambda: SimpleProperty(None))
+    
     openning_date: int
     dispute_payout_tx_id: Optional[str] = field(default=None)
     # Added v1.2.0: support type
@@ -88,7 +90,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     donation_address_of_delayed_payout_tx: Optional[str] = field(default=None)
 
     # Added at v1.6.0
-    dispute_state: DisputeState = field(default=DisputeState.NEW)
+    dispute_state_property: SimpleProperty["DisputeState"] = field(default_factory=lambda: SimpleProperty(DisputeState.NEW)) # transient, but dispute_state itself is not transient 
 
     # Added in v 1.9.7
     burning_man_selection_height: int
@@ -106,7 +108,7 @@ class Dispute(NetworkPayload, PersistablePayload):
 
     payout_done: bool = field(default=False)  # transient
 
-    badge_count: int = field(default=0)  # transient
+    badge_count_property: SimpleProperty[int] = field(default_factory=lambda: SimpleProperty(0))  # transient
 
     file_transfer_session: Optional["FileTransferSession"] = field(
         default=None
@@ -169,7 +171,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             chat_message=[m.to_proto_network_envelope().chat_message for m in self.chat_messages],
             is_closed=self.is_closed,
             opening_date=self.openning_date,
-            state=DisputeState.to_proto_message(self.dispute_state),
+            state=DisputeState.to_proto_message(self.dispute_state_property.value),
             id=self.id,
             burning_man_selection_height=self.burning_man_selection_height,
             trade_tx_fee=self.trade_tx_fee,
@@ -182,7 +184,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             dispute_payout_tx_id=self.dispute_payout_tx_id,
             maker_contract_signature=self.maker_contract_signature,
             taker_contract_signature=self.taker_contract_signature,
-            dispute_result=self.dispute_result.to_proto_message() if self.dispute_result else None,
+            dispute_result=self.dispute_result_property.value.to_proto_message() if self.dispute_result_property.value else None,
             support_type=SupportType.to_proto_message(self.support_type) if self.support_type else None,
             mediators_dispute_result=self.mediators_dispute_result,
             delayed_payout_tx_id=self.delayed_payout_tx_id,
@@ -225,7 +227,7 @@ class Dispute(NetworkPayload, PersistablePayload):
                 dispute.chat_messages.append(ChatMessage.from_payload_proto(chat_message))
                 
         if proto.dispute_result:
-            dispute.dispute_result = DisputeResult.from_proto(proto.dispute_result)
+            dispute.dispute_result_property.value = DisputeResult.from_proto(proto.dispute_result)
         
         dispute.dispute_payout_tx_id = ProtoUtil.string_or_none_from_proto(proto.dispute_payout_tx_id)
         
@@ -240,15 +242,15 @@ class Dispute(NetworkPayload, PersistablePayload):
             
         if DisputeState.from_proto(proto.state) == DisputeState.NEEDS_UPGRADE:
             # old disputes did not have a state field, so choose an appropriate state:
-            dispute.dispute_state = DisputeState.CLOSED if proto.is_closed else DisputeState.OPEN
-            if dispute.dispute_state == DisputeState.CLOSED:
+            dispute.dispute_state_property.value = DisputeState.CLOSED if proto.is_closed else DisputeState.OPEN
+            if dispute.dispute_state_property.value == DisputeState.CLOSED:
                 # mark chat messages as read for pre-existing CLOSED disputes
                 # otherwise at upgrade, all old disputes would have 1 unread chat message
                 # because currently when a dispute is closed, the last chat message is not marked read
                 for chat_message in dispute.chat_messages:
                     chat_message.was_displayed = True       
         else:
-            dispute.dispute_state = DisputeState.from_proto(proto.state)
+            dispute.dispute_state_property.value = DisputeState.from_proto(proto.state)
             
         dispute.refresh_alert_level(True)
         return dispute
@@ -281,10 +283,10 @@ class Dispute(NetworkPayload, PersistablePayload):
             logger.info(f"cleared sensitive data from {change} of dispute for trade {get_short_id(self.trade_id)}")
         
     def re_open(self):
-        self.dispute_state = DisputeState.REOPENED
+        self.dispute_state_property.value = DisputeState.REOPENED
     
     def set_closed(self):
-        self.dispute_state = DisputeState.CLOSED
+        self.dispute_state_property.value = DisputeState.CLOSED
         
     def set_extra_data(self, key: str, value: str):
         if key is None or value is None:
@@ -307,23 +309,23 @@ class Dispute(NetworkPayload, PersistablePayload):
     
     @property
     def is_new(self) -> bool:
-        return self.dispute_state == DisputeState.NEW
+        return self.dispute_state_property.value == DisputeState.NEW
         
     @property
     def is_closed(self) -> bool:
-        return self.dispute_state == DisputeState.CLOSED
+        return self.dispute_state_property.value == DisputeState.CLOSED
     
     @property
     def is_result_proposed(self) -> bool:
-        return self.dispute_state == DisputeState.RESULT_PROPOSED
+        return self.dispute_state_property.value == DisputeState.RESULT_PROPOSED
     
     def refresh_alert_level(self, sender_flag: bool):
         # if the dispute is "new" that is 1 alert that has to be propagated upstrea
         # or if there are unread messages that is 1 alert that has to be propagated upstream
         if self.is_new or self.unread_message_count(sender_flag) > 0:
-            self.badge_count = 1
+            self.badge_count_property.value = 1
         else:
-            self.badge_count = 0
+            self.badge_count_property.value = 0
     
     def unread_message_count(self, sender_flag: bool):
         """
@@ -339,8 +341,8 @@ class Dispute(NetworkPayload, PersistablePayload):
         return count
     
     def set_dispute_seen(self, sender_flag: bool):
-        if self.dispute_state == DisputeState.NEW:
-            self.dispute_state = DisputeState.OPEN
+        if self.dispute_state_property.value == DisputeState.NEW:
+            self.dispute_state_property.value = DisputeState.OPEN
         self.refresh_alert_level(sender_flag)
     
     def set_chat_messages_seen(self, sender_flag: bool):
@@ -379,7 +381,7 @@ class Dispute(NetworkPayload, PersistablePayload):
                 f"\n     trade_id='{self.trade_id}'"
                 f",\n     id='{self.id}'"
                 f",\n     uid='{self.uid}'"
-                f",\n     state={self.dispute_state}"
+                f",\n     state={self.dispute_state_property.value}"
                 f",\n     trader_id={self.trader_id}"
                 f",\n     dispute_opener_is_buyer={self.dispute_opener_is_buyer}"
                 f",\n     dispute_opener_is_maker={self.dispute_opener_is_maker}"
@@ -398,7 +400,7 @@ class Dispute(NetworkPayload, PersistablePayload):
                 f",\n     agent_pub_key_ring={self.agent_pub_key_ring}"
                 f",\n     is_support_ticket={self.is_support_ticket}"
                 f",\n     chat_messages={self.chat_messages}"
-                f",\n     dispute_result={self.dispute_result}"
+                f",\n     dispute_result={self.dispute_result_property.value}"
                 f",\n     dispute_payout_tx_id='{self.dispute_payout_tx_id}'"
                 f",\n     openning_date={self.openning_date}"
                 f",\n     support_type={self.support_type}"

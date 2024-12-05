@@ -57,7 +57,7 @@ class ChatMessage(SupportMessage):
     # Added in v1.1.6. for trader chat to store if message was shown in popup
     was_displayed: bool = field(default=False)
 
-    # todo move to base class (??? present on original bisq code)
+    # JAVA TODO move to base class
     arrived: bool = field(default=False)
     stored_in_mailbox: bool = field(default=False)
     acknowledged: bool = field(default=False)
@@ -177,7 +177,7 @@ class ChatMessage(SupportMessage):
         self._listener = ref(listener)
 
     def is_result_message(self, dispute: "Dispute") -> bool:
-        dispute_result = dispute.dispute_result
+        dispute_result = dispute.dispute_result_property.value
         if dispute_result is None:
             return False
         result_chat_message = dispute_result.chat_message
