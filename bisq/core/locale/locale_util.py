@@ -264,3 +264,13 @@ ALL_LOCALES = {
 }
 
 ALL_LANGUAGE_CODES = {"af", "bi", "de", "dv", "en", "ga", "id", "rw", "sw", "la", "mt", "ms", "nl", "sm", "so", "vi", "tr", "az", "bs", "ca", "da", "et", "es", "fr", "fo", "hr", "it", "kl", "lv", "lt", "hu", "no", "uz", "pl", "pt", "ro", "sq", "sk", "sl", "fi", "sv", "tk", "is", "cs", "el", "be", "bg", "ky", "mk", "mn", "ru", "sr", "tg", "uk", "kk", "hy", "he", "ar", "fa", "ps", "ne", "hi", "bn", "si", "th", "lo", "dz", "my", "ka", "ti", "am", "km", "zh", "ja", "ko"}
+
+def find_locale(language: str, country: str) -> LocaleData:
+    candidate = None
+    for locale in ALL_LOCALES:
+        if locale.language == language:
+            if locale.country == country:
+                return locale
+            if not candidate:
+                candidate = locale
+    return candidate or DEFAULT_LOCALE
