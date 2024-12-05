@@ -333,4 +333,9 @@ def get_name_by_code(country_code: str):
     country = find_country_by_code(country_code)
     return country.name if country else "Unknown"
 
-    
+def get_default_country():
+    from bisq.core.locale.global_settings import GlobalSettings
+    locale = GlobalSettings.locale_property.get()
+    region_code = get_region_code(locale.country)
+    region = Region(region_code, get_region_name(region_code))
+    return Country(locale.country, locale.display_country, region)
