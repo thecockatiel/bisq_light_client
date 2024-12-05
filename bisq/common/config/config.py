@@ -19,6 +19,7 @@ class Config:
     config_file: Path = field(init=False, default=None)
     ban_list: list[str] = field(default_factory=list)
     seed_nodes: list = field(default_factory=list)
+    use_localhost_for_p2p: bool = field(default=False)
     max_connections: int = field(default=12)
     filter_provided_seed_nodes: list = field(default_factory=list)
     banned_seed_nodes: list = field(default_factory=list)
