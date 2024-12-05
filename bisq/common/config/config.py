@@ -34,9 +34,15 @@ class Config:
     msg_throttle_per_10_sec: int = field(default=1000)
     send_msg_throttle_trigger: int = field(default=20)
     send_msg_throttle_sleep: int = field(default=50)
+    use_tor_for_btc: bool = field(default=False)
+    use_tor_for_btc_option_set_explicitly: bool = field(default=False)
+    btc_nodes: str = field(default="", init=False)
     rpc_user: str = field(default="")
     rpc_password: str = field(default="")
     rpc_block_notification_port: int = field(default=UNSPECIFIED_PORT)
+    full_dao_node: bool = field(default=False, init=False)
+    full_dao_node_option_set_explicitly: bool = field(default=False, init=False)
+    is_bm_full_node: bool = field(default=False, init=False)
 
     # Properties derived from options but not exposed as options themselves
     tor_dir: Path = field(default=None, init=False)
