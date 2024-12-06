@@ -58,11 +58,6 @@ class PubKeyRing:
         return f"PubKeyRing{{signaturePubKeyHex={self.signature_pub_key_bytes.hex()}" \
                f", encryptionPubKeyHex={self.encryption_pub_key_bytes.hex()}}}"
 
-    def __setattr__(self, key, value):
-        if key == 'signature_pub_key' or key == 'encryption_pub_key' or key == 'signature_pub_key_bytes' or key == 'encryption_pub_key_bytes':
-            raise AttributeError(f"Attribute {key} is read-only")
-        super().__setattr__(key, value)
-
     def __eq__(self, other):
         return isinstance(other, PubKeyRing) and self.signature_pub_key_bytes == other.signature_pub_key_bytes and self.encryption_pub_key_bytes == other.encryption_pub_key_bytes
     
