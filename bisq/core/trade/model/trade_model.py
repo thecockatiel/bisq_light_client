@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, TypeVar
 from bisq.common.taskrunner.task_model import TaskModel
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 _T = TypeVar("T", bound="TradePeer")
 
-class TradeModel(Tradable, TaskModel):
+class TradeModel(Tradable, TaskModel, ABC):
     def __init__(self, uid: str, offer: "Offer", 
                  take_offer_date: Optional[int] = None,
                  trading_peer_node_address: Optional["NodeAddress"] = None,
