@@ -6,7 +6,7 @@ def get_sys_info():
 
 def encode_to_hex(bytes_: bytes, allow_none: bool) -> str:
     if allow_none:
-        return bytes.hex() if bytes_ is not None else "None"
+        return bytes.hex(bytes_) if bytes_ is not None else "None"
     assert bytes_ is not None, "bytes_ must not be None at encode_to_hex"
     return bytes_.hex()
 
