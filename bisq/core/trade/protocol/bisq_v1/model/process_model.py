@@ -208,7 +208,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     @take_offer_fee_tx.setter
     def take_offer_fee_tx(self, value: "Transaction"):
         self._take_offer_fee_tx = value
-        self._take_offer_fee_tx_id = str(value.get_tx_id())
+        self._take_offer_fee_tx_id = str(value.get_tx_id()) # TODO
     
     def get_payment_account_payload(self, trade: "Trade"):
         if self._payment_account is None:
