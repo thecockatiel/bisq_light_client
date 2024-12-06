@@ -205,6 +205,10 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     def take_offer_fee_tx(self):
         return self._take_offer_fee_tx
     
+    @property
+    def burning_man_selection_height(self):
+        return self._burning_man_selection_height
+    
     @take_offer_fee_tx.setter
     def take_offer_fee_tx(self, value: "Transaction"):
         self._take_offer_fee_tx = value
