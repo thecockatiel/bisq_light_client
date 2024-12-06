@@ -91,6 +91,10 @@ class TradeModel(Tradable, TaskModel):
     def get_maker_fee(self) -> "Coin":
         pass
 
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Tradable implementation
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
     def get_offer(self):
         return self._offer
 
@@ -98,7 +102,7 @@ class TradeModel(Tradable, TaskModel):
         return datetime.fromtimestamp(self.take_offer_date / 1000)
 
     def get_id(self) -> str:
-        return self._offer.get_id()
+        return self._offer.id
 
     def get_short_id(self) -> str:
         return get_short_id(self.get_id())
