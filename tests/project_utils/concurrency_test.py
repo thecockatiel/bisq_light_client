@@ -7,6 +7,11 @@ import time
 class TestThreadSafeSet(unittest.TestCase):
     def setUp(self):
         self.safe_set = ThreadSafeSet()
+        
+    def test_init_with_set(self):
+        items = {1, 2, 3}
+        safe_set = ThreadSafeSet(items)
+        self.assertEqual(safe_set._set, items)
 
     def test_add_and_contains(self):
         self.safe_set.add(1)

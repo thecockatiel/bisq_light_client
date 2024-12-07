@@ -7,8 +7,8 @@ from typing import Iterator, Dict, List, Optional, Set, TypeVar, Generic
 T = TypeVar('T')
 
 class ThreadSafeSet(Set[T]):
-    def __init__(self):
-        self._set: Set[T] = set()
+    def __init__(self, initial: Optional[Set[T]] = None):
+        self._set: Set[T] = set(initial) if initial is not None else set()
         self._read_lock = threading.RLock()
         self._write_lock = threading.Lock()
 
