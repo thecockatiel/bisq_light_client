@@ -163,7 +163,8 @@ class Trade(TradeModel, ABC):
         # Taker Trade Specific:
         self.price_as_long = price_as_long
         self.trading_peer_node_address = trading_peer_node_address
-        self.set_amount(amount)
+        if amount:
+            self.set_amount(amount)
 
     @property
     def is_currency_for_taker_fee_btc(self):
