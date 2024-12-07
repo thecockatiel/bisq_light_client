@@ -23,8 +23,8 @@ class PubKeyRing:
         if signature_pub_key is not None and encryption_pub_key is not None:
             self._signature_pub_key = signature_pub_key
             self._encryption_pub_key = encryption_pub_key
-            self.signature_pub_key_bytes = signature_pub_key.public_bytes()
-            self.encryption_pub_key_bytes = encryption_pub_key.public_bytes()
+            self.signature_pub_key_bytes = Sig.get_public_key_bytes(signature_pub_key)
+            self.encryption_pub_key_bytes = Encryption.get_public_key_bytes(encryption_pub_key)
         elif signature_pub_key_bytes is not None and encryption_pub_key_bytes is not None:
             self.signature_pub_key_bytes = signature_pub_key_bytes
             self.encryption_pub_key_bytes = encryption_pub_key_bytes
