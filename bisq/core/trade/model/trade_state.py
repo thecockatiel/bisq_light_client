@@ -1,10 +1,11 @@
 from enum import Enum
+from bisq.core.trade.model.trade_state_protocol import TradeStateProtocol
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.trade.model.trade_phase import TradePhase
 
 # NOTE: we removed the interface of java in favor of implementing the TradePhase directly as it seemed unnecessary
-class TradeState(Enum):
+class TradeState(TradeStateProtocol, Enum):
     # #################### Phase PREPARATION
     # When trade protocol starts no funds are on stake
     PREPARATION = TradePhase.INIT

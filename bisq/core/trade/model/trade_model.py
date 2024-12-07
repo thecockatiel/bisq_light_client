@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from bisq.core.trade.protocol.trade_peer import TradePeer
     from bisq.core.monetary.price import Price
     from bisq.core.monetary.volume import Volume
-    from bisq.core.trade.model.trade_phase import TradePhase
-    from bisq.core.trade.model.trade_state import TradeState
+    from bisq.core.trade.model.trade_phase_protocol import TradePhaseProtocol
+    from bisq.core.trade.model.trade_state_protocol import TradeStateProtocol
     from bitcoinj.base.coin import Coin
 
 _T = TypeVar("T", bound="TradePeer")
@@ -56,11 +56,11 @@ class TradeModel(Tradable, TaskModel, ABC):
         pass
 
     @abstractmethod
-    def get_trade_state(self) -> "TradeState":
+    def get_trade_state(self) -> "TradeStateProtocol":
         pass
 
     @abstractmethod
-    def get_trade_phase(self) -> "TradePhase":
+    def get_trade_phase(self) -> "TradePhaseProtocol":
         pass
 
     @abstractmethod
