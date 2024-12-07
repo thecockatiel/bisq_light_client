@@ -56,12 +56,12 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
         # Transient/Immutable (not set in constructor so they are not final, but at init)
         self._provider: "Provider" = None # transient
-        self._trade_manager: "TradeManager" = None # transient
+        self.trade_manager: "TradeManager" = None # transient
         self._offer: "Offer" = None # transient
         
         # Transient/Mutable
         self._take_offer_fee_tx: "Transaction" = None # transient
-        self._trade_message: "Transaction" = None # transient
+        self.trade_message: "Transaction" = None # transient
         
         # Added in v1.2.0
         self._delayed_payout_tx_signature: Optional[bytes] = None # transient
@@ -84,7 +84,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self._my_multi_sig_pub_key: Optional[bytes] = None
         # that is used to store temp. the peers address when we get an incoming message before the message is verified.
         # After successful verified we copy that over to the trade.tradingPeerAddress
-        self._temp_trading_peer_node_address: Optional["NodeAddress"] = None
+        self.temp_trading_peer_node_address: Optional["NodeAddress"] = None
         
         # Added in v.1.1.6
         self._mediated_payout_tx_signature: Optional[bytes] = None
@@ -105,7 +105,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
     def apply_transient(self, provider: "Provider", trade_manager: "TradeManager", offer: "Offer"):
         self._provider = provider
-        self._trade_manager = trade_manager
+        self.trade_manager = trade_manager
         self._offer = offer
         
     def apply_payment_account(self, trade: "Trade"):
@@ -145,9 +145,9 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             builder.change_output_address = self._change_output_address
         if self._my_multi_sig_pub_key:
             builder.my_multi_sig_pub_key = self._my_multi_sig_pub_key
-        if self._temp_trading_peer_node_address:
+        if self.temp_trading_peer_node_address:
             builder.temp_trading_peer_node_address.CopyFrom(
-                self._temp_trading_peer_node_address.to_proto_message()
+                self.temp_trading_peer_node_address.to_proto_message()
             )
         if self._mediated_payout_tx_signature:
             builder.mediated_payout_tx_signature = self._mediated_payout_tx_signature
@@ -178,7 +178,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
         process_model._change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
         process_model._my_multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.my_multi_sig_pub_key)
-        process_model._temp_trading_peer_node_address = NodeAddress.from_proto(proto.temp_trading_peer_node_address) if proto.HasField('temp_trading_peer_node_address') else None
+        process_model.temp_trading_peer_node_address = NodeAddress.from_proto(proto.temp_trading_peer_node_address) if proto.HasField('temp_trading_peer_node_address') else None
         process_model._mediated_payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.mediated_payout_tx_signature)
 
         payment_started_message_state = MessageState.from_string(ProtoUtil.string_or_none_from_proto(proto.payment_started_message_state))
@@ -198,8 +198,13 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     def on_complete(self):
         pass
     
-    def get_trade_peer(self):
+    @property
+    def trade_peer(self):
         return self._trading_peer
+    
+    @trade_peer.setter
+    def trade_peer(self, value: "TradingPeer"):
+        self._trading_peer = value
     
     @property
     def take_offer_fee_tx(self):
@@ -233,8 +238,9 @@ class ProcessModel(ProtocolModel[TradingPeer]):
                 self._take_offer_fee_tx = self.btc_wallet_service.get_transaction(self._take_offer_fee_tx_id)
         return self._take_offer_fee_tx
     
-    def get_my_node_address(self):
-        return self.get_p2p_service().get_address()
+    @property
+    def my_node_address(self):
+        return self.p2p_service.get_address()
     
     def set_payment_started_ack_message(self, ack_message: "AckMessage"):
         message_state = MessageState.ACKNOWLEDGED if ack_message.success else MessageState.FAILED
@@ -242,8 +248,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
     def set_payment_started_message_state(self, message_state: "MessageState"):
         self._payment_started_message_state_property.value = message_state
-        if self._trade_manager is not None:
-            self._trade_manager.request_persistence()
+        if self.trade_manager is not None:
+            self.trade_manager.request_persistence()
         
     def set_deposit_tx_sent_ack_message(self, ack_message: "AckMessage"):
         message_state = MessageState.ACKNOWLEDGED if ack_message.success else MessageState.FAILED
@@ -251,8 +257,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
     def set_deposit_tx_message_state(self, message_state: "MessageState"):
         self._deposit_tx_message_state_property.value = message_state
-        if self._trade_manager is not None:
-            self._trade_manager.request_persistence()
+        if self.trade_manager is not None:
+            self.trade_manager.request_persistence()
             
     def maybe_clear_sensitive_data(self):
         changed = False
@@ -270,14 +276,14 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     def account_age_witness_service(self):
         return self._provider.account_age_witness_service
 
-    def get_p2p_service(self):
+    @property
+    def p2p_service(self):
         return self._provider.p2p_service 
     
     @property
     def bsq_wallet_service(self):
         return self._provider.bsq_wallet_service
 
-    
     @property
     def trade_wallet_service(self):
         return self._provider.trade_wallet_service
@@ -329,4 +335,3 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     @property
     def dao_facade(self):
         return self._provider.dao_facade
-

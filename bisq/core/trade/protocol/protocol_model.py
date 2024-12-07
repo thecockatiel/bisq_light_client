@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, runtime_checkable
 
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.taskrunner.task_model import TaskModel
@@ -15,36 +15,23 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound=TradePeer)
 
-class ProtocolModel(Generic[T], TaskModel, PersistablePayload, ABC):
+@runtime_checkable
+class _ProtocolModelProtocol(Generic[T], Protocol):
     @abstractmethod
-    def apply_transient(self, provider: 'Provider', trade_manager: "TradeManager", offer: "Offer") -> None:
-        pass
+    def apply_transient(self, provider: 'Provider', trade_manager: "TradeManager", offer: "Offer") -> None: ...
+    
+    p2p_service: "P2PService" # only get needed
+    
+    trade_peer: T # only get needed
+    
+    temp_trading_peer_node_address: "NodeAddress"
+    
+    trade_manager: "TradeManager" # only get needed
+    
+    trade_message: "TradeMessage"
+    
+    my_node_address: "NodeAddress" # only get needed
+    
 
-    @abstractmethod
-    def get_p2p_service(self) -> "P2PService":
-        pass
-
-    @abstractmethod
-    def get_trade_peer(self) -> T:
-        pass
-
-    @abstractmethod
-    def set_temp_trading_peer_node_address(self, node_address: "NodeAddress") -> None:
-        pass
-
-    @abstractmethod
-    def get_temp_trading_peer_node_address(self) -> "NodeAddress":
-        pass
-
-    @abstractmethod
-    def get_trade_manager(self) -> "TradeManager":
-        pass
-
-    @abstractmethod
-    def set_trade_message(self, trade_message: "TradeMessage") -> None:
-        pass
-
-    @abstractmethod
-    def get_my_node_address(self) -> "NodeAddress":
-        pass
-
+class ProtocolModel(_ProtocolModelProtocol[T], TaskModel, PersistablePayload, ABC):
+    pass
