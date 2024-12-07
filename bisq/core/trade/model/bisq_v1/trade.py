@@ -62,10 +62,14 @@ class Trade(TradeModel, ABC):
     # Maker
     def __init__(
         self,
+        *,
         offer: "Offer",
         trade_tx_fee: "Coin",
         taker_fee: "Coin",
         is_currency_for_taker_fee_btc: bool,
+        amount: Optional["Coin"] = None, # Taker Trade Specific
+        price_as_long: int = 0, # Taker Trade Specific
+        trading_peer_node_address: Optional["NodeAddress"] = None, # Taker Trade Specific
         arbitrator_node_address: Optional["NodeAddress"] = None,
         mediator_node_address: Optional["NodeAddress"] = None,
         refund_agent_node_address: Optional["NodeAddress"] = None,
@@ -157,39 +161,11 @@ class Trade(TradeModel, ABC):
             self.state_phase_property.set(e.new_value.phase)
             
         self.state_property.add_listener(on_new_state)
-
-    @staticmethod
-    def create_taker_trade(
-        offer: "Offer",
-        amount: "Coin",
-        tx_fee: "Coin",
-        taker_fee: "Coin",
-        is_currency_for_taker_fee_btc: bool,
-        price_as_long: int,
-        trading_peer_node_address: "NodeAddress",
-        arbitrator_node_address: Optional["NodeAddress"],
-        mediator_node_address: Optional["NodeAddress"],
-        refund_agent_node_address: Optional["NodeAddress"],
-        btc_wallet_service: "BtcWalletService",
-        process_model: "ProcessModel",
-        uid: str,
-    ):
-        trade = Trade(
-            offer=offer,
-            trade_tx_fee=tx_fee,
-            taker_fee=taker_fee,
-            is_currency_for_taker_fee_btc=is_currency_for_taker_fee_btc,
-            arbitrator_node_address=arbitrator_node_address,
-            mediator_node_address=mediator_node_address,
-            refund_agent_node_address=refund_agent_node_address,
-            btc_wallet_service=btc_wallet_service,
-            process_model=process_model,
-            uid=uid,
-        )
-        trade.price_as_long = price_as_long
-        trade.trading_peer_node_address = trading_peer_node_address
-        trade.set_amount(amount)
-        return trade
+        
+        # Taker Trade Specific:
+        self.price_as_long = price_as_long
+        self.trading_peer_node_address = trading_peer_node_address
+        self.set_amount(amount)
 
     @property
     def is_currency_for_taker_fee_btc(self):
