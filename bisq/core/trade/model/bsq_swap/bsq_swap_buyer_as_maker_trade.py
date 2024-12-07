@@ -6,11 +6,9 @@ from bisq.core.trade.model.taker_trade import TakerTrade
 from bitcoinj.base.coin import Coin
 import uuid
 import proto.pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.trade.protocol.bsq_swap.model.bsq_swap_protocol_model import BsqSwapProtocolModel
-    from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.offer.offer import Offer
+from bisq.core.trade.protocol.bsq_swap.model.bsq_swap_protocol_model import BsqSwapProtocolModel
+from bisq.core.network.p2p.node_address import NodeAddress
+from bisq.core.offer.offer import Offer
 
 
 class BsqSwapBuyerAsMakerTrade(BsqSwapBuyerTrade, TakerTrade): # TODO JAVA SANITY CHECK: why TakerTrade ?
