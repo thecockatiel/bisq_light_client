@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict
 
-
+# TODO: check against java implementation
 class JsonUtil:
     @staticmethod
     def object_to_json(obj) -> str:
