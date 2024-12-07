@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from datetime import datetime
 from google.protobuf.message import Message
+from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
-
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.monetary.price import Price
 from bisq.core.monetary.volume import Volume
@@ -15,19 +15,14 @@ from bisq.core.trade.model.trade_model import TradeModel
 from bisq.core.trade.model.trade_period_state import TradePeriodState
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.model.trade_state import TradeState
-from bisq.core.trade.protocol.protocol_model import ProtocolModel
-from bisq.core.trade.protocol.provider import Provider
 from bisq.core.trade.txproof.asset_tx_proof_result import AssetTxProofResult
 from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin
-from bitcoinj.core.transaction_confidence import TransactionConfidence
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
-import proto.pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
-from typing import TYPE_CHECKING, Optional
-
 from utils.data import ObservableList, SimpleProperty, SimplePropertyChangeEvent
 from utils.time import get_time_ms
+import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
@@ -40,6 +35,9 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.trade.protocol.bisq_v1.model.trading_peer import TradingPeer
+    from bisq.core.trade.protocol.provider import Provider
+    from bisq.core.trade.protocol.protocol_model import ProtocolModel
+    from bitcoinj.core.transaction_confidence import TransactionConfidence
 
 
 logger = get_logger(__name__)
