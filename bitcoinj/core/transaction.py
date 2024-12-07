@@ -2,13 +2,19 @@
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
+
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_confidence import TransactionConfidence
+    from bitcoinj.core.network_parameters import NetworkParameters
 
 # TODO
 class Transaction:
     
-    def __init__(self) -> None:
+    def __init__(self, params: "NetworkParameters", payload_bytes: bytes = None, offset = 0) -> None:
+        self.params = params
+        self.offset = offset
+        self.payload_bytes = payload_bytes
+        
         self.updated_at: Optional[datetime] = None
         """
         This is either the time the transaction was broadcast as measured from the local clock, or the time from the
