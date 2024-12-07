@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
 
 
-class BsqSwapBuyerAsMakerTrade(BsqSwapBuyerTrade, TakerTrade): # JAVA SANITY CHECK: why TakerTrade ?
+class BsqSwapBuyerAsMakerTrade(BsqSwapBuyerTrade, TakerTrade): # TODO JAVA SANITY CHECK: why TakerTrade ?
     def __init__(self, 
                  offer: 'Offer',
                  amount: 'Coin',
