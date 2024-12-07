@@ -46,7 +46,7 @@ class BsqSwapSellerAsMakerTrade(BsqSwapBuyerTrade, MakerTrade):
     
     def to_proto_message(self):
         return protobuf.Tradable(
-            bsq_swap_buyer_as_maker_trade=protobuf.BsqSwapSellerAsMakerTrade(
+            bsq_swap_seller_as_maker_trade=protobuf.BsqSwapSellerAsMakerTrade(
                 bsq_swap_trade=super().to_proto_message()
             )
         )
