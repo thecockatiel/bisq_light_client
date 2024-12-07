@@ -1,10 +1,8 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from bisq.common.capabilities import Capabilities
 
-class HasCapabilities():
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not hasattr(self, 'capabilities'):
-            raise RuntimeError(f"You need to have 'capabilities' in {self.__name__}")
+@runtime_checkable
+class HasCapabilities(Protocol):
+    capabilities: Optional['Capabilities']
