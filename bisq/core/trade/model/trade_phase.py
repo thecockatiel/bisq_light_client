@@ -3,7 +3,6 @@ from bisq.core.trade.model.trade_phase_protocol import TradePhaseProtocol
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
-# NOTE: we removed the interface of java in favor of implementing the TradePhase directly as it seemed unnecessary
 class TradePhase(TradePhaseProtocol, IntEnum):
     INIT = 0
     TAKER_FEE_PUBLISHED = 1
