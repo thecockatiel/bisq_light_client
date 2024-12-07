@@ -1,9 +1,5 @@
-from abc import ABC, abstractmethod
+from typing import Protocol, runtime_checkable
 
-class UidMessage(ABC):
+@runtime_checkable
+class UidMessage(Protocol):
     uid: str
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not hasattr(self, 'uid'):
-            raise RuntimeError(f"You need to have 'uid' in {self.__name__}")
