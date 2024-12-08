@@ -6,12 +6,13 @@ class JsonUtil:
     @staticmethod
     def object_to_json(obj) -> str:
         obj_dict = JsonUtil.recursively_resolve_dict(obj)
-        return json.dumps(obj_dict)
+        return json.dumps(obj_dict, indent=2, separators=(",", ": "))
     
     @staticmethod
     def recursively_resolve_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
         resolved_dict = {}
-        for key, value in obj.items():
+        obj_dict = obj if isinstance(obj, dict) else obj.__dict__
+        for key, value in obj_dict.items():
             if isinstance(value, dict):
                 resolved_dict[key] = JsonUtil.recursively_resolve_dict(value)
             elif hasattr(value, "get_json_dict"):
