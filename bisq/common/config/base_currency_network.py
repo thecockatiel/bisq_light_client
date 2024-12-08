@@ -1,7 +1,10 @@
 
 from enum import Enum
 
-from bitcoinj.core.network_parameters import MainNetParams, NetworkParameters, RegTestParams, TestNet3Params
+from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.params.main_net_params import MainNetParams
+from bitcoinj.params.reg_test_params import RegTestParams
+from bitcoinj.params.test_net3_params import TestNet3Params
 
 
 class BaseCurrencyNetwork(Enum):

@@ -1,9 +1,14 @@
-from bitcoinj.core.network_parameters import MainNetParams, NetworkParameters
+from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.params.main_net_params import MainNetParams
 from electrum_min.bitcoin import b58_address_to_hash160
 from electrum_min.segwit_addr import decode_segwit_address
 
 #TODO
 class Address:
+    
+    def __init__(self, params: NetworkParameters, bytes_: bytes):
+        self.bytes = bytes_
+        self.params = params
     
     @staticmethod
     def is_b58_address(addr: str, network_parameters: NetworkParameters=None) -> bool:

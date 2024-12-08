@@ -1,7 +1,10 @@
 from bisq.asset.address_validation_result import AddressValidationResult
 from bisq.asset.bitcoin_address_validator import BitcoinAddressValidator
 from bisq.asset.coin import Coin
-from bitcoinj.core.network_parameters import MainNetParams, TestNet3Params, RegTestParams, NetworkParameters
+from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.params.main_net_params import MainNetParams
+from bitcoinj.params.reg_test_params import RegTestParams
+from bitcoinj.params.test_net3_params import TestNet3Params
 
 class BSQAddressValidator(BitcoinAddressValidator):
     
