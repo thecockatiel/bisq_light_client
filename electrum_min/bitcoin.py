@@ -69,6 +69,9 @@ def base_decode(v: Union[bytes, str], *, base: int) -> Optional[bytes]:
 
     return num.to_bytes(origlen - newlen + (num.bit_length() + 7) // 8, 'big')
 
+def EncodeBase58Check(vchIn: bytes) -> str:
+    hash = sha256d(vchIn)
+    return base_encode(vchIn + hash[0:4], base=58)
 
 def DecodeBase58Check(psz: Union[bytes, str]) -> bytes:
     vchRet = base_decode(psz, base=58)
