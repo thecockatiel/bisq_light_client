@@ -769,6 +769,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
     def is_full_bm_accounting_node(self) -> bool:
         return self.pref_payload.is_full_bm_accounting_node
+    
+    def get_user_defined_trade_limit(self):
+        return self.pref_payload.user_defined_trade_limit
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
