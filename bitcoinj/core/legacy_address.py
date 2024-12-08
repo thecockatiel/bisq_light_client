@@ -1,5 +1,6 @@
 
-from bisq.common.crypto.encryption import Encryption
+from typing import Union
+from bisq.common.crypto.encryption import Encryption, ECPubkey, ECPrivkey
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bitcoinj.core.address import Address
 from bitcoinj.core.network_parameters import NetworkParameters
@@ -7,7 +8,6 @@ from bitcoinj.core.networks import NETWORKS
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160, hash160_to_b58_address
-from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
 
 # NOTE: doesn't cover all methods and properties of the original class, but it should be enough
 class LegacyAddress(Address):
@@ -51,7 +51,7 @@ class LegacyAddress(Address):
         return LegacyAddress(params, False, hash160)
     
     @staticmethod
-    def from_key(key: "PUBLIC_KEY_TYPES", params: "NetworkParameters") -> "LegacyAddress":
+    def from_key(key: Union["ECPrivkey", "ECPubkey"], params: "NetworkParameters") -> "LegacyAddress":
         return LegacyAddress.from_pub_key_hash(get_sha256_ripemd160_hash(Encryption.get_public_key_bytes(key)), params)
     
     @property
