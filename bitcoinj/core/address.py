@@ -1,10 +1,12 @@
+from abc import ABC, abstractmethod
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.params.main_net_params import MainNetParams
+from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160
 from electrum_min.segwit_addr import decode_segwit_address
 
 #TODO
-class Address:
+class Address(ABC):
     
     def __init__(self, params: NetworkParameters, bytes_: bytes):
         self.bytes = bytes_
@@ -31,3 +33,14 @@ class Address:
         except Exception as e:
             return False
         return witprog is not None
+    
+    @abstractmethod
+    def hash(self) -> bytes:
+        """Get either the public key hash or script hash that is encoded in the address."""
+        pass
+    
+    @abstractmethod
+    def output_script_type(self) -> "ScriptType":
+        """Get the type of output script that will be used for sending to the address."""
+        pass
+    
