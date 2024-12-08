@@ -86,7 +86,7 @@ class SegwitAddress(Address):
         return SegwitAddress(params, bytes(data))
         
     @staticmethod
-    def from_hash(params: "NetworkParameters", hash: bytes, witness_version: int = 0) -> "SegwitAddress":
+    def from_hash(hash: bytes, params: "NetworkParameters", witness_version: int = 0) -> "SegwitAddress":
         """
         Create a SegwitAddress that represents the given hash, which is either a pubkey hash or a script hash.
         
@@ -97,7 +97,7 @@ class SegwitAddress(Address):
         return SegwitAddress(params, bytes([witness_version]) + bytes(convertbits(hash, 8, 5, True)))
     
     @staticmethod
-    def from_key(params: "NetworkParameters", key: Union["ECPubkey", "ECPrivkey"]) -> "SegwitAddress":
+    def from_key(key: Union["ECPubkey", "ECPrivkey"], params: "NetworkParameters") -> "SegwitAddress":
         # only compressed keys allowed
         # but we don't have the utilities to check that here
-        return SegwitAddress.from_hash(params, Encryption.get_public_key_bytes(key))
+        return SegwitAddress.from_hash(Encryption.get_public_key_bytes(key), params)

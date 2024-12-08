@@ -18,4 +18,4 @@ class ScriptType(Enum):
         return obj
 
     def __str__(self):
-        return f"ScriptType(id='{self.id}')"
+        return f"ScriptType(id='{self.id}', name='{self.name}')"
