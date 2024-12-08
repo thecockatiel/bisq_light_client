@@ -1,8 +1,8 @@
 
 from typing import Optional, Tuple, Union
 from electrum_min import constants, segwit_addr
-from electrum_min.util import BitcoinException, inv_dict, to_bytes
-from .crypto import sha256d
+from electrum_min.util import BitcoinException, inv_dict, to_bytes, assert_bytes
+from electrum_min.crypto import sha256d
 
 class BaseDecodeError(BitcoinException): pass
 
@@ -16,6 +16,28 @@ __b58chars_inv = inv_dict(dict(enumerate(__b58chars)))
 __b43chars = b'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$*+-./:'
 assert len(__b43chars) == 43
 __b43chars_inv = inv_dict(dict(enumerate(__b43chars)))
+
+def base_encode(v: bytes, *, base: int) -> str:
+    """ encode v, which is a string of bytes, to base58."""
+    assert_bytes(v)
+    if base not in (58, 43):
+        raise ValueError('not supported base: {}'.format(base))
+    chars = __b58chars
+    if base == 43:
+        chars = __b43chars
+
+    origlen = len(v)
+    v = v.lstrip(b'\x00')
+    newlen = len(v)
+
+    num = int.from_bytes(v, byteorder='big')
+    string = b""
+    while num:
+        num, idx = divmod(num, base)
+        string = chars[idx:idx + 1] + string
+
+    result = chars[0:1] * (origlen - newlen) + string
+    return result.decode('ascii')
 
 
 def base_decode(v: Union[bytes, str], *, base: int) -> Optional[bytes]:
@@ -57,6 +79,11 @@ def DecodeBase58Check(psz: Union[bytes, str]) -> bytes:
     else:
         return payload
 
+
+def hash160_to_b58_address(h160: bytes, addrtype: int) -> str:
+    s = bytes([addrtype]) + h160
+    s = s + sha256d(s)[0:4]
+    return base_encode(s, base=58)
 
 def b58_address_to_hash160(addr: str) -> Tuple[int, bytes]:
     addr = to_bytes(addr, 'ascii')
