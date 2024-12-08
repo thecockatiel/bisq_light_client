@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 # Camel cased to match java's output on json dump
-# TODO: compare json outputs of java with python
 @dataclass
 class AccountAgeWitnessDto:
     profileId: str
