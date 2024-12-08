@@ -119,3 +119,6 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         return (f"PaymentAccountPayload(payment_method_id={self.payment_method_id}, "
                 f"id={self.id}, max_trade_period={self.max_trade_period}, "
                 f"exclude_from_json_data_map={self.exclude_from_json_data_map})")
+        
+    def __hash__(self):
+        return hash((self.payment_method_id, self.id, self.max_trade_period))
