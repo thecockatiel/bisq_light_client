@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from bisq.common.util.utilities import bytes_as_hex_string
-from bitcoinj.script.script import ScriptType
+from bitcoinj.script.script_type import ScriptType
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
 from bisq.common.protocol.network.network_payload import NetworkPayload
