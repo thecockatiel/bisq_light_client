@@ -36,6 +36,9 @@ class PaymentAccount(PersistablePayload, ABC):
     def __post_init__(self):
         self.init()
         
+    def __hash__(self):
+        return hash((self.payment_method, self.id, self.creation_date, self.account_name))
+        
     def init(self):
         self.payment_account_payload = self.create_payload() 
 
