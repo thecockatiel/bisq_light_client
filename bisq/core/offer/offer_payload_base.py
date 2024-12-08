@@ -66,6 +66,10 @@ class OfferPayloadBase(
             if self.base_currency_code == "BTC"
             else self.base_currency_code
         )
+        
+    @property
+    def currency_code(self):
+        return self.get_currency_code()
 
     def get_ttl(self):
         return self.TTL
