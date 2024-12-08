@@ -173,7 +173,9 @@ class Encryption:
             raise RuntimeError("Couldn't generate key") from e
 
     @staticmethod
-    def get_public_key_bytes(public_key: PUBLIC_KEY_TYPES) -> bytes:
+    def get_public_key_bytes(public_key: Union[PUBLIC_KEY_TYPES, ECPubkey, ECPrivkey]) -> bytes:
+        if isinstance(public_key, ECPubkey) or isinstance(public_key, ECPrivkey):
+            return public_key.get_public_key_bytes()
         return public_key.public_bytes(
             encoding=serialization.Encoding.DER,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
