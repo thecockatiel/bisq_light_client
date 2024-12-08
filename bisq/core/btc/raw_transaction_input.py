@@ -16,7 +16,7 @@ class RawTransactionInput(NetworkPayload, PersistablePayload):
     # Added at Bsq swap release
     # id of the org.bitcoinj.script.Script.ScriptType. Useful to know if input is segwit.
     # Lowest Script.ScriptType.id value is 1, so we use 0 as value for not defined
-    script_type_id: int
+    script_type_id: int = field(default=0)
     
     def to_proto_message(self) -> Message:
         return protobuf.RawTransactionInput(
