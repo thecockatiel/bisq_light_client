@@ -1,4 +1,13 @@
+from typing import Type
+
+
 class AddressFormatException(ValueError):
+    InvalidCharacter: Type["InvalidCharacter"] = None
+    InvalidDataLength: Type["InvalidDataLength"] = None
+    InvalidChecksum: Type["InvalidChecksum"] = None
+    InvalidPrefix: Type["InvalidPrefix"] = None
+    WrongNetwork: Type["WrongNetwork"] = None
+    
     def __init__(self, message=None):
         super().__init__(message)
 
@@ -56,3 +65,9 @@ class WrongNetwork(InvalidPrefix):
         else:
             message = "WrongNetwork"
         super().__init__(message)
+
+AddressFormatException.InvalidCharacter = InvalidCharacter
+AddressFormatException.InvalidDataLength = InvalidDataLength
+AddressFormatException.InvalidChecksum = InvalidChecksum
+AddressFormatException.InvalidPrefix = InvalidPrefix
+AddressFormatException.WrongNetwork = WrongNetwork

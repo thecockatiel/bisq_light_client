@@ -4,11 +4,12 @@ from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bitcoinj.core.address import Address
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.networks import NETWORKS
-from bitcoinj.core.address_format_exception import InvalidPrefix, WrongNetwork
+from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160, hash160_to_b58_address
 from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
 
+# NOTE: doesn't cover all methods and properties of the original class, but it should be enough
 class LegacyAddress(Address):
     # An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
     LENGTH = 20
@@ -34,14 +35,14 @@ class LegacyAddress(Address):
                     p2sh = True
                     break
             if p2sh is None:
-                raise InvalidPrefix(f"No network found for {base58}")
+                raise AddressFormatException.InvalidPrefix(f"No network found for {base58}")
         else:
             if addrtype == params.address_header:
                 p2sh = False
             elif addrtype == params.p2sh_header:
                 p2sh = True
             else:
-                raise WrongNetwork(version_header=addrtype)
+                raise AddressFormatException.WrongNetwork(version_header=addrtype)
         
         return LegacyAddress(params, p2sh, hash160)
     
