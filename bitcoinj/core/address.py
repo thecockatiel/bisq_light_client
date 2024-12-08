@@ -1,16 +1,45 @@
 from abc import ABC, abstractmethod
+from typing import Union
+from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.params.main_net_params import MainNetParams
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160
 from electrum_min.segwit_addr import decode_segwit_address
+from bisq.common.crypto.encryption import ECPubkey, ECPrivkey
 
-#TODO
+#NOTE: Implement as necessary
 class Address(ABC):
     
     def __init__(self, params: NetworkParameters, bytes_: bytes):
         self.bytes = bytes_
         self.params = params
+        
+    @staticmethod
+    def from_string(addr: str, network_parameters: NetworkParameters=None):
+        from bitcoinj.core.legacy_address import LegacyAddress
+        from bitcoinj.core.segwit_address import SegwitAddress
+        try:
+            return LegacyAddress.from_base58(addr, network_parameters)
+        except AddressFormatException.WrongNetwork as e:
+            raise e
+        except Exception as e:
+            try:
+                return SegwitAddress.from_bech32(addr, network_parameters)
+            except Exception as e:
+                raise e
+        
+    @staticmethod
+    def from_key(key: Union["ECPrivkey", "ECPubkey"], script_type: "ScriptType", network_parameters: NetworkParameters=None):
+        from bitcoinj.core.legacy_address import LegacyAddress
+        from bitcoinj.core.segwit_address import SegwitAddress
+        
+        if script_type == ScriptType.P2PKH:
+            return LegacyAddress.from_key(key, network_parameters)
+        elif script_type == ScriptType.P2WPKH:
+            return SegwitAddress.from_key(key, network_parameters)
+        else:
+            raise ValueError(f"Unsupported script type: {script_type}")
     
     @staticmethod
     def is_b58_address(addr: str, network_parameters: NetworkParameters=None) -> bool:
