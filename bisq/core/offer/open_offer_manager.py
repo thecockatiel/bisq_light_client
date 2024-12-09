@@ -1,0 +1,4 @@
+# TODO
+
+class OpenOfferManager:
+    pass
