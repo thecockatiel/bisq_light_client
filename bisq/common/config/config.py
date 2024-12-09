@@ -53,6 +53,7 @@ class Config:
     rpc_block_notification_port: int = field(default=UNSPECIFIED_PORT)
     full_dao_node: bool = field(default=False, init=False)
     full_dao_node_option_set_explicitly: bool = field(default=False, init=False)
+    republish_mailbox_entries: bool = field(default=False)
     is_bm_full_node: bool = field(default=False, init=False)
 
     # Properties derived from options but not exposed as options themselves
