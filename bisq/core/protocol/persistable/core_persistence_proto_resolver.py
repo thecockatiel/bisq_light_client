@@ -4,6 +4,7 @@ from bisq.common.protocol.persistable.persistence_proto_resolver import Persiste
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness_store import SignedWitnessStore
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
+from bisq.core.btc.model.address_entry_list import AddressEntryList
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
@@ -15,6 +16,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.support.dispute.arbitration.arbitration_dispute_list import ArbitrationDisputeList
 from bisq.core.support.dispute.mediation.mediation_dispute_list import MediationDisputeList
 from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
+from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.user.preferences_payload import PreferencesPayload
 from bisq.core.user.user_payload import UserPayload
 import proto.pb_pb2 as protobuf
@@ -22,13 +24,15 @@ import proto.pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+    from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from utils.clock import Clock
 
 logger = get_logger(__name__)
 
 class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
-    def __init__(self, clock: "Clock", network_proto_resolver: "NetworkProtoResolver"):
+    def __init__(self, clock: "Clock", btc_wallet_service: "BtcWalletService", network_proto_resolver: "NetworkProtoResolver"):
         super().__init__(clock)
+        self.btc_wallet_service = btc_wallet_service
         self.network_proto_resolver = network_proto_resolver
         
     def from_proto(self, proto: protobuf.PersistableEnvelope) -> "PersistableEnvelope":
@@ -41,11 +45,10 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
                 return SequenceNumberMap.from_proto(proto.sequence_number_map)
             case "peer_list":
                 return PeerList.from_proto(proto.peer_list)
-            # case "address_entry_list":
-            #     return AddressEntryList.from_proto(proto.address_entry_list)
+            case "address_entry_list":
+                return AddressEntryList.from_proto(proto.address_entry_list)
             case "tradable_list":
-                raise NotImplementedError("tradable_list not implemented yet") # TODO
-                # return TradableList.from_proto(proto.tradable_list, self, btc_wallet_service.get())
+                return TradableList.from_proto(proto.tradable_list, self, self.btc_wallet_service)
             case "arbitration_dispute_list":
                 return ArbitrationDisputeList.from_proto(proto.arbitration_dispute_list, self)
             case "mediation_dispute_list":
