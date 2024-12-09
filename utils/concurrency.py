@@ -14,11 +14,17 @@ class ThreadSafeSet(Set[T]):
 
     def add(self, item: T):
         with self._write_lock:
-            self._set.add(item)
+            if item not in self._set:
+                self._set.add(item)
+                return True
+            return False
 
     def remove(self, item: T):
         with self._write_lock:
-            self._set.remove(item)
+            if item in self._set:
+                self._set.remove(item)
+                return True
+            return False
 
     def discard(self, item: T):
         with self._write_lock:
