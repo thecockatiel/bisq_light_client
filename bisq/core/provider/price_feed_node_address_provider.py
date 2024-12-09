@@ -1,8 +1,8 @@
 from typing import List, Optional
 import random
 
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -12,7 +12,8 @@ class PriceFeedNodeAddressProvider:
         "http://runbtcpn7gmbj5rgqeyfyvepqokrijem6rbw7o5wgqbguimuoxrmcdyd.onion"    # @runbtc
     ]
 
-    def __init__(self, providers: List[str], use_localhost_for_p2p: bool):
+    def __init__(self, config: "Config", providers: List[str], use_localhost_for_p2p: bool):
+        self.config = config
         self.providers_from_program_args = providers
         self.use_localhost_for_p2p = use_localhost_for_p2p
         
@@ -23,7 +24,7 @@ class PriceFeedNodeAddressProvider:
 
         random.shuffle(PriceFeedNodeAddressProvider.DEFAULT_NODES)
         
-        self.apply_banned_nodes(CONFIG.banned_price_relay_nodes)
+        self.apply_banned_nodes(self.config.banned_price_relay_nodes)
 
     def apply_banned_nodes(self, banned_nodes: Optional[List[str]]) -> None:
         self.banned_nodes = banned_nodes
@@ -41,7 +42,7 @@ class PriceFeedNodeAddressProvider:
             self.base_url = self.provider_list[self.index]
             self.index += 1
 
-            if len(self.provider_list) == 1 and CONFIG.base_currency_network.is_mainnet():
+            if len(self.provider_list) == 1 and self.config.base_currency_network.is_mainnet():
                 logger.warning("We only have one provider")
         else:
             self.base_url = ""
