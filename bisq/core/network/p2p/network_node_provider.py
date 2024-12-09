@@ -28,7 +28,6 @@ class NetworkNodeProvider:
                  control_host: str,
                  control_port: int,
                  password: str,
-                 stream_isolation: bool,
                  use_bridges_file: bool):
         
         if use_localhost_for_p2p:
@@ -44,8 +43,8 @@ class NetworkNodeProvider:
                 password,
                 use_bridges_file,
             )
-            self.network_node = TorNetworkNode(port, network_proto_resolver, stream_isolation, 
-                                             tor_mode, ban_filter, max_connections, control_host)
+            self.network_node = TorNetworkNode(port, network_proto_resolver, 
+                                             tor_mode, ban_filter, max_connections)
 
     def _get_tor_mode(self,
                       bridge_address_provider: "BridgeAddressProvider",
