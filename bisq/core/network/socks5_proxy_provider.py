@@ -6,49 +6,57 @@ from bisq.common.setup.log_setup import get_logger
 
 logger = get_logger(__name__)
 
-def get_proxy_from_address(socks5_proxy_address: str):
-    if socks5_proxy_address:
-        if "socks5://" in socks5_proxy_address:
-            socks5_proxy_address = socks5_proxy_address.replace("socks5://", "")
-        elif "socks5h://" in socks5_proxy_address:
-            socks5_proxy_address = socks5_proxy_address.replace("socks5h://", "")
-
-        tokens = socks5_proxy_address.split(":")
-        if len(tokens) == 2:
-            if not tokens[1].isdigit():
-                logger.error(f"Port must be a number. socks5ProxyAddress={socks5_proxy_address}")
-                return None
-            return Socks5Proxy(tokens[0], int(tokens[1]))
-        else:
-            logger.error(f"Incorrect format for socks5ProxyAddress. Should be: host:port.\nsocks5ProxyAddress={socks5_proxy_address}")
-    return None
-
 class Socks5ProxyProvider:
     """
-    Unlike the original Socks5ProxyProvider in bisq, this only provides socks5 proxies for p2p network and http requests. bitcoin network is omitted from this project.
     By default there is only used the bisq internal Tor proxy, which is used for the P2P network
-    If the user provides a socks5ProxyHttpAddress it will be used for http requests
-    If no socks5ProxyHttpAddress is defined (default) we use the internal tor proxy.
+    If the user provides a socks5_proxy_http_address it will be used for http requests
+    If the user provides a socks5_proxy_btc_address, this will be used for the btc network.
+    If no socks5_proxy_http_address and no socks5_proxy_btc_address is defined (default) we use get_socks5_proxy_internal.
     """
     
-    def __init__(self, socks5_proxy_http_address: str = None):
-        if socks5_proxy_http_address:
-            self.socks5_proxy_http_address = get_proxy_from_address(socks5_proxy_http_address)
-        else:
-            self.socks5_proxy_http_address = None
+    def __init__(self, socks5_proxy_btc_address: str = None, socks5_proxy_http_address: str = None):
+        # proxy used for btc network
+        self.socks5_proxy_btc = self.get_proxy_from_address(socks5_proxy_btc_address)
+        
+        # if defined proxy used for http requests
+        self.socks5_proxy_http = self.get_proxy_from_address(socks5_proxy_http_address)
             
         self._socks5_proxy_internal_factory: Socks5ProxyInternalFactory = None
     
     def get_socks5_proxy(self):
-        if self._socks5_proxy_internal_factory:
+        if self.socks5_proxy_btc:
+            return self.socks5_proxy_btc
+        elif self._socks5_proxy_internal_factory:
             return self._socks5_proxy_internal_factory.get_socks_proxy()
-        return None
+        else:
+            return None
+    
+    def get_socks5_proxy_btc(self):
+        return self.socks5_proxy_btc
     
     def get_socks5_proxy_http(self):
-        return self.socks5_proxy_http_address
+        return self.socks5_proxy_http
     
     def get_socks5_proxy_internal(self):
         return self._socks5_proxy_internal_factory.get_socks_proxy()
     
     def set_socks5_proxy_internal(self, bisq_socks5_proxy_factory: Optional[Socks5ProxyInternalFactory]):
         self._socks5_proxy_internal_factory = bisq_socks5_proxy_factory
+
+    def get_proxy_from_address(self, socks5_proxy_address: str) -> Optional[Socks5Proxy]:
+        if socks5_proxy_address:
+            if "socks5://" in socks5_proxy_address:
+                socks5_proxy_address = socks5_proxy_address.replace("socks5://", "")
+            elif "socks5h://" in socks5_proxy_address:
+                socks5_proxy_address = socks5_proxy_address.replace("socks5h://", "")
+                
+            tokens = socks5_proxy_address.split(":")
+            if len(tokens) == 2:
+                if not tokens[1].isdigit():
+                    logger.error(f"Port must be a number. socks5_proxy_address={socks5_proxy_address}")
+                    return None
+                return Socks5Proxy(tokens[0], int(tokens[1]))
+                # NOTE: in java implementation it instantly tests the connection to the proxy, should we also do it?
+            else:
+                logger.error(f"Incorrect format for socks5_proxy_address. Should be: host:port.\nsocks5_proxy_address={socks5_proxy_address}")
+        return None

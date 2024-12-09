@@ -115,11 +115,14 @@ class HttpClientImpl(HttpClient):
         if not self.socks5_proxy_provider:
             return None
 
+        # We use the custom socks5ProxyHttp.
         socks5_proxy = self.socks5_proxy_provider.get_socks5_proxy_http()
         if not socks5_proxy:
-            socks5_proxy = self.socks5_proxy_provider.get_socks5_proxy()
-
-        return socks5_proxy
+            return socks5_proxy
+        
+        # If not set we request socks5_proxy_provider.get_socks5_proxy()
+        # which delivers the btc proxy if set, otherwise the internal proxy.        
+        return self.socks5_proxy_provider.get_socks5_proxy()
 
     def __str__(self):
         return f"HttpClient(socks5_proxy_provider={self.socks5_proxy_provider}, base_url='{self.base_url}', ignore_socks5_proxy={self.ignore_socks5_proxy}, uid='{self.uid}')"
