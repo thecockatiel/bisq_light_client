@@ -14,6 +14,7 @@ class Config:
     APP_DATA_DIR_VALUE: ClassVar[Path] = None
     DEFAULT_CONFIG_FILE_NAME = "bisq.properties"
     UNSPECIFIED_PORT = -1
+    MAX_SEQUENCE_NUMBER_MAP_SIZE_BEFORE_PURGE = 1000
 
     # Fields
     config_file: Path = field(init=False, default=None)
@@ -36,6 +37,7 @@ class Config:
     use_dev_mode: bool = field(default=False)
     use_dev_privilege_keys: bool = field(default=False)
     ignore_dev_msg: bool = field(default=False)
+    providers: list[str] = field(default_factory=list)
     app_data_dir: Path = field(default_factory=user_data_dir)
     node_port: int = field(default=9999)
     log_level: str = field(default="INFO")
