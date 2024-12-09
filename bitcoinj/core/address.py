@@ -63,11 +63,13 @@ class Address(ABC):
             return False
         return witprog is not None
     
+    @property
     @abstractmethod
     def hash(self) -> bytes:
         """Get either the public key hash or script hash that is encoded in the address."""
         pass
     
+    @property
     @abstractmethod
     def output_script_type(self) -> "ScriptType":
         """Get the type of output script that will be used for sending to the address."""
