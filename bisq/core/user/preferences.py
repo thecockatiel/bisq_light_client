@@ -31,7 +31,7 @@ from bisq.core.user.preferences_const import (
 )
 from bisq.core.user.block_chain_explorer import BlockChainExplorer
 from bisq.core.user.preferences_payload import PreferencesPayload 
-from utils.data import ObservableList, ObservableMap, SimpleProperty, SimplePropertyChangeEvent
+from utils.data import ObservableChangeEvent, ObservableList, ObservableMap, SimpleProperty, SimplePropertyChangeEvent
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -99,16 +99,16 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             self.request_persistence()
         self.use_standby_mode_property.add_listener(on_use_standby_change)
         
-        def on_fiat_currencies_change(l: ObservableList["FiatCurrency"], c: str, e: "FiatCurrency"):
+        def on_fiat_currencies_change(e):
             self.pref_payload.fiat_currencies.clear()
-            self.pref_payload.fiat_currencies.extend(l)
+            self.pref_payload.fiat_currencies.extend(self.fiat_currencies_as_observable)
             self.pref_payload.fiat_currencies.sort(key=lambda x: x.name)
             self.request_persistence()
         self.fiat_currencies_as_observable.add_listener(on_fiat_currencies_change)
         
-        def on_crypto_currencies_change(l: ObservableList["CryptoCurrency"], c: str, e: "CryptoCurrency"):
+        def on_crypto_currencies_change(e):
             self.pref_payload.crypto_currencies.clear()
-            self.pref_payload.crypto_currencies.extend(l)
+            self.pref_payload.crypto_currencies.extend(self.crypto_currencies_as_observable)
             self.pref_payload.crypto_currencies.sort(key=lambda x: x.name)
             self.request_persistence()
         self.crypto_currencies_as_observable.add_listener(on_crypto_currencies_change)
@@ -777,12 +777,13 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     # // Private
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
-    def update_trade_currencies(self, l: "ObservableList", evt: str, i: "FiatCurrency"):
-        if evt in ["append", "insert"] and self.initial_read_done:
-            self.trade_currencies_as_observable.append(i)
-        elif evt == "remove":
-            if i in self.trade_currencies_as_observable:
-                self.trade_currencies_as_observable.remove(i)
+    def update_trade_currencies(self, e: ObservableChangeEvent["FiatCurrency"]):
+        if e.added_elements and len(e.added_elements) == 1 and self.initial_read_done:
+            if e.added_elements[0] not in self.trade_currencies_as_observable:
+                self.trade_currencies_as_observable.append(e.added_elements[0])
+        if e.removed_elements and len(e.removed_elements) == 1 and self.initial_read_done:
+            if e.removed_elements[0] in self.trade_currencies_as_observable:
+                self.trade_currencies_as_observable.remove(e.removed_elements[0])
                 
         self.request_persistence()
             

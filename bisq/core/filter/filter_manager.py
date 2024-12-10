@@ -40,10 +40,13 @@ class FilterManager:
     FILTER_PROVIDED_SEED_NODES = "filterProvidedSeedNodes"
     FILTER_PROVIDED_BTC_NODES = "filterProvidedBtcNodes"
     
-    class Listener(ABC):
+    class Listener(Callable[["Filter"], None], ABC):
         @abstractmethod
         def on_filter_added(self, filter: "Filter"):
             pass
+        
+        def __call__(self, filter: "Filter"):
+            self.on_filter_added(filter)
 
     def __init__(self, 
                  p2p_service: "P2PService",
@@ -268,7 +271,7 @@ class FilterManager:
             logger.warning("Removing dev filter from network failed")
 
     
-    def add_listener(self, listener):
+    def add_listener(self, listener: Listener):
         self.listeners.add(listener)
 
     def get_filter(self) -> Optional[Filter]:
