@@ -9,7 +9,7 @@ from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 
 from bisq.core.user.user_payload import UserPayload
-from utils.data import ObservableSet, SimpleProperty, SimplePropertyChangeEvent
+from utils.data import ObservableChangeEvent, ObservableSet, SimpleProperty, SimplePropertyChangeEvent
 
 if TYPE_CHECKING:
     from bisq.core.user.cookie import Cookie
@@ -65,7 +65,7 @@ class User(PersistedDataHost):
         assert self.user_payload.payment_accounts is not None, "userPayload.payment_accounts must not be null"
         assert self.user_payload.accepted_language_locale_codes is not None, "userPayload.accepted_language_locale_codes must not be null"
         
-        self.payment_accounts_observable = ObservableSet(self.user_payload.payment_accounts)
+        self.payment_accounts_observable = ObservableSet["PaymentAccount"](self.user_payload.payment_accounts)
         self.current_payment_account_property.set(self.user_payload.current_payment_account)
         
         assert self.key_ring is not None
@@ -78,8 +78,8 @@ class User(PersistedDataHost):
         if english not in self.user_payload.accepted_language_locale_codes:
             self.user_payload.accepted_language_locale_codes.append(english)
 
-        def on_payment_accounts_change(the_set: "ObservableSet[PaymentAccount]", operation: str, element: "PaymentAccount"):
-            self.user_payload.payment_accounts = set(the_set)
+        def on_payment_accounts_change(e: ObservableChangeEvent["PaymentAccount"]):
+            self.user_payload.payment_accounts = set(self.payment_accounts_observable)
             self.request_persistence()
         self.payment_accounts_observable.add_listener(on_payment_accounts_change)
 

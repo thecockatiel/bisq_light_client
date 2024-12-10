@@ -132,7 +132,7 @@ class DisputeAgentManager(Generic[T], ABC):
                 )
 
         self.filter_manager.filter_property.add_listener(
-            lambda observable, old_value, new_value: self.update_map()
+            lambda e: self.update_map()
         )
 
         self.update_map()

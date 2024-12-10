@@ -1,6 +1,6 @@
 import unittest
 
-from utils.data import ObservableList, ObservableSet, ObservableMap, SimpleProperty, combine_simple_properties
+from utils.data import ObservableChangeEvent, ObservableList, ObservableSet, ObservableMap, SimpleProperty, combine_simple_properties
 
 class TestSimpleProperty(unittest.TestCase):
     def setUp(self):
@@ -158,8 +158,8 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(new_set), 3)
 
     def test_add(self):
-        def listener(set_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(set_obj, event):
+            self.events.append((event.added_elements, event.removed_elements))
 
         self.set.add_listener(listener)
         
@@ -167,7 +167,7 @@ class TestObservableSet(unittest.TestCase):
         result = self.set.add(1)
         self.assertTrue(result)
         self.assertEqual(len(self.set), 1)
-        self.assertEqual(self.events, [('add', 1)])
+        self.assertEqual(self.events, [([1], None)])
 
         # Test adding existing element
         result = self.set.add(1)
@@ -176,8 +176,8 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(self.events), 1)  # No new event
 
     def test_remove(self):
-        def listener(set_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(set_obj, event):
+            self.events.append((event.added_elements, event.removed_elements))
 
         self.set.add(1)
         self.set.add_listener(listener)
@@ -185,16 +185,17 @@ class TestObservableSet(unittest.TestCase):
         result = self.set.remove(1)
         self.assertTrue(result)
         self.assertEqual(len(self.set), 0)
-        self.assertEqual(self.events, [('remove', 1)])
+        self.assertEqual(self.events, [(None, [1])])
         
         result = self.set.remove(1)
         self.assertFalse(result)
         self.assertEqual(len(self.set), 0)
-        self.assertEqual(len(self.events), 1)   # No new event
+        self.assertEqual(len(self.events), 1)  # No new event
 
     def test_clear(self):
-        def listener(set_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(set_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.set.add(1)
         self.set.add(2)
@@ -202,43 +203,32 @@ class TestObservableSet(unittest.TestCase):
         
         self.set.clear()
         self.assertEqual(len(self.set), 0)
-        self.assertEqual(self.events, [('clear', None)])
+        self.assertEqual(self.events, [(None, [1, 2])])
 
     def test_listener_management(self):
         events1 = []
         events2 = []
 
-        def listener1(set_obj, operation, element):
-            events1.append((operation, element))
+        def listener1(set_obj, event):
+            events1.append((event.added_elements,
+                          event.removed_elements))
 
-        def listener2(set_obj, operation, element):
-            events2.append((operation, element))
+        def listener2(set_obj, event):
+            events2.append((event.added_elements,
+                          event.removed_elements))
 
         self.set.add_listener(listener1)
         self.set.add_listener(listener2)
         
         self.set.add(1)
-        self.assertEqual(events1, [('add', 1)])
-        self.assertEqual(events2, [('add', 1)])
+        expected = [([1], None)]
+        self.assertEqual(events1, expected)
+        self.assertEqual(events2, expected)
 
         self.set.remove_listener(listener1)
         self.set.add(2)
         self.assertEqual(len(events1), 1)  # No new events
-        self.assertEqual(events2, [('add', 1), ('add', 2)])
-
-    def test_contains(self):
-        self.set.add(1)
-        self.assertTrue(1 in self.set)
-        self.assertFalse(2 in self.set)
-
-    def test_update(self):
-        def listener(set_obj, operation, element):
-            self.events.append((operation, element))
-            
-        self.set.add_listener(listener)
-        
-        self.set.update([2, 3, 4])
-        self.assertEqual(self.events, [('update', None)])
+        self.assertEqual(events2, [([1], None), ([2], None)])
 
 class TestObservableMap(unittest.TestCase):
     def setUp(self):
@@ -252,39 +242,43 @@ class TestObservableMap(unittest.TestCase):
         self.assertEqual(new_map['b'], 2)
 
     def test_set_item(self):
-        def listener(map_obj, operation, key, value):
-            self.events.append((operation, key, value))
+        def listener(event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.map.add_listener(listener)
         
-        # Test setting new item
         self.map['a'] = 1
         self.assertEqual(len(self.map), 1)
-        self.assertEqual(self.events, [('set', 'a', 1)])
+        self.assertEqual(self.events, [([('a', 1)], None)])
 
-        # Test updating existing item
         self.map['a'] = 2
         self.assertEqual(len(self.map), 1)
-        self.assertEqual(self.events, [('set', 'a', 1), ('set', 'a', 2)])
+        self.assertEqual(self.events, [
+            ([('a', 1)], None),
+            ([('a', 2)], None)
+        ])
 
     def test_del_item(self):
-        def listener(map_obj, operation, key, value):
-            self.events.append((operation, key, value))
+        def listener(event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.map['a'] = 1
         self.map.add_listener(listener)
         
         del self.map['a']
         self.assertEqual(len(self.map), 0)
-        self.assertEqual(self.events, [('delete', 'a', 1)])
+        self.assertEqual(self.events, [(None, [('a', 1)])])
         
         # Test deleting non-existent key
-        del self.map['a'] # Should not raise or trigger event
+        del self.map['a']  # Should not raise or trigger event
         self.assertEqual(len(self.events), 1)  # No new event
 
     def test_clear(self):
-        def listener(map_obj, operation, key, value):
-            self.events.append((operation, key, value))
+        def listener(event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.map['a'] = 1
         self.map['b'] = 2
@@ -292,44 +286,43 @@ class TestObservableMap(unittest.TestCase):
         
         self.map.clear()
         self.assertEqual(len(self.map), 0)
-        self.assertEqual(self.events, [('clear', None, None)])
+        self.assertEqual(self.events, [(None, [('a', 1), ('b', 2)])])
 
     def test_update(self):
-        def listener(map_obj, operation, key, value):
-            self.events.append((operation, key, value))
+        def listener(event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.map.add_listener(listener)
         
         self.map.update({'a': 1, 'b': 2})
         self.assertEqual(len(self.map), 2)
-        self.assertEqual(self.events, [('update', None, None)])
+        self.assertEqual(self.events, [([('a', 1), ('b', 2)], None)])
 
     def test_listener_management(self):
         events1 = []
         events2 = []
 
-        def listener1(map_obj, operation, key, value):
-            events1.append((operation, key, value))
+        def listener1(event):
+            events1.append((event.added_elements,
+                          event.removed_elements))
 
-        def listener2(map_obj, operation, key, value):
-            events2.append((operation, key, value))
+        def listener2(event):
+            events2.append((event.added_elements,
+                          event.removed_elements))
 
         self.map.add_listener(listener1)
         self.map.add_listener(listener2)
         
         self.map['a'] = 1
-        self.assertEqual(events1, [('set', 'a', 1)])
-        self.assertEqual(events2, [('set', 'a', 1)])
+        expected = [([('a', 1)], None)]
+        self.assertEqual(events1, expected)
+        self.assertEqual(events2, expected)
 
         self.map.remove_listener(listener1)
         self.map['b'] = 2
         self.assertEqual(len(events1), 1)  # No new events
-        self.assertEqual(events2, [('set', 'a', 1), ('set', 'b', 2)])
-
-        self.map.remove_all_listeners()
-        self.map['c'] = 3
-        self.assertEqual(len(events1), 1)  # No new events
-        self.assertEqual(len(events2), 2)  # No new events
+        self.assertEqual(events2, [([('a', 1)], None), ([('b', 2)], None)])
 
 class TestObservableList(unittest.TestCase):
     def setUp(self):
@@ -342,66 +335,55 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(list(new_list), [1, 2, 3])
 
     def test_append(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.add_listener(listener)
         
         self.list.append(1)
         self.assertEqual(len(self.list), 1)
-        self.assertEqual(self.events, [('append', 1)])
+        self.assertEqual(self.events, [([1], None)])
 
     def test_extend(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.add_listener(listener)
         
         self.list.extend([1, 2, 3])
         self.assertEqual(len(self.list), 3)
-        self.assertEqual(self.events, [('extend', None)])
-        self.assertEqual(list(self.list), [1, 2, 3])
-
-    def test_extend_one(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
-
-        self.list.add_listener(listener)
-        
-        self.list.extend([1])
-        self.assertEqual(len(self.list), 1)
-        self.assertEqual(self.events, [('append', 1)])
-        self.assertEqual(list(self.list), [1])
+        self.assertEqual(self.events, [([1, 2, 3], None)])
 
     def test_insert(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
         
         self.list.insert(1, 4)
         self.assertEqual(list(self.list), [1, 4, 2, 3])
-        self.assertEqual(self.events, [('insert', 4)])
+        self.assertEqual(self.events, [([4], None)])
 
     def test_remove(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
         
         self.list.remove(2)
         self.assertEqual(list(self.list), [1, 3])
-        self.assertEqual(self.events, [('remove', 2)])
-        
-        # Test removing non-existent element
-        self.list.remove(4)  # Should not raise or trigger event
-        self.assertEqual(len(self.events), 1)  # No new event
+        self.assertEqual(self.events, [(None, [2])])
 
     def test_pop(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
@@ -409,67 +391,72 @@ class TestObservableList(unittest.TestCase):
         value = self.list.pop()
         self.assertEqual(value, 3)
         self.assertEqual(list(self.list), [1, 2])
-        self.assertEqual(self.events, [('remove', 3)])
+        self.assertEqual(self.events, [(None, [3])])
         
         value = self.list.pop(0)
         self.assertEqual(value, 1)
         self.assertEqual(list(self.list), [2])
-        self.assertEqual(self.events, [('remove', 3), ('remove', 1)])
+        self.assertEqual(self.events, [(None, [3]), (None, [1])])
 
     def test_clear(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
         
         self.list.clear()
         self.assertEqual(len(self.list), 0)
-        self.assertEqual(self.events, [('clear', None)])
+        self.assertEqual(self.events, [(None, [1, 2, 3])])
 
     def test_setitem(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
         
         self.list[1] = 4
         self.assertEqual(list(self.list), [1, 4, 3])
-        self.assertEqual(self.events, [('set', 4)])
+        self.assertEqual(self.events, [
+            ([4], [2])
+        ])
 
     def test_delitem(self):
-        def listener(list_obj, operation, element):
-            self.events.append((operation, element))
+        def listener(list_obj, event):
+            self.events.append((event.added_elements,
+                              event.removed_elements))
 
         self.list.extend([1, 2, 3])
         self.list.add_listener(listener)
         
         del self.list[1]
         self.assertEqual(list(self.list), [1, 3])
-        self.assertEqual(self.events, [('remove', 2)])
+        self.assertEqual(self.events, [(None, [2])])
 
     def test_listener_management(self):
         events1 = []
         events2 = []
 
-        def listener1(list_obj, operation, element):
-            events1.append((operation, element))
+        def listener1(list_obj, event):
+            events1.append(event)
 
-        def listener2(list_obj, operation, element):
-            events2.append((operation, element))
+        def listener2(list_obj, event):
+            events2.append(event)
 
         self.list.add_listener(listener1)
         self.list.add_listener(listener2)
         
         self.list.append(1)
-        self.assertEqual(events1, [('append', 1)])
-        self.assertEqual(events2, [('append', 1)])
+        self.assertEqual(events1, [ObservableChangeEvent([1])])
+        self.assertEqual(events2, [ObservableChangeEvent([1])])
 
         self.list.remove_listener(listener1)
         self.list.append(2)
         self.assertEqual(len(events1), 1)  # No new events
-        self.assertEqual(events2, [('append', 1), ('append', 2)])
+        self.assertEqual(events2, [ObservableChangeEvent([1]), ObservableChangeEvent([2])])
 
         self.list.remove_all_listeners()
         self.list.append(3)

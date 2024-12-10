@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from typing import Any, Iterable, Optional, Set, TypeVar, Generic
-from dataclasses import dataclass
+from typing import Any, Iterable, Literal, Optional, Set, TypeVar, Generic
+from dataclasses import dataclass, field
 
 T = TypeVar("T")
 
@@ -11,6 +11,11 @@ V = TypeVar("V")
 class SimplePropertyChangeEvent(Generic[T]):
     old_value: T
     new_value: T
+
+@dataclass
+class ObservableChangeEvent(Generic[T]):
+    added_elements: Optional[Iterable[T]] = field(default=None)
+    removed_elements: Optional[Iterable[T]] = field(default=None)
 
 
 class SimpleProperty(Generic[T]):
@@ -105,20 +110,20 @@ def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[
 class ObservableSet(set[T]):
     def __init__(self, *args):
         super().__init__(*args)
-        self._listeners: Set[Callable] = set()
+        self._listeners: Set[Callable[[ObservableChangeEvent[T]], None]] = set()
     
-    def add_listener(self, listener: Callable[['ObservableSet', str, T], None]):
+    def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
         
-    def remove_listener(self, listener: Callable[['ObservableSet', str, T], None]):
+    def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
         
-    def remove_all_listener(self, listener: Callable[['ObservableSet', str, T], None]):
+    def remove_all_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
         
-    def _notify(self, operation: str, element: T = None):
+    def _notify(self, e: ObservableChangeEvent[T]):
         for listener in self._listeners:
-            listener(self, operation, element)
+            listener(self, e)
             
     def add(self, element: T) -> bool:
         """
@@ -127,7 +132,7 @@ class ObservableSet(set[T]):
         if element in self:
             return False
         super().add(element)
-        self._notify('add', element)
+        self._notify(ObservableChangeEvent([element]))
         return True
         
     def remove(self, element: T) -> None:
@@ -138,18 +143,20 @@ class ObservableSet(set[T]):
         if element not in self:
             return False
         super().remove(element)
-        self._notify('remove', element)
+        self._notify(ObservableChangeEvent(None, [element]))
         return True
         
     def clear(self) -> None:
+        elements = list(self)
         super().clear()
-        self._notify('clear')
+        self._notify(ObservableChangeEvent(None, elements))
         
     def update(self, *others: Iterable[T]) -> bool:
-        initial_size = len(self)
+        before = self.copy()
         super().update(*others)
-        if len(self) > initial_size:
-            self._notify('update')
+        added_elements = self - before
+        if len(added_elements) > 0:
+            self._notify(ObservableChangeEvent(added_elements))
             return True
         return False
 
@@ -157,94 +164,108 @@ class ObservableSet(set[T]):
 class ObservableMap(dict[K, V]):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._listeners: Set[Callable] = set()
+        self._listeners: Set[ObservableChangeEvent[tuple[K,V]]] = set()
     
-    def add_listener(self, listener: Callable[['ObservableMap', str, K, V], None]):
+    def add_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.add(listener)
         
-    def remove_listener(self, listener: Callable[['ObservableMap', str, K, V], None]):
+    def remove_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.discard(listener)
         
     def remove_all_listeners(self):
         self._listeners.clear()
         
-    def _notify(self, operation: str, key: K = None, value: V = None):
+    def _notify(self, e: ObservableChangeEvent[tuple[K,V]]):
         for listener in self._listeners:
-            listener(self, operation, key, value)
+            listener(e)
             
     def __setitem__(self, key: K, value: V) -> None:
         super().__setitem__(key, value)
-        self._notify('set', key, value)
+        self._notify(ObservableChangeEvent([(key, value)]))
         
     def __delitem__(self, key: K) -> None:
         if key in self:
             value = self[key]
             super().__delitem__(key)
-            self._notify('delete', key, value)
+            self._notify(ObservableChangeEvent(None, [(key, value)]))
             
     def clear(self) -> None:
+        l = list(self.items())
         super().clear()
-        self._notify('clear')
+        self._notify(ObservableChangeEvent(None, l))
         
-    def update(self, other=None, **kwargs) -> None:
-        super().update(other, **kwargs)
-        self._notify('update')
+    def update(self, m: Iterable[tuple[K, V]]=None, **kwargs) -> None:
+        if m:
+            remove_changes = []
+            add_changes = []
+            new_items = dict(m).items()
+            for k, v in new_items:
+                existed = k in self
+                super().__setitem__(k, v) # to not trigger notifs until after all changes are done
+                if existed:
+                    remove_changes.append((k, v))
+                add_changes.append((k, v))
+            if len(remove_changes) > 0 or len(add_changes) > 0:
+                self._notify(ObservableChangeEvent(add_changes if add_changes else None, remove_changes if remove_changes else None))
 
 
 class ObservableList(list[T]):
     def __init__(self, *args):
         super().__init__(*args)
-        self._listeners: Set[Callable] = set()
+        self._listeners: Set[Callable[[ObservableChangeEvent[T]], None]] = set()
     
-    def add_listener(self, listener: Callable[['ObservableList', str, T], None]):
+    def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
         
-    def remove_listener(self, listener: Callable[['ObservableList', str, T], None]):
+    def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
         
     def remove_all_listeners(self):
         self._listeners.clear()
         
-    def _notify(self, operation: str, element: T = None):
+    def _notify(self, e: ObservableChangeEvent[T]):
         for listener in self._listeners:
-            listener(self, operation, element)
+            listener(self, e)
             
     def append(self, element: T) -> None:
         super().append(element)
-        self._notify('append', element)
+        self._notify(ObservableChangeEvent([element]))
         
     def extend(self, iterable: Iterable[T]) -> None:
         l = list(iterable)
         super().extend(iterable)
-        if len(l) > 1:
-            self._notify('extend')
-        if len(l) == 1:
-            self._notify('append', l[0])
+        if len(l) > 0:
+            self._notify(ObservableChangeEvent(l))
         
     def insert(self, index: int, element: T) -> None:
         super().insert(index, element)
-        self._notify('insert', element)
+        self._notify(ObservableChangeEvent([element]))
         
     def remove(self, element: T) -> None:
         if element in self:
             super().remove(element)
-            self._notify('remove', element)
+            self._notify(ObservableChangeEvent(None, [element]))
             
     def pop(self, index: int = -1) -> T:
         element = super().pop(index)
-        self._notify('remove', element)
+        self._notify(ObservableChangeEvent(None, [element]))
         return element
         
     def clear(self) -> None:
+        elements = list(self)
         super().clear()
-        self._notify('clear')
+        self._notify(ObservableChangeEvent(None, elements))
         
     def __setitem__(self, index, element: T) -> None:
+        if self[index] == element:
+            return
+        removed = self[index]
+        added = element
         super().__setitem__(index, element)
-        self._notify('set', element)
+        self._notify(ObservableChangeEvent([added], [removed]))
         
     def __delitem__(self, index) -> None:
         element = self[index]
         super().__delitem__(index)
-        self._notify('remove', element)
+        self._notify(ObservableChangeEvent(None, [element]))
 
