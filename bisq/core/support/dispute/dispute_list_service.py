@@ -18,7 +18,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
     def __init__(self, persistence_manager: "PersistenceManager[T]"):
         self._persistence_manager = persistence_manager
         self._dispute_list: T = self.get_concrete_dispute_list()
-        self._num_open_disputes = SimpleProperty(0)
+        self.num_open_disputes_property = SimpleProperty(0)
         self._disputed_trade_ids: Set[str] = set()
         
         self._persistence_manager.initialize(self._dispute_list, PersistenceManagerSource.PRIVATE, self.get_file_name())
@@ -30,10 +30,6 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
     @property
     def dispute_list(self) -> T:
         return self._dispute_list
-
-    @property
-    def num_open_disputes(self) -> SimpleProperty[int]:
-        return self._num_open_disputes
 
     @property
     def disputed_trade_ids(self) -> Set[str]:
@@ -112,7 +108,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
             def on_badge_count_change(is_alerting: int):
                 def update_alerts():
                     num_alerts = sum(x.badge_count_property.value for x in self._dispute_list.list)
-                    self._num_open_disputes.value = num_alerts
+                    self.num_open_disputes_property.value = num_alerts
                 
                 UserThread.execute(update_alerts)
 
