@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
+    from bitcoinj.core.transaction import Transaction
+    from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
 
 
 class DisputeState(IntEnum):
@@ -113,8 +115,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     file_transfer_session: Optional["FileTransferSession"] = field(
         default=None
     )  # transient
-    # TODO: implement cached_deposit_tx ?
-    cached_deposit_tx: list = field(default_factory=list)  # transient
+    cached_deposit_tx: Optional["Transaction"] = field(default=None)  # transient
     
     def __post_init__(self):
         self.id = self.trade_id + "_" + self.trader_id
@@ -365,9 +366,13 @@ class Dispute(NetworkPayload, PersistablePayload):
     def get_role_string_for_log_file(self) -> str:
         return f"{'BUYER' if self.dispute_opener_is_buyer else 'SELLER'}_{'MAKER' if self.dispute_opener_is_maker else 'TAKER'}"
 
-    def find_deposit_tx(self, btc_wallet_service):
-        # TODO:
-        raise NotImplementedError("find_deposit_tx not implemented")
+    def find_deposit_tx(self, btc_wallet_service: "BtcWalletService") -> Optional["Transaction"]:
+        if self.cached_deposit_tx or self.deposit_tx_serialized is None:
+            return self.cached_deposit_tx
+        
+        tx = Transaction(btc_wallet_service.params, self.deposit_tx_serialized)
+        self.cached_deposit_tx = tx
+        return self.cached_deposit_tx
     
     # Dispute agents might receive disputes created before activation date.
     # By checking if burningManSelectionHeight is > 0 we can detect if the trade was created with
