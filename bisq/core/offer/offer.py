@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     
 logger = get_logger(__name__)
 
+# TODO: get_json_dict
 class Offer(NetworkPayload, PersistablePayload):
     # We allow max. 1 % difference between own offerPayload price calculation and takers calculation.
     # Market price might be different at maker's and takers side so we need a bit of tolerance.
@@ -46,7 +47,7 @@ class Offer(NetworkPayload, PersistablePayload):
     PRICE_TOLERANCE = 0.01
 
     def __init__(self, offer_payload_base: 'OfferPayloadBase'):
-        self.offer_payload_base = offer_payload_base # JsonExclude
+        self.offer_payload_base = offer_payload_base
         
         self.state_property = SimpleProperty(OfferState.UNKNOWN) # JsonExclude
         self.availability_protocol: Optional['OfferAvailabilityProtocol'] = None # JsonExclude
@@ -55,6 +56,11 @@ class Offer(NetworkPayload, PersistablePayload):
         
         # Used only as cache
         self._currency_code: Optional[str] = None # JsonExclude
+        
+    def get_json_dict(self):
+        return {
+            "offerPayloadBase": self.offer_payload_base,
+        }
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
