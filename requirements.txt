@@ -9,5 +9,6 @@ pycryptodome~=3.11
 psutil~=5.9
 PySocks>=1.7.1
 requests~=2.28
+sortedcontainers~=2.4
 
 pypiwin32; platform_system == "Windows"
