@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.offer.offer_direction import OfferDirection
 
+# TODO: get_json_dict
 @dataclass(kw_only=True)
 class OfferPayloadBase(
     ProtectedStoragePayload, ExpirablePayload, RequiresOwnerIsOnlinePayload, ABC
@@ -76,6 +77,24 @@ class OfferPayloadBase(
     
     def get_owner_node_address(self):
         return self.owner_node_address
+    
+    def get_json_dict(self):
+        return {
+            "id": self.id,
+            "date": self.date,
+            "baseCurrencyCode": self.base_currency_code,
+            "counterCurrencyCode": self.counter_currency_code,
+            "price": self.price,
+            "amount": self.amount,
+            "minAmount": self.min_amount,
+            "paymentMethodId": self.payment_method_id,
+            "makerPaymentAccountId": self.maker_payment_account_id,
+            "ownerNodeAddress": self.owner_node_address,
+            "direction": self.direction,
+            "versionNr": self.version_nr,
+            "protocolVersion": self.protocol_version,
+            "extraDataMap": self.extra_data_map,
+        }
 
     def __str__(self) -> str:
         return (
