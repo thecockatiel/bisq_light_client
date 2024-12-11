@@ -21,7 +21,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
         self._num_open_disputes = SimpleProperty(0)
         self._disputed_trade_ids: Set[str] = set()
         
-        self._persistence_manager.initialize(self._dispute_list, self.get_file_name(), PersistenceManagerSource.PRIVATE)
+        self._persistence_manager.initialize(self._dispute_list, PersistenceManagerSource.PRIVATE, self.get_file_name())
 
     @property
     def persistence_manager(self) -> "PersistenceManager[T]":
