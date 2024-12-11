@@ -26,10 +26,10 @@ logger = get_logger(__name__)
 
 class SupportManager(ABC):
 
-    def __init__(self, p2p_service: "P2PService", wallet_service: "WalletsSetup"):
+    def __init__(self, p2p_service: "P2PService", wallets_setup: "WalletsSetup"):
         super().__init__()
         self.p2p_service = p2p_service
-        self.wallet_service = wallet_service
+        self.wallets_setup = wallets_setup
 
         self.mailbox_message_service = self.p2p_service.mailbox_message_service
 
@@ -294,8 +294,8 @@ class SupportManager(ABC):
     def is_ready(self) -> bool:
         return (self.all_services_initialized and
                 self.p2p_service.is_bootstrapped and
-                self.wallet_service.is_download_complete and
-                self.wallet_service.has_sufficient_peers_for_broadcast)
+                self.wallets_setup.is_download_complete and
+                self.wallets_setup.has_sufficient_peers_for_broadcast)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
