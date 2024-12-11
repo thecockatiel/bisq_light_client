@@ -15,16 +15,16 @@ class DisputeValidationException(Exception):
         return self._dispute
 
 
-class DisputeNodeAddressException(DisputeValidationException):
+class DisputeValidationNodeAddressException(DisputeValidationException):
     def __init__(self, dispute, msg):
         super().__init__(dispute, msg)
 
 
-class DisputeAddressException(DisputeValidationException):
+class DisputeValidationAddressException(DisputeValidationException):
     def __init__(self, dispute, msg):
         super().__init__(dispute, msg)
 
 
-class DisputeReplayException(DisputeValidationException):
+class DisputeValidationReplayException(DisputeValidationException):
     def __init__(self, dispute, msg):
         super().__init__(dispute, msg)
