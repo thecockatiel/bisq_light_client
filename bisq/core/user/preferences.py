@@ -742,6 +742,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             return self.rpc_pw_from_options
         else:
             return self.pref_payload.rpc_pw
+        
+    def get_clear_data_after_days(self):
+        return self.pref_payload.clear_data_after_days
 
     def get_block_notify_port(self) -> int:
         if self.block_notify_port_from_options != Config.UNSPECIFIED_PORT:
@@ -769,6 +772,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
     def is_full_bm_accounting_node(self) -> bool:
         return self.pref_payload.is_full_bm_accounting_node
+    
+    def get_user_has_raised_trade_limit(self):
+        return self.pref_payload.user_has_raised_trade_limit
     
     def get_user_defined_trade_limit(self):
         return self.pref_payload.user_defined_trade_limit
