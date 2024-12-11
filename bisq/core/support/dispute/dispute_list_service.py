@@ -91,7 +91,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
 
         return str(len(set(filter(filter_dispute, self.get_observable_list()))))
 
-    def get_observable_list(self) -> List["Dispute"]:
+    def get_observable_list(self):
         return self._dispute_list.get_observable_list()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
