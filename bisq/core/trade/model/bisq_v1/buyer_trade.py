@@ -11,4 +11,4 @@ class BuyerTrade(Trade, ABC):
         return self._offer.buyer_security_deposit.add(self.get_amount())
     
     def confirm_permitted(self):
-        return not self.dispute_state_property.value.is_arbitrated()
+        return not self.dispute_state_property.value.is_arbitrated

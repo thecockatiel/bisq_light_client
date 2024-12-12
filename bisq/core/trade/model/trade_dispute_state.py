@@ -27,17 +27,20 @@ class TradeDisputeState(IntEnum):
     @staticmethod
     def to_proto_message(state: "TradeDisputeState"):
         return ProtoUtil.proto_enum_from_enum(protobuf.Trade.DisputeState, state)
-        
+    
+    @property
     def is_not_disputed(self):
         return self == TradeDisputeState.NO_DISPUTE
-        
+    
+    @property
     def is_mediated(self):
         return self in [
             TradeDisputeState.MEDIATION_REQUESTED,
             TradeDisputeState.MEDIATION_STARTED_BY_PEER,
             TradeDisputeState.MEDIATION_CLOSED
         ]
-        
+    
+    @property
     def is_arbitrated(self):
         return self in [
             TradeDisputeState.DISPUTE_REQUESTED,
