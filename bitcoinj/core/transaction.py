@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 
-
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
+    from bitcoinj.core.transaction_output import TransactionOutput
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.network_parameters import NetworkParameters
 
@@ -17,6 +17,7 @@ class Transaction:
         self.offset = offset
         self.payload_bytes = payload_bytes
         self.inputs: list["TransactionInput"] = []
+        self.outputs: list["TransactionOutput"] = []
         
         self.updated_at: Optional[datetime] = None
         """
