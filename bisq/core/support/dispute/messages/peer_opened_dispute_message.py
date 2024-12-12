@@ -38,7 +38,7 @@ class PeerOpenedDisputeMessage(DisputeMessage):
         )
 
     def get_trade_id(self) -> str:
-        return self.dispute.get_trade_id()
+        return self.dispute.trade_id
 
     def __str__(self) -> str:
         return (

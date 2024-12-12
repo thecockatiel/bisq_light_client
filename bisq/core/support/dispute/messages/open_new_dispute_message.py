@@ -39,8 +39,7 @@ class OpenNewDisputeMessage(DisputeMessage):
             message_version=message_version,
         )
 
-    @property
-    def trade_id(self):
+    def get_trade_id(self):
         return self.dispute.trade_id
 
     def __str__(self):
