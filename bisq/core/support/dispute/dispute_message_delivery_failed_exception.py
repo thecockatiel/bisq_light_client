@@ -1,0 +1,3 @@
+
+class DisputeMessageDeliveryFailedException(Exception):
+    pass
