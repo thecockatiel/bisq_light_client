@@ -1,0 +1,3 @@
+
+class DisputeAlreadyOpenException(Exception):
+    pass
