@@ -5,11 +5,10 @@ from bisq.core.util.validation.input_validation_result import InputValidationRes
 
 
 class InputValidator:
-    def __init__(self, input_str: str):
-        self.input = input_str
+    def __init__(self):
         self.allow_empty = False
 
-    def validate(self, input_str: str) -> InputValidationResult:
+    def validate(self, input_str: Optional[str]) -> InputValidationResult:
         return self.validate_if_not_empty(input_str)
 
     def validate_if_not_empty(self, input_str: str) -> InputValidationResult:
