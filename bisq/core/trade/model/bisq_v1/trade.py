@@ -194,6 +194,14 @@ class Trade(TradeModel, ABC):
     def btc_wallet_service(self):
         return self._btc_wallet_service
     
+    @property
+    def dispute_state(self):
+        return self.dispute_state_property.value
+    
+    @dispute_state.setter
+    def dispute_state(self, dispute_state: "TradeDisputeState"):
+        self.dispute_state_property.set(dispute_state)
+    
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
     # ///////////////////////////////////////////////////////////////////////////////////////////
