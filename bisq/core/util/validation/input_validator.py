@@ -1,6 +1,7 @@
 from bisq.core.locale.res import Res
-from bisq.core.util.input_validation_result import InputValidationResult
 from typing import Optional
+
+from bisq.core.util.validation.input_validation_result import InputValidationResult
 
 
 class InputValidator:
