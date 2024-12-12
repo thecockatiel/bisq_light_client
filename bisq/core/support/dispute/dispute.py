@@ -80,7 +80,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     chat_messages: ObservableList["ChatMessage"] = field(default_factory=ObservableList)
     dispute_result_property: SimpleProperty[Optional["DisputeResult"]] = field(default_factory=lambda: SimpleProperty(None))
     
-    openning_date: int
+    opening_date: int
     dispute_payout_tx_id: Optional[str] = field(default=None)
     # Added v1.2.0: support type
     support_type: SupportType
@@ -171,7 +171,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             is_support_ticket=self.is_support_ticket,
             chat_message=[m.to_proto_network_envelope().chat_message for m in self.chat_messages],
             is_closed=self.is_closed,
-            opening_date=self.openning_date,
+            opening_date=self.opening_date,
             state=DisputeState.to_proto_message(self.dispute_state_property.value),
             id=self.id,
             burning_man_selection_height=self.burning_man_selection_height,
@@ -196,7 +196,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     @staticmethod
     def from_proto(proto: protobuf.Dispute, core_proto_resolver: "CoreProtoResolver"):
         dispute = Dispute(
-            openning_date=proto.opening_date,
+            opening_date=proto.opening_date,
             trade_id=proto.trade_id,
             trader_id=proto.trader_id,
             dispute_opener_is_buyer=proto.dispute_opener_is_buyer,
@@ -306,7 +306,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         return datetime.fromtimestamp(self.trade_period_end / 1000)
     
     def get_opening_date(self):
-        return datetime.fromtimestamp(self.openning_date / 1000)
+        return datetime.fromtimestamp(self.opening_date / 1000)
     
     @property
     def is_new(self) -> bool:
@@ -407,7 +407,7 @@ class Dispute(NetworkPayload, PersistablePayload):
                 f",\n     chat_messages={self.chat_messages}"
                 f",\n     dispute_result={self.dispute_result_property.value}"
                 f",\n     dispute_payout_tx_id='{self.dispute_payout_tx_id}'"
-                f",\n     openning_date={self.openning_date}"
+                f",\n     opening_date={self.opening_date}"
                 f",\n     support_type={self.support_type}"
                 f",\n     mediators_dispute_result='{self.mediators_dispute_result}'"
                 f",\n     delayed_payout_tx_id='{self.delayed_payout_tx_id}'"
