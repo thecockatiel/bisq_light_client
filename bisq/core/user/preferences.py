@@ -779,6 +779,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def get_user_defined_trade_limit(self):
         return self.pref_payload.user_defined_trade_limit
 
+    def is_pay_fee_in_btc(self) -> bool:
+        return self.pref_payload.pay_fee_in_btc
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
     # ///////////////////////////////////////////////////////////////////////////////////////////
