@@ -18,12 +18,6 @@ class BsqSwapTradePeer(TradePeer):
         self.change = 0
         self.payout = 0
         self.tx: Optional[bytes] = None
-    
-    def get_pub_key_ring(self):
-        return self.pub_key_ring
-    
-    def set_pub_key_ring(self, pub_key_ring: "PubKeyRing"):
-        self.pub_key_ring = pub_key_ring
 
     def to_proto_message(self) -> protobuf.BsqSwapTradePeer:
         builder = protobuf.BsqSwapTradePeer(
