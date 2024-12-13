@@ -787,6 +787,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
     def is_pay_fee_in_btc(self) -> bool:
         return self.pref_payload.pay_fee_in_btc
+    
+    def get_auto_confirm_settings_list(self):
+        return self.pref_payload.auto_confirm_settings_list
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
