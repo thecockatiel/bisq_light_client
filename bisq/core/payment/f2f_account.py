@@ -21,20 +21,27 @@ class F2FAccount(CountryBasedPaymentAccount):
     def get_supported_currencies(self) -> List['TradeCurrency']:
         return F2FAccount.SUPPORTED_CURRENCIES
 
-    def set_contact(self, contact: str) -> None:
+    @property
+    def contact(self) -> str:
+        return cast(F2FAccountPayload, self.payment_account_payload).contact
+    
+    @contact.setter
+    def contact(self, contact: str) -> None:
         cast(F2FAccountPayload, self.payment_account_payload).contact = contact
 
-    def get_contact(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).contact
-
-    def set_city(self, city: str) -> None:
+    @property
+    def city(self) -> str:
+        return cast(F2FAccountPayload, self.payment_account_payload).city
+    
+    @city.setter
+    def city(self, city: str) -> None:
         cast(F2FAccountPayload, self.payment_account_payload).city = city
 
-    def get_city(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).city
-
-    def set_extra_info(self, extra_info: str) -> None:
+    @property
+    def extra_info(self) -> str:
+        return cast(F2FAccountPayload, self.payment_account_payload).extra_info
+    
+    @extra_info.setter
+    def extra_info(self, extra_info: str) -> None:
         cast(F2FAccountPayload, self.payment_account_payload).extra_info = extra_info
 
-    def get_extra_info(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).extra_info
