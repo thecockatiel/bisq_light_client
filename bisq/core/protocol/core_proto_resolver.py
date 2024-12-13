@@ -6,6 +6,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
+from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
@@ -120,8 +121,8 @@ class CoreProtoResolver(ProtoResolver):
                     # return HalCashAccountPayload.from_proto(proto)
                 # case "u_s_postal_money_order_account_payload":
                     # return USPostalMoneyOrderAccountPayload.from_proto(proto)
-                # case "cash_by_mail_account_payload":
-                    # return CashByMailAccountPayload.from_proto(proto)
+                case "cash_by_mail_account_payload":
+                    return CashByMailAccountPayload.from_proto(proto)
                 # case "prompt_pay_account_payload":
                     # return PromptPayAccountPayload.from_proto(proto)
                 # case "advanced_cash_account_payload":
