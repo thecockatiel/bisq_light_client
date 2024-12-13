@@ -48,7 +48,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             
         # Persistable Immutable
         self._offer_id = offer_id
-        self._pub_key_ring = pub_key_ring
+        self.pub_key_ring = pub_key_ring
         # Was changed at v1.9.2 from immutable to mutable
         self._account_id = account_id
         # Persistable Mutable
@@ -123,7 +123,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             trading_peer=self._trading_peer.to_proto_message(),
             offer_id=self._offer_id,
             account_id=self._account_id,
-            pub_key_ring=self._pub_key_ring.to_proto_message(),
+            pub_key_ring=self.pub_key_ring.to_proto_message(),
             change_output_value=self._change_output_value,
             use_savings_wallet=self._use_savings_wallet,
             funds_needed_for_trade_as_long=self._funds_needed_for_trade_as_long,

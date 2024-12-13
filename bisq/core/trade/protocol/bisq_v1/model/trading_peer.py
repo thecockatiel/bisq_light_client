@@ -45,12 +45,6 @@ class TradingPeer(TradePeer):
         # Added in v1.7.0
         self.hash_of_payment_account_payload: Optional[bytes] = None
         self.payment_method_id: Optional[str] = None
-        
-    def get_pub_key_ring(self) -> PubKeyRing:
-        return self.pub_key_ring
-    
-    def set_pub_key_ring(self, pub_key_ring: PubKeyRing) -> None:
-        self.pub_key_ring = pub_key_ring
 
     def to_proto_message(self):
         trading_peer = protobuf.TradingPeer(
