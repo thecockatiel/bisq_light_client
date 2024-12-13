@@ -1,5 +1,7 @@
 import platform
 from utils.dir import user_data_dir
+import random
+import string
 
 def get_sys_info():
     return f"System info: os.name={platform.system()}; os.version={platform.version()}; os.arch={platform.machine()}; platform={platform.platform()}"
@@ -15,3 +17,18 @@ def bytes_as_hex_string(data: bytes) -> str:
 
 def get_system_home_directory():
     return user_data_dir().parent
+
+def get_random_prefix(min_length: int, max_length: int) -> str:
+    length = random.randint(min_length, max_length)
+    
+    char_choices = [
+        string.ascii_letters,
+        string.digits,
+        string.ascii_letters + string.digits
+    ]
+    chars = random.choice(char_choices)
+    result = ''.join(random.choice(chars) for _ in range(length))
+    
+    case_choices = [str.upper, str.lower, lambda x: x]
+    case_transformer = random.choice(case_choices)
+    return case_transformer(result)
