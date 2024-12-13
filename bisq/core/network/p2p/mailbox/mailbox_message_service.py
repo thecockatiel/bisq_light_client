@@ -456,7 +456,7 @@ class MailboxMessageService:
         assert mailbox_item.decrypted_message_with_pub_key is not None, "mailbox_item.decrypted_message_with_pub_key must not be None at process_my_mailbox_item"
         decrypted_message_with_pub_key = mailbox_item.decrypted_message_with_pub_key
         mailbox_message: "MailboxMessage" = decrypted_message_with_pub_key.network_envelope
-        sender = mailbox_message.get_sender_node_address()
+        sender = mailbox_message.sender_node_address
         
         logger.info(
             f"Received a {mailbox_message.__class__.__name__} mailbox message with "

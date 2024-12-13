@@ -48,9 +48,6 @@ class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeA
         ))
         return envelope
 
-    def get_sender_node_address(self) -> NodeAddress:
-        return self.sender_node_address
-
     def __str__(self) -> str:
         return (f"FileTransferPart{{\n"
                 f"     senderNodeAddress='{self.sender_node_address.get_host_name_for_display()}',\n"

@@ -47,6 +47,4 @@ class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMe
             reported_peers={Peer.from_proto(peer) for peer in proto.reported_peers},
             supported_capabilities=Capabilities.from_int_list(proto.supported_capabilities),
         )
-    
-    def get_sender_node_address(self) -> NodeAddress:
-        return self.sender_node_address
+
