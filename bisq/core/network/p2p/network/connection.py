@@ -463,7 +463,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     
 
     def process_senders_node_address_message(self, senders_node_address_message: SendersNodeAddressMessage) -> bool:
-        sender_node_address = senders_node_address_message.get_sender_node_address()
+        sender_node_address = senders_node_address_message.sender_node_address
         assert sender_node_address, "sender_node_address must not be null at SendersNodeAddressMessage"
         
         if self.peers_node_address:
@@ -635,7 +635,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         if self.peers_node_address:
             return self.peers_node_address
         elif isinstance(network_envelope, SendersNodeAddressMessage):
-            return network_envelope.get_sender_node_address()
+            return network_envelope.sender_node_address
         else:
             return None
 

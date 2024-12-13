@@ -244,7 +244,7 @@ class SupportManager(ABC):
             result,
             error_message
         )
-        peers_node_address = support_message.get_sender_node_address()
+        peers_node_address = support_message.sender_node_address
         
         logger.info(
             f"Send AckMessage for {ack_message.source_msg_class_name} to peer {peers_node_address}. "

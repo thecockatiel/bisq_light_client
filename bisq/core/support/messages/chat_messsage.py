@@ -179,9 +179,6 @@ class ChatMessage(SupportMessage):
 
     def get_trade_id(self) -> str:
         return self.trade_id
-    
-    def get_sender_node_address(self):
-        return self.sender_node_address
 
     def get_short_id(self) -> str:
         return get_short_id(self.trade_id)

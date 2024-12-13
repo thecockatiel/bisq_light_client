@@ -60,9 +60,6 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
             uid=proto.uid,
             message_version=-1
         )
-    
-    def get_sender_node_address(self) -> NodeAddress:
-        return self.sender_node_address
 
     def get_ttl(self) -> int:
         return self.TTL
