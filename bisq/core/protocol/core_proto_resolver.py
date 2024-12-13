@@ -6,6 +6,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
+from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from utils.clock import Clock
@@ -57,8 +58,8 @@ class CoreProtoResolver(ProtoResolver):
                             return SepaAccountPayload.from_proto(proto)
                         case "sepa_instant_account_payload":
                             return SepaInstantAccountPayload.from_proto(proto)
-                        # case "f2f_account_payload":
-                            # return F2FAccountPayload.from_proto(proto)
+                        case "f2f_account_payload":
+                            return F2FAccountPayload.from_proto(proto)
                         # case "upi_account_payload":
                             # return UpiAccountPayload.from_proto(proto)
                         # case "paytm_account_payload":
