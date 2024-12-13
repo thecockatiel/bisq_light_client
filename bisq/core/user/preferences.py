@@ -717,6 +717,12 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
         return (Restrictions.get_default_buyer_security_deposit_as_percent() 
                 if value == 0 else value)
+        
+    def get_preferred_trade_currency(self):
+        return self.pref_payload.preferred_trade_currency
+    
+    def get_user_country(self):
+        return self.pref_payload.user_country
 
     def get_bridge_addresses(self) -> Optional[list[str]]:
         return self.pref_payload.bridge_addresses
