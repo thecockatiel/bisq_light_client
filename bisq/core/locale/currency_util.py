@@ -161,3 +161,6 @@ def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
     result.append(CryptoCurrency("DAC", "DACash"))
     result.append(CryptoCurrency("RDD", "ReddCoin"))
     return result
+
+def get_all_fiat_currencies() -> list["FiatCurrency"]:
+    return SORTED_BY_NAME_FIAT_CURRENCIES
