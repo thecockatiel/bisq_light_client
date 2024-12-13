@@ -87,7 +87,7 @@ class Price(MonetaryWrapper):
             
         return rate.fiat_to_coin(convert_fiat)
     
-    def get_currency_code(self):
+    def get_currency_code(self) -> str:
         return self.monetary.currency_code # either of altcoin or fiat have currency_code
     
     def get_value(self):
