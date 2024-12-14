@@ -10,6 +10,7 @@ from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAcc
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
+from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
 from utils.clock import Clock
 
 import proto.pb_pb2 as protobuf
@@ -43,8 +44,8 @@ class CoreProtoResolver(ProtoResolver):
                                     # return NationalBankAccountPayload.from_proto(proto)
                                 # case "same_bank_accunt_payload":
                                     # return SameBankAccountPayload.from_proto(proto)
-                                # case "specific_banks_account_payload":
-                                    # return SpecificBanksAccountPayload.from_proto(proto)
+                                case "specific_banks_account_payload":
+                                    return SpecificBanksAccountPayload.from_proto(proto)
                                 # case "ach_transfer_account_payload":
                                     # return AchTransferAccountPayload.from_proto(proto)
                                 # case "domestic_wire_transfer_account_payload":
