@@ -19,28 +19,36 @@ class SepaAccount(CountryBasedPaymentAccount, BankAccount):
         def create_payload(self) -> PaymentAccountPayload:
             return SepaAccountPayload(self.payment_method.id, self.id, accepted_countries=get_all_sepa_countries())
         
-        def get_bank_id(self):
+        @property
+        def bank_id(self):
             return cast(SepaAccountPayload, self.payment_account_payload).bic
         
-        def set_holder_name(self, holder_name: str):
-            self.payment_account_payload.set_holder_name(holder_name)
+        @property
+        def holder_name(self):
+            return self.payment_account_payload.holder_name
         
-        def get_holder_name(self):
-            return self.payment_account_payload.get_holder_name()
+        @holder_name.setter
+        def holder_name(self, holder_name: str):
+            self.payment_account_payload.holder_name = holder_name
         
-        def set_iban(self, iban: str):
-            cast(SepaAccountPayload, self.payment_account_payload).iban = iban
-        
-        def get_iban(self):
+        @property
+        def iban(self):
             return cast(SepaAccountPayload, self.payment_account_payload).iban
         
-        def set_bic(self, bic: str):
-            cast(SepaAccountPayload, self.payment_account_payload).bic = bic
+        @iban.setter
+        def iban(self, iban: str):
+            cast(SepaAccountPayload, self.payment_account_payload).iban = iban
         
-        def get_bic(self):
+        @property
+        def bic(self):
             return cast(SepaAccountPayload, self.payment_account_payload).bic
         
-        def get_accepted_country_codes(self):
+        @bic.setter
+        def bic(self, bic: str):
+            cast(SepaAccountPayload, self.payment_account_payload).bic = bic
+        
+        @property
+        def accepted_country_codes(self):
             return cast(SepaAccountPayload, self.payment_account_payload).accepted_country_codes
         
         def add_accepted_country_code(self, country_code: str):
@@ -58,4 +66,4 @@ class SepaAccount(CountryBasedPaymentAccount, BankAccount):
             cast(SepaAccountPayload, self.payment_account_payload).revert_changes()
             
         def get_supported_currencies(self) -> list[TradeCurrency]:
-            return self.SUPPORTED_CURRENCIES
+            return SepaAccount.SUPPORTED_CURRENCIES

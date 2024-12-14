@@ -97,7 +97,7 @@ class SwiftAccountPayload(PaymentAccountPayload):
         return self.get_payment_details()
 
     def get_age_witness_input_data(self) -> bytes:
-        return super().get_age_witness_input_data_with_bytes(self.beneficiary_account_nr.encode('utf-8'))
+        return super().get_age_witness_input_data_using_bytes(self.beneficiary_account_nr.encode('utf-8'))
 
     def uses_intermediary_bank(self) -> bool:
         return bool(self.intermediary_swift_code and len(self.intermediary_swift_code) > 0)

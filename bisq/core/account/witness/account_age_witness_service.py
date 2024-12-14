@@ -207,7 +207,7 @@ class AccountAgeWitnessService:
         return witness.get_hash() if witness else None
 
     def get_account_input_data_with_salt(self, payment_account_payload: "PaymentAccountPayload") -> bytes:
-        return payment_account_payload.get_age_witness_input_data() + payment_account_payload.get_salt()
+        return payment_account_payload.get_age_witness_input_data() + payment_account_payload.salt
 
     def get_new_witness(self, payment_account_payload: "PaymentAccountPayload", pub_key_ring: "PubKeyRing") -> "AccountAgeWitness":
         account_input_data_with_salt = self.get_account_input_data_with_salt(payment_account_payload)
@@ -484,7 +484,7 @@ class AccountAgeWitnessService:
         
         peers_account_input_data_with_salt = (
             peers_payment_account_payload.get_age_witness_input_data() + 
-            peers_payment_account_payload.get_salt()
+            peers_payment_account_payload.salt
         )
         hash_bytes = get_sha256_ripemd160_hash(
             peers_account_input_data_with_salt + 
@@ -924,12 +924,12 @@ class AccountAgeWitnessService:
         # Collect accounts that have ownerId to sign unsigned accounts with the same ownderId
         signer_accounts = {
             account for account in self.user.payment_accounts
-            if (account.get_owner_id() is not None and 
+            if (account.owner_id is not None and 
                 self.account_is_signer(self.get_my_witness(account.payment_account_payload)))
         }
         unsigned_accounts = {
             account for account in self.user.payment_accounts
-            if (account.get_owner_id() is not None and
+            if (account.owner_id is not None and
                 not self.signed_witness_service.is_signed_account_age_witness(
                         self.get_my_witness(account.payment_account_payload)
                     )
@@ -939,7 +939,7 @@ class AccountAgeWitnessService:
         # For each signer, sign matching unsigned accounts
         for signer in signer_accounts:
             for unsigned in unsigned_accounts:
-                if signer.get_owner_id() == unsigned.get_owner_id():
+                if signer.owner_id == unsigned.owner_id:
                     try:
                         self.signed_witness_service.self_sign_and_publish_account_age_witness(
                             self.get_my_witness(unsigned.payment_account_payload)

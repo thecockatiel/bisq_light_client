@@ -127,30 +127,39 @@ class PaymentAccount(PersistablePayload, ABC):
     def create_payload(self) -> 'PaymentAccountPayload':
         pass
 
-    def set_salt(self, salt: bytes) -> None:
-        self.payment_account_payload.set_salt(salt)
+    @property
+    def salt(self) -> bytes:
+        return self.payment_account_payload.salt
 
-    def get_salt(self) -> bytes:
-        return self.payment_account_payload.get_salt()
+    @salt.setter
+    def salt(self, salt: bytes) -> None:
+        self.payment_account_payload.salt = salt
+        
+    @property
+    def salt_as_hex(self) -> str: 
+        return self.salt.hex()
+    
+    @salt_as_hex.setter
+    def salt_as_hex(self, salt_as_hex: str) -> None: 
+        self.salt = bytes.fromhex(salt_as_hex)
 
-    def set_salt_as_hex(self, salt_as_hex: str) -> None: 
-        self.set_salt(bytes.fromhex(salt_as_hex))
+    @property
+    def holder_name(self) -> str:
+        return self.payment_account_payload.holder_name
 
-    def get_salt_as_hex(self) -> str: 
-        return self.get_salt().hex()
+    @holder_name.setter
+    def holder_name(self, value: str) -> None:
+        self.payment_account_payload.holder_name = value
 
-    def set_holder_name(self, value: str) -> None:
-        self.payment_account_payload.set_holder_name(value)
+    @property
+    def owner_id(self) -> str:
+        return self.payment_account_payload.owner_id
 
-    def get_holder_name(self) -> str:
-        return self.payment_account_payload.get_holder_name()
-
-    def get_owner_id(self) -> str:
-        return self.payment_account_payload.get_owner_id()
-
+    @property
     def is_country_based_payment_account(self) -> bool:
         return False
     
+    @property
     def has_payment_method_with_id(self, payment_method_id: str):
         return self.payment_method.id == payment_method_id
     

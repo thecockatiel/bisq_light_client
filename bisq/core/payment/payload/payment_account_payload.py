@@ -63,20 +63,24 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     def show_ref_text_warning(self) -> bool:
         return True
 
-    def get_salt(self) -> bytes:
-        assert self.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map"
+    @property
+    def salt(self) -> bytes:
+        assert PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map"
         return binascii.unhexlify(self.exclude_from_json_data_map[self.SALT])
 
-    def set_salt(self, salt: bytes) -> None:
+    @salt.setter
+    def salt(self, salt: bytes) -> None:
         self.exclude_from_json_data_map[self.SALT] = binascii.hexlify(salt).decode()
 
-    def get_holder_name(self) -> str:
+    @property
+    def holder_name(self) -> str:
         return self.exclude_from_json_data_map.get(self.HOLDER_NAME, "")
 
     def get_holder_name_or_prompt_if_empty(self) -> str:
-        return "payment.account.owner.ask" if self.get_holder_name() == "" else self.get_holder_name()
+        return "payment.account.owner.ask" if self.holder_name == "" else self.holder_name
 
-    def set_holder_name(self, holder_name: str) -> None:
+    @holder_name.setter
+    def holder_name(self, holder_name: str) -> None:
         # an empty string must result in the mapping removing the entry.
         if holder_name:
             self.exclude_from_json_data_map[self.HOLDER_NAME] = holder_name
@@ -92,10 +96,11 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         """
         pass
     
-    def get_age_witness_input_data_with_bytes(self, data: bytes) -> bytes:
+    def get_age_witness_input_data_using_bytes(self, data: bytes) -> bytes:
         return self.payment_method_id.encode('utf-8') + data
 
-    def get_owner_id(self) -> Optional[str]:
+    @property
+    def owner_id(self) -> Optional[str]:
         return None
     
     # NOTE: we need to handle this for java compatiblity because of FilterManager calling the methods dynamically and name coming over the wire
