@@ -349,88 +349,88 @@ PaymentMethod.CASH_APP = PaymentMethod.get_dummy_payment_method(PaymentMethod.CA
 PaymentMethod.VENMO = PaymentMethod.get_dummy_payment_method(PaymentMethod.VENMO_ID)
 
 # EUR
-PaymentMethod.SEPA = PaymentMethod(PaymentMethod.SEPA_ID, 6 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.SEPA_INSTANT = PaymentMethod(PaymentMethod.SEPA_INSTANT_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.MONEY_BEAM = PaymentMethod(PaymentMethod.MONEY_BEAM_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.SEPA = PaymentMethod(PaymentMethod.SEPA_ID, 6 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.SEPA_INSTANT = PaymentMethod(PaymentMethod.SEPA_INSTANT_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.MONEY_BEAM = PaymentMethod(PaymentMethod.MONEY_BEAM_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # UK
-PaymentMethod.FASTER_PAYMENTS = PaymentMethod(PaymentMethod.FASTER_PAYMENTS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.FASTER_PAYMENTS = PaymentMethod(PaymentMethod.FASTER_PAYMENTS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Sweden
-PaymentMethod.SWISH = PaymentMethod(PaymentMethod.SWISH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
+PaymentMethod.SWISH = PaymentMethod(PaymentMethod.SWISH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
 
 # US
-PaymentMethod.CLEAR_X_CHANGE = PaymentMethod(PaymentMethod.CLEAR_X_CHANGE_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.CLEAR_X_CHANGE = PaymentMethod(PaymentMethod.CLEAR_X_CHANGE_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
-PaymentMethod.POPMONEY = PaymentMethod(PaymentMethod.POPMONEY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.US_POSTAL_MONEY_ORDER = PaymentMethod(PaymentMethod.US_POSTAL_MONEY_ORDER_ID, 8 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.POPMONEY = PaymentMethod(PaymentMethod.POPMONEY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.US_POSTAL_MONEY_ORDER = PaymentMethod(PaymentMethod.US_POSTAL_MONEY_ORDER_ID, 8 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Canada
-PaymentMethod.INTERAC_E_TRANSFER = PaymentMethod(PaymentMethod.INTERAC_E_TRANSFER_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.INTERAC_E_TRANSFER = PaymentMethod(PaymentMethod.INTERAC_E_TRANSFER_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Global
-PaymentMethod.CASH_DEPOSIT = PaymentMethod(PaymentMethod.CASH_DEPOSIT_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.CASH_BY_MAIL = PaymentMethod(PaymentMethod.CASH_BY_MAIL_ID, 8 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.MONEY_GRAM = PaymentMethod(PaymentMethod.MONEY_GRAM_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK),
-PaymentMethod.WESTERN_UNION = PaymentMethod(PaymentMethod.WESTERN_UNION_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK),
-PaymentMethod.NATIONAL_BANK = PaymentMethod(PaymentMethod.NATIONAL_BANK_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.SAME_BANK = PaymentMethod(PaymentMethod.SAME_BANK_ID, 2 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.SPECIFIC_BANKS = PaymentMethod(PaymentMethod.SPECIFIC_BANKS_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.HAL_CASH = PaymentMethod(PaymentMethod.HAL_CASH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
-PaymentMethod.F2F = PaymentMethod(PaymentMethod.F2F_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
-PaymentMethod.AMAZON_GIFT_CARD = PaymentMethod(PaymentMethod.AMAZON_GIFT_CARD_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.CASH_DEPOSIT = PaymentMethod(PaymentMethod.CASH_DEPOSIT_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.CASH_BY_MAIL = PaymentMethod(PaymentMethod.CASH_BY_MAIL_ID, 8 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.MONEY_GRAM = PaymentMethod(PaymentMethod.MONEY_GRAM_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK)
+PaymentMethod.WESTERN_UNION = PaymentMethod(PaymentMethod.WESTERN_UNION_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK)
+PaymentMethod.NATIONAL_BANK = PaymentMethod(PaymentMethod.NATIONAL_BANK_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.SAME_BANK = PaymentMethod(PaymentMethod.SAME_BANK_ID, 2 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.SPECIFIC_BANKS = PaymentMethod(PaymentMethod.SPECIFIC_BANKS_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.HAL_CASH = PaymentMethod(PaymentMethod.HAL_CASH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
+PaymentMethod.F2F = PaymentMethod(PaymentMethod.F2F_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
+PaymentMethod.AMAZON_GIFT_CARD = PaymentMethod(PaymentMethod.AMAZON_GIFT_CARD_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Trans national
-PaymentMethod.UPHOLD = PaymentMethod(PaymentMethod.UPHOLD_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.REVOLUT = PaymentMethod(PaymentMethod.REVOLUT_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.PERFECT_MONEY = PaymentMethod(PaymentMethod.PERFECT_MONEY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
-PaymentMethod.ADVANCED_CASH = PaymentMethod(PaymentMethod.ADVANCED_CASH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK),
-PaymentMethod.TRANSFERWISE = PaymentMethod(PaymentMethod.TRANSFERWISE_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.TRANSFERWISE_USD = PaymentMethod(PaymentMethod.TRANSFERWISE_USD_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.PAYSERA = PaymentMethod(PaymentMethod.PAYSERA_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.PAXUM = PaymentMethod(PaymentMethod.PAXUM_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.NEFT = PaymentMethod(PaymentMethod.NEFT_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.02")),
-PaymentMethod.RTGS = PaymentMethod(PaymentMethod.RTGS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.IMPS = PaymentMethod(PaymentMethod.IMPS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.UPI = PaymentMethod(PaymentMethod.UPI_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05")),
-PaymentMethod.PAYTM = PaymentMethod(PaymentMethod.PAYTM_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05")),
-PaymentMethod.NEQUI = PaymentMethod(PaymentMethod.NEQUI_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.BIZUM = PaymentMethod(PaymentMethod.BIZUM_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.04")),
-PaymentMethod.PIX = PaymentMethod(PaymentMethod.PIX_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.CAPITUAL = PaymentMethod(PaymentMethod.CAPITUAL_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.CELPAY = PaymentMethod(PaymentMethod.CELPAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.MONESE = PaymentMethod(PaymentMethod.MONESE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.SATISPAY = PaymentMethod(PaymentMethod.SATISPAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.TIKKIE = PaymentMethod(PaymentMethod.TIKKIE_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05")),
-PaymentMethod.VERSE = PaymentMethod(PaymentMethod.VERSE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.STRIKE = PaymentMethod(PaymentMethod.STRIKE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.SWIFT = PaymentMethod(PaymentMethod.SWIFT_ID, 7 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK),
-PaymentMethod.ACH_TRANSFER = PaymentMethod(PaymentMethod.ACH_TRANSFER_ID, 5 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
-PaymentMethod.DOMESTIC_WIRE_TRANSFER = PaymentMethod(PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID, 3 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.UPHOLD = PaymentMethod(PaymentMethod.UPHOLD_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.REVOLUT = PaymentMethod(PaymentMethod.REVOLUT_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.PERFECT_MONEY = PaymentMethod(PaymentMethod.PERFECT_MONEY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
+PaymentMethod.ADVANCED_CASH = PaymentMethod(PaymentMethod.ADVANCED_CASH_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
+PaymentMethod.TRANSFERWISE = PaymentMethod(PaymentMethod.TRANSFERWISE_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.TRANSFERWISE_USD = PaymentMethod(PaymentMethod.TRANSFERWISE_USD_ID, 4 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.PAYSERA = PaymentMethod(PaymentMethod.PAYSERA_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.PAXUM = PaymentMethod(PaymentMethod.PAXUM_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.NEFT = PaymentMethod(PaymentMethod.NEFT_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.02"))
+PaymentMethod.RTGS = PaymentMethod(PaymentMethod.RTGS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.IMPS = PaymentMethod(PaymentMethod.IMPS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.UPI = PaymentMethod(PaymentMethod.UPI_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05"))
+PaymentMethod.PAYTM = PaymentMethod(PaymentMethod.PAYTM_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05"))
+PaymentMethod.NEQUI = PaymentMethod(PaymentMethod.NEQUI_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.BIZUM = PaymentMethod(PaymentMethod.BIZUM_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.04"))
+PaymentMethod.PIX = PaymentMethod(PaymentMethod.PIX_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.CAPITUAL = PaymentMethod(PaymentMethod.CAPITUAL_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.CELPAY = PaymentMethod(PaymentMethod.CELPAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.MONESE = PaymentMethod(PaymentMethod.MONESE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.SATISPAY = PaymentMethod(PaymentMethod.SATISPAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.TIKKIE = PaymentMethod(PaymentMethod.TIKKIE_ID, PaymentMethod.DAY_MS, Coin.parse_coin("0.05"))
+PaymentMethod.VERSE = PaymentMethod(PaymentMethod.VERSE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.STRIKE = PaymentMethod(PaymentMethod.STRIKE_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.SWIFT = PaymentMethod(PaymentMethod.SWIFT_ID, 7 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_MID_RISK)
+PaymentMethod.ACH_TRANSFER = PaymentMethod(PaymentMethod.ACH_TRANSFER_ID, 5 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
+PaymentMethod.DOMESTIC_WIRE_TRANSFER = PaymentMethod(PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID, 3 * PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Japan
-PaymentMethod.JAPAN_BANK = PaymentMethod(PaymentMethod.JAPAN_BANK_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
+PaymentMethod.JAPAN_BANK = PaymentMethod(PaymentMethod.JAPAN_BANK_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
 
 # Australia
-PaymentMethod.AUSTRALIA_PAYID = PaymentMethod(PaymentMethod.AUSTRALIA_PAYID_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
+PaymentMethod.AUSTRALIA_PAYID = PaymentMethod(PaymentMethod.AUSTRALIA_PAYID_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
 
 # Argentina
-PaymentMethod.MERCADO_PAGO = PaymentMethod(PaymentMethod.MERCADO_PAGO_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.MERCADO_PAGO = PaymentMethod(PaymentMethod.MERCADO_PAGO_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # China
-PaymentMethod.ALI_PAY = PaymentMethod(PaymentMethod.ALI_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
-PaymentMethod.WECHAT_PAY = PaymentMethod(PaymentMethod.WECHAT_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
+PaymentMethod.ALI_PAY = PaymentMethod(PaymentMethod.ALI_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
+PaymentMethod.WECHAT_PAY = PaymentMethod(PaymentMethod.WECHAT_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
 
 # Thailand
-PaymentMethod.PROMPT_PAY = PaymentMethod(PaymentMethod.PROMPT_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK),
+PaymentMethod.PROMPT_PAY = PaymentMethod(PaymentMethod.PROMPT_PAY_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_LOW_RISK)
 
 # Russia
-PaymentMethod.SBP = PaymentMethod(PaymentMethod.SBP_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK),
+PaymentMethod.SBP = PaymentMethod(PaymentMethod.SBP_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_HIGH_RISK)
 
 # Altcoins
-PaymentMethod.BLOCK_CHAINS = PaymentMethod(PaymentMethod.BLOCK_CHAINS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK),
+PaymentMethod.BLOCK_CHAINS = PaymentMethod(PaymentMethod.BLOCK_CHAINS_ID, PaymentMethod.DAY_MS, PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
 # Altcoins with 1 hour trade period
-PaymentMethod.BLOCK_CHAINS_INSTANT = PaymentMethod(PaymentMethod.BLOCK_CHAINS_INSTANT_ID, int(timedelta(hours=1).total_seconds()*1000), PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK),
+PaymentMethod.BLOCK_CHAINS_INSTANT = PaymentMethod(PaymentMethod.BLOCK_CHAINS_INSTANT_ID, int(timedelta(hours=1).total_seconds()*1000), PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
 # BsqSwap
 PaymentMethod.BSQ_SWAP = PaymentMethod(PaymentMethod.BSQ_SWAP_ID, 1, PaymentMethod.DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
     
