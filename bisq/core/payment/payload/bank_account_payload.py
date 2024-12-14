@@ -25,7 +25,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         bank_id: Optional[str] = "",
         national_account_id: Optional[str] = "",
         max_trade_period: int = -1,
-        exclude_from_json_data_map: dict[str, str] | None = None,
+        exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_name,
