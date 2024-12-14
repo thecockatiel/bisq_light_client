@@ -16,7 +16,15 @@ class CountryBasedPaymentAccountPayload(PaymentAccountPayload, ABC):
         super().__init__(
             payment_method_name, id, max_trade_period, exclude_from_json_data_map
         )
-        self.country_code = country_code
+        self._country_code = country_code
+    
+    @property
+    def country_code(self) -> str:
+        return self._country_code
+    
+    @country_code.setter
+    def country_code(self, country_code: str):
+        self._country_code = country_code
 
     def get_payment_account_payload_builder(self):
         country_payload = protobuf.CountryBasedPaymentAccountPayload(
