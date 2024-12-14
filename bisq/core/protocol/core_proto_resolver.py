@@ -8,6 +8,7 @@ from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
+from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
@@ -42,8 +43,8 @@ class CoreProtoResolver(ProtoResolver):
                             match proto.country_based_payment_account_payload.bank_account_payload.WhichOneof("message"):
                                 # case "national_bank_account_payload":
                                     # return NationalBankAccountPayload.from_proto(proto)
-                                # case "same_bank_accunt_payload":
-                                    # return SameBankAccountPayload.from_proto(proto)
+                                case "same_bank_accunt_payload":
+                                    return SameBankAccountPayload.from_proto(proto)
                                 case "specific_banks_account_payload":
                                     return SpecificBanksAccountPayload.from_proto(proto)
                                 # case "ach_transfer_account_payload":
