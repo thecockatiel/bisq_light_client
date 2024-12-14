@@ -112,8 +112,9 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
         # We don't add holder_name because we don't want to break age validation if the user recreates an account with
         # slight changes in holder name (e.g. add or remove middle name)
         witness_bytes = self.iban.encode('utf-8') + self.bic.encode('utf-8')
-        return super().get_age_witness_input_data_with_bytes(witness_bytes)
+        return super().get_age_witness_input_data_using_bytes(witness_bytes)
 
-    def get_owner_id(self) -> str:
+    @property
+    def owner_id(self) -> str:
         return self.holder_name
 

@@ -1,17 +1,16 @@
 from bisq.core.locale.currency_util import SORTED_BY_CODE_FIAT_CURRENCIES
 from bisq.core.locale.trade_currency import TradeCurrency
-from bisq.core.payment.bank_account import BankAccount
-from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.swift_account_payload import SwiftAccountPayload
+from bisq.core.payment.payment_account import PaymentAccount
 
-class SwiftAccount(CountryBasedPaymentAccount, BankAccount):
+class SwiftAccount(PaymentAccount):
         SUPPORTED_CURRENCIES: list["TradeCurrency"] = SORTED_BY_CODE_FIAT_CURRENCIES
         
         def __init__(self):
             super().__init__(PaymentMethod.SWIFT)
-            self.set_single_trade_currency(SwiftAccount.SUPPORTED_CURRENCIES[0])
+            self.trade_currencies.extend(SwiftAccount.SUPPORTED_CURRENCIES)
             
         def create_payload(self) -> PaymentAccountPayload:
             return SwiftAccountPayload(self.payment_method.id, self.id)
@@ -29,4 +28,4 @@ class SwiftAccount(CountryBasedPaymentAccount, BankAccount):
             return "payment.swift.info.account"
         
         def get_supported_currencies(self) -> list[TradeCurrency]:
-            return self.SUPPORTED_CURRENCIES
+            return SwiftAccount.SUPPORTED_CURRENCIES

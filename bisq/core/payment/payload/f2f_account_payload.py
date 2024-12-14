@@ -81,5 +81,5 @@ class F2FAccountPayload(CountryBasedPaymentAccountPayload):
         # We use here the city because the address alone seems to be too weak
         contact_bytes = self.contact.encode('utf-8')
         city_bytes = self.city.encode('utf-8')
-        return super().get_age_witness_input_data(contact_bytes + city_bytes)
+        return super().get_age_witness_input_data_using_bytes(contact_bytes + city_bytes)
 

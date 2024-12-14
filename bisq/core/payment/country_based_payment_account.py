@@ -13,19 +13,23 @@ if TYPE_CHECKING:
 class CountryBasedPaymentAccount(PaymentAccount, ABC):
     def __init__(self, payment_method: "PaymentMethod"):
         super().__init__(payment_method)
-        self.country: Optional[Country] = None
+        self._country: Optional[Country] = None
 
-    def get_country(self) -> Optional[Country]:
-        if self.country is None:
+    @property
+    def country(self) -> Optional[Country]:
+        """country getter. potentially expensive operation as it might need to fetch the country from the code"""
+        if self._country is None:
             country_code = cast(CountryBasedPaymentAccountPayload, self.payment_account_payload).country_code
             country = find_country_by_code(country_code)
             if country:
-                self.country = country
-        return self.country
-
-    def set_country(self, country: Country) -> None:
-        self.country = country
+                self._country = country
+        return self._country
+    
+    @country.setter
+    def country(self, country: Country) -> None:
+        self._country = country
         cast(CountryBasedPaymentAccountPayload, self.payment_account_payload).country_code = country.code
-
+        
+    @property
     def is_country_based_payment_account(self) -> bool:
         return True

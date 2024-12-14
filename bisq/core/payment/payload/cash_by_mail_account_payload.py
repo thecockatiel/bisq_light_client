@@ -71,12 +71,14 @@ class CashByMailAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
         # We use here the contact because the address alone seems to be too weak
         contact_bytes = self.contact.encode('utf-8')
         address_bytes = self.postal_address.encode('utf-8')
-        return super().get_age_witness_input_data(contact_bytes + address_bytes)
+        return super().get_age_witness_input_data_using_bytes(contact_bytes + address_bytes)
 
-    def get_owner_id(self) -> str:
+    @property
+    def owner_id(self) -> str:
         return self.contact
 
-    def get_holder_name(self) -> str:
+    @property
+    def holder_name(self) -> str:
         return self.contact
 
 
