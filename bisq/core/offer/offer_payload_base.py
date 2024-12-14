@@ -38,7 +38,7 @@ class OfferPayloadBase(
     protocol_version: int
     pub_key_ring: "PubKeyRing"
     # cache
-    hash: Optional[bytes] = field(default=None, repr=False, hash=False)
+    hash: Optional[bytes] = field(default=None, repr=False, hash=False, init=False) # transient
     extra_data_map: Optional[Dict[str, str]] = field(default=None)
 
     def get_hash(self):
