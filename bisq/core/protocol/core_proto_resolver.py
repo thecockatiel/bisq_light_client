@@ -6,6 +6,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
+from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
@@ -135,8 +136,8 @@ class CoreProtoResolver(ProtoResolver):
                     # return PayseraAccountPayload.from_proto(proto)
                 # case "paxum_account_payload":
                     # return PaxumAccountPayload.from_proto(proto)
-                # case "amazon_gift_card_account_payload":
-                    # return AmazonGiftCardAccountPayload.from_proto(proto)
+                case "amazon_gift_card_account_payload":
+                    return AmazonGiftCardAccountPayload.from_proto(proto)
                 # case "instant_crypto_currency_account_payload":
                     # return InstantCryptoCurrencyPayload.from_proto(proto)
                 # case "capitual_account_payload":
