@@ -1,6 +1,11 @@
-# TODO
+from bisq.common.config.config import Config
 
+
+# TODO
 class WalletsSetup:
+    
+    def __init__(self, config: "Config"):
+        self.params = config.base_currency_network.parameters
     
     @property
     def is_download_complete(self):
