@@ -790,6 +790,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     
     def get_auto_confirm_settings_list(self):
         return self.pref_payload.auto_confirm_settings_list
+    
+    def get_use_custom_withdrawal_tx_fee(self):
+        return self.pref_payload.use_custom_withdrawal_tx_fee
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
