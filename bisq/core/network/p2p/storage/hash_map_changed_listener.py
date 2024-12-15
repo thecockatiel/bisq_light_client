@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Collection
+from typing import TYPE_CHECKING, Collection
 
-from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 
 class HashMapChangedListener(ABC):
     @abstractmethod
