@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.network_parameters import NetworkParameters
     from bitcoinj.core.transaction_confidence import TransactionConfidence
+    from bitcoinj.core.transaction_output import TransactionOutput
 
 logger = get_logger(__name__)
 
@@ -49,3 +50,14 @@ class WalletService(ABC):
     def get_last_block_seen_height(self) -> int:
         raise RuntimeError("WalletService.get_last_block_seen_height Not implemented yet")
     
+    def get_all_recent_transactions(self, include_dead: bool) -> list["Transaction"]:
+        raise RuntimeError("WalletService.get_all_recent_transactions Not implemented yet")
+
+    def is_transaction_output_mine(self, transaction_output: "TransactionOutput") -> bool:
+        raise RuntimeError("WalletService.is_transaction_output_mine Not implemented yet")
+    
+    def is_output_script_convertible_to_address(self, transaction_output: "TransactionOutput") -> bool:
+        raise RuntimeError("WalletService.is_output_script_convertible_to_address Not implemented yet")
+    
+    def get_address_string_from_output(self, transaction_output: "TransactionOutput") -> Optional[str]:
+        raise RuntimeError("WalletService.get_address_string_from_output Not implemented yet")
