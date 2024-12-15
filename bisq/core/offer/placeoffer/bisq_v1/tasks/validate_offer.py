@@ -58,7 +58,7 @@ class ValidateOffer(Task['PlaceOfferModel']):
             self.complete()
         except Exception as e:
             offer.error_message = f"An error occurred.\nError message:\n{str(e)}"
-            self.failed(e)
+            self.failed(exception=e)
 
     @staticmethod
     def check_coin_not_null_or_zero(value: Optional[Coin], name: str) -> None:
