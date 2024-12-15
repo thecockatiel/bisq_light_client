@@ -45,3 +45,7 @@ class WalletService(ABC):
                 self.fee_service.get_tx_fee_per_vbyte()
         logger.info(f"tx fee = {fee.to_friendly_string()}")
         return fee
+    
+    def get_last_block_seen_height(self) -> int:
+        raise RuntimeError("WalletService.get_last_block_seen_height Not implemented yet")
+    
