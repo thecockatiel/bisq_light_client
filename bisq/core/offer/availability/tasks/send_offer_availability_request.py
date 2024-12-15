@@ -48,5 +48,5 @@ class SendOfferAvailabilityRequest(Task[OfferAvailabilityModel]):
             
         except Exception as e:
             self.model.offer.error_message = f"An error occurred.\nError message:\n{str(e)}"
-            self.failed(e)
+            self.failed(exception=e)
 

@@ -7,6 +7,7 @@ from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
     from bisq.core.btc.wallets_setup import WalletsSetup
@@ -61,3 +62,10 @@ class WalletService(ABC):
     
     def get_address_string_from_output(self, transaction_output: "TransactionOutput") -> Optional[str]:
         raise RuntimeError("WalletService.get_address_string_from_output Not implemented yet")
+    
+    def broadcast_tx(self, tx: "Transaction", callback: "TxBroadcasterCallback", timeout: Optional[int] = None):
+        raise RuntimeError("WalletService.broadcast_tx Not implemented yet")
+    
+    @staticmethod
+    def check_all_script_signatures_for_tx(transaction: "Transaction"):
+        raise RuntimeError("WalletService.check_all_script_signatures_for_tx Not implemented yet")    
