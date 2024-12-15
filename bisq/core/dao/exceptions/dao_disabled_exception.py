@@ -1,0 +1,2 @@
+class DaoDisabledException(RuntimeError):
+    pass
