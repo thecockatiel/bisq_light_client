@@ -94,7 +94,7 @@ class CreateOfferService:
         bank_id = PaymentAccountUtil.get_bank_id(payment_account)
         accepted_banks = PaymentAccountUtil.get_accepted_banks(payment_account)
         
-        seller_security_deposit = self.get_seller_security_deposit(buyer_security_deposit)
+        seller_security_deposit = self.get_seller_security_deposit_as_float(buyer_security_deposit)
         tx_fee_estimation = self.get_estimated_fee_and_tx_vsize(amount, direction, 
                                                               buyer_security_deposit, 
                                                               seller_security_deposit)
@@ -202,7 +202,7 @@ class CreateOfferService:
                 if self.offer_util.is_buy_offer(direction)
                 else self.get_seller_security_deposit(amount, seller_security_deposit))
 
-    def get_seller_security_deposit(self, buyer_security_deposit: float) -> float:
+    def get_seller_security_deposit_as_float(self, buyer_security_deposit: float) -> float:
         return (buyer_security_deposit if USE_SYMMETRIC_SECURITY_DEPOSIT 
                 else Restrictions.get_seller_security_deposit_as_percent())
 
