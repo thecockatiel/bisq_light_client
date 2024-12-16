@@ -157,7 +157,7 @@ class OfferBookService:
                 offers.append(offer)
         return offers
 
-    def remove_offer_at_shutdown(self, offer_payload_base: "OfferPayloadBase") -> None:
+    def remove_offer_at_shut_down(self, offer_payload_base: "OfferPayloadBase") -> None:
         self.remove_offer(offer_payload_base, None, None)
 
     @property
