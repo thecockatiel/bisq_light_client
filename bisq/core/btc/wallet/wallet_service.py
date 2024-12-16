@@ -66,6 +66,9 @@ class WalletService(ABC):
     def broadcast_tx(self, tx: "Transaction", callback: "TxBroadcasterCallback", timeout: Optional[int] = None):
         raise RuntimeError("WalletService.broadcast_tx Not implemented yet")
     
+    def is_chain_height_synced_within_tolerance(self) -> bool:
+        return self.wallets_setup.is_chain_height_synced_within_tolerance()
+    
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
         raise RuntimeError("WalletService.check_all_script_signatures_for_tx Not implemented yet")    

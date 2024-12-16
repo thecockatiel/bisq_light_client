@@ -40,3 +40,6 @@ class DaoFacade:
             all_past_param_values.add(DelayedPayoutAddressProvider.BM3_ADDRESS)
 
         return all_past_param_values
+
+    def is_dao_state_ready_and_in_sync(self) -> bool:
+        raise RuntimeError("DaoFacade.is_dao_state_ready_and_in_sync Not implemented yet")
