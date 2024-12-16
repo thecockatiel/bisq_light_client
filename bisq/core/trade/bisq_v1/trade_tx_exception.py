@@ -1,0 +1,2 @@
+class TradeTxException(Exception):
+    pass
