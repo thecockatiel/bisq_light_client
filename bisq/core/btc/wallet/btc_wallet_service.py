@@ -65,3 +65,18 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.swap_trade_entry_to_available_entry Not implemented yet"
         )
+
+    def get_address_entries_for_open_offer(self) -> list[AddressEntry]:
+        raise RuntimeError(
+            "BtcWalletService.get_address_entries_for_open_offer Not implemented yet"
+        )
+        
+    def reset_address_entries_for_open_offer(self) -> None:
+        raise RuntimeError(
+            "BtcWalletService.reset_address_entries_for_open_offer Not implemented yet"
+        )
+    
+    def is_unconfirmed_transactions_limit_hit(self) -> bool:
+        raise RuntimeError(
+            "BtcWalletService.is_unconfirmed_transactions_limit_hit Not implemented yet"
+        )

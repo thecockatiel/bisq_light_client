@@ -29,3 +29,8 @@ class BsqWalletService(WalletService, DaoStateListener):
 
     def commit_tx(self, tx: "Transaction") -> None:
         raise RuntimeError("BsqWalletService.commit_tx Not implemented yet")
+
+    def is_unconfirmed_transactions_limit_hit(self) -> bool:
+        raise RuntimeError(
+            "BsqWalletService.is_unconfirmed_transactions_limit_hit Not implemented yet"
+        )
