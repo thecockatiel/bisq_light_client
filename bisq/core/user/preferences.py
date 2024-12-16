@@ -793,6 +793,12 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     
     def get_use_custom_withdrawal_tx_fee(self):
         return self.pref_payload.use_custom_withdrawal_tx_fee
+    
+    def get_ignore_traders_list(self):
+        return self.pref_payload.ignore_traders_list
+    
+    def is_deny_api_taker(self):
+        return self.pref_payload.deny_api_taker
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
