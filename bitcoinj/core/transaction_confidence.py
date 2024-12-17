@@ -4,12 +4,17 @@ from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
-    from bitcoinj.core.listeners.transaction_confidence_change_reason import TransactionConfidenceChangeReason
-    from bitcoinj.core.listeners.transaction_confidence_changed_listener import TransactionConfidenceChangedListener
+    from bitcoinj.core.listeners.transaction_confidence_change_reason import (
+        TransactionConfidenceChangeReason,
+    )
+    from bitcoinj.core.listeners.transaction_confidence_changed_listener import (
+        TransactionConfidenceChangedListener,
+    )
+
 
 # TODO
 class TransactionConfidence:
-    
+
     def __init__(self) -> None:
         self.depth = 0
         """
@@ -24,11 +29,13 @@ class TransactionConfidence:
         If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
         the depth is zero.
         """
-        self.confidence_type: "TransactionConfidenceType" = TransactionConfidenceType.UNKNOWN
+        self.confidence_type: "TransactionConfidenceType" = (
+            TransactionConfidenceType.UNKNOWN
+        )
         """a general statement of the level of confidence you can have in this transaction."""
-        
+
         self._listeners = ThreadSafeSet["TransactionConfidenceChangedListener"]()
-        
+
     def add_listener(self, listener: "TransactionConfidenceChangedListener") -> None:
         self._listeners.add(listener)
 
@@ -37,14 +44,22 @@ class TransactionConfidence:
 
     def get_depth_future(self, depth: int) -> Future["TransactionConfidence"]:
         result = Future()
-        
+
         if self.depth >= depth:
             result.set_result(self)
         else:
-            def on_change(confidence: "TransactionConfidence", reason: "TransactionConfidenceChangeReason"):
+
+            def on_change(
+                confidence: "TransactionConfidence",
+                reason: "TransactionConfidenceChangeReason",
+            ):
                 if confidence.depth >= depth:
                     self.remove_listener(on_change)
                     result.set_result(confidence)
+
             self.add_listener(on_change)
-        
+
         return result
+
+    def get_depth_in_blocks(self):
+        return self.depth
