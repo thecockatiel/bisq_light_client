@@ -6,6 +6,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.btc.exceptions.transaction_verification_exception import TransactionVerificationException
 from bisq.core.btc.exceptions.wallet_exception import WalletException
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
+from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.send_mailbox_message_listener import (
@@ -273,7 +274,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                             contract.seller_multi_sig_pub_key,
                             dispute_result.arbitrator_pub_key
                         )
-                        committed_disputed_payout_tx = self.btc_wallet_service.maybe_add_network_tx_to_wallet(
+                        committed_disputed_payout_tx = WalletService.maybe_add_network_tx_to_wallet(
                             signed_disputed_payout_tx,
                             self.btc_wallet_service.get_wallet()
                         )
@@ -374,7 +375,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         self.cleanup_retry_map(uid)
 
         committed_dispute_payout_tx = (
-            self.btc_wallet_service.maybe_add_network_tx_to_wallet(
+            WalletService.maybe_add_network_tx_to_wallet(
                 peer_published_payout_tx_message.transaction,
                 self.btc_wallet_service.get_wallet(),
             )

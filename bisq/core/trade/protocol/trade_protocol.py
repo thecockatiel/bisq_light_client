@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.setup.log_setup import get_logger
@@ -214,8 +215,8 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
     def any_phase(self, *expected_phases: "TradePhase") -> "FluentProtocolCondition":
         return FluentProtocolCondition(self.trade_model).add_phases(*expected_phases)
 
-    def precondition(self, pre_condition: bool) -> "FluentProtocolCondition":
-        return FluentProtocolCondition(self.trade_model).add_precondition(pre_condition)
+    def precondition(self, pre_condition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
+        return FluentProtocolCondition(self.trade_model).add_precondition(pre_condition, condition_failed_handler)
 
     def tasks(self, *tasks: type["Task"]) -> "FluentProtocolSetup":
         return FluentProtocolSetup(self, self.trade_model).with_tasks(*tasks)

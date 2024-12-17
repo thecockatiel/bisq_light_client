@@ -65,16 +65,11 @@ class FluentProtocolCondition:
         self.peer = peer
         return self
         
-    def add_precondition(self, precondition: bool) -> "FluentProtocolCondition":
+    def add_precondition(self, precondition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
         assert self.result is None
         self.pre_conditions.add(precondition)
-        return self
-        
-    def add_precondition_with_handler(self, precondition: bool, 
-                                    condition_failed_handler: Callable[[], None]) -> "FluentProtocolCondition":
-        assert self.result is None
-        self.add_precondition(precondition)
-        self.pre_conditions_failed_handler = condition_failed_handler
+        if condition_failed_handler is not None:
+            self.pre_conditions_failed_handler = condition_failed_handler
         return self
 
     def get_result(self) -> "FluentProtocolConditionResult":
