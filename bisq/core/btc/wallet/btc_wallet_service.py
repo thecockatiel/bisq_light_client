@@ -9,6 +9,7 @@ from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.core.transaction import Transaction
 
 logger = get_logger(__name__)
@@ -116,6 +117,16 @@ class BtcWalletService(WalletService, DaoStateListener):
         self, offer_id: str, address: str, context: AddressEntryContext
     ) -> None:
         raise RuntimeError("BtcWalletService.recover_address_entry Not implemented yet")
+
+    def get_arbitrator_address_entry(self) -> "AddressEntry":
+        raise RuntimeError(
+            "BtcWalletService.get_arbitrator_address_entry Not implemented yet"
+        )
+        
+    def get_multi_sig_key_pair(self, trade_id: str, pub_key: bytes) -> "DeterministicKey":
+        raise RuntimeError(
+            "BtcWalletService.get_multi_sig_key_pair Not implemented yet"
+        )
 
     @staticmethod
     def print_tx(trade_prefix: str, tx: "Transaction") -> None:

@@ -75,7 +75,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
         open_offer_manager: "OpenOfferManager",
         dao_facade: "DaoFacade",
         key_ring: "KeyRing",
-        dispute_list_service: DisputeListService,
+        dispute_list_service: "DisputeListService",
         config: "Config",
         price_feed_service: "PriceFeedService",
     ):
