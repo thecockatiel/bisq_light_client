@@ -1,0 +1,2 @@
+class SignatureDecodeException(Exception):
+    pass
