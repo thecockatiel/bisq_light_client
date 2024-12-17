@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Iterable, Optional
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.wallet_service import WalletService
@@ -79,4 +79,9 @@ class BtcWalletService(WalletService, DaoStateListener):
     def is_unconfirmed_transactions_limit_hit(self) -> bool:
         raise RuntimeError(
             "BtcWalletService.is_unconfirmed_transactions_limit_hit Not implemented yet"
+        )
+        
+    def get_address_entries_for_available_balance_stream(self) -> Iterable[AddressEntry]:
+        raise RuntimeError(
+            "BtcWalletService.get_address_entries_for_available_balance_stream Not implemented yet"
         )
