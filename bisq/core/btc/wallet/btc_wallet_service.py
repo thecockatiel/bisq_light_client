@@ -1,10 +1,14 @@
-from typing import Iterable, Optional
+from collections.abc import Callable
+from concurrent.futures import Future
+from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
-from bitcoinj.core.transaction import Transaction
+
+if TYPE_CHECKING:
+    from bitcoinj.core.transaction import Transaction
 
 
 # TODO
@@ -84,4 +88,22 @@ class BtcWalletService(WalletService, DaoStateListener):
     def get_address_entries_for_available_balance_stream(self) -> Iterable[AddressEntry]:
         raise RuntimeError(
             "BtcWalletService.get_address_entries_for_available_balance_stream Not implemented yet"
+        )
+
+    def send_funds(
+        self,
+        from_address: str,
+        to_address: str,
+        receiver_amount: Coin,
+        fee: Coin,
+        aes_key: Optional[bytes] = None,
+        context: Optional[AddressEntryContext] = None,
+        memo: Optional[str] = None,
+        callback: Optional[Callable[[Future["Transaction"]], None]] = None
+    ) -> str:
+        raise RuntimeError("BtcWalletService.send_funds Not implemented yet")
+
+    def reset_address_entries_for_pending_trade(self, offer_id: str) -> None:
+        raise RuntimeError(
+            "BtcWalletService.reset_address_entries_for_pending_trade Not implemented yet"
         )
