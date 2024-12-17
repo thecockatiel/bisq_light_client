@@ -17,6 +17,7 @@ class TransactionConfidence:
 
     def __init__(self) -> None:
         self.depth = 0
+        self.hash: bytes = bytes()
         """
         the depth of the transaction in the best chain in blocks. An unconfirmed block has depth 0.
         
@@ -63,3 +64,9 @@ class TransactionConfidence:
 
     def get_depth_in_blocks(self):
         return self.depth
+    
+    def get_appeared_at_chain_height(self) -> int:
+        raise RuntimeError("TransactionConfidence.get_appeared_at_chain_height Not implemented yet")
+
+    def get_transaction_hash(self) -> bytes:
+        raise RuntimeError("TransactionConfidence.get_transaction_hash Not implemented yet")

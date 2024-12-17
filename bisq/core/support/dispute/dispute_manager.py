@@ -865,13 +865,16 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             
         return None
 
-    def _find_dispute_by_ids(self, trade_id: str, trader_id: int) -> Optional["Dispute"]:
+    def _find_dispute_by_ids(self, trade_id: str, trader_id: Optional[int] = None) -> Optional["Dispute"]:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
             logger.warning("disputes is None") 
             return None
-        return next((d for d in dispute_list if d.trade_id == trade_id and d.trader_id == trader_id), None)
-
+        if trader_id is None:
+            return next((d for d in dispute_list if d.trade_id == trade_id), None)
+        else:
+            return next((d for d in dispute_list if d.trade_id == trade_id and d.trader_id == trader_id), None)
+    
     def find_trade(self, dispute: "Dispute") -> Optional["Trade"]:
         ret_val = self.trade_manager.get_trade_by_id(dispute.trade_id)
         if ret_val is None:
