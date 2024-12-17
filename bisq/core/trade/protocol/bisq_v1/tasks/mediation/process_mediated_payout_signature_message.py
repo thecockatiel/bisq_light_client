@@ -17,7 +17,9 @@ class ProcessMediatedPayoutSignatureMessage(TradeTask):
     def run(self):
         try:
             self.run_intercept_hook()
-            message = cast(MediatedPayoutTxSignatureMessage, self.process_model.trade_message)
+            message = self.process_model.trade_message
+            if not isinstance(message, MediatedPayoutTxSignatureMessage):
+                raise ValueError(f"Invalid message type. expected type: MediatedPayoutTxSignatureMessage, actual type: {type(message)}")
             Validator.check_trade_id(self.process_model.offer_id, message)
             assert message is not None
             
