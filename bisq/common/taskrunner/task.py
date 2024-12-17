@@ -28,7 +28,10 @@ class Task(ABC, Generic[T]):
             raise InterceptTaskException(f"Task intercepted for testing purpose. Task = {self.__class__.__name__}")
 
     def append_to_error_message(self, message: Union[str, Exception]) -> None:
-        self.error_message += f"\n{repr(message)}"
+        if isinstance(message, Exception):
+            self.error_message += f"\n{repr(message)}"
+        else:
+            self.error_message += f"\n{message}"
 
     def complete(self) -> None:
         self.completed = True
