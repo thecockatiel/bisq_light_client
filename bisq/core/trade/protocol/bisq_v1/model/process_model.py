@@ -15,6 +15,7 @@ from utils.data import SimpleProperty
 from bisq.core.payment.payment_account import PaymentAccount
 
 if TYPE_CHECKING:
+    from bisq.core.trade.protocol.trade_message import TradeMessage
     from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
     from bisq.core.trade.trade_manager import TradeManager
     from bisq.core.offer.offer import Offer
@@ -61,7 +62,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
         # Transient/Mutable
         self._take_offer_fee_tx: "Transaction" = None # transient
-        self.trade_message: "Transaction" = None # transient
+        self.trade_message: "TradeMessage" = None # transient
         
         # Added in v1.2.0
         self._delayed_payout_tx_signature: Optional[bytes] = None # transient
