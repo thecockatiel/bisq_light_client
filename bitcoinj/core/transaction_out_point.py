@@ -14,3 +14,4 @@ class TransactionOutPoint:
         self.index = 0
         self.from_tx: "Transaction" = None
         self.connected_output: "TransactionOutput" = None
+        self.hash: bytes = None

@@ -16,6 +16,7 @@ class Transaction:
         self.params = params
         self.offset = offset
         self.payload_bytes = payload_bytes
+        self.lock_time = 0
         self.inputs: list["TransactionInput"] = []
         self.outputs: list["TransactionOutput"] = []
         
