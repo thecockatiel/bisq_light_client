@@ -36,13 +36,13 @@ class FluentProtocolSetup:
                 self.task_runner = TradeTaskRunner(
                     self.trade_model,
                     lambda: self.trade_protocol.handle_task_runner_success(message),
-                    lambda error_message: self.trade_protocol.handle_task_runner_fault(message, error_message)
+                    lambda error_message: self.trade_protocol.handle_task_runner_fault(message=message, error_message=error_message)
                 )
             elif event is not None:
                 self.task_runner = TradeTaskRunner(
                     self.trade_model,
                     lambda: self.trade_protocol.handle_task_runner_success(event),
-                    lambda error_message: self.trade_protocol.handle_task_runner_fault(event, error_message)
+                    lambda error_message: self.trade_protocol.handle_task_runner_fault(message=event, error_message=error_message)
                 )
             else:
                 raise RuntimeError(
