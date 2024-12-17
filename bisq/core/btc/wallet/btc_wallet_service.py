@@ -74,18 +74,20 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.get_address_entries_for_open_offer Not implemented yet"
         )
-        
+
     def reset_address_entries_for_open_offer(self) -> None:
         raise RuntimeError(
             "BtcWalletService.reset_address_entries_for_open_offer Not implemented yet"
         )
-    
+
     def is_unconfirmed_transactions_limit_hit(self) -> bool:
         raise RuntimeError(
             "BtcWalletService.is_unconfirmed_transactions_limit_hit Not implemented yet"
         )
-        
-    def get_address_entries_for_available_balance_stream(self) -> Iterable[AddressEntry]:
+
+    def get_address_entries_for_available_balance_stream(
+        self,
+    ) -> Iterable[AddressEntry]:
         raise RuntimeError(
             "BtcWalletService.get_address_entries_for_available_balance_stream Not implemented yet"
         )
@@ -99,7 +101,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         aes_key: Optional[bytes] = None,
         context: Optional[AddressEntryContext] = None,
         memo: Optional[str] = None,
-        callback: Optional[Callable[[Future["Transaction"]], None]] = None
+        callback: Optional[Callable[[Future["Transaction"]], None]] = None,
     ) -> str:
         raise RuntimeError("BtcWalletService.send_funds Not implemented yet")
 
@@ -107,3 +109,8 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.reset_address_entries_for_pending_trade Not implemented yet"
         )
+
+    def recover_address_entry(
+        self, offer_id: str, address: str, context: AddressEntryContext
+    ) -> None:
+        raise RuntimeError("BtcWalletService.recover_address_entry Not implemented yet")
