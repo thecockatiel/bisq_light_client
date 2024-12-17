@@ -7,6 +7,7 @@ from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bitcoinj.wallet.wallet import Wallet
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
@@ -68,6 +69,14 @@ class WalletService(ABC):
     
     def is_chain_height_synced_within_tolerance(self) -> bool:
         return self.wallets_setup.is_chain_height_synced_within_tolerance()
+    
+    def maybe_add_network_tx_to_wallet(self, serialized_transaction: bytes, wallet: "Wallet") -> "Transaction":
+        raise RuntimeError(
+            "WalletService.maybe_add_network_tx_to_wallet Not implemented yet"
+        )
+        
+    def get_wallet(self) -> "Wallet":
+        raise RuntimeError("WalletService.get_wallet Not implemented yet")
     
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
