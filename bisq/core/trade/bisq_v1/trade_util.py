@@ -1,14 +1,25 @@
 from typing import TYPE_CHECKING, Tuple, Optional
 
+from bisq.common.handlers.error_message_handler import ErrorMessageHandler
+from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.util.utilities import bytes_as_hex_string
 
 if TYPE_CHECKING:
+    from bisq.core.filter.filter_manager import FilterManager
+    from bisq.core.network.p2p.node_address import NodeAddress
+    from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
+    from bisq.core.trade.model.trade_model import TradeModel
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService 
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-# TODO: implement rest?
+def _assert_not_none(value, message: str):
+    """Asserts that the given value is not None."""
+    if value is None:
+        raise ValueError(message)
+    return True
 
+# TODO: implement rest?
 class TradeUtil:
     """This class contains trade utility methods."""
     
@@ -69,4 +80,34 @@ class TradeUtil:
             return None
             
         return multi_sig_address.get_address_string(), payout_address
+    
+    @staticmethod
+    def apply_filter(trade_model: "TradeModel",
+                    filter_manager: "FilterManager",
+                    node_address: "NodeAddress",
+                    payment_account_payload: Optional["PaymentAccountPayload"],
+                    complete: ResultHandler,
+                    failed: ErrorMessageHandler) -> None:
+        """Apply trading filters to check if trade should be allowed."""
+        if filter_manager.is_node_address_banned(node_address):
+            failed(f"Other trader is banned by their node address.\n"
+                                      f"tradingPeerNodeAddress={node_address}")
+        elif filter_manager.is_offer_id_banned(trade_model.get_id()):
+            failed(f"Offer ID is banned.\nOffer ID={trade_model.get_id()}")
+        elif (trade_model.get_offer() is not None and
+              filter_manager.is_currency_banned(trade_model.get_offer().currency_code)):
+            failed(f"Currency is banned.\n"
+                                      f"Currency code={trade_model.get_offer().currency_code}")
+        elif _assert_not_none(trade_model.get_offer()) and filter_manager.is_payment_method_banned(trade_model.get_offer().payment_method):
+            failed(f"Payment method is banned.\n"
+                                      f"Payment method={trade_model.get_offer().payment_method.id}")
+        elif payment_account_payload is not None and filter_manager.are_peers_payment_account_data_banned(payment_account_payload):
+            failed(f"Other trader is banned by their trading account data.\n"
+                                      f"paymentAccountPayload={payment_account_payload.get_payment_details()}")
+        elif filter_manager.require_update_to_new_version_for_trading():
+            failed("Your version of Bisq is not compatible for trading anymore. "
+                                      "Please update to the latest Bisq version at https://bisq.network/downloads.")
+        else:
+            complete()
+
 
