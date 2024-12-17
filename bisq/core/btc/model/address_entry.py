@@ -51,9 +51,9 @@ class AddressEntry(PersistablePayload):
         self.key_pair: Optional["DeterministicKey"] = key_pair # transient
         
         # Only used as cache
-        self.address: Optional["Address"] = None # transient
+        self._address: Optional["Address"] = None # transient
         # Only used as cache
-        self.address_string: Optional["str"] = None # transient
+        self._address_string: Optional["str"] = None # transient
     
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
@@ -102,21 +102,21 @@ class AddressEntry(PersistablePayload):
         return get_short_id(self.offer_id) if self.offer_id else None
 
     def get_address_string(self) -> Optional[str]:
-        if self.address_string is None and self.get_address() is not None:
-            self.address_string = str(self.get_address())
-        return self.address_string
+        if self._address_string is None and self.get_address() is not None:
+            self._address_string = str(self.get_address())
+        return self._address_string
 
     def get_address(self) -> Optional["Address"]:
-        if self.address is None and self.key_pair is not None:
+        if self._address is None and self.key_pair is not None:
             script_type = ScriptType.P2WPKH if self.segwit else ScriptType.P2PKH
-            self.address = Address.from_key(self.key_pair, script_type, CONFIG.base_currency_network.parameters)
-        if self.address is None:
+            self._address = Address.from_key(self.key_pair, script_type, CONFIG.base_currency_network.parameters)
+        if self._address is None:
             logger.warning(f"Address is null at getAddress(). keyPair={self.key_pair}")
-        return self.address
+        return self._address
 
     @property
     def is_address_null(self) -> bool:
-        return self.address is None
+        return self._address is None
 
     @property
     def is_open_offer(self) -> bool:

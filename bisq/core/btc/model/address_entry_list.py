@@ -93,8 +93,8 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         # If we have an address entry which shared the address with another one (shared maker fee offers use case)
         # then we do not swap to available as we need to protect the address of the remaining entry.
         entry_with_same_context_exists = any(
-            entry.address_string == address_entry.address_string and entry.context == address_entry.context
-            for entry in self.entry_set if address_entry.address_string is not None
+            entry.get_address_string() == address_entry.get_address_string() and entry.context == address_entry.context
+            for entry in self.entry_set if address_entry.get_address_string() is not None
         )
         
         if entry_with_same_context_exists:
@@ -152,7 +152,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         raise NotImplementedError("maybe_add_new_address_entry not implemented")
 
     def is_address_not_in_entries(self, address: "Address") -> bool:
-        return not any(address == entry.address for entry in self.entry_set)
+        return not any(address == entry.get_address() for entry in self.entry_set)
 
     def __str__(self) -> str:
         return f"AddressEntryList{{\n     entry_set={self.entry_set}\n}}"
