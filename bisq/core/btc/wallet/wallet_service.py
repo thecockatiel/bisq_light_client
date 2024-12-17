@@ -71,11 +71,6 @@ class WalletService(ABC):
     
     def is_chain_height_synced_within_tolerance(self) -> bool:
         return self.wallets_setup.is_chain_height_synced_within_tolerance()
-    
-    def maybe_add_network_tx_to_wallet(self, serialized_transaction: bytes, wallet: "Wallet") -> "Transaction":
-        raise RuntimeError(
-            "WalletService.maybe_add_network_tx_to_wallet Not implemented yet"
-        )
         
     def get_wallet(self) -> "Wallet":
         raise RuntimeError("WalletService.get_wallet Not implemented yet")
@@ -89,6 +84,12 @@ class WalletService(ABC):
     def get_confidence_for_address_from_block_height(self, address: "Address", target_height: int) -> "TransactionConfidence":
         raise RuntimeError("WalletService.get_confidence_for_address_from_block_height Not implemented yet")
     
+    @staticmethod
+    def maybe_add_network_tx_to_wallet(serialized_transaction: bytes, wallet: "Wallet") -> "Transaction":
+        raise RuntimeError(
+            "WalletService.maybe_add_network_tx_to_wallet Not implemented yet"
+        )
+        
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
         raise RuntimeError("WalletService.check_all_script_signatures_for_tx Not implemented yet")    

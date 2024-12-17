@@ -95,3 +95,16 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
         )
+        
+    def finalize_mediated_payout_tx(self,
+                                    deposit_tx: "Transaction",
+                                    buyer_signature: bytes,
+                                    seller_signature: bytes,
+                                    buyer_payout_amount: Coin,
+                                    seller_payout_amount: Coin,
+                                    buyer_payout_address: str,
+                                    seller_payout_address: str,
+                                    multi_sig_key_pair: "DeterministicKey",
+                                    buyer_multi_sig_pub_key: bytes,
+                                    seller_multi_sig_pub_key: bytes) -> "Transaction":
+        raise RuntimeError("TradeWalletService.finalize_mediated_payout_tx Not implemented yet")
