@@ -1,3 +1,4 @@
+from utils.aio import run_in_thread
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
@@ -12,7 +13,6 @@ from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.setup_listener import SetupListener
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.utils.utils import Utils
-from utils.aio import run_in_thread
 from utils.time import get_time_ms
 from bisq.core.network.p2p.node_address import NodeAddress
 
