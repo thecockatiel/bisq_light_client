@@ -1,11 +1,13 @@
 from datetime import timedelta
-from abc import ABC, abstractmethod
-from typing import List
+from typing import TYPE_CHECKING
 
-from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
+
+if TYPE_CHECKING:
+    from bisq.common.clock_watcher_listener import ClockWatcherListener
+    from bisq.common.timer import Timer
 
 logger = get_logger(__name__)
 
@@ -18,24 +20,9 @@ class ClockWatcher:
 
     IDLE_TOLERANCE_MS = 20000
 
-    class Listener(ABC):
-        @abstractmethod
-        def on_second_tick(self) -> None:
-            pass
-
-        @abstractmethod
-        def on_minute_tick(self) -> None:
-            pass
-
-        def on_missed_second_tick(self, missed_ms: int) -> None:
-            pass
-
-        def on_awake_from_standby(self, missed_ms: int) -> None:
-            pass
-
     def __init__(self):
         self._timer: "Timer" = None
-        self._listeners: set["ClockWatcher.Listener"] = set()
+        self._listeners: set["ClockWatcherListener"] = set()
         self._counter = 0
         self._last_second_tick = 0
 
@@ -78,8 +65,8 @@ class ClockWatcher:
         self._timer = None
         self._counter = 0
 
-    def add_listener(self, listener: "ClockWatcher.Listener"):
+    def add_listener(self, listener: "ClockWatcherListener"):
         self._listeners.add(listener)
 
-    def remove_listener(self, listener: "ClockWatcher.Listener"):
+    def remove_listener(self, listener: "ClockWatcherListener"):
         self._listeners.discard(listener)
