@@ -79,8 +79,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self._raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
         self._change_output_value: int = 0
         self._change_output_address: Optional[str] = None
-        self._use_savings_wallet = False
-        self._funds_needed_for_trade_as_long: int = 0
+        self.use_savings_wallet = False
+        self.funds_needed_for_trade_as_long: int = 0
         self._my_multi_sig_pub_key: Optional[bytes] = None
         # that is used to store temp. the peers address when we get an incoming message before the message is verified.
         # After successful verified we copy that over to the trade.tradingPeerAddress
@@ -125,8 +125,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             account_id=self._account_id,
             pub_key_ring=self.pub_key_ring.to_proto_message(),
             change_output_value=self._change_output_value,
-            use_savings_wallet=self._use_savings_wallet,
-            funds_needed_for_trade_as_long=self._funds_needed_for_trade_as_long,
+            use_savings_wallet=self.use_savings_wallet,
+            funds_needed_for_trade_as_long=self.funds_needed_for_trade_as_long,
             payment_started_message_state=self._payment_started_message_state_property.value.name,
             buyer_payout_amount_from_mediation=self._buyer_payout_amount_from_mediation,
             seller_payout_amount_from_mediation=self._seller_payout_amount_from_mediation,
@@ -163,8 +163,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model = ProcessModel(proto.offer_id, proto.account_id, pub_key_ring, trading_peer)
         
         process_model._change_output_value = proto.change_output_value
-        process_model._use_savings_wallet = proto.use_savings_wallet
-        process_model._funds_needed_for_trade_as_long = proto.funds_needed_for_trade_as_long
+        process_model.use_savings_wallet = proto.use_savings_wallet
+        process_model.funds_needed_for_trade_as_long = proto.funds_needed_for_trade_as_long
         process_model._buyer_payout_amount_from_mediation = proto.buyer_payout_amount_from_mediation
         process_model._seller_payout_amount_from_mediation = proto.seller_payout_amount_from_mediation
 
@@ -228,7 +228,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         return self._payment_account.payment_account_payload
     
     def get_funds_needed_for_trade(self):
-        return Coin.value_of(self._funds_needed_for_trade_as_long)
+        return Coin.value_of(self.funds_needed_for_trade_as_long)
     
     def resolve_take_offer_fee_tx(self, trade: "Trade"):
         if self._take_offer_fee_tx is None:
