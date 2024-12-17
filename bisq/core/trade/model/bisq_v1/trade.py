@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from datetime import datetime
-from google.protobuf.message import Message
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
@@ -202,6 +201,22 @@ class Trade(TradeModel, ABC):
     def dispute_state(self, dispute_state: "TradeDisputeState"):
         self.dispute_state_property.set(dispute_state)
     
+    @property
+    def mediation_result_state(self):
+        return self.mediation_result_state_property.value
+    
+    @mediation_result_state.setter
+    def mediation_result_state(self, state: "MediationResultState"):
+        self.mediation_result_state_property.set(state)
+    
+    @property
+    def refund_result_state(self):
+        return self.refund_result_state_property.value
+    
+    @refund_result_state.setter
+    def refund_result_state(self, state: "RefundResultState"):
+        self.refund_result_state_property.set(state)
+    
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +393,7 @@ class Trade(TradeModel, ABC):
         # If mediated payout is same or more then normal payout we enable otherwise a penalty was applied
         # by mediators and we keep the confirm disabled to avoid that the seller can complete the trade
         # without the penalty.
-        payment_amount_from_mediation = self.process_model._seller_payout_amount_from_mediation
+        payment_amount_from_mediation = self.process_model.seller_payout_amount_from_mediation
         normal_payment_amount = self._offer.seller_security_deposit.value
         return payment_amount_from_mediation < normal_payment_amount
     
