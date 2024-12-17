@@ -5,6 +5,7 @@ from bisq.core.locale.res import Res
 from bisq.core.support.dispute.dispute_result_payout_suggestion import DisputeResultPayoutSuggestion
 from bisq.core.support.dispute.dispute_result_reason import DisputeResultReason
 from bisq.core.support.dispute.dispute_result_winner import DisputeResultWinner
+from bitcoinj.base.coin import Coin
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from utils.data import SimpleProperty
@@ -155,6 +156,12 @@ class DisputeResult(NetworkPayload):
                 case DisputeResultPayoutSuggestion.CUSTOM_PAYOUT:
                     return Res.get("disputeSummaryWindow.result.customPayout")
         return Res.get("popup.headline.error")
+
+    def get_buyer_payout_amount(self):
+        return Coin.value_of(self.buyer_payout_amount)
+
+    def get_seller_payout_amount(self):
+        return Coin.value_of(self.seller_payout_amount)
 
     def __str__(self):
         return (
