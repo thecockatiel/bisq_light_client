@@ -335,3 +335,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     @property
     def dao_facade(self):
         return self._provider.dao_facade
+
+    @property
+    def offer(self):
+        return self._offer
