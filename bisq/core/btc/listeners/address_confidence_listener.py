@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 from bitcoinj.core.transaction_confidence import TransactionConfidence
 
-if TYPE_CHECKING:
-    from email.headerregistry import Address
+if TYPE_CHECKING: 
+    from bitcoinj.core.address import Address
 
 
 class AddressConfidenceListener:
