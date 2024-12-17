@@ -200,7 +200,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         def result_handler(result: "FluentProtocolConditionResult"):
             if not result.is_valid:
                 logger.warning(result.info)
-                self.handle_task_runner_fault(None, result.name, result.info)
+                self.handle_task_runner_fault(message=None, source=result.name, error_message=result.info)
                 
         return FluentProtocol(self).with_condition(condition).with_result_handler(result_handler)
 
@@ -335,7 +335,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
             self.remove_mailbox_message_after_processing(message)
 
     def handle_task_runner_fault(
-        self, message: Union[Optional["TradeMessage"], "FluentProtocolEvent"], source: str, error_message: str
+        self, *, message: Union[Optional["TradeMessage"], "FluentProtocolEvent", None], source: Optional[str] = None, error_message: str
     ) -> None:
         if isinstance(message, FluentProtocolEvent):
             source = message.name
