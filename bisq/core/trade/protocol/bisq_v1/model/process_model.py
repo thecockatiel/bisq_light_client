@@ -47,7 +47,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             trading_peer = TradingPeer()
             
         # Persistable Immutable
-        self._offer_id = offer_id
+        self.offer_id = offer_id
         self.pub_key_ring = pub_key_ring
         # Was changed at v1.9.2 from immutable to mutable
         self._account_id = account_id
@@ -267,7 +267,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             self._trading_peer = TradingPeer()
             changed = True
         return changed
-        
+    
     @property
     def btc_wallet_service(self):
         return self._provider.btc_wallet_service
