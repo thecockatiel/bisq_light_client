@@ -7,6 +7,8 @@ from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bitcoinj.core.address import Address
+    from bisq.core.btc.listeners.address_confidence_listener import AddressConfidenceListener
     from bitcoinj.wallet.wallet import Wallet
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bisq.core.provider.fee.fee_service import FeeService
@@ -77,6 +79,15 @@ class WalletService(ABC):
         
     def get_wallet(self) -> "Wallet":
         raise RuntimeError("WalletService.get_wallet Not implemented yet")
+    
+    def add_address_confidence_listener(self, listener: "AddressConfidenceListener") -> None:
+        raise RuntimeError("WalletService.add_address_confidence_listener Not implemented yet")
+    
+    def remove_address_confidence_listener(self, listener: "AddressConfidenceListener") -> None:
+        raise RuntimeError("WalletService.remove_address_confidence_listener Not implemented yet")
+    
+    def get_confidence_for_address_from_block_height(self, address: "Address", target_height: int) -> "TransactionConfidence":
+        raise RuntimeError("WalletService.get_confidence_for_address_from_block_height Not implemented yet")
     
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):

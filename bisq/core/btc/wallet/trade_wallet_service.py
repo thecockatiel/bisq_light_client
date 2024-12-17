@@ -73,5 +73,25 @@ class TradeWalletService:
             "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
         )
 
-    def broadcast_tx(self, tx: "Transaction", callback: "TxBroadcasterCallback", timeout_sec: Optional[int] = None) -> None:
+    def broadcast_tx(
+        self,
+        tx: "Transaction",
+        callback: "TxBroadcasterCallback",
+        timeout_sec: Optional[int] = None,
+    ) -> None:
         raise RuntimeError("TradeWalletService.broadcast_tx Not implemented yet")
+
+    def sign_mediated_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address_string: str,
+        seller_payout_address_string: str,
+        my_multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "bytes":
+        raise RuntimeError(
+            "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
+        )

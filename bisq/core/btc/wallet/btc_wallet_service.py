@@ -127,6 +127,11 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.get_multi_sig_key_pair Not implemented yet"
         )
+        
+    def reset_coin_locked_in_multi_sig_address_entry(self, offer_id: str) -> None:
+        raise RuntimeError(
+            "BtcWalletService.reset_coin_locked_in_multi_sig_address_entry Not implemented yet"
+        )
 
     @staticmethod
     def print_tx(trade_prefix: str, tx: "Transaction") -> None:
