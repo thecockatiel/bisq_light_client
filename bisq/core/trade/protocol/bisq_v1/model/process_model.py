@@ -81,15 +81,15 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self._change_output_address: Optional[str] = None
         self.use_savings_wallet = False
         self.funds_needed_for_trade_as_long: int = 0
-        self._my_multi_sig_pub_key: Optional[bytes] = None
+        self.my_multi_sig_pub_key: Optional[bytes] = None
         # that is used to store temp. the peers address when we get an incoming message before the message is verified.
         # After successful verified we copy that over to the trade.tradingPeerAddress
         self.temp_trading_peer_node_address: Optional["NodeAddress"] = None
         
         # Added in v.1.1.6
-        self._mediated_payout_tx_signature: Optional[bytes] = None
-        self._buyer_payout_amount_from_mediation: int = 0
-        self._seller_payout_amount_from_mediation: int = 0
+        self.mediated_payout_tx_signature: Optional[bytes] = None
+        self.buyer_payout_amount_from_mediation: int = 0
+        self.seller_payout_amount_from_mediation: int = 0
         
         # Was added at v1.9.2
         self._payment_account: Optional["PaymentAccount"] = None
@@ -128,8 +128,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             use_savings_wallet=self.use_savings_wallet,
             funds_needed_for_trade_as_long=self.funds_needed_for_trade_as_long,
             payment_started_message_state=self._payment_started_message_state_property.value.name,
-            buyer_payout_amount_from_mediation=self._buyer_payout_amount_from_mediation,
-            seller_payout_amount_from_mediation=self._seller_payout_amount_from_mediation,
+            buyer_payout_amount_from_mediation=self.buyer_payout_amount_from_mediation,
+            seller_payout_amount_from_mediation=self.seller_payout_amount_from_mediation,
             burning_man_selection_height=self._burning_man_selection_height,
         )
         
@@ -143,14 +143,14 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             builder.raw_transaction_inputs.extend(ProtoUtil.collection_to_proto(self._raw_transaction_inputs, protobuf.RawTransactionInput))
         if self._change_output_address:
             builder.change_output_address = self._change_output_address
-        if self._my_multi_sig_pub_key:
-            builder.my_multi_sig_pub_key = self._my_multi_sig_pub_key
+        if self.my_multi_sig_pub_key:
+            builder.my_multi_sig_pub_key = self.my_multi_sig_pub_key
         if self.temp_trading_peer_node_address:
             builder.temp_trading_peer_node_address.CopyFrom(
                 self.temp_trading_peer_node_address.to_proto_message()
             )
-        if self._mediated_payout_tx_signature:
-            builder.mediated_payout_tx_signature = self._mediated_payout_tx_signature
+        if self.mediated_payout_tx_signature:
+            builder.mediated_payout_tx_signature = self.mediated_payout_tx_signature
         if self._payment_account:
             builder.payment_account.CopyFrom(self._payment_account.to_proto_message())
 
@@ -165,8 +165,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model._change_output_value = proto.change_output_value
         process_model.use_savings_wallet = proto.use_savings_wallet
         process_model.funds_needed_for_trade_as_long = proto.funds_needed_for_trade_as_long
-        process_model._buyer_payout_amount_from_mediation = proto.buyer_payout_amount_from_mediation
-        process_model._seller_payout_amount_from_mediation = proto.seller_payout_amount_from_mediation
+        process_model.buyer_payout_amount_from_mediation = proto.buyer_payout_amount_from_mediation
+        process_model.seller_payout_amount_from_mediation = proto.seller_payout_amount_from_mediation
 
         # nullable
         process_model._take_offer_fee_tx_id = ProtoUtil.string_or_none_from_proto(proto.take_offer_fee_tx_id)
@@ -177,9 +177,9 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model._raw_transaction_inputs = raw_transaction_inputs
         
         process_model._change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
-        process_model._my_multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.my_multi_sig_pub_key)
+        process_model.my_multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.my_multi_sig_pub_key)
         process_model.temp_trading_peer_node_address = NodeAddress.from_proto(proto.temp_trading_peer_node_address) if proto.HasField('temp_trading_peer_node_address') else None
-        process_model._mediated_payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.mediated_payout_tx_signature)
+        process_model.mediated_payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.mediated_payout_tx_signature)
 
         payment_started_message_state = MessageState.from_string(ProtoUtil.string_or_none_from_proto(proto.payment_started_message_state))
         process_model.set_payment_started_message_state(payment_started_message_state)
