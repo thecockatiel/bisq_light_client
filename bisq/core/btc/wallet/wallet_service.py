@@ -92,3 +92,7 @@ class WalletService(ABC):
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
         raise RuntimeError("WalletService.check_all_script_signatures_for_tx Not implemented yet")    
+
+    @staticmethod
+    def maybe_add_self_tx_to_wallet(transaction: "Transaction", wallet: "Wallet"):
+        raise RuntimeError("WalletService.maybe_add_self_tx_to_wallet Not implemented yet")
