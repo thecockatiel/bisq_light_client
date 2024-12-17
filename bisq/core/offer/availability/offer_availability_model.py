@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.taskrunner.task_model import TaskModel
+from bisq.core.trade.statistics.trade_statistics_manager import TradeStatisticsManager
 
 if TYPE_CHECKING:
     from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import DelayedPayoutTxReceiverService
@@ -11,9 +12,6 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
     from bisq.common.crypto.pub_key_ring import PubKeyRing
 
-# TODO: implement TradeStatisticsManager and DelayedPayoutTxReceiverService if necessary
-# But its omitted for now.
-
 class OfferAvailabilityModel(TaskModel):
     def __init__(
         self,
@@ -22,7 +20,7 @@ class OfferAvailabilityModel(TaskModel):
         p2p_service: 'P2PService',
         user: 'User',
         mediator_manager: 'MediatorManager',
-        # trade_statistics_manager: 'TradeStatisticsManager'
+        trade_statistics_manager: 'TradeStatisticsManager',
         delayed_payout_tx_receiver_service: 'DelayedPayoutTxReceiverService',
         is_taker_api_user: bool
     ):
@@ -32,6 +30,7 @@ class OfferAvailabilityModel(TaskModel):
         self.p2p_service = p2p_service
         self.user = user
         self.mediator_manager = mediator_manager
+        self.trade_statistics_manager = trade_statistics_manager,
         # Added in v 1.9.7
         self.delayed_payout_tx_receiver_service = delayed_payout_tx_receiver_service
         # Added in v1.5.5
