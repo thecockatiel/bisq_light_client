@@ -34,11 +34,12 @@ class SimpleProperty(Generic[T]):
             self._value = value
             self._notify_listeners(SimplePropertyChangeEvent(old_value, value))
 
-    def add_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
+    def add_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> Callable[[], None]:
         if listener not in self._listeners:
             self._listeners.add(listener)
             if self.on_add_listener:
                 self.on_add_listener(len(self._listeners))
+        return lambda: self.remove_listener(listener)
 
     def remove_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
         if listener in self._listeners:
