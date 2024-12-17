@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from bitcoinj.base.coin import Coin
 
 
 if TYPE_CHECKING:
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction import Transaction
@@ -54,3 +55,23 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.get_cloned_transaction Not implemented yet"
         )
+
+    def trader_sign_and_finalize_disputed_payout_tx(
+        self,
+        deposit_tx_serialized: bytes,
+        arbitrator_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_address_string: str,
+        seller_address_string: str,
+        traders_multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+        arbitrator_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
+        )
+
+    def broadcast_tx(self, tx: "Transaction", callback: "TxBroadcasterCallback", timeout_sec: Optional[int] = None) -> None:
+        raise RuntimeError("TradeWalletService.broadcast_tx Not implemented yet")
