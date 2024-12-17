@@ -1,0 +1,3 @@
+
+class TransactionVerificationException(Exception):
+    pass
