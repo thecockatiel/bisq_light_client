@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 class SetupPayoutTxListener(TradeTask):
 
-    def __init__(self, task_handler: TaskRunner["Trade"], model: "Trade"):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
         self.trade_state_unsub: Optional[Callable[[], None]] = None
         self.confidence_listener: "AddressConfidenceListener" = None
