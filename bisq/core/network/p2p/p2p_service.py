@@ -132,7 +132,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
         if self.keep_alive_manager is not None:
             self.keep_alive_manager.shut_down()
 
-        if self.network_ready_property is not None:
+        if self.network_ready_property.value is not None:
             self.network_ready_property.remove_all_listeners()
 
         if self.network_node is not None:

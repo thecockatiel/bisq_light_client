@@ -815,7 +815,7 @@ class AccountAgeWitnessService:
         )
 
     def is_buyer_winner(self, dispute: "Dispute") -> bool:
-        if not dispute.is_closed or not dispute.dispute_result_property:
+        if not dispute.is_closed or not dispute.dispute_result_property.value:
             return False
         return dispute.dispute_result_property.value.winner == DisputeResultWinner.BUYER
 
