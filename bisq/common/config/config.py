@@ -36,6 +36,7 @@ class Config:
     referral_id: str = field(default="")
     use_dev_mode: bool = field(default=False)
     use_dev_privilege_keys: bool = field(default=False)
+    dump_statistics: bool = field(default=False)
     ignore_dev_msg: bool = field(default=False)
     providers: list[str] = field(default_factory=list)
     app_data_dir: Path = field(default_factory=user_data_dir)
@@ -53,6 +54,8 @@ class Config:
     rpc_block_notification_port: int = field(default=UNSPECIFIED_PORT)
     full_dao_node: bool = field(default=False, init=False)
     full_dao_node_option_set_explicitly: bool = field(default=False, init=False)
+    dump_delayed_payout_txs: bool = field(default=False)
+    allow_faulty_delayed_txs: bool = field(default=False)
     republish_mailbox_entries: bool = field(default=False)
     is_bm_full_node: bool = field(default=False, init=False)
 
