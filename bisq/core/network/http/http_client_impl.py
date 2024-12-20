@@ -18,19 +18,29 @@ class HttpClientImpl(HttpClient):
     def __init__(
         self, base_url: str = None, socks5_proxy_provider: Socks5ProxyProvider = None
     ):
-        self.base_url = base_url.rstrip("/") if base_url else None
+        self._base_url = base_url.rstrip("/") if base_url else None
         self.socks5_proxy_provider = socks5_proxy_provider
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
         super().__init__()
         self.session = Session()
+        
+    @property
+    def base_url(self):
+        return self._base_url
+    
+    @base_url.setter
+    def base_url(self, value: str):
+        self._base_url = value.rstrip("/") if value else None
 
     def shut_down(self):
         try:
             self.session.close()
         except Exception as e:
             logger.error(f"Error while closing http client session: {e}")
+        finally:
+            self.session = Session()
 
     def get(
         self,
