@@ -111,7 +111,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
                 username=socks5_proxy.username,
                 password=socks5_proxy.password,
                 rdns=True,
-                verify_ssl=verify_ssl,
+                ssl=verify_ssl,
             )
             client_timeout = (
                 timeout

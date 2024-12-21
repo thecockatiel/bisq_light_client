@@ -59,7 +59,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2)
         self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3)
 
-        self.shut_down_in_progress = False
+        self.__shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
         self.node_address_property: SimpleProperty[Optional["NodeAddress"]] = SimpleProperty()
         self.server: Server = None
@@ -121,7 +121,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             try:
                 socket.close()
             except Exception as e:
-                if not self.shut_down_in_progress:
+                if not self.__shut_down_in_progress:
                     logger.error("Error at closing socket", exc_info=e)
 
             existing_connection.send_message(network_envelope)
@@ -303,8 +303,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     def shut_down(self, shutdown_complete_handler: Optional[Callable[[], None]] = None) -> None:
         logger.info("NetworkNode shutdown started")
 
-        if not self.shut_down_in_progress:
-            self.shut_down_in_progress = True
+        if not self.__shut_down_in_progress:
+            self.__shut_down_in_progress = True
 
             if self.server:
                 self.server.shut_down()

@@ -1,9 +1,5 @@
-from datetime import timedelta
-import os
-from utils.aio import as_future, get_asyncio_loop
-from bisq.common.user_thread import UserThread
+from utils.aio import get_asyncio_loop
 from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
-from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 import logging
 from bisq.common.setup.log_setup import (
@@ -55,7 +51,6 @@ def run_with_reactor(f):
 
         def async_wrapper():
             try:
-                # UserThread.run_periodically(lambda: logger.info("I am alive"), timedelta(seconds=10))
                 future: asyncio.Future = asyncio.ensure_future(f(*args, **kwargs))
 
                 def on_done(f: asyncio.Future):
@@ -172,4 +167,3 @@ class TestTorNetworkNode(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    # TODO: check why test does not exit after shutdown
