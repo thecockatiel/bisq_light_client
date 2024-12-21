@@ -168,3 +168,6 @@ electrum_min/*.so
 electrum_min/*.so.*
 electrum_min/*.dll
 electrum_min/*.dylib
+
+.testdata
+testdata
