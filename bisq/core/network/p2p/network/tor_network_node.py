@@ -47,7 +47,7 @@ class TorNetworkNode(NetworkNode):
         self.shut_down_timeout_timer: "Timer" = None
         self.tor: Optional["Tor"] = None
         self.tor_mode = tor_mode
-        self.socks_proxy: Optional["Socks5Proxy"] = None
+        self._socks_proxy: Optional["Socks5Proxy"] = None
         self.shut_down_in_progress = False
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="StartTor")
 
@@ -74,11 +74,15 @@ class TorNetworkNode(NetworkNode):
         sock.connect((peer_node_address.host_name, peer_node_address.port))
         return sock
     
-    def get_socks_proxy(self) -> Socks5Proxy:
-        if not self.socks_proxy:
+    @property
+    def socks_proxy(self) -> Socks5Proxy:
+        if not self._socks_proxy:
             assert self.tor, "Tor instance not ready at get_socks_proxy"
             assert self.tor._config, "Tor config not ready at get_socks_proxy"
-            self.socks_proxy = Socks5Proxy("127.0.0.1", self.tor._config.SOCKSPort)
+            self._socks_proxy = Socks5Proxy("127.0.0.1", self.tor._config.SOCKSPort[0])
+        return self._socks_proxy
+    
+    def get_socks_proxy(self) -> Socks5Proxy:
         return self.socks_proxy
 
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None):
