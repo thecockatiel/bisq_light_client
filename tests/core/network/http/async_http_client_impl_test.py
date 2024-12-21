@@ -112,7 +112,6 @@ class TestTorNetworkNode(unittest.TestCase):
             await asyncio.gather(
                 self._shutdown_node(self.node1),
             )
-            shutil.rmtree(self.base_dir)
 
         get_asyncio_loop().run_until_complete(shutdown())
 
