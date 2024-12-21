@@ -10,7 +10,7 @@ _T = TypeVar("T")
 _R = TypeVar("R")
 
 
-def get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
+def _get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
     """Returns the asyncio event loop that is *running in this thread*, if any."""
     try:
         return asyncio.get_running_loop()
@@ -25,7 +25,7 @@ def get_asyncio_loop() -> asyncio.AbstractEventLoop:
     if loop := _asyncio_event_loop:
         return loop
     if AS_LIB_USER_I_WANT_TO_MANAGE_MY_OWN_ASYNCIO_LOOP:
-        if loop := get_running_loop():
+        if loop := _get_running_loop():
             return loop
     raise Exception("event loop not created yet")
 
@@ -50,7 +50,7 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
             # In case electrum is being used as a library, there might be other
             # event loops in use besides ours. To minimise interfering with those,
             # if there is a loop running in the current thread, return that:
-            running_loop = get_running_loop()
+            running_loop = _get_running_loop()
             if running_loop is not None:
                 return running_loop
             # Otherwise, return our global loop:
