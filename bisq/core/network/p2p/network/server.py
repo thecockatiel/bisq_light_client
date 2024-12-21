@@ -101,4 +101,4 @@ class Server(Callable[[], None]):
             logger.warning("stopped already called at shutdown")
 
     def is_server_active(self) -> bool:
-        return self.server_thread.is_alive()
+        return self.server_thread.is_alive() and self.server_socket and not self.server_socket._closed

@@ -1,4 +1,4 @@
-from utils.aio import run_in_thread
+from utils.aio import as_future, run_in_thread
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
@@ -48,8 +48,7 @@ class TorNetworkNode(NetworkNode):
         self.tor: Optional["Tor"] = None
         self.tor_mode = tor_mode
         self._socks_proxy: Optional["Socks5Proxy"] = None
-        self.shut_down_in_progress = False
-        self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="StartTor")
+        self.__shutdown_in_progress = False
 
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         await run_in_thread(self.tor_mode.do_rolling_backup)
@@ -86,18 +85,17 @@ class TorNetworkNode(NetworkNode):
         return self.socks_proxy
 
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None):
-        logger.info("TorNetworkNode shutdown started")
-        if self.shut_down_in_progress:
+        logger.info(f"TorNetworkNode shutdown started at {get_time_ms()}")
+        if self.__shutdown_in_progress:
             logger.warning("We got shutDown already called")
             return
         
-        self.shut_down_in_progress = True
+        self.__shutdown_in_progress = True
 
         def timeout_handler():
-            logger.error("A timeout occurred at shutDown")
+            logger.error(f"A timeout occurred at shutDown at {get_time_ms()}")
             if shut_down_complete_handler:
                 shut_down_complete_handler()
-            self.executor.shutdown(wait=False)
 
         self.shut_down_timeout_timer = UserThread.run_after(
             timeout_handler, 
@@ -107,10 +105,9 @@ class TorNetworkNode(NetworkNode):
         def complete_handler():
             try:
                 if self.tor:
-                    self.tor.quit() # NOTE: we didn't wait for the tor to quit
+                    as_future(self.tor.quit()) # NOTE: we didn't wait for the tor to quit
                     self.tor = None
-                    logger.info("Tor shutdown completed")
-                self.executor.shutdown(wait=False)
+                    logger.info(f"Tor shutdown completed at {get_time_ms()}")
             except Exception as e:
                 logger.error("Shutdown torNetworkNode failed with exception", exc_info=e)
             finally:
