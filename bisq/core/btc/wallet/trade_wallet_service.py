@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 # TODO
 class TradeWalletService:
+    MIN_DELAYED_PAYOUT_TX_FEE = Coin.value_of(1000)
 
     def get_wallet_tx(self, tx_id: bytes) -> "Transaction":
         raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
