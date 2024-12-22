@@ -4,6 +4,7 @@ from requests import Session, Response
 
 import bisq.common.version as Version
 from bisq.core.network.http.http_client import HttpClient
+from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import get_logger
@@ -18,13 +19,15 @@ class HttpClientImpl(HttpClient):
     def __init__(
         self, base_url: str = None, socks5_proxy_provider: Socks5ProxyProvider = None
     ):
-        self._base_url = base_url.rstrip("/") if base_url else None
+        self._base_url = None
+        self._base_url_host_is_onion = False
         self.socks5_proxy_provider = socks5_proxy_provider
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
         super().__init__()
         self.session = Session()
+        self.base_url = base_url
         
     @property
     def base_url(self):
@@ -32,7 +35,13 @@ class HttpClientImpl(HttpClient):
     
     @base_url.setter
     def base_url(self, value: str):
-        self._base_url = value.rstrip("/") if value else None
+        parsed = parse_and_validate_url(value)
+        if parsed:
+            self._base_url = value.rstrip('/')
+            self._base_url_host_is_onion = parsed.hostname.endswith(".onion")
+        else:
+            self._base_url = None
+            self._base_url_host_is_onion = False
 
     def shut_down(self):
         try:
@@ -94,6 +103,10 @@ class HttpClientImpl(HttpClient):
         ts = get_time_ms()
 
         try:
+            if self._base_url_host_is_onion:
+                verify_ssl = False
+            else:
+                verify_ssl = True
             response: Response = self.session.request(
                 http_method,
                 self.base_url + url,
@@ -102,7 +115,7 @@ class HttpClientImpl(HttpClient):
                 headers=headers,
                 allow_redirects=True,
                 proxies=proxies,
-                verify=False if ".onion" in self.base_url else True,
+                verify=verify_ssl,
             )
             self.session.cookies.clear()
 
