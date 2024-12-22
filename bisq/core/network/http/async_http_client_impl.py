@@ -30,7 +30,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
-        self.current_task: "asyncio.Task" = None
+        self.current_task: "asyncio.Task[str]" = None
         self.default_timeout = timeout
 
     @property
