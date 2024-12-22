@@ -1,5 +1,4 @@
 import asyncio
-import ssl
 from typing import Literal
 import uuid
 import aiohttp
@@ -7,6 +6,7 @@ from aiohttp_socks import ProxyType, ProxyConnector
 
 import bisq.common.version as Version
 from bisq.core.network.http.async_http_client import AsyncHttpClient
+from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import get_logger
@@ -25,13 +25,15 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         timeout: asyncio.TimeoutError = None,
     ):
         super().__init__()
-        self._base_url = base_url.rstrip("/") if base_url else None
+        self._base_url = None
+        self._base_url_host_is_onion = False
         self.socks5_proxy_provider = socks5_proxy_provider
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
         self.current_task: "asyncio.Task[str]" = None
         self.default_timeout = timeout
+        self.base_url = base_url
 
     @property
     def base_url(self):
@@ -39,7 +41,13 @@ class AsyncHttpClientImpl(AsyncHttpClient):
 
     @base_url.setter
     def base_url(self, value: str):
-        self._base_url = value.rstrip("/") if value else None
+        parsed = parse_and_validate_url(value)
+        if parsed:
+            self._base_url = value.rstrip('/')
+            self._base_url_host_is_onion = parsed.hostname.endswith(".onion")
+        else:
+            self._base_url = None
+            self._base_url_host_is_onion = False
 
     def shut_down(self):
         if self.current_task:
@@ -99,8 +107,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
             socks5_proxy = self._get_socks5_proxy()
 
         if socks5_proxy:
-            is_tor = ".onion" in self.base_url
-            if is_tor:
+            if self._base_url_host_is_onion:
                 verify_ssl = False
             else:
                 verify_ssl = True
