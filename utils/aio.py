@@ -4,7 +4,7 @@ from collections.abc import Callable
 from concurrent.futures import Future as ConcurrentFuture
 import platform
 import threading
-from typing import Optional, Tuple, Union, Coroutine, TypeVar 
+from typing import Any, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
 _T = TypeVar("T")
 _R = TypeVar("R")
@@ -62,10 +62,14 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
     return loop
 
 
-def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T]]) -> asyncio.Future[_T]:
+def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
+    if isinstance(d, Deferred):
+        return d.asFuture(get_asyncio_loop())
     if isinstance(d, ConcurrentFuture):
         return asyncio.wrap_future(d, loop=get_asyncio_loop())
-    return d.asFuture(get_asyncio_loop())
+    if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
+        return asyncio.ensure_future(d, loop=get_asyncio_loop())
+    raise TypeError(f"unexpected type {type(d)}")
 
 
 def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
