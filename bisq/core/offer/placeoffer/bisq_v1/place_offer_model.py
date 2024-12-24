@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
+from bisq.common.taskrunner.task_model import TaskModel
 
 
 if TYPE_CHECKING:
     from bisq.asset.coin import Coin
-    from bisq.common.taskrunner.task_model import TaskModel
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.dao.burningman.btc_fee_receiver_service import BtcFeeReceiverService

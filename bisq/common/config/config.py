@@ -117,7 +117,7 @@ class Config:
             if value is not None
         }  # get only present options
 
-        options.update(vars(cli_opts))
+        options.update(cli_opts)
 
         config_file: Path = None
         cli_has_config_file_opt = options["configFile"] is not None

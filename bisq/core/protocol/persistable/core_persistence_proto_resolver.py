@@ -20,6 +20,7 @@ from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.user.preferences_payload import PreferencesPayload
 from bisq.core.user.user_payload import UserPayload
 import proto.pb_pb2 as protobuf
+from utils.di import DependencyProvider
 
 if TYPE_CHECKING:
     from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
@@ -30,9 +31,9 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
-    def __init__(self, clock: "Clock", btc_wallet_service: "BtcWalletService", network_proto_resolver: "NetworkProtoResolver"):
+    def __init__(self, clock: "Clock", btc_wallet_service_provider: DependencyProvider["BtcWalletService"], network_proto_resolver: "NetworkProtoResolver"):
         super().__init__(clock)
-        self.btc_wallet_service = btc_wallet_service
+        self.btc_wallet_service_provider = btc_wallet_service_provider
         self.network_proto_resolver = network_proto_resolver
         
     def from_proto(self, proto: protobuf.PersistableEnvelope) -> "PersistableEnvelope":
@@ -48,7 +49,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             case "address_entry_list":
                 return AddressEntryList.from_proto(proto.address_entry_list)
             case "tradable_list":
-                return TradableList.from_proto(proto.tradable_list, self, self.btc_wallet_service)
+                return TradableList.from_proto(proto.tradable_list, self, self.btc_wallet_service_provider.get())
             case "arbitration_dispute_list":
                 return ArbitrationDisputeList.from_proto(proto.arbitration_dispute_list, self)
             case "mediation_dispute_list":
