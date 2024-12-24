@@ -1,12 +1,10 @@
-from datetime import timedelta
-import os
-from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.aio import as_future, get_asyncio_loop
-import logging
 from bisq.common.setup.log_setup import configure_logging, get_logger, set_custom_log_level
 from utils.random import next_random_int
 from pathlib import Path
+
+from utils.test import run_with_reactor, teardown_reactor
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath("testdata")
@@ -19,53 +17,18 @@ from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 import unittest
 import asyncio
 
-import tempfile
 import shutil
-from functools import wraps
 from twisted.internet import reactor
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
-from bisq.core.network.p2p.network.tor_mode import TorMode
-from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.protocol.network.core_network_proto_resolver import CoreNetworkProtoResolver
 from utils.clock import Clock
 
 logger = get_logger(__name__)
 
-disabled = False
-
-def run_with_reactor(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        error_container = []
-        def handle_error(e: Exception):
-            error_container.append(e)
-            reactor.stop()
-
-        def async_wrapper():
-            try: 
-                UserThread.run_periodically(lambda: logger.info("I am alive"), timedelta(seconds=10))
-                future: asyncio.Future = asyncio.ensure_future(f(*args, **kwargs))
-                def on_done(f: asyncio.Future):
-                    try:
-                        f.result()
-                        reactor.stop()
-                    except Exception as e:
-                        handle_error(e)
-                future.add_done_callback(on_done)
-            except Exception as e:
-                handle_error(e)
-
-        reactor.callWhenRunning(async_wrapper)
-        reactor.run()
-        
-        if error_container:
-            raise error_container[0] from error_container[0]
-
-    return wrapper
-
+disabled = True
 
 @unittest.skipIf(disabled, "Disabled test because it requires running 2 Tor instances")
 class TestTorNetworkNode(unittest.TestCase):
@@ -80,9 +43,6 @@ class TestTorNetworkNode(unittest.TestCase):
         class CustomBridgeAddressProvider(BridgeAddressProvider):
             def get_bridge_addresses(self):
                 return [
-                    "webtunnel [2001:db8:a62f:3205:a2b8:80f2:8491:9497]:443 CDCF334F257ACAD04A2C6CD9725B7FC686160912 url=https://meskio.net/eCDFZe3boSv+b2iqHiaY4ZgPxXBc ver=0.0.1",
-                    "webtunnel [2001:db8:5985:711a:a60e:61a0:1260:b42e]:443 58DA67BD879E9239FCD4A590E25118BB2118CB3C url=https://fdmf.ch/QCjqMFJumKjWgB7BFaOc04dN ver=0.0.1",
-                    "webtunnel [2001:db8:bcbf:d7d2:facb:e9d6:cf06:ab93]:443 8C70788C18CCF7528848890E0FFD21FAE2133C1E url=https://atlantico-dev.arrecife.link/OddoMptjadoEtoDWtl67oC4q ver=0.0.1"
                 ]      
         
         # Create separate TorMode instances with different hidden service directories
@@ -114,8 +74,7 @@ class TestTorNetworkNode(unittest.TestCase):
     def tearDown(self):
         async def shutdown():
             # Cancel all pending calls
-            for delayed_call in reactor.getDelayedCalls():
-                delayed_call.cancel()
+            teardown_reactor()
             # Shutdown nodes
             await asyncio.gather(
                 self._shutdown_node(self.node1),

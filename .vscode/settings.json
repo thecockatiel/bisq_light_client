@@ -3,6 +3,8 @@
     "-v",
     "-s",
     "tests",
+    "-t",
+    "${workspaceFolder}",
     "-p",
     "*_test.py"
   ],

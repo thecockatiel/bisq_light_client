@@ -1,7 +1,8 @@
-
 import asyncio
 from collections.abc import Callable
 from concurrent.futures import Future as ConcurrentFuture
+from functools import partial
+import inspect
 import platform
 import threading
 from typing import Any, Optional, Tuple, Union, Coroutine, TypeVar
@@ -74,6 +75,20 @@ def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any,Any,_T]
 
 def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
     return Deferred.fromFuture(asyncio.ensure_future(f))
+
+def is_async_callable(obj):
+    """Check if an object is an async callable"""
+    if hasattr(obj, '__call__'):
+        # Check if it's a coroutine function
+        if asyncio.iscoroutinefunction(obj):
+            return True
+        # Check if it's an async __call__ method
+        if inspect.iscoroutinefunction(getattr(obj, '__call__')):
+            return True
+        # Handle partial functions
+        if isinstance(obj, partial):
+            return is_async_callable(obj.func)
+    return False
 
 async def run_in_thread(func: Callable[...,_T], *args: _R):
     '''Run a function in a separate thread, and await its completion.'''

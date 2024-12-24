@@ -23,7 +23,7 @@ class UserThread:
 
     @classmethod
     def execute(cls, runnable: Callable[[], None]):
-        cls.run_after(runnable, timedelta(microseconds=0))
+        return cls.run_after(runnable, timedelta(microseconds=0))
 
     @classmethod
     def run_after_random_delay(cls, runnable: Callable[[], None], min_delay: timedelta, max_delay: timedelta) -> Timer:
