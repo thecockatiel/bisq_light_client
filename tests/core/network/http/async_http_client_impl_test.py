@@ -7,8 +7,9 @@ from bisq.common.setup.log_setup import (
     get_logger,
     set_custom_log_level,
 )
-from utils.random import next_random_int
 from pathlib import Path
+
+from utils.test import run_with_reactor, teardown_reactor
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath(".testdata")
@@ -21,15 +22,11 @@ from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 import unittest
 import asyncio
 
-import shutil
-from functools import wraps
 from twisted.internet import reactor
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
-from bisq.core.network.p2p.network.tor_mode import TorMode
-from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.protocol.network.core_network_proto_resolver import (
     CoreNetworkProtoResolver,
 )
@@ -37,40 +34,7 @@ from utils.clock import Clock
 
 logger = get_logger(__name__)
 
-disabled = False
-
-
-def run_with_reactor(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        error_container = []
-
-        def handle_error(e: Exception):
-            error_container.append(e)
-            reactor.stop()
-
-        def async_wrapper():
-            try:
-                future: asyncio.Future = asyncio.ensure_future(f(*args, **kwargs))
-
-                def on_done(f: asyncio.Future):
-                    try:
-                        f.result()
-                        reactor.stop()
-                    except Exception as e:
-                        handle_error(e)
-
-                future.add_done_callback(on_done)
-            except Exception as e:
-                handle_error(e)
-
-        reactor.callWhenRunning(async_wrapper)
-        reactor.run()
-
-        if error_container:
-            raise error_container[0] from error_container[0]
-
-    return wrapper
+disabled = True
 
 
 @unittest.skipIf(disabled, "Disabled test because it requires running Tor instances")
@@ -108,8 +72,7 @@ class TestTorNetworkNode(unittest.TestCase):
     def tearDown(self):
         async def shutdown():
             # Cancel all pending calls
-            for delayed_call in reactor.getDelayedCalls():
-                delayed_call.cancel()
+            teardown_reactor()
             # Shutdown nodes
             await asyncio.gather(
                 self._shutdown_node(self.node1),
