@@ -1,10 +1,10 @@
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.backends import default_backend
-from bisq.common.config.config import CONFIG
 from bisq.common.crypto.key_entry import KeyEntry
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.file.file_util import rolling_backup
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 class KeyStorage:
-    def __init__(self, storage_dir = CONFIG.storage_dir):
+    def __init__(self, storage_dir: Path):
         self.storage_dir = check_dir(storage_dir)
 
     def all_key_files_exist(self) -> bool:

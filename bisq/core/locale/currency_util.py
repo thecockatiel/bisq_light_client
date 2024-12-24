@@ -1,7 +1,6 @@
 from bisq.asset.asset import Asset
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.config.config import CONFIG
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.currency_data import (
     COUNTRY_TO_CURRENCY_CODE_MAP,
@@ -81,7 +80,8 @@ def set_base_currency_code(currency_code: str):
     BASE_CURRENCY_CODE = currency_code
     
 def setup():
-    set_base_currency_code(CONFIG.base_currency_network.currency_code)
+    from global_container import GLOBAL_CONTAINER
+    set_base_currency_code(GLOBAL_CONTAINER.config.base_currency_network.currency_code)
     
 MATURE_MARKET_CURRENCIES = tuple(sorted([
     FiatCurrency("EUR"),

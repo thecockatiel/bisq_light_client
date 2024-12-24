@@ -6,16 +6,14 @@ from typing import Union
 
 def user_data_dir():
     path = None
-    if "BISQ_LIGHT_DIR" in os.environ:
-        path = os.environ["BISQ_LIGHT_DIR"]
-    elif 'ANDROID_DATA' in os.environ:
+    if 'ANDROID_DATA' in os.environ:
         raise Exception ("Android not supported yet")
     elif os.name == 'posix':
-        path = os.path.join(os.environ["HOME"], ".bisq_light")
+        path = os.environ["HOME"]
     elif "APPDATA" in os.environ:
-        path = os.path.join(os.environ["APPDATA"], "bisq_light")
+        path = os.environ["APPDATA"]
     elif "LOCALAPPDATA" in os.environ:
-        path = os.path.join(os.environ["LOCALAPPDATA"], "bisq_light")
+        path = os.environ["LOCALAPPDATA"]
     else:
         raise Exception("No home directory found in environment variables.")
     return Path(path)

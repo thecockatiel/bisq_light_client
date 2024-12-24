@@ -5,7 +5,6 @@ import platform
 import re
 import tarfile
 from typing import TYPE_CHECKING, Optional, Union
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
 from bisq.core.network.utils.utils import Utils
@@ -36,6 +35,7 @@ class NewTor(TorMode):
     """
     def __init__(
         self,
+        app_data_dir: Path,
         tor_dir: Path,
         torrc_file: Optional[Path] = None,
         torrc_options: str = "",
@@ -47,7 +47,7 @@ class NewTor(TorMode):
         self.torrc_options = torrc_options
         self.bridge_address_provider = bridge_address_provider
         self.use_bridges_file = use_bridges_file
-        self.app_data_dir = CONFIG.app_data_dir
+        self.app_data_dir = app_data_dir
 
     async def get_tor(self) -> Optional["Tor"]:
         ts1 = get_time_ms()
@@ -241,7 +241,7 @@ class NewTor(TorMode):
         tor_bin_dir.mkdir(parents=True, exist_ok=True)
         
         try:
-            downloaded_file = await download_file(tor_bin_url)
+            downloaded_file = await download_file(self.app_data_dir, tor_bin_url)
         except Exception as e:
             logger.error(f"Failed to download tor binary: {e}")
             return None

@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from bisq.common.config.config import CONFIG
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 
 if TYPE_CHECKING:

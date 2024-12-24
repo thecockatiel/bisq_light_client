@@ -3,8 +3,8 @@ import sys
 import traceback
 import threading
 from types import TracebackType
+from typing import TYPE_CHECKING
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 
 from bisq.common.ascii_logo import show_ascii_logo
@@ -15,6 +15,10 @@ from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandle
 from bisq.common.user_thread import UserThread
 from bisq.common.util.profiler import Profiler
 import bisq.common.version as Version
+
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
+
 
 logger = get_logger(__name__)
 
@@ -49,15 +53,13 @@ class CommonSetup:
         threading.excepthook = lambda args: exception_handler(args.exc_type, args.exc_value, args.exc_traceback, args.thread)
 
     @staticmethod
-    def setup(graceful_shutdown_handler: GracefulShutDownHandler):
-        # log is setup in log_setup when imported
-        # config is also set up globally as CONFIG
+    def setup(config: "Config", graceful_shutdown_handler: GracefulShutDownHandler):
         show_ascii_logo()
-        Version.set_base_crypto_network_id(CONFIG.base_currency_network.value)
+        Version.set_base_crypto_network_id(config.base_currency_network.value)
         Version.print_version()
         Profiler.print_system_load()
         CommonSetup.setup_sig_int_handlers(graceful_shutdown_handler)
-        DevEnv.setup(CONFIG)
+        DevEnv.setup(config)
 
     @staticmethod
     def start_periodic_tasks():

@@ -1,9 +1,9 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from pathlib import Path
 import re
 
-from bisq.common.config.config import CONFIG
 from bisq.common.util.utilities import get_sys_info
 
 DEFAULT_LOG_LEVEL=logging.INFO
@@ -79,7 +79,11 @@ class CustomRotatingFileHandler(RotatingFileHandler):
             return f"{file_root}_{rotation_num}.{file_ext}"
         return default_name
 
-def configure_logging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
+def configure_logging(log_file: Path, log_level="INFO"):
+    if not log_file:
+        raise ValueError("log_file must be set at configure_logging")
+    
+    log_level = getattr(logging, log_level.upper(), DEFAULT_LOG_LEVEL)
     # Create formatter with pattern matching Java configuration
     formatter = logging.Formatter(
         fmt="%(asctime)s [%(threadName)s] %(levelname)-5s %(name)-15s: %(message)s",
@@ -98,7 +102,7 @@ def configure_logging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
         file_handler.setLevel(DEFAULT_LOG_LEVEL)
         bisq_logger.addHandler(file_handler)
         
-    bisq_logger.setLevel(CONFIG.log_level) # default is info
+    bisq_logger.setLevel(log_level) # default is info
     
     if log_file:
         bisq_logger.info(f"Log file at: {log_file}")
@@ -108,4 +112,6 @@ def configure_logging(log_file=CONFIG.app_data_dir.joinpath("bisq.log")):
     get_logger("utils.tor").setLevel(logging.WARN)
 
 def set_custom_log_level(level):
+    if isinstance(level, str):
+        level = getattr(logging, level.upper(), DEFAULT_LOG_LEVEL)
     bisq_logger.setLevel(level)

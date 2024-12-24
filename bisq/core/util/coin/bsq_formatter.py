@@ -1,5 +1,4 @@
 from typing import Union
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.res import Res
@@ -13,6 +12,7 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.monetary_format import MonetaryFormat 
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.governance.param.param_type import ParamType
+from global_container import GLOBAL_CONTAINER
 
 logger = get_logger(__name__)
 
@@ -24,7 +24,7 @@ class BsqFormatter(CoinFormatter):
     
     def __init__(self):
         super().__init__()
-        self.btc_coin_format = CONFIG.base_currency_network.get_monetary_format()
+        self.btc_coin_format = GLOBAL_CONTAINER.config.base_currency_network.parameters.get_monetary_format()
         self.monetary_format = MonetaryFormat().with_shift(6).code(6, "BSQ").with_min_decimals(2)
         self.immutable_coin_formatter = ImmutableCoinFormatter(self.monetary_format)
         self.amount_format: DecimalFormat = None
