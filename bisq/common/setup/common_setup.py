@@ -58,7 +58,7 @@ class CommonSetup:
                 failure = event['failure']
                 exception = failure.value
                 exception_handler(type(exception), exception, failure.getTracebackObject())
-        log.addObserver(on_twisted_log)
+        log.startLoggingWithObserver(on_twisted_log, 0)
 
     @staticmethod
     def setup(config: "Config", graceful_shutdown_handler: GracefulShutDownHandler):
