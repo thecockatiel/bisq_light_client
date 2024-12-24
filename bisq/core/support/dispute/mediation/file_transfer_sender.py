@@ -2,7 +2,6 @@ from datetime import timedelta
 from pathlib import Path
 import zipfile
 import uuid
-from bisq.common.config.config import CONFIG
 from bisq.common.file.file_util import does_file_contain_keyword
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.ack_message import AckMessage
@@ -12,6 +11,7 @@ from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.common.setup.log_setup import get_logger
+from global_container import GLOBAL_CONTAINER
 
 logger = get_logger(__name__)
 
@@ -30,7 +30,7 @@ class FileTransferSender(FileTransferSession):
         super().__init__(
             network_node, peer_node_address, trade_id, trader_id, trader_role, callback
         )
-        self.zip_file_path = CONFIG.app_data_dir.joinpath(self.zip_id + ".zip")
+        self.zip_file_path = GLOBAL_CONTAINER.config.app_data_dir.joinpath(self.zip_id + ".zip")
         self.is_test = is_test
     
     def create_zip_file_to_send(self):
@@ -40,7 +40,7 @@ class FileTransferSender(FileTransferSession):
         try:
             with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 # Get all .log files in app data directory
-                log_files = [f for f in CONFIG.app_data_dir.iterdir() if f.is_file()]
+                log_files = [f for f in GLOBAL_CONTAINER.config.app_data_dir.iterdir() if f.is_file()]
                 
                 for log_file in log_files:
                     filename = log_file.name

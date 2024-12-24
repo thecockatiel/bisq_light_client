@@ -1,4 +1,3 @@
-from collections import defaultdict
 import concurrent.futures
 from io import BufferedReader
 import socket as Socket
@@ -20,7 +19,7 @@ from google.protobuf.message import Error as InvalidProtocolBufferException
 import concurrent
 
 from bisq.common.capabilities import Capabilities
-from bisq.common.config.config import CONFIG
+from bisq.common.config.config import Config
 from bisq.common.has_capabilities import HasCapabilities
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.user_thread import UserThread
@@ -61,9 +60,17 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     PERMITTED_MESSAGE_SIZE = 200 * 1024  # 200 kb
     MAX_PERMITTED_MESSAGE_SIZE = 10 * 1024 * 1024  # 10 MB (425 offers resulted in about 660 kb, mailbox msg will add more to it) offer has usually 2 kb, mailbox 3kb.
-    # TODO decrease limits again after testing
+    # JAVA TODO decrease limits again after testing
     SOCKET_TIMEOUT_SEC = 240
     SHUTDOWN_TIMEOUT_SEC = 0.1
+    _config: Config = None
+    
+    @property
+    def config(self):
+        if Connection._config is None:
+            from global_container import GLOBAL_CONTAINER
+            Connection._config = GLOBAL_CONTAINER.config
+        return Connection._config
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
@@ -141,9 +148,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         try:
             now = get_time_ms()
             elapsed = now - self.last_send_timestamp
-            if elapsed < Connection.get_send_msg_throttle_trigger():
-                logger.debug(f"We got 2 sendMessage requests in less than {Connection.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {Connection.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
-                time.sleep(Connection.get_send_msg_throttle_sleep())
+            if elapsed < self.get_send_msg_throttle_trigger():
+                logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
+                time.sleep(self.get_send_msg_throttle_sleep())
             self.last_send_timestamp = now
             if not self.stopped:
                 self.proto_output_stream.write_envelope(network_envelope)
@@ -208,37 +215,33 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.message_time_stamps.append(now)
 
         # clean list
-        while len(self.message_time_stamps) > Connection.get_msg_throttle_per_10_sec():
+        while len(self.message_time_stamps) > self.get_msg_throttle_per_10_sec():
             self.message_time_stamps.remove(0)
 
-        return (self._violates_throttle_limit(now, 1, Connection.get_msg_throttle_per_sec()) or
-                self._violates_throttle_limit(now, 10, Connection.get_msg_throttle_per_10_sec()))
+        return (self._violates_throttle_limit(now, 1, self.get_msg_throttle_per_sec()) or
+                self._violates_throttle_limit(now, 10, self.get_msg_throttle_per_10_sec()))
 
-    @staticmethod
-    def get_msg_throttle_per_sec():
-        if CONFIG:
-            return CONFIG.msg_throttle_per_sec
+    def get_msg_throttle_per_sec(self):
+        if self.config:
+            return self.config.msg_throttle_per_sec
         else:
             return 200
     
-    @staticmethod
-    def get_msg_throttle_per_10_sec():
-        if CONFIG:
-            return CONFIG.msg_throttle_per_10_sec
+    def get_msg_throttle_per_10_sec(self):
+        if self.config:
+            return self.config.msg_throttle_per_10_sec
         else:
             return 1000
 
-    @staticmethod
-    def get_send_msg_throttle_sleep():
-        if CONFIG:
-            return CONFIG.send_msg_throttle_sleep
+    def get_send_msg_throttle_sleep(self):
+        if self.config:
+            return self.config.send_msg_throttle_sleep
         else:
             return 50
 
-    @staticmethod
-    def get_send_msg_throttle_trigger():
-        if CONFIG:
-            return CONFIG.send_msg_throttle_trigger
+    def get_send_msg_throttle_trigger(self):
+        if self.config:
+            return self.config.send_msg_throttle_trigger
         else:
             return 20
 

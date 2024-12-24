@@ -3,7 +3,6 @@ import asyncio
 from datetime import timedelta
 from typing import TYPE_CHECKING, List
 
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.support.dispute.dispute_manager import DisputeManager
@@ -22,6 +21,7 @@ from bisq.core.support.dispute.agent.dispute_agent_lookup_map import (
 )
 from bisq.core.locale.res import Res
 import bisq.common.version as Version
+from global_container import GLOBAL_CONTAINER
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
@@ -253,7 +253,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
     ) -> Future[List["Transaction"]]:
         # in regtest mode, simulate a delay & failure obtaining the blockchain transactions
         # since we cannot request them in regtest anyway.  this is useful for checking failure scenarios
-        if not CONFIG.base_currency_network.is_mainnet():
+        if not GLOBAL_CONTAINER.config.base_currency_network.is_mainnet():
             future = Future()
             UserThread.run_after(lambda: future.set_result([]), timedelta(seconds=5))
             return future

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import base64
 
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.config.config import CONFIG
+from bisq.common.config.config import Config
 from bisq.common.config.config_file_editor import ConfigFileEditor
 from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.common.crypto.hash import get_sha256_hash
@@ -52,19 +52,21 @@ class FilterManager:
                  p2p_service: "P2PService",
                  key_ring: "KeyRing",
                  user: "User",
+                 config: "Config",
                  providers_repository: "ProvidersRepository",
                  ban_filter: "BanFilter",
                  ignore_dev_msg: bool = None,
                  use_dev_privilege_keys: bool = None):
         if ignore_dev_msg is None:
-            ignore_dev_msg = CONFIG.ignore_dev_msg
+            ignore_dev_msg = config.ignore_dev_msg
         if use_dev_privilege_keys is None:
-            use_dev_privilege_keys = CONFIG.use_dev_privilege_keys
+            use_dev_privilege_keys = config.use_dev_privilege_keys
         
         self.p2p_service = p2p_service
         self.key_ring = key_ring
         self.user = user
-        self.config_file_editor = ConfigFileEditor(CONFIG.config_file)
+        self.config = config
+        self.config_file_editor = ConfigFileEditor(config.config_file)
         self.providers_repository = providers_repository
         self.ignore_dev_msg: bool = ignore_dev_msg
         
@@ -104,7 +106,7 @@ class FilterManager:
 
         # On mainNet we expect to have received a filter object, if not show a popup to the user to inform the
         # Bisq devs.
-        if (CONFIG.base_currency_network.is_mainnet() and 
+        if (self.config.base_currency_network.is_mainnet() and 
             self.get_filter() is None and 
             self.filter_warning_handler is not None):
             self.filter_warning_handler(Res.get("popup.warning.noFilter"))

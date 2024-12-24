@@ -1,4 +1,4 @@
-from bisq.common.config.config import CONFIG
+from bisq.common.config.config import Config
 from bitcoinj.base.coin import Coin
 
 class GenesisTxInfo:
@@ -58,8 +58,8 @@ class GenesisTxInfo:
     # private static final int DEFAULT_GENESIS_BLOCK_HEIGHT = 499000; // recursive test 137298, 499000 dec 2017
 
 
-    def __init__(self, genesis_tx_id: str = "", genesis_block_height: int = -1, genesis_total_supply: int = -1):
-        base_currency_network = CONFIG.base_currency_network
+    def __init__(self, config: "Config", genesis_tx_id: str = "", genesis_block_height: int = -1, genesis_total_supply: int = -1):
+        base_currency_network = config.base_currency_network
         is_mainnet = base_currency_network.is_mainnet()
         is_testnet = base_currency_network.is_testnet()
         is_dao_test_net = base_currency_network.is_dao_testnet()

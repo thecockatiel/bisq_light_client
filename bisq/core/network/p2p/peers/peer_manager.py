@@ -14,7 +14,6 @@ from bisq.core.network.p2p.network.inbound_connection import InboundConnection
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.time import get_time_ms
@@ -76,9 +75,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             for listener in self.manager.listeners:
                 listener.on_awake_from_standby()
 
-    def __init__(self, network_node: "NetworkNode", seed_node_repository: "SeedNodeRepository", clock_watcher: "ClockWatcher", persistence_manager: "PersistenceManager[PeerList]", max_connections: int = None):
-        if max_connections is None:
-            max_connections = CONFIG.max_connections
+    def __init__(self, network_node: "NetworkNode", seed_node_repository: "SeedNodeRepository", clock_watcher: "ClockWatcher", persistence_manager: "PersistenceManager[PeerList]", max_connections: int):
 
         self.shut_down_requested = False
         self.num_on_connections = 0

@@ -1,5 +1,4 @@
-from typing import Optional
-from bisq.common.config.config import CONFIG
+from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.protocol.proto_util import ProtoUtil
@@ -7,10 +6,13 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
-from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
+from global_container import GLOBAL_CONTAINER
 import proto.pb_pb2 as protobuf
 from utils.formatting import get_short_id
+
+if TYPE_CHECKING:
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
 
 logger = get_logger(__name__)
 
@@ -23,7 +25,7 @@ class AddressEntry(PersistablePayload):
     # It will be restored when the wallet is ready at setDeterministicKey
     # So after startup it must never be null
 
-    def __init__(self, 
+    def __init__(self,
                  key_pair: "DeterministicKey" = None, 
                  context: "AddressEntryContext" = None,
                  offer_id: Optional[str] = None,
@@ -41,7 +43,7 @@ class AddressEntry(PersistablePayload):
         else:
             self.pub_key = key_pair.eckey.get_public_key_bytes()
             self.pub_key_hash = get_sha256_ripemd160_hash(self.pub_key)
-            
+
         self.offer_id = offer_id
         self.context = context
         self.coin_locked_in_multi_sig = coin_locked_in_multi_sig
@@ -109,7 +111,7 @@ class AddressEntry(PersistablePayload):
     def get_address(self) -> Optional["Address"]:
         if self._address is None and self.key_pair is not None:
             script_type = ScriptType.P2WPKH if self.segwit else ScriptType.P2PKH
-            self._address = Address.from_key(self.key_pair, script_type, CONFIG.base_currency_network.parameters)
+            self._address = Address.from_key(self.key_pair, script_type, GLOBAL_CONTAINER.config.base_currency_network_parameters)
         if self._address is None:
             logger.warning(f"Address is null at getAddress(). keyPair={self.key_pair}")
         return self._address

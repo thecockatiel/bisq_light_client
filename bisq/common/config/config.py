@@ -1,78 +1,258 @@
-# TODO: THIS CLASS IS INCOMPLETE. made to work with DefaultSeedNodeRepository
-
+from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
-from typing import ClassVar
-
+import argparse
+import re
+import tempfile
+from typing import Any, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
-from utils.dir import user_data_dir
+from bisq.common.config.config_exception import ConfigException
+from bisq.common.config.config_file_reader import ConfigFileReader
+
+def _random_app_name():
+    try:
+        temp_file = tempfile.NamedTemporaryFile(
+            prefix="Bisq", suffix="Temp", delete=True, delete_on_close=True
+        )
+        temp_file.close()
+        filename = os.path.basename(temp_file.name)
+        return filename
+    except IOError as e:
+        raise IOError(f"Failed to create temporary file: {e}")
 
 
-@dataclass(kw_only=True)
+def _temp_user_data_dir():
+    return Path(tempfile.mkdtemp(prefix="BisqTempUserData"))
+
+
+def _comma_separated_str_list(value: str):
+    return value.split(",")
+
+
+def _parse_bool(value: str) -> bool:
+    if value.lower() in {"true", "1"}:
+        return True
+    if value.lower() in {"false", "0"}:
+        return False
+    raise argparse.ArgumentTypeError("Boolean value expected")
+
+
+_torrc_options_re = re.compile(r"^([^\s,]+\s[^,]+,?\s*)+$")
+
+
+def _parse_regex(value: re.Pattern) -> Callable[[str], str]:
+    def check_regex(v: str) -> str:
+        if not value.match(v):
+            raise argparse.ArgumentTypeError(
+                f"Value '{v}' does not match regex '{value.pattern}'"
+            )
+        return v
+
+    return check_regex
+
+
+def get_if_is_file_and_exists_and_is_readable_or_none(path: Path) -> Optional[Path]:
+    if (
+        isinstance(path, Path)
+        and path.is_file()
+        and path.exists()
+        and os.access(path, os.R_OK)
+    ):
+        return path
+    return None
+
+class DisabledArgumentAction(argparse.Action):
+    def __init__(self, disable_message: str = None, *args, **kwargs):
+        self.disable_message = disable_message
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        msg = self.disable_message or f"Option '{option_string}' is currently disabled"
+        parser.error(msg)
+
+class CustomArgumentParser(argparse.ArgumentParser):
+    def add_disabled_argument(self, *args, disable_message: str = None, **kwargs):
+        kwargs['action'] = DisabledArgumentAction
+        kwargs['disable_message'] = disable_message
+        return self.add_argument(*args, **kwargs)
+
 class Config:
-    # Constants
-    APP_DATA_DIR_VALUE: ClassVar[Path] = None
-    DEFAULT_CONFIG_FILE_NAME = "bisq.properties"
+    # Default values for certain options
     UNSPECIFIED_PORT = -1
+    DEFAULT_REGTEST_HOST = "localhost"
+    DEFAULT_NUM_CONNECTIONS_FOR_BTC_PROVIDED = 7  # down from BitcoinJ default of 12
+    DEFAULT_NUM_CONNECTIONS_FOR_BTC_PUBLIC = 9
+    DEFAULT_FULL_DAO_NODE = False
+    DEFAULT_CONFIG_FILE_NAME = "bisq.properties"
+
     MAX_SEQUENCE_NUMBER_MAP_SIZE_BEFORE_PURGE = 1000
 
-    # Fields
-    config_file: Path = field(init=False, default=None)
-    ban_list: list[str] = field(default_factory=list)
-    seed_nodes: list = field(default_factory=list)
-    use_localhost_for_p2p: bool = field(default=False)
-    max_connections: int = field(default=12)
-    socks5_proxy_btc_address: str = field(default="")
-    socks5_proxy_http_address: str = field(default="")
-    torrc_file: Path = field(default=None)
-    torrc_options: str = field(default="")
-    tor_control_host: str = field(default="127.0.0.1")
-    tor_control_port: int = field(default=UNSPECIFIED_PORT)
-    tor_control_password: str = field(default="")
-    filter_provided_seed_nodes: list = field(default_factory=list)
-    banned_seed_nodes: list = field(default_factory=list)
-    banned_price_relay_nodes: list = field(default_factory=list)
-    base_currency_network: BaseCurrencyNetwork = field(default=BaseCurrencyNetwork.BTC_MAINNET)
-    referral_id: str = field(default="")
-    use_dev_mode: bool = field(default=False)
-    use_dev_privilege_keys: bool = field(default=False)
-    dump_statistics: bool = field(default=False)
-    ignore_dev_msg: bool = field(default=False)
-    providers: list[str] = field(default_factory=list)
-    app_data_dir: Path = field(default_factory=user_data_dir)
-    node_port: int = field(default=9999)
-    log_level: str = field(default="INFO")
-    msg_throttle_per_sec: int = field(default=200)
-    msg_throttle_per_10_sec: int = field(default=1000)
-    send_msg_throttle_trigger: int = field(default=20)
-    send_msg_throttle_sleep: int = field(default=50)
-    use_tor_for_btc: bool = field(default=False)
-    use_tor_for_btc_option_set_explicitly: bool = field(default=False)
-    btc_nodes: str = field(default="", init=False)
-    rpc_user: str = field(default="")
-    rpc_password: str = field(default="")
-    rpc_block_notification_port: int = field(default=UNSPECIFIED_PORT)
-    full_dao_node: bool = field(default=False, init=False)
-    full_dao_node_option_set_explicitly: bool = field(default=False, init=False)
-    genesis_tx_id: str = field(default="")
-    genesis_block_height: int = field(default=-1)
-    genesis_total_supply: int = field(default=-1)
-    dump_delayed_payout_txs: bool = field(default=False)
-    allow_faulty_delayed_txs: bool = field(default=False)
-    republish_mailbox_entries: bool = field(default=False)
-    is_bm_full_node: bool = field(default=False, init=False)
+    def __init__(
+        self,
+        default_app_name: Optional[str] = None,
+        default_user_data_dir: Optional[Path] = None,
+    ):
+        # Default "data dir properties", i.e. properties that can determine the location of
+        # Bisq's application data directory (appDataDir)
+        self.default_app_name = default_app_name or _random_app_name()
+        self.default_user_data_dir = default_user_data_dir or _temp_user_data_dir()
+        self.default_app_data_dir = self.default_user_data_dir.joinpath(
+            self.default_app_name
+        )
+        self.default_config_file = self.default_app_data_dir.joinpath(
+            Config.DEFAULT_CONFIG_FILE_NAME
+        )
 
-    # Properties derived from options but not exposed as options themselves
-    tor_dir: Path = field(default=None, init=False)
-    tor_use_bridges_file: bool = field(default=True, init=False)
-    storage_dir: Path = field(default=None, init=False)
-    key_storage_dir: Path = field(default=None, init=False)
-    wallet_dir: Path = field(default=None, init=False)
+        self.app_data_dir: Path = None  # used by self.parse_options_from
 
-    def __post_init__(self):
-        # NOTE: for compability with old code we use the same directory structure as before
-        # and we only support btc_mainnet for now
-        btc_network_dir = self.app_data_dir.joinpath("btc_mainnet")
+        options = defaultdict[str, Any](lambda: None)
+
+        self.parser = self.get_config_parser()
+
+        cli_opts = {
+            key: value
+            for key, value in vars(self.parser.parse_known_args()[0]).items()
+            if value is not None
+        }  # get only present options
+
+        options.update(vars(cli_opts))
+
+        config_file: Path = None
+        cli_has_config_file_opt = options["configFile"] is not None
+        config_file_has_been_processed = False
+        if cli_has_config_file_opt:
+            config_file = Path(options["configFile"])
+            if config_file.is_absolute():
+                config_file_opts = self.parse_options_from(config_file)
+                if config_file_opts:
+                    options.update(
+                        {
+                            key: value
+                            for key, value in vars(config_file_opts).items()
+                            if value is not None
+                        }  # get only present options
+                    )
+                    config_file_has_been_processed = True
+
+        self.app_name: str = options["appName"] or self.default_app_name
+        self.user_data_dir: Path = options["userDataDir"] or self.default_user_data_dir
+        self.app_data_dir: Path = options["appDataDir"] or self.user_data_dir.joinpath(
+            self.app_name
+        )
+        self.app_data_dir.mkdir(parents=True, exist_ok=True)
+
+        # If the config file has not yet been processed, either because a relative
+        # path was provided at the command line, or because no value was provided at
+        # the command line, attempt to process the file now, falling back to the
+        # default config file location if none was specified at the command line.
+        if not config_file_has_been_processed:
+            config_file = (
+                self.app_data_dir.joinpath(str(config_file))
+                if cli_has_config_file_opt and not config_file.is_absolute()
+                else self.app_data_dir.joinpath(Config.DEFAULT_CONFIG_FILE_NAME)
+            )
+            config_file_opts = self.parse_options_from(config_file)
+            if config_file_opts:
+                options.update(
+                    {
+                        key: value
+                        for key, value in vars(config_file_opts).items()
+                        if value is not None
+                    }  # get only present options
+                )
+
+        # Assign all remaining properties, with command line options taking
+        # precedence over those provided in the config file (if any)
+        self.config_file = config_file
+        self.node_port: int = options["nodePort"] or 9999
+        self.max_memory: int = options["maxMemory"] or 1200
+        self.log_level: str = options["logLevel"] or "INFO"
+        self.banned_btc_nodes: list[str] = options["bannedBtcNodes"] or []
+        self.filter_provided_btc_nodes: list[str] = (
+            options["filterProvidedBtcNodes"] or []
+        )
+        self.banned_price_relay_nodes: list[str] = (
+            options["bannedPriceRelayNodes"] or []
+        )
+        self.banned_seed_nodes: list[str] = options["bannedSeedNodes"] or []
+        self.filter_provided_seed_nodes: list[str] = (
+            options["filterProvidedSeedNodes"] or []
+        )
+        self.base_currency_network = BaseCurrencyNetwork[
+            options["baseCurrencyNetwork"] or "BTC_MAINNET"
+        ]
+        self.ignore_local_btc_node: bool = options["ignoreLocalBtcNode"] or False
+        self.bitcoin_regtest_host: str = options["bitcoinRegtestHost"] or ""
+        self.torrc_file = get_if_is_file_and_exists_and_is_readable_or_none(
+            options["torrcFile"]
+        )
+        self.torrc_options: str = options["torrcOptions"] or ""
+        self.tor_use_bridges_file: bool = options["torUseBridgesFile"] or True
+        self.tor_control_host: str = options["torControlHost"] or "127.0.0.1"
+        self.tor_control_port: int = (
+            options["torControlPort"] or Config.UNSPECIFIED_PORT
+        )
+        self.tor_control_password: str = options["torControlPassword"] or ""
+        self.tor_control_cookie_file = get_if_is_file_and_exists_and_is_readable_or_none(
+            options["torControlCookieFile"]
+        )
+        self.use_tor_control_safe_cookie_auth: bool = options["torControlUseSafeCookieAuth"] or False
+        self.tor_stream_isolation: bool = options["torStreamIsolation"] or False
+        self.referral_id: str = options["referralId"] or ""
+        self.use_dev_mode: bool = options["useDevMode"] or False
+        self.use_dev_mode_header: bool = options["useDevModeHeader"] or False
+        self.use_dev_privilege_keys: bool = options["useDevPrivilegeKeys"] or False
+        self.dump_statistics: bool = options["dumpStatistics"] or False
+        self.ignore_dev_msg: bool = options["ignoreDevMsg"] or False
+        self.providers: list[str] = options["providers"] or []
+        self.seed_nodes: list[str] = options["seedNodes"] or []
+        self.ban_list: list[str] = options["banList"] or []
+        self.use_localhost_for_p2p: bool = not self.base_currency_network.is_mainnet() and (options["useLocalhostForP2P"] or False)
+        self.max_connections: int = options["maxConnections"] or 12
+        self.socks5_proxy_btc_address: str = options["socks5ProxyBtcAddress"] or ""
+        self.socks5_proxy_http_address: str = options["socks5ProxyHttpAddress"] or ""
+        self.msg_throttle_per_sec: int = options["msgThrottlePerSec"] or 200
+        self.msg_throttle_per_10_sec: int = options["msgThrottlePer10Sec"] or 1000
+        self.send_msg_throttle_trigger: int = options["sendMsgThrottleTrigger"] or 20
+        self.send_msg_throttle_sleep: int = options["sendMsgThrottleSleep"] or 50
+        self.btc_nodes: list[str] = options["btcNodes"] or []
+        self.use_tor_for_btc: bool = options["useTorForBtc"] or False
+        self.use_tor_for_btc_option_set_explicitly = options["useTorForBtc"] is not None
+        self.socks5_discover_mode: str = options["socks5DiscoverMode"] or "ALL"
+        self.use_all_provided_nodes: bool = options["useAllProvidedNodes"] or False
+        self.user_agent: str = options["userAgent"] or "Bisq"
+        self.num_connections_for_btc: int = (
+            options["numConnectionsForBtc"] or Config.DEFAULT_NUM_CONNECTIONS_FOR_BTC_PROVIDED
+        )
+        self.rpc_user = options["rpcUser"] or ""
+        self.rpc_password = options["rpcPassword"] or ""
+        self.rpc_host = options["rpcHost"] or ""
+        self.rpc_port = options["rpcPort"] or Config.UNSPECIFIED_PORT
+        self.rpc_block_notification_port = options["rpcBlockNotificationPort"] or Config.UNSPECIFIED_PORT
+        self.rpc_block_notification_host = options["rpcBlockNotificationHost"] or ""
+        self.dump_blockchain_data: bool = options["dumpBlockchainData"] or False
+        self.full_dao_node: bool = options["fullDaoNode"] or Config.DEFAULT_FULL_DAO_NODE
+        self.genesis_tx_id: str = options["genesisTxId"] or ""
+        self.genesis_block_height: int = options["genesisBlockHeight"] or -1
+        self.genesis_total_supply: int = options["genesisTotalSupply"] or -1
+        self.dump_delayed_payout_txs: bool = options["dumpDelayedPayoutTxs"] or False
+        self.allow_faulty_delayed_txs: bool = options["allowFaultyDelayedTxs"] or False
+        self.api_password: str = options["apiPassword"] or ""
+        self.api_port: int = options["apiPort"] or 9998
+        self.prevent_periodic_shutdown_at_seed_node: bool = options["preventPeriodicShutdownAtSeedNode"] or False
+        self.republish_mailbox_entries: bool = options["republishMailboxEntries"] or False
+        self.bypass_mempool_validation: bool = options["bypassMempoolValidation"] or False
+        self.dao_node_api_url: str = options["daoNodeApiUrl"] or "http://localhost"
+        self.dao_node_api_port: int = options["daoNodeApiPort"] or 8082
+        self.is_bm_full_node: bool = options["isBmFullNode"] or False
+        self.bm_oracle_node_pub_key: str = options["bmOracleNodePubKey"] or ""
+        self.bm_oracle_node_priv_key: str = options["bmOracleNodePrivKey"] or ""
+        self.seed_node_reporting_server_url: str = options["seedNodeReportingServerUrl"] or ""
+        
+        # Create all appDataDir subdirectories and assign to their respective properties
+        btc_network_dir = self.app_data_dir.joinpath(self.base_currency_network.name.lower())
         btc_network_dir.mkdir(parents=True, exist_ok=True)
 
         self.key_storage_dir = btc_network_dir.joinpath("keys")
@@ -87,8 +267,550 @@ class Config:
         self.wallet_dir = btc_network_dir.joinpath("wallet")
         self.wallet_dir.mkdir(parents=True, exist_ok=True)
 
-        Config.APP_DATA_DIR_VALUE = self.app_data_dir
-        Config.config_file = self.app_data_dir.joinpath(self.DEFAULT_CONFIG_FILE_NAME)
+    @property
+    def network_parameters(self):
+        return self.base_currency_network.parameters
 
+    @property
+    def base_currency_network_parameters(self):
+        return self.base_currency_network.parameters
 
-CONFIG = Config()
+    def parse_options_from(self, config_file: Path) -> Optional[argparse.Namespace]:
+        if not config_file.exists():
+            if self.app_data_dir and config_file != self.app_data_dir.joinpath(
+                Config.DEFAULT_CONFIG_FILE_NAME
+            ):
+                raise ConfigException(
+                    f"The specified config file '{config_file}' does not exist."
+                )
+            return None
+
+        config_file_reader = ConfigFileReader(config_file)
+        option_lines = ["--" + line for line in config_file_reader.get_option_lines()]
+
+        parsed_config = self.parser.parse_known_args(option_lines)[0]
+
+        for arg in ["help", "configFile"]:
+            if getattr(parsed_config, arg):
+                if (
+                    arg == "configFile"
+                    and getattr(parsed_config, arg) == Config.DEFAULT_CONFIG_FILE_NAME
+                ):
+                    continue
+                raise ConfigException(
+                    f"Option '{arg}' is not allowed in the config file."
+                )
+
+        return parsed_config
+
+    def get_config_parser(self) -> CustomArgumentParser:
+        parser = CustomArgumentParser(
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter, allow_abbrev=False
+        )
+        parser.add_argument(
+            "--configFile",
+            help=(
+                f"Specify configuration file. "
+                f"Relative paths will be prefixed by appDataDir location."
+            ),
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--appName",
+            help="Application name",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--userDataDir",
+            help="User data directory",
+            type=Path,
+            metavar="<File>",
+        )
+        parser.add_argument(
+            "--appDataDir",
+            help="Application data directory",
+            type=Path,
+            metavar="<File>",
+        )
+        parser.add_argument(
+            "--nodePort",
+            help="Port to listen on",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--maxMemory",
+            help="Max. permitted memory (used only by headless versions)",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--logLevel",
+            help="Set logging level",
+            type=str,
+            metavar="<OFF|ALL|ERROR|WARN|INFO|DEBUG|TRACE>",
+            choices=["OFF", "ALL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"],
+        )
+        parser.add_argument(
+            "--bannedBtcNodes",
+            help="List Bitcoin nodes to ban",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--filterProvidedBtcNodes",
+            help="List of filter provided Bitcoin nodes",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--bannedPriceRelayNodes",
+            help="List Bisq price nodes to ban",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--bannedSeedNodes",
+            help="List Bisq seed nodes to ban",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--filterProvidedSeedNodes",
+            help="List of filter provided seed nodes",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--baseCurrencyNetwork",
+            help="Base currency network",
+            type=str,
+            metavar="<BTC_MAINNET|BTC_TESTNET|BTC_REGTEST|BTC_DAO_TESTNET|BTC_DAO_BETANET|BTC_DAO_REGTEST>",
+            choices=[
+                "BTC_MAINNET",
+                "BTC_TESTNET",
+                "BTC_REGTEST",
+                "BTC_DAO_TESTNET",
+                "BTC_DAO_BETANET",
+                "BTC_DAO_REGTEST",
+            ],
+        )
+        parser.add_argument(
+            "--ignoreLocalBtcNode",
+            help="If set to true a Bitcoin Core node running locally will be ignored",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--bitcoinRegtestHost",
+            help="Bitcoin Core node when using BTC_REGTEST network",
+            type=str,
+            metavar="<host[:port]>",
+        )
+        parser.add_argument(
+            "--referralId",
+            help="Optional Referral ID (e.g. for API users or pro market makers)",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--useDevMode",
+            help="Enables dev mode which is used for convenience for developer testing",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--useDevModeHeader",
+            help="Use dev mode css scheme to distinguish dev instances.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--useDevPrivilegeKeys",
+            help="If set to true all privileged features requiring a private key to be enabled are overridden by a dev key pair (This is for developers only!)",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--dumpStatistics",
+            help="If set to true dump trade statistics to a json file in appDataDir",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--ignoreDevMsg",
+            help=(
+                "If set to true all signed network_messages "
+                "from bisq developers are ignored (Global alert, "
+                "Version update alert, Filters for offers, nodes or "
+                "trading account data)"
+            ),
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--providers",
+            help="List custom pricenodes",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--seedNodes",
+            help=(
+                "Override hard coded seed nodes as comma separated list e.g. "
+                "'rxdkppp3vicnbgqt.onion:8002,mfla72c4igh5ta2t.onion:8002'"
+            ),
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--banList",
+            help="Nodes to exclude from network connections.",
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--useLocalhostForP2P",
+            help="Use localhost P2P network for development. Only available for non-BTC_MAINNET configuration.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--maxConnections",
+            help="Max. connections a peer will try to keep",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--socks5ProxyBtcAddress",
+            help="A proxy address to be used for Bitcoin network.",
+            type=str,
+            metavar="<host:port>",
+        )
+        parser.add_argument(
+            "--socks5ProxyHttpAddress",
+            help="A proxy address to be used for Http requests (should be non-Tor)",
+            type=str,
+            metavar="<host:port>",
+        )
+        parser.add_argument(
+            "--torrcFile",
+            help=(
+                "An existing torrc-file to be sourced for Tor. Note that torrc-entries, "
+                "which are critical to Bisq's correct operation, cannot be overwritten."
+            ),
+            type=Path,
+            metavar="<File>",
+        )
+        parser.add_argument(
+            "--torrcOptions",
+            help=(
+                "A list of torrc-entries to amend to Bisq's torrc. Note that "
+                "torrc-entries, which are critical to Bisq's flawless operation, cannot be overwritten. "
+                "[torrc options line, torrc option, ...]"
+            ),
+            type=_parse_regex(_torrc_options_re),
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--torUseBridgesFile",
+            help="Use lines from 'bridges' file in Tor data directory as bridge entries, if exists. Defaults to True.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--torControlHost",
+            help="The control hostname of an already running Tor service to be used by Bisq.",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--torControlPort",
+            help="The control port of an already running Tor service to be used by Bisq.",
+            type=int,
+            metavar="<port>",
+        )
+        parser.add_argument(
+            "--torControlPassword",
+            help="The password for controlling the already running Tor service.",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--torControlCookieFile",
+            help=(
+                "The cookie file for authenticating against the already "
+                "running Tor service. Use in conjunction with --torControlUseSafeCookieAuth"
+            ),
+            type=Path,
+            metavar="<File>",
+        )
+        parser.add_argument(
+            "--torControlUseSafeCookieAuth",
+            help="Use the SafeCookie method when authenticating to the already running Tor service.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_disabled_argument(
+            "--torStreamIsolation",
+            help="This option is not supported. Do NOT use.",
+            disable_message="torStreamIsolation is not supported. Do NOT use.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--msgThrottlePerSec",
+            help="Message throttle per sec for connection class",
+            type=int,
+            metavar="<Integer>",
+            # With PERMITTED_MESSAGE_SIZE of 200kb results in bandwidth of 40MB/sec or 5 mbit/sec
+        )
+        parser.add_argument(
+            "--msgThrottlePer10Sec",
+            help="Message throttle per 10 sec for connection class",
+            type=int,
+            metavar="<Integer>",
+            # With PERMITTED_MESSAGE_SIZE of 200kb results in bandwidth of 20MB/sec or 2.5 mbit/sec
+        )
+        parser.add_argument(
+            "--sendMsgThrottleTrigger",
+            help="Time in ms when we trigger a sleep if 2 messages are sent",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--sendMsgThrottleSleep",
+            help="Pause in ms to sleep if we get too many messages to send",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--btcNodes",
+            help=(
+                "Override provided Bitcoin nodes as comma separated list e.g. "
+                "'rxdkppp3vicnbgqt.onion:8002,mfla72c4igh5ta2t.onion:8002'"
+            ),
+            type=_comma_separated_str_list,
+            metavar="<host:port[,...]>",
+        )
+        parser.add_argument(
+            "--useTorForBtc",
+            help="If set to true BitcoinJ is routed over tor (socks 5 proxy).",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--socks5DiscoverMode",
+            help="Specify discovery mode for Bitcoin nodes. One or more of: [ADDR, DNS, ONION, ALL] (comma separated, they get OR'd together)",
+            type=str,
+            metavar="<mode[,...]>",
+        )
+        parser.add_argument(
+            "--useAllProvidedNodes",
+            help="Set to true if connection of bitcoin nodes should include clear net nodes",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--userAgent",
+            help="User agent at btc node connections",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--numConnectionsForBtc",
+            help="Number of connections to the Bitcoin network",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--rpcUser",
+            help="Bitcoind rpc username",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--rpcPassword",
+            help="Bitcoind rpc password",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--rpcHost",
+            help="Bitcoind rpc host",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--rpcPort",
+            help="Bitcoind rpc port",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--rpcBlockNotificationPort",
+            help="Bitcoind rpc port for block notifications",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--rpcBlockNotificationHost",
+            help="Bitcoind rpc accepted incoming host for block notifications",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--dumpBlockchainData",
+            help="If set to true the blockchain data from RPC requests to Bitcoin Core are stored as json file in the data dir.",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--fullDaoNode",
+            help=(
+                "If set to true the node requests the blockchain data via RPC requests "
+                "from Bitcoin Core and provide the validated BSQ txs to the network. It requires that the "
+                "other RPC properties are set as well."
+            ),
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--genesisTxId",
+            help="Genesis transaction ID when not using the hard coded one",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--genesisBlockHeight",
+            help="Genesis transaction block height when not using the hard coded one",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--genesisTotalSupply",
+            help="Genesis total supply when not using the hard coded one",
+            type=int,
+            metavar="<Integer>",
+        )
+        parser.add_argument(
+            "--dumpDelayedPayoutTxs",
+            help="Dump delayed payout transactions to file",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--allowFaultyDelayedTxs",
+            help="Allow completion of trades with faulty delayed payout transactions",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--apiPassword",
+            help="gRPC API password",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--apiPort",
+            help="gRPC API port",
+            type=int,
+        )
+        parser.add_argument(
+            "--preventPeriodicShutdownAtSeedNode",
+            help="Prevents periodic shutdown at seed nodes",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--republishMailboxEntries",
+            help="Republish mailbox messages at startup",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--bypassMempoolValidation",
+            help="Prevents mempool check of trade parameters",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--daoNodeApiUrl",
+            help="Dao node API url",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--daoNodeApiPort",
+            help="Dao node API port",
+            type=int,
+        )
+        parser.add_argument(
+            "--isBmFullNode",
+            help="Run as Burningman full node",
+            type=_parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--bmOracleNodePubKey",
+            help="Burningman oracle node public key",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--bmOracleNodePrivKey",
+            help="Burningman oracle node private key",
+            type=str,
+            metavar="<String>",
+        )
+        parser.add_argument(
+            "--seedNodeReportingServerUrl",
+            help="URL of seed node reporting server",
+            type=str,
+            metavar="<String>",
+        )
+
+        return parser
+

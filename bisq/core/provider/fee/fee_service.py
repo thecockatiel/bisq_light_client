@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
-from bisq.common.config.config import CONFIG
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.param.param import Param
 from bitcoinj.base.coin import Coin
+from global_container import GLOBAL_CONTAINER
 from utils.data import SimpleProperty
 from utils.time import get_time_ms
 
@@ -28,7 +28,7 @@ class FeeService:
 
     def on_all_services_initialized(self, provided_filter_manager: "FilterManager"):
         FeeService.filter_manager = provided_filter_manager
-        self.min_fee_per_v_byte = CONFIG.base_currency_network.get_default_min_fee_per_v_byte()
+        self.min_fee_per_v_byte = GLOBAL_CONTAINER.config.base_currency_network.get_default_min_fee_per_v_byte()
 
     @staticmethod
     def get_fee_from_param_as_coin(param: Param) -> Coin:

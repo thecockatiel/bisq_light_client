@@ -1,7 +1,6 @@
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from pathlib import Path
 from typing import Optional, Callable
-from bisq.common.config.config import CONFIG
 import shutil
 import logging
 
@@ -11,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class TorSetup:
     def __init__(self, tor_dir: Path = None):
-        self.tor_dir = check_dir(tor_dir or CONFIG.tor_dir)
+        self.tor_dir = check_dir(tor_dir)
 
     def cleanup_tor_files(self, result_handler: Optional[Callable] = None,
                          error_message_handler: Optional[ErrorMessageHandler] = None) -> None:

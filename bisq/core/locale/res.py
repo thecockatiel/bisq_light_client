@@ -1,7 +1,5 @@
 # TODO: Implemented partially since it was used widely, to complete later as needed.
 
-from bisq.common.config.config import CONFIG
-
 class Res:
     base_currency_code: str = None
     base_currency_name: str = None
@@ -9,7 +7,8 @@ class Res:
     
     @staticmethod
     def setup():
-        base_currency_network = CONFIG.base_currency_network
+        from global_container import GLOBAL_CONTAINER
+        base_currency_network = GLOBAL_CONTAINER.config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
         

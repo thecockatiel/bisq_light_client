@@ -1,14 +1,13 @@
 import os
 import io
+from pathlib import Path
 from urllib.parse import urlparse
 from tqdm import tqdm
 import aiohttp
-from bisq.common.config.config import CONFIG
+import bisq.common.version as Version
 
-HTTP_HEADERS = {'User-Agent': 'Electrum-Bisq/1.0'}
-
-async def download_file(url: str, skip_if_exists=True):
-    download_dir = CONFIG.app_data_dir.joinpath('downloads')
+async def download_file(app_data_dir: Path, url: str, skip_if_exists=True):
+    download_dir = app_data_dir.joinpath('downloads')
     download_dir.mkdir(parents=True, exist_ok=True)
     filename: str = os.path.basename(urlparse(url).path)
     download_path = download_dir.joinpath(filename)
@@ -16,7 +15,7 @@ async def download_file(url: str, skip_if_exists=True):
     chunk_size = io.DEFAULT_BUFFER_SIZE
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
+            async with session.get(url, headers={"User-Agent": f"bisq/{Version.VERSION}"}) as response:
                 total_size = int(response.headers.get("content-length", 0))
                 # if the file already exists and has the same size, skip the download
                 if skip_if_exists and download_path.is_file():

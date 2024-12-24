@@ -14,7 +14,7 @@ from pathlib import Path
 testdata_dir = Path(__file__).parent.joinpath(".testdata")
 testdata_dir.mkdir(parents=True, exist_ok=True)
 configure_logging(testdata_dir.joinpath("test.log"))
-set_custom_log_level(logging.TRACE)
+set_custom_log_level("TRACE")
 
 from bisq.core.network.p2p.network.bridge_address_provider import BridgeAddressProvider
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
@@ -90,7 +90,9 @@ class TestTorNetworkNode(unittest.TestCase):
 
         # Create separate TorMode instances with different hidden service directories
         self.tor_mode1 = NewTor(
-            self.tor_dir_1, bridge_address_provider=CustomBridgeAddressProvider()
+            self.base_dir,
+            self.tor_dir_1,
+            bridge_address_provider=CustomBridgeAddressProvider(),
         )
 
         self.node1 = TorNetworkNode(
