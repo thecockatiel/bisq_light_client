@@ -2,6 +2,7 @@
 
 # TODO: fix class initializers when implemented for those who are still not done
 
+from utils.di import DependencyProvider
 
 class GlobalContainer:
     ############################################################################### (not listed in ModuleForAppWithP2p)
@@ -39,9 +40,9 @@ class GlobalContainer:
         if GlobalContainer._config is None:
             from bisq.common.config.config import Config
             from utils.dir import user_data_dir
-            
+
             GlobalContainer._config = Config("bisq_light_client", user_data_dir())
-        
+
         return GlobalContainer._config
 
     @property
@@ -452,9 +453,16 @@ class GlobalContainer:
             from bisq.core.protocol.persistable.core_persistence_proto_resolver import (
                 CorePersistenceProtoResolver,
             )
+            from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
+            
+            class BtcWalletServiceProvider(DependencyProvider["BtcWalletService"]):
+                def get(self_) -> "BtcWalletService":
+                    return self.btc_wallet_service
 
             GlobalContainer._persistence_proto_resolver = CorePersistenceProtoResolver(
-                self.clock, self.btc_wallet_service, self.network_proto_resolver
+                self.clock,
+                BtcWalletServiceProvider(),
+                self.network_proto_resolver,
             )
         return GlobalContainer._persistence_proto_resolver
 
@@ -464,7 +472,9 @@ class GlobalContainer:
             from bisq.core.user.preferences import Preferences
 
             GlobalContainer._preferences = Preferences(
-                self.persistence_manager, self.config, self.fee_service
+                self.persistence_manager,
+                self.config,
+                self.fee_service,
             )
         return GlobalContainer._preferences
 
@@ -491,7 +501,9 @@ class GlobalContainer:
                 DefaultSeedNodeRepository,
             )
 
-            GlobalContainer._seed_node_repository = DefaultSeedNodeRepository(self.config)
+            GlobalContainer._seed_node_repository = DefaultSeedNodeRepository(
+                self.config
+            )
 
         return GlobalContainer._seed_node_repository
 
@@ -988,7 +1000,9 @@ class GlobalContainer:
             from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
 
             GlobalContainer._btc_wallet_service = BtcWalletService(
-                self.config.base_currency_network.parameters
+                self.wallets_setup,
+                self.preferences,
+                self.fee_service,
             )
 
         return GlobalContainer._btc_wallet_service
@@ -999,7 +1013,9 @@ class GlobalContainer:
             from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
 
             GlobalContainer._bsq_wallet_service = BsqWalletService(
-                self.config.base_currency_network.parameters
+                self.wallets_setup,
+                self.preferences,
+                self.fee_service,
             )
 
         return GlobalContainer._bsq_wallet_service
@@ -1111,7 +1127,9 @@ class GlobalContainer:
         if GlobalContainer._dao_state_service is None:
             from bisq.core.dao.state.dao_state_service import DaoStateService
 
-            GlobalContainer._dao_state_service = DaoStateService(self.dao_state, self.genesis_tx_info, self.bsq_formatter)
+            GlobalContainer._dao_state_service = DaoStateService(
+                self.dao_state, self.genesis_tx_info, self.bsq_formatter
+            )
 
         return GlobalContainer._dao_state_service
 

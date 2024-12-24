@@ -26,8 +26,8 @@ class PlaceOfferProtocol:
     def __init__(
         self,
         model: "PlaceOfferModel",
-        result_handler: TransactionResultHandler,
-        error_message_handler: ErrorMessageHandler,
+        result_handler: "TransactionResultHandler",
+        error_message_handler: "ErrorMessageHandler",
     ) -> None:
         self.model = model
         self.result_handler = result_handler
