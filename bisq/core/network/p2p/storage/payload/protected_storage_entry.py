@@ -13,7 +13,7 @@ from bisq.core.network.p2p.storage.data_and_seq_nr_pair import DataAndSeqNrPair
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
-from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
+from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload, wrap_in_storage_payload
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
 from utils.clock import Clock
@@ -56,7 +56,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
 
     def to_proto_message(self) -> Message:
         return protobuf.ProtectedStorageEntry(
-            storagePayload=self.protected_storage_payload.to_proto_message(), # Weird protobuf names
+            storagePayload=wrap_in_storage_payload(self.protected_storage_payload.to_proto_message()), # Weird protobuf names
             owner_pub_key_bytes=self.owner_pub_key_bytes,
             sequence_number=self.sequence_number,
             signature=self.signature,

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.common.protocol.network.network_payload import NetworkPayload
-from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
+from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload, wrap_in_storage_payload
 import proto.pb_pb2 as protobuf
 
 
@@ -27,4 +27,4 @@ class DataAndSeqNrPair(NetworkPayload, ExcludeForHashAwareProto):
             storage_payload = self.protected_storage_payload.to_proto(serialize_for_hash) # only Filter comes here ??
             return storage_payload
         else:
-            return self.protected_storage_payload.to_proto_message()
+            return wrap_in_storage_payload(self.protected_storage_payload.to_proto_message())
