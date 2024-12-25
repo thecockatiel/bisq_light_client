@@ -16,11 +16,7 @@ from dataclasses import dataclass, field
 
 @dataclass(kw_only=True)
 class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, CapabilityRequiringPayload):
-    envelopes: list[NetworkEnvelope]
-
-    def __init__(self, envelopes: Optional[List[NetworkEnvelope]] = [], message_version: int = Version.get_p2p_message_version()):
-        super().__init__(message_version)
-        self.envelopes = envelopes
+    envelopes: list[NetworkEnvelope] = field(default_factory=list)
 
     def add(self, network_envelope: NetworkEnvelope) -> None:
         self.envelopes.append(network_envelope)
