@@ -163,8 +163,8 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         filter = self.get_filter_builder()
         if serialize_for_hash:
             # excludeForHash
-            filter.addedBtcNodes = None
-            filter.addedSeedNodes = None
+            filter.ClearField("addedBtcNodes") # Weird protobuf names
+            filter.ClearField("addedSeedNodes") # Weird protobuf names
             
         return filter
     
