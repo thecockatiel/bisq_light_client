@@ -45,12 +45,12 @@ from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSa
 from utils.data import SimpleProperty, combine_simple_properties
 from utils.formatting import to_truncated_string
 from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
 
 if TYPE_CHECKING: 
     from utils.clock import Clock
     from bisq.common.timer import Timer
     from bisq.core.network.p2p.persistence.append_only_data_store_listener import AppendOnlyDataStoreListener
-    from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
     from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.persistence.append_only_data_store_service import AppendOnlyDataStoreService
@@ -93,7 +93,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         
         self.persistence_manager = persistence_manager
         
-        self.sequence_number_map: "SequenceNumberMap" = {}
+        self.sequence_number_map: "SequenceNumberMap" = SequenceNumberMap()
         self.append_only_data_store_listeners: ThreadSafeSet["AppendOnlyDataStoreListener"] = ThreadSafeSet()
         self.removed_payloads_service = removed_payloads_service
         self.clock = clock
