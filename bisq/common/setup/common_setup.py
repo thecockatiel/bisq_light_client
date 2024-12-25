@@ -42,12 +42,13 @@ class CommonSetup:
                 
             # Add keyboard interrupt handler as fallback
             def keyboard_interrupt_handler():
-                while True:
+                interrupted = False
+                while not interrupted:
                     try:
                         input()
                     except KeyboardInterrupt:
+                        interrupted = True
                         UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
-                        return
             
             if threading.current_thread() is threading.main_thread():
                 keyboard_thread = threading.Thread(target=keyboard_interrupt_handler, daemon=True)
