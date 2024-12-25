@@ -6,15 +6,12 @@ import proto.pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.user.preferences_const import CLEAR_DATA_AFTER_DAYS_INITIAL, INITIAL_TRADE_LIMIT
-
-if TYPE_CHECKING:
-    from bisq.core.user.block_chain_explorer import BlockChainExplorer
-    from bisq.core.user.auto_confirm_settings import AutoConfirmSettings
-    from bisq.core.payment.payment_account import PaymentAccount
-    from bisq.core.locale.crypto_currency import CryptoCurrency
-    from bisq.core.locale.fiat_currency import FiatCurrency
-    from bisq.core.locale.trade_currency import TradeCurrency
-
+from bisq.core.user.block_chain_explorer import BlockChainExplorer
+from bisq.core.user.auto_confirm_settings import AutoConfirmSettings
+from bisq.core.payment.payment_account import PaymentAccount
+from bisq.core.locale.crypto_currency import CryptoCurrency
+from bisq.core.locale.fiat_currency import FiatCurrency
+from bisq.core.locale.trade_currency import TradeCurrency
 
 class PreferencesPayload(PersistableEnvelope):
     
