@@ -1,4 +1,5 @@
 from datetime import timedelta
+import platform
 import sys
 import traceback
 import threading
@@ -30,8 +31,28 @@ class CommonSetup:
             logger.info(f"Received signal {sig}")
             UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
 
-        signal(SIGINT, signal_handler)
-        signal(SIGTERM, signal_handler)
+        if platform.system() == 'Windows':
+            try:
+                signal(SIGINT, signal_handler)
+                signal(SIGTERM, signal_handler)
+            except Exception as e:
+                logger.warning(f"Could not set up signal handlers on windows: {e}")
+                
+            # Add keyboard interrupt handler as fallback
+            def keyboard_interrupt_handler():
+                while True:
+                    try:
+                        input()
+                    except KeyboardInterrupt:
+                        UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
+            
+            if threading.current_thread() is threading.main_thread():
+                keyboard_thread = threading.Thread(target=keyboard_interrupt_handler, daemon=True)
+                keyboard_thread.start()
+        else:
+            # Unix-like systems
+            signal(SIGINT, signal_handler)
+            signal(SIGTERM, signal_handler)
 
     @staticmethod
     def setup_uncaught_exception_handler(uncaught_exception_handler: UncaughtExceptionHandler):
