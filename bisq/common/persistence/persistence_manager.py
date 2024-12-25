@@ -171,7 +171,7 @@ class PersistenceManager(Generic[T]):
 
         file_name = file_name or persistable.get_default_storage_file_name()
 
-        if self.file_name in PersistenceManager.ALL_PERSISTENCE_MANAGERS:
+        if file_name in PersistenceManager.ALL_PERSISTENCE_MANAGERS:
             e = RuntimeError(
                 f"We must not create multiple PersistenceManager instances for file {file_name}."
             )

@@ -25,7 +25,7 @@ class RemovedPayloadsService(PersistedDataHost):
     seed nodes where we do skip some checks.
     """
 
-    def __init__(self, persistence_manager: "PersistenceManager"):
+    def __init__(self, persistence_manager: "PersistenceManager[RemovedPayloadsMap]"):
         self.persistence_manager = persistence_manager
         self.removed_payloads_map = RemovedPayloadsMap()
 
