@@ -47,6 +47,7 @@ class CommonSetup:
                         input()
                     except KeyboardInterrupt:
                         UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
+                        return
             
             if threading.current_thread() is threading.main_thread():
                 keyboard_thread = threading.Thread(target=keyboard_interrupt_handler, daemon=True)
