@@ -59,6 +59,8 @@ class CommonSetup:
     @staticmethod
     def setup_uncaught_exception_handler(uncaught_exception_handler: UncaughtExceptionHandler):
         def exception_handler(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType, thread: threading.Thread = None):
+            if exc_type.__name__ == "CancelledError":
+                return
             
             if isinstance(exc_value, MemoryError):
                 logger.error("OutOfMemoryError occurred. We shut down.", exc_info=(exc_type, exc_value, exc_traceback))
@@ -80,8 +82,7 @@ class CommonSetup:
             if event['isError'] and event['failure']:
                 failure = event['failure']
                 exception = failure.value
-                if not isinstance(exception, CancelledError) and not isinstance(exception, AsyncioCancelledError): 
-                    exception_handler(type(exception), exception, failure.getTracebackObject())
+                exception_handler(type(exception), exception, failure.getTracebackObject())
         log.startLoggingWithObserver(on_twisted_log, 0)
 
     @staticmethod
