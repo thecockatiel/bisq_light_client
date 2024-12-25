@@ -29,3 +29,6 @@ class AddDataMessage(BroadcastMessage):
         envelope.add_data_message.CopyFrom(protobuf.AddDataMessage(entry=entry))
 
         return envelope
+
+    def __hash__(self):
+        return hash(self.protected_storage_entry)
