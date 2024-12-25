@@ -69,7 +69,7 @@ class OfferPayload(OfferPayloadBase):
     # Close offer when certain price is reached
     use_auto_close: bool
     # If useReOpenAfterAutoClose=true we re-open a new offer with the remaining funds if the trade amount
-    # was less than the offer's max. trade amount. 
+    # was less than the offer's max. trade amount.
     use_re_open_after_auto_close: bool
     # Used when useAutoClose is set for canceling the offer when lowerClosePrice is triggered
     lower_close_price: int
@@ -85,7 +85,7 @@ class OfferPayload(OfferPayloadBase):
             # set to a non-null value;  now is the time to cache the payload hash.
             self.hash = get_sha256_hash(self.serialize_for_hash())
         return self.hash
-    
+
     def to_proto_message(self) -> protobuf.StoragePayload:
         offer_payload = protobuf.OfferPayload(
             id=self.id,
@@ -100,8 +100,12 @@ class OfferPayload(OfferPayloadBase):
             min_amount=self.min_amount,
             base_currency_code=self.base_currency_code,
             counter_currency_code=self.counter_currency_code,
-            arbitrator_node_addresses=[node.to_proto_message() for node in self.arbitrator_node_addresses],
-            mediator_node_addresses=[node.to_proto_message() for node in self.mediator_node_addresses],
+            arbitrator_node_addresses=[
+                node.to_proto_message() for node in self.arbitrator_node_addresses
+            ],
+            mediator_node_addresses=[
+                node.to_proto_message() for node in self.mediator_node_addresses
+            ],
             payment_method_id=self.payment_method_id,
             maker_payment_account_id=self.maker_payment_account_id,
             version_nr=self.version_nr,
@@ -120,9 +124,11 @@ class OfferPayload(OfferPayloadBase):
             is_private_offer=self.is_private_offer,
             protocol_version=self.protocol_version,
         )
-        assert self.offer_fee_payment_tx_id is not None, "OfferPayload is in invalid state: offerFeePaymentTxID is not set when adding to P2P network."
+        assert (
+            self.offer_fee_payment_tx_id is not None
+        ), "OfferPayload is in invalid state: offerFeePaymentTxID is not set when adding to P2P network."
         offer_payload.offer_fee_payment_tx_id = self.offer_fee_payment_tx_id
-        
+
         if self.country_code:
             offer_payload.country_code = self.country_code
         if self.bank_id:
@@ -135,13 +141,15 @@ class OfferPayload(OfferPayloadBase):
             offer_payload.hash_of_challenge = self.hash_of_challenge
         if self.extra_data_map:
             offer_payload.extra_data.update(self.extra_data_map)
-        
+
         return protobuf.StoragePayload(offer_payload=offer_payload)
-    
+
     @staticmethod
-    def from_proto(proto: protobuf.OfferPayload) -> 'OfferPayload':
-        assert proto.offer_fee_payment_tx_id, "OfferFeePaymentTxId must be set in PB.OfferPayload"
-        
+    def from_proto(proto: protobuf.OfferPayload) -> "OfferPayload":
+        assert (
+            proto.offer_fee_payment_tx_id
+        ), "OfferFeePaymentTxId must be set in PB.OfferPayload"
+
         return OfferPayload(
             id=proto.id,
             date=proto.date,
@@ -155,15 +163,25 @@ class OfferPayload(OfferPayloadBase):
             min_amount=proto.min_amount,
             base_currency_code=proto.base_currency_code,
             counter_currency_code=proto.counter_currency_code,
-            arbitrator_node_addresses=[NodeAddress.from_proto(node) for node in proto.arbitrator_node_addresses],
-            mediator_node_addresses=[NodeAddress.from_proto(node) for node in proto.mediator_node_addresses],
+            arbitrator_node_addresses=[
+                NodeAddress.from_proto(node) for node in proto.arbitrator_node_addresses
+            ],
+            mediator_node_addresses=[
+                NodeAddress.from_proto(node) for node in proto.mediator_node_addresses
+            ],
             payment_method_id=proto.payment_method_id,
             maker_payment_account_id=proto.maker_payment_account_id,
             offer_fee_payment_tx_id=proto.offer_fee_payment_tx_id,
             country_code=ProtoUtil.string_or_none_from_proto(proto.country_code),
-            accepted_country_codes=list(proto.accepted_country_codes) if proto.accepted_country_codes else None,
+            accepted_country_codes=(
+                list(proto.accepted_country_codes)
+                if proto.accepted_country_codes
+                else None
+            ),
             bank_id=ProtoUtil.string_or_none_from_proto(proto.bank_id),
-            accepted_bank_ids=list(proto.accepted_bank_ids) if proto.accepted_bank_ids else None,
+            accepted_bank_ids=(
+                list(proto.accepted_bank_ids) if proto.accepted_bank_ids else None
+            ),
             version_nr=proto.version_nr,
             block_height_at_offer_creation=proto.block_height_at_offer_creation,
             tx_fee=proto.tx_fee,
@@ -178,7 +196,9 @@ class OfferPayload(OfferPayloadBase):
             lower_close_price=proto.lower_close_price,
             upper_close_price=proto.upper_close_price,
             is_private_offer=proto.is_private_offer,
-            hash_of_challenge=ProtoUtil.string_or_none_from_proto(proto.hash_of_challenge),
+            hash_of_challenge=ProtoUtil.string_or_none_from_proto(
+                proto.hash_of_challenge
+            ),
             extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
             protocol_version=proto.protocol_version,
         )
@@ -211,7 +231,6 @@ class OfferPayload(OfferPayloadBase):
             f"\r\n     hashOfChallenge='{self.hash_of_challenge}'"
             f"\r\n}} " + super().__str__()
         )
-        
 
     # For backward compatibility we need to ensure same order for json fields as with 1.7.5. and earlier versions.
     # The json is used for the hash in the contract and change of order would cause a different hash and
@@ -255,3 +274,6 @@ class OfferPayload(OfferPayloadBase):
             "protocolVersion": self.protocol_version,
         }
         return data
+
+    def __hash__(self):
+        return hash(self.get_hash())

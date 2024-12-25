@@ -73,7 +73,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
             proto.sequence_number,
             proto.signature,
             resolver.get_clock(),
-            creation_time_stamp=proto.creation_time_stamp,
+            proto.creation_time_stamp,
         )
 
     # API
