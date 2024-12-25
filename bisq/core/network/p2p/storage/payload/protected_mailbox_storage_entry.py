@@ -132,13 +132,13 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                   resolver: 'NetworkProtoResolver') -> 'ProtectedMailboxStorageEntry':
         entry = ProtectedStorageEntry.from_proto(proto.entry, resolver)
         return ProtectedMailboxStorageEntry(
-            cast(MailboxStoragePayload, entry.protected_storage_payload),
+            entry.protected_storage_payload,
             entry.owner_pub_key,
             entry.sequence_number,
             entry.signature,
             Sig.get_public_key_from_bytes(proto.receivers_pub_key_bytes),
             resolver.get_clock(),
-            creation_time_stamp=entry.creation_time_stamp)
+            entry.creation_time_stamp)
 
     def __str__(self) -> str:
         return f"ProtectedMailboxStorageEntry:\n\t  Receivers Public Key: {Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True)}\n{super().__str__()}"

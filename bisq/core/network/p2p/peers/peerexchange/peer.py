@@ -32,7 +32,7 @@ class Peer(HasCapabilities, NetworkPayload, PersistablePayload, SupportedCapabil
 
     @staticmethod
     def from_proto(proto: protobuf.Peer) -> 'Peer':
-        node_address = NodeAddress.from_proto(proto)
+        node_address = NodeAddress.from_proto(proto.node_address)
         capabilities = Capabilities.from_int_list(proto.supported_capabilities)
         return Peer(node_address=node_address, date=proto.date, capabilities=capabilities)
 

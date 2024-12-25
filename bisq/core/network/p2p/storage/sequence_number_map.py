@@ -44,7 +44,7 @@ class SequenceNumberMap(PersistableEnvelope):
         return key in self.map
     
     def __getitem__(self, key: StorageByteArray) -> StorageMapValue:
-        return self.map[key]
+        return self.map.get(key)
     
     def __setitem__(self, key: StorageByteArray, value: StorageMapValue):
         self.map[key] = value
