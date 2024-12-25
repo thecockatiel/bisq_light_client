@@ -91,7 +91,11 @@ class StoreService(Generic[T], ABC):
             self.store = persisted
             self.initialize_persistence_manager()
             complete_handler(persisted)
-        self.persistence_manager.read_persisted(result_handler=on_persisted, or_else=lambda: complete_handler(self.create_store()), file_name=file_name)
+        
+        def create_default():
+            on_persisted(self.create_store())
+            
+        self.persistence_manager.read_persisted(result_handler=on_persisted, or_else=create_default, file_name=file_name)
         
     # Uses synchronous execution on the userThread. Only used by tests. The async methods should be used by app code.
     def get_store_sync(self, file_name: str):
