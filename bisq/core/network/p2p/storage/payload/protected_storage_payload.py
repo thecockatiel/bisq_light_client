@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
-from cryptography.hazmat.primitives.asymmetric import rsa
+from bisq.common.crypto.encryption import PUBLIC_KEY_TYPES
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 
@@ -18,7 +18,7 @@ class ProtectedStoragePayload(NetworkPayload, ABC):
     """
 
     @abstractmethod
-    def get_owner_pub_key(self) -> rsa.RSAPublicKey:
+    def get_owner_pub_key(self) -> PUBLIC_KEY_TYPES:
         """
         Used to check if the add or remove operation is permitted.
         Only the data owner can add or remove the data.
