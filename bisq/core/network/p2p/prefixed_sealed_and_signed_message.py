@@ -25,7 +25,7 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
     def __post_init__(self):
         assert self.sender_node_address, "sender_node_address must not be null at PrefixedSealedAndSignedMessage"
 
-    def to_proto_network_envelope(self) -> NetworkEnvelope:
+    def to_proto_network_envelope(self):
         proto_message = protobuf.PrefixedSealedAndSignedMessage(
             node_address=self.sender_node_address.to_proto_message(),
             sealed_and_signed=self.sealed_and_signed.to_proto_message(),

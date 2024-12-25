@@ -40,6 +40,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
         self.sender_pub_key_for_add_operation_bytes = Sig.get_public_key_bytes(sender_pub_key_for_add_operation)
         self.owner_pub_key_bytes = Sig.get_public_key_bytes(owner_pub_key)
 
+        self.extra_data_map = None
         if ttl:
             # Should be only used in emergency case if we need to add data but do not want to break backward compatibility
             # at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
@@ -60,10 +61,11 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
     # PROTO BUFFER
 
     def to_proto_message(self) -> protobuf.StoragePayload:
-        payload = protobuf.MailboxStoragePayload()
-        payload.prefixed_sealed_and_signed_message.CopyFrom(self.prefixed_sealed_and_signed_message.to_proto_message()) 
-        payload.sender_pub_key_for_add_operation_bytes = self.sender_pub_key_for_add_operation_bytes
-        payload.owner_pub_key_bytes = self.owner_pub_key_bytes
+        payload = protobuf.MailboxStoragePayload(
+            prefixed_sealed_and_signed_message=self.prefixed_sealed_and_signed_message.to_proto_network_envelope().prefixed_sealed_and_signed_message,
+            sender_pub_key_for_add_operation_bytes=self.sender_pub_key_for_add_operation_bytes,
+            owner_pub_key_bytes=self.owner_pub_key_bytes
+        )
         if self.extra_data_map:
             payload.extra_data.update(self.extra_data_map)
         return payload
