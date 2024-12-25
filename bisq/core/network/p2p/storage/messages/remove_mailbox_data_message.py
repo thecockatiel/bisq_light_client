@@ -40,3 +40,6 @@ class RemoveMailboxDataMessage(BroadcastMessage):
                 proto.protected_storage_entry, resolver
             ),
         )
+        
+    def __hash__(self):
+        return hash(self.protected_storage_entry)
