@@ -16,7 +16,7 @@ class AccountAgeWitnessStore(PersistableNetworkPayloadStore[AccountAgeWitness]):
 
     def get_builder(self):
         proto_list = [cast(AccountAgeWitness, payload).to_proto_account_age_witness() for payload in self.map.values()]
-        return protobuf.AccountAgeWitness(items=proto_list)
+        return protobuf.AccountAgeWitnessStore(items=proto_list)
 
     @staticmethod
     def from_proto(proto: protobuf.AccountAgeWitness):
