@@ -20,6 +20,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
+      // "args": ["--logLevel", "DEBUG"],
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
