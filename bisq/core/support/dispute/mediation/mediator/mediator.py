@@ -68,3 +68,7 @@ class Mediator(DisputeAgent):
 
     def __eq__(self, other) -> bool:
         return isinstance(other, Mediator) and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+    
