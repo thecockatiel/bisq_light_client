@@ -1289,3 +1289,7 @@ class GlobalContainer:
 
 
 GLOBAL_CONTAINER = GlobalContainer()
+
+# Force initialization of services 
+GLOBAL_CONTAINER.signed_witness_service
+GLOBAL_CONTAINER.account_age_witness_service

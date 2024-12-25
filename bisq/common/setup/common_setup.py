@@ -1,3 +1,5 @@
+from asyncio import CancelledError as AsyncioCancelledError
+from concurrent.futures import CancelledError
 from datetime import timedelta
 import platform
 import sys
@@ -78,7 +80,8 @@ class CommonSetup:
             if event['isError'] and event['failure']:
                 failure = event['failure']
                 exception = failure.value
-                exception_handler(type(exception), exception, failure.getTracebackObject())
+                if not isinstance(exception, CancelledError) and not isinstance(exception, AsyncioCancelledError): 
+                    exception_handler(type(exception), exception, failure.getTracebackObject())
         log.startLoggingWithObserver(on_twisted_log, 0)
 
     @staticmethod

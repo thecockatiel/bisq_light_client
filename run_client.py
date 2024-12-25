@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
 
+from collections.abc import Callable
 from datetime import timedelta
 import os
 import sys
 import threading
+
+from utils.concurrency import AtomicInt
 
 MIN_PYTHON_VERSION = "3.10.0"
 _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
@@ -13,11 +16,10 @@ _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
 if sys.version_info[:3] < _min_python_version_tuple:
     sys.exit("Error: Bisq light client requires Python version >= %s..." % MIN_PYTHON_VERSION)
 
-from utils.aio import as_future, create_event_loop
-loop = create_event_loop()
+from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
+from utils.aio import as_future, get_asyncio_loop
+from global_container import GLOBAL_CONTAINER
 
-from twisted.internet import asyncioreactor
-asyncioreactor.install(loop)
 
 import asyncio
 from twisted.internet import reactor
@@ -25,7 +27,7 @@ from twisted.internet.defer import Deferred
 
 from bisq.common.setup.log_setup import configure_logging, get_logger
 
-configure_logging()
+configure_logging(log_file=GLOBAL_CONTAINER.config.app_data_dir.joinpath("bisq.log"), log_level=GLOBAL_CONTAINER.config.log_level)
 
 logger = get_logger(__name__)
 
@@ -36,7 +38,6 @@ from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
 from bisq.common.user_thread import UserThread
 from bisq.core.setup.core_setup import CoreSetup
-from utils.tor import setup_tor
 
 # TODO: check and implement
 # This is a quick setup to test stuff. It should be replaced with proper setups based on the following files.
@@ -53,20 +54,29 @@ class MainApp(GracefulShutDownHandler, UncaughtExceptionHandler):
     EXIT_FAILURE = 1
     
     def __init__(self) -> None:
-        super().__init__()
         self.is_shutdown_in_progress = False
         self.shutdown_requested = False
         self.has_downgraded = False
 
     async def execute(self):
-        CommonSetup.setup(self)
+        CommonSetup.setup_sig_int_handlers(self)
+        CommonSetup.setup_uncaught_exception_handler(self)
+        CommonSetup.setup(GLOBAL_CONTAINER.config, self)
         CoreSetup.setup()
         CommonSetup.start_periodic_tasks()
-        CommonSetup.setup_uncaught_exception_handler(self)
-
-        socks_port = await setup_tor(reactor)
-        print(f"Tor is running at: {socks_port}")
+        ###############
+        UserThread.run_after(self.step2, timedelta(milliseconds=1))
         await as_future(Deferred())
+    
+    def step2(self):
+        self.read_maps_from_resources(self.step3)
+        
+    def step3(self):
+        self.read_all_persisted(self.step4)
+    
+    def step4(self):
+        PersistenceManager.on_all_services_initialized()
+        asyncio.run_coroutine_threadsafe(GLOBAL_CONTAINER.p2p_service.start(), get_asyncio_loop())
     
     def graceful_shut_down(self, result_handler):
         logger.info("Shutting down gracefully")
@@ -83,10 +93,10 @@ class MainApp(GracefulShutDownHandler, UncaughtExceptionHandler):
         shutdown_timer = threading.Timer(10.0, timeout_handler)
         shutdown_timer.start()
         
-        
         try:
-            # do proper service shutdowns
-            raise Exception("Not implemented") # to end fast
+            GLOBAL_CONTAINER.clock_watcher.shut_down()
+            GLOBAL_CONTAINER.price_feed_service.shut_down()
+            GLOBAL_CONTAINER.arbitrator_manager.shut_down()
         except Exception as e:
             logger.error("App shutdown failed with an exception", exc_info=e)
             self.flush_and_exit(result_handler, MainApp.EXIT_FAILURE)
@@ -114,9 +124,22 @@ class MainApp(GracefulShutDownHandler, UncaughtExceptionHandler):
     
     def handle_uncaught_exception(self, throwable, do_shut_down):
         if not self.shutdown_requested:
-            logger.error(str(throwable))
+            logger.error(throwable)
             if do_shut_down:
                 self.stop()
+                
+    def read_maps_from_resources(self, complete_handler: Callable):
+        post_fix = "_" + GLOBAL_CONTAINER.config.base_currency_network.name.lower()
+        GLOBAL_CONTAINER.p2p_data_storage.read_from_resources(post_fix, complete_handler)
+
+    def read_all_persisted(self, complete_handler: Callable):
+        hosts = CorePersistedDataHost.get_persisted_data_hosts(GLOBAL_CONTAINER)
+        remaining = AtomicInt(len(hosts))
+        for host in hosts:
+            def on_read():
+                if (remaining.decrement_and_get() == 0):
+                    UserThread.execute(complete_handler)
+            host.read_persisted(on_read)
 
 
 if __name__ == '__main__':
