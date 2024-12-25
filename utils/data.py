@@ -124,7 +124,7 @@ class ObservableSet(set[T]):
         
     def _notify(self, e: ObservableChangeEvent[T]):
         for listener in self._listeners:
-            listener(self, e)
+            listener(e)
             
     def add(self, element: T) -> bool:
         """
@@ -226,7 +226,7 @@ class ObservableList(list[T]):
         
     def _notify(self, e: ObservableChangeEvent[T]):
         for listener in self._listeners:
-            listener(self, e)
+            listener(e)
             
     def append(self, element: T) -> None:
         super().append(element)

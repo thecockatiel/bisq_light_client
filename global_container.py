@@ -69,6 +69,7 @@ class GlobalContainer:
                 self.key_ring,
                 self.fee_service,
                 self.btc_fee_receiver_service,
+                self.delayed_payout_tx_receiver_service,
             )
         return GlobalContainer._provider
 
@@ -205,11 +206,13 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             GlobalContainer._arbitration_dispute_list_service = (
-                ArbitrationDisputeListService(PersistenceManager(
-                    self.config.storage_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ))
+                ArbitrationDisputeListService(
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    )
+                )
             )
         return GlobalContainer._arbitration_dispute_list_service
 
@@ -222,11 +225,13 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             GlobalContainer._mediation_dispute_list_service = (
-                MediationDisputeListService(PersistenceManager(
-                    self.config.storage_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ))
+                MediationDisputeListService(
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    )
+                )
             )
         return GlobalContainer._mediation_dispute_list_service
 
@@ -444,12 +449,15 @@ class GlobalContainer:
         if GlobalContainer._user is None:
             from bisq.core.user.user import User
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
-            GlobalContainer._user = User(PersistenceManager(
+
+            GlobalContainer._user = User(
+                PersistenceManager(
                     self.config.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
-                ), self.key_ring)
+                ),
+                self.key_ring,
+            )
 
         return GlobalContainer._user
 
@@ -499,7 +507,7 @@ class GlobalContainer:
         if GlobalContainer._preferences is None:
             from bisq.core.user.preferences import Preferences
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._preferences = Preferences(
                 PersistenceManager(
                     self.config.storage_dir,
@@ -550,6 +558,35 @@ class GlobalContainer:
         return GlobalContainer._ban_filter
 
     ###############################################################################
+
+    _delayed_payout_tx_receiver_service = None
+    _burning_man_service = None
+
+    @property
+    def delayed_payout_tx_receiver_service(self):
+        if GlobalContainer._delayed_payout_tx_receiver_service is None:
+            from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import (
+                DelayedPayoutTxReceiverService,
+            )
+
+            GlobalContainer._delayed_payout_tx_receiver_service = (
+                DelayedPayoutTxReceiverService(
+                    self.dao_state_service, self.burning_man_service
+                )
+            )
+        return GlobalContainer._delayed_payout_tx_receiver_service
+
+    @property
+    def burning_man_service(self):
+        if GlobalContainer._burning_man_service is None:
+            from bisq.core.dao.burningman.burning_man_service import BurningManService
+
+            GlobalContainer._burning_man_service = BurningManService(
+                self.dao_state_service,
+            )
+        return GlobalContainer._burning_man_service
+
+    ###############################################################################
     _trade_manager = None
     _closed_tradable_manager = None
     _failed_trades_manager = None
@@ -564,7 +601,7 @@ class GlobalContainer:
         if GlobalContainer._trade_manager is None:
             from bisq.core.trade.trade_manager import TradeManager
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._trade_manager = TradeManager(
                 self.user,
                 self.key_ring,
@@ -588,6 +625,9 @@ class GlobalContainer:
                     self.corrupted_storage_file_handler,
                 ),
                 self.referral_id_service,
+                self.persistence_proto_resolver,
+                self.dump_delayed_payout_tx,
+                self.config.allow_faulty_delayed_txs,
             )
         return GlobalContainer._trade_manager
 
@@ -596,7 +636,7 @@ class GlobalContainer:
         if GlobalContainer._closed_tradable_manager is None:
             from bisq.core.trade.closed_tradable_manager import ClosedTradableManager
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._closed_tradable_manager = ClosedTradableManager(
                 self.key_ring,
                 self.price_feed_service,
@@ -671,10 +711,10 @@ class GlobalContainer:
                 AccountAgeWitnessStorageService(
                     self.config.storage_dir,
                     PersistenceManager(
-                    self.config.storage_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ),
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    ),
                 )
             )
         return GlobalContainer._account_age_witness_storage_service
@@ -709,10 +749,10 @@ class GlobalContainer:
                 SignedWitnessStorageService(
                     self.config.storage_dir,
                     PersistenceManager(
-                    self.config.storage_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ),
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    ),
                 )
             )
         return GlobalContainer._signed_witness_storage_service
@@ -755,6 +795,7 @@ class GlobalContainer:
     def open_offer_manager(self):
         if GlobalContainer._open_offer_manager is None:
             from bisq.core.offer.open_offer_manager import OpenOfferManager
+            from bisq.common.persistence.persistence_manager import PersistenceManager
 
             GlobalContainer._open_offer_manager = OpenOfferManager(
                 self.core_context,
@@ -776,6 +817,14 @@ class GlobalContainer:
                 self.dao_facade,
                 self.filter_manager,
                 self.btc_fee_receiver_service,
+                self.delayed_payout_tx_receiver_service,
+                self.broadcaster,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+                self.dao_state_service,
             )
         return GlobalContainer._open_offer_manager
 
@@ -845,7 +894,7 @@ class GlobalContainer:
         if GlobalContainer._peer_manager is None:
             from bisq.core.network.p2p.peers.peer_manager import PeerManager
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._peer_manager = PeerManager(
                 self.network_node,
                 self.seed_node_repository,
@@ -865,7 +914,7 @@ class GlobalContainer:
         if GlobalContainer._p2p_data_storage is None:
             from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._p2p_data_storage = P2PDataStorage(
                 self.network_node,
                 self.broadcaster,
@@ -1047,7 +1096,7 @@ class GlobalContainer:
         if GlobalContainer._address_entry_list is None:
             from bisq.core.btc.model.address_entry_list import AddressEntryList
             from bisq.common.persistence.persistence_manager import PersistenceManager
-            
+
             GlobalContainer._address_entry_list = AddressEntryList(
                 PersistenceManager(
                     self.config.storage_dir,

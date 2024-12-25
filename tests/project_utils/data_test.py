@@ -158,7 +158,7 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(new_set), 3)
 
     def test_add(self):
-        def listener(set_obj, event):
+        def listener(event):
             self.events.append((event.added_elements, event.removed_elements))
 
         self.set.add_listener(listener)
@@ -176,7 +176,7 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(self.events), 1)  # No new event
 
     def test_remove(self):
-        def listener(set_obj, event):
+        def listener(event):
             self.events.append((event.added_elements, event.removed_elements))
 
         self.set.add(1)
@@ -193,7 +193,7 @@ class TestObservableSet(unittest.TestCase):
         self.assertEqual(len(self.events), 1)  # No new event
 
     def test_clear(self):
-        def listener(set_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -209,11 +209,11 @@ class TestObservableSet(unittest.TestCase):
         events1 = []
         events2 = []
 
-        def listener1(set_obj, event):
+        def listener1(event):
             events1.append((event.added_elements,
                           event.removed_elements))
 
-        def listener2(set_obj, event):
+        def listener2(event):
             events2.append((event.added_elements,
                           event.removed_elements))
 
@@ -335,7 +335,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(list(new_list), [1, 2, 3])
 
     def test_append(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -346,7 +346,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [([1], None)])
 
     def test_extend(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -357,7 +357,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [([1, 2, 3], None)])
 
     def test_insert(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -369,7 +369,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [([4], None)])
 
     def test_remove(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -381,7 +381,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [(None, [2])])
 
     def test_pop(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -399,7 +399,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [(None, [3]), (None, [1])])
 
     def test_clear(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -411,7 +411,7 @@ class TestObservableList(unittest.TestCase):
         self.assertEqual(self.events, [(None, [1, 2, 3])])
 
     def test_setitem(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -425,7 +425,7 @@ class TestObservableList(unittest.TestCase):
         ])
 
     def test_delitem(self):
-        def listener(list_obj, event):
+        def listener(event):
             self.events.append((event.added_elements,
                               event.removed_elements))
 
@@ -440,10 +440,10 @@ class TestObservableList(unittest.TestCase):
         events1 = []
         events2 = []
 
-        def listener1(list_obj, event):
+        def listener1(event):
             events1.append(event)
 
-        def listener2(list_obj, event):
+        def listener2(event):
             events2.append(event)
 
         self.list.add_listener(listener1)

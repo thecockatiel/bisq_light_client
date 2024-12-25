@@ -32,7 +32,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         if self.persistence_manager:
             self.persistence_manager.initialize(self, PersistenceManagerSource.PRIVATE)
 
-    def read_persisted(self, complete_handler):
+    def read_persisted(self, complete_handler: Callable[[], None]):
         self.persistence_manager.read_persisted(lambda persisted: self._on_read(persisted, complete_handler), complete_handler)
         
     def _on_read(self, persisted: "AddressEntryList", complete_handler: Callable):

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, List
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
@@ -6,6 +7,7 @@ from collections import Counter as Multiset
 from typing import Optional
 import copy
 
+from bisq.core.trade.model.tradable_list import TradableList
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 
 if TYPE_CHECKING:
@@ -15,7 +17,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.trade.model.bsq_swap.bsq_swap_trade import BsqSwapTrade
-    from bisq.core.trade.model.tradable_list import TradableList
     from bisq.core.offer.offer import Offer
     from bisq.core.trade.model.tradable import Tradable
 
@@ -41,7 +42,7 @@ class BsqSwapTradeManager(PersistedDataHost):
 
         self.persistence_manager.initialize(self.bsq_swap_trades, PersistenceManagerSource.PRIVATE, "BsqSwapTrades")
 
-    def read_persisted(self, complete_handler):
+    def read_persisted(self, complete_handler: Callable[[], None]):
         def on_persisted(persisted: 'TradableList[BsqSwapTrade]'):
             self.bsq_swap_trades.set_all(persisted.list)
             for bsq_swap_trade in self.bsq_swap_trades:
