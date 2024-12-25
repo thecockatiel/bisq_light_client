@@ -56,7 +56,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
 
     def to_proto_message(self) -> Message:
         return protobuf.ProtectedStorageEntry(
-            storage_payload=self.protected_storage_payload.to_proto_message(),
+            storagePayload=self.protected_storage_payload.to_proto_message(), # Weird protobuf names
             owner_pub_key_bytes=self.owner_pub_key_bytes,
             sequence_number=self.sequence_number,
             signature=self.signature,
