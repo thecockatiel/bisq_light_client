@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, Dict
+from typing import TYPE_CHECKING, Optional
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -29,7 +29,7 @@ class ProtectedStoragePayload(NetworkPayload, ABC):
         pass
 
     @abstractmethod
-    def get_extra_data_map(self) -> Optional[Dict[str, str]]:
+    def get_extra_data_map(self) -> Optional[dict[str, str]]:
         """
         Should be used only in emergency cases if data needs to be added without breaking
         backward compatibility at the P2P network storage checks.

@@ -89,7 +89,13 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
                 pass
         # If not set in extra_data_map or value is invalid or too large we return default TTL
         return self.TTL
+    
+    def get_owner_pub_key(self) -> 'dsa.DSAPublicKey':
+        return self.owner_pub_key
 
+    def get_extra_data_map(self) -> Optional[dict[str, str]]:
+        return self.extra_data_map
+    
     def __eq__(self, other):
         if not isinstance(other, MailboxStoragePayload):
             return False
