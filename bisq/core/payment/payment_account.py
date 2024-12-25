@@ -63,6 +63,8 @@ class PaymentAccount(PersistablePayload, ABC):
 
     @staticmethod
     def from_proto(proto: 'protobuf.PaymentAccount', core_proto_resolver: "CoreProtoResolver") -> Optional['PaymentAccount']:
+        from bisq.core.payment.payload.payment_method import PaymentMethod
+        
         payment_method_id = proto.payment_method.id
         trade_currencies = [TradeCurrency.from_proto(tc) for tc in proto.trade_currencies]
 

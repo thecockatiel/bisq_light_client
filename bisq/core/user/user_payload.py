@@ -5,14 +5,14 @@ from bisq.core.notifications.alerts.market.market_alert_filter import MarketAler
 from bisq.core.notifications.alerts.price.price_alert_filter import PriceAlertFilter
 from bisq.core.user.cookie import Cookie
 import proto.pb_pb2 as protobuf
+from bisq.core.payment.payment_account import PaymentAccount
+from bisq.core.alert.alert import Alert
+from bisq.core.filter.filter import Filter
+from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
+from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
+from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
 
 if TYPE_CHECKING:
-    from bisq.core.alert.alert import Alert
-    from bisq.core.filter.filter import Filter
-    from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
-    from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
-    from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
-    from bisq.core.payment.payment_account import PaymentAccount
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 class UserPayload(PersistableEnvelope):
@@ -138,8 +138,10 @@ class UserPayload(PersistableEnvelope):
         # Convert protobuf SubAccountMapEntry list to dictionary
         sub_accounts = {
             entry.key: {
-                PaymentAccount.from_proto(sub_account, core_proto_resolver)
+                sub_account_obj
                 for sub_account in entry.value
+                if sub_account is not None
+                if (sub_account_obj := PaymentAccount.from_proto(sub_account, core_proto_resolver)) is not None
             }
             for entry in proto.sub_account_map_entries
         }
@@ -147,9 +149,9 @@ class UserPayload(PersistableEnvelope):
         return UserPayload(
             account_id=ProtoUtil.string_or_none_from_proto(proto.account_id),
             payment_accounts={
-                PaymentAccount.from_proto(account, core_proto_resolver)
-                for account in proto.payment_accounts
-                if account is not None
+                account_obj
+                for account in proto.payment_accounts if account is not None
+                if (account_obj := PaymentAccount.from_proto(account, core_proto_resolver)) is not None
             } if proto.payment_accounts else set(),
             current_payment_account=PaymentAccount.from_proto(proto.current_payment_account, core_proto_resolver) 
                 if proto.HasField("current_payment_account") else None,
