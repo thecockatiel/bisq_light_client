@@ -5,9 +5,9 @@ from bisq.common.persistence.persistence_manager_source import PersistenceManage
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.network.p2p.persistence.historical_data_store_service import T, HistoricalDataStoreService
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
+from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 
 if TYPE_CHECKING:
-    from bisq.core.account.witness.account_age_witness import AccountAgeWitness
     from bisq.common.persistence.persistence_manager import PersistenceManager
 
 class AccountAgeWitnessStorageService(HistoricalDataStoreService[AccountAgeWitnessStore]):
@@ -23,7 +23,7 @@ class AccountAgeWitnessStorageService(HistoricalDataStoreService[AccountAgeWitne
         self.persistence_manager.initialize(self.store, PersistenceManagerSource.NETWORK)
         
     def can_handle(self, payload: "PersistableNetworkPayload") -> bool:
-        return isinstance(payload, "AccountAgeWitness")
+        return isinstance(payload, AccountAgeWitness)
     
     def create_store(self) -> AccountAgeWitnessStore:
         return AccountAgeWitnessStore()
