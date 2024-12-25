@@ -16,12 +16,13 @@ class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapab
     supported_capabilities: Capabilities = field(default_factory=lambda: Capabilities.app)
 
     def to_proto_network_envelope(self):
-        request = protobuf.PreliminaryGetDataRequest()
-        request.nonce = self.nonce
-        request.excluded_keys.extend(self.excluded_keys)
+        request = protobuf.PreliminaryGetDataRequest(
+            nonce=self.nonce,
+            excluded_keys=self.excluded_keys,
+            supported_capabilities=Capabilities.to_int_list(self.supported_capabilities),
+        )
         if self.version:
             request.version = self.version
-        request.supported_capabilities.extend(self.supported_capabilities)
         envelope = self.get_network_envelope_builder()
         envelope.preliminary_get_data_request.CopyFrom(request)
         logger.info(f"Sending a PreliminaryGetDataRequest with {request.ByteSize() / 1000} kB and {len(self.excluded_keys)} excluded key entries. Requester's version={self.version}")
