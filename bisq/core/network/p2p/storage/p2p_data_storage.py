@@ -171,7 +171,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def build_get_updated_data_request(self, sender_node_address: "NodeAddress", nonce: int):
         """Returns a GetUpdatedDataRequest that can be sent to a peer node to request missing Payload data."""
-        return GetUpdatedDataRequest(sender_node_address, nonce, self.get_known_payload_hashes())
+        return GetUpdatedDataRequest(sender_node_address=sender_node_address, nonce=nonce, excluded_keys=self.get_known_payload_hashes())
     
     def get_known_payload_hashes(self) -> set[bytes]:
         """Returns the set of known payload hashes. This is used in the GetData path to request missing data from peer nodes"""
