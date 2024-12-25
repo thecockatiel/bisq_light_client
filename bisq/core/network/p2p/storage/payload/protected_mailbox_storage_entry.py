@@ -26,7 +26,6 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                  clock: Clock,
                  creation_time_stamp: int = None):
         super().__init__(mailbox_storage_payload,
-                         Sig.get_public_key_bytes(owner_pub_key),
                          owner_pub_key,
                          sequence_number,
                          signature,
