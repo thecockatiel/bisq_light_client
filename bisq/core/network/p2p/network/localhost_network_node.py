@@ -30,7 +30,7 @@ class LocalhostNetworkNode(NetworkNode):
     def __init__(self, service_port: int, network_proto_resolver: "NetworkProtoResolver", ban_filter: Optional["BanFilter"], max_connections: int):
         super().__init__(service_port, network_proto_resolver, ban_filter, max_connections)
         
-    def start(self, setup_listener: Optional["SetupListener"] = None):
+    async def start(self, setup_listener: Optional["SetupListener"] = None):
         if setup_listener:
             self.add_setup_listener(setup_listener)
         

@@ -65,7 +65,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.server: Server = None
 
     @abstractmethod
-    def start(self, setup_listener: Optional["SetupListener"] = None):
+    async def start(self, setup_listener: Optional["SetupListener"] = None):
         # Calls this (and other registered) setup listener's ``onTorNodeReady()`` and ``onHiddenServicePublished``
         # when the events happen.
         pass
