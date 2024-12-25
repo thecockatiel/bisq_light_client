@@ -4,6 +4,7 @@
 
 from utils.di import DependencyProvider
 
+
 class GlobalContainer:
     ############################################################################### (not listed in ModuleForAppWithP2p)
     _config = None
@@ -454,7 +455,7 @@ class GlobalContainer:
                 CorePersistenceProtoResolver,
             )
             from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
-            
+
             class BtcWalletServiceProvider(DependencyProvider["BtcWalletService"]):
                 def get(self_) -> "BtcWalletService":
                     return self.btc_wallet_service
@@ -620,7 +621,8 @@ class GlobalContainer:
 
             GlobalContainer._account_age_witness_storage_service = (
                 AccountAgeWitnessStorageService(
-                    self.config.storage_dir, self.persistence_manager
+                    self.config.storage_dir,
+                    self.persistence_manager,
                 )
             )
         return GlobalContainer._account_age_witness_storage_service
@@ -652,7 +654,8 @@ class GlobalContainer:
 
             GlobalContainer._signed_witness_storage_service = (
                 SignedWitnessStorageService(
-                    self.config.storage_dir, self.persistence_manager
+                    self.config.storage_dir,
+                    self.persistence_manager,
                 )
             )
         return GlobalContainer._signed_witness_storage_service

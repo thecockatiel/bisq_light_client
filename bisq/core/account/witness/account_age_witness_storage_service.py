@@ -8,11 +8,12 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import Pe
 
 if TYPE_CHECKING:
     from bisq.core.account.witness.account_age_witness import AccountAgeWitness
+    from bisq.common.persistence.persistence_manager import PersistenceManager
 
 class AccountAgeWitnessStorageService(HistoricalDataStoreService[AccountAgeWitnessStore]):
     FILE_NAME = "AccountAgeWitnessStore"
     
-    def __init__(self, storage_dir: Path, persistence_manager: "PersistableNetworkPayload[AccountAgeWitnessStore]"):
+    def __init__(self, storage_dir: Path, persistence_manager: "PersistenceManager[AccountAgeWitnessStore]"):
         super().__init__(storage_dir, persistence_manager)
         
     def get_file_name(self):
