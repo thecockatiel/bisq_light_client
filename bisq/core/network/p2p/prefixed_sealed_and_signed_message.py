@@ -65,4 +65,4 @@ class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNod
         return self.TTL
     
     def __hash__(self):
-        return hash(self.sender_node_address, self.sealed_and_signed, self.address_prefix_hash, self.uid)
+        return hash((self.sender_node_address, self.sealed_and_signed, self.address_prefix_hash, self.uid))
