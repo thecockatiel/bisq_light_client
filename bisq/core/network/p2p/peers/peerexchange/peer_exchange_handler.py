@@ -142,7 +142,7 @@ class PeerExchangeHandler(MessageListener):
 
     def _handle_fault(self, error_message: str, close_connection_reason: "CloseConnectionReason", node_address: "NodeAddress"):
         self.cleanup()
-        self.peer_manager.handle_connection_fault(node_address, self.connection)
+        self.peer_manager.handle_connection_fault(node_address=node_address, connection=self.connection)
         self.listener.on_fault(error_message, self.connection)
 
     def cleanup(self):

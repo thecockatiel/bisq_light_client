@@ -196,23 +196,23 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         return future
 
     def lookup_outbound_connection(self, peers_node_address: "NodeAddress"):
-        logger.debug(
+        logger.trace(
             f"lookupOutboundConnection for peersNodeAddress={peers_node_address.get_full_address()}"
         )
         self.print_outbound_connections()
 
-        for connection in self.outbound_connections:
-            if (
-                connection.peers_node_address
+        return next(
+            (
+                connection
+                for connection in self.outbound_connections
+                if connection.peers_node_address
                 and peers_node_address == connection.peers_node_address
-            ):
-                return connection
-
-        return None
+            ),
+            None,
+        )
 
     def lookup_inbound_connection(self, peers_node_address: "NodeAddress"):
-        full_address = peers_node_address.get_full_address()
-        logger.debug(f"lookupInboundConnection for peersNodeAddress={full_address}")
+        logger.trace(f"lookupInboundConnection for peersNodeAddress={peers_node_address.get_full_address()}")
         self.print_inbound_connections()
 
         return next(
@@ -220,7 +220,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 connection
                 for connection in self.inbound_connections
                 if connection.peers_node_address
-                and connection.peers_node_address.get_full_address() == full_address
+                and peers_node_address == connection.peers_node_address
             ),
             None,
         )
@@ -462,7 +462,7 @@ class NetworkNodeServerConnectionListener(ConnectionListener):
     def on_disconnect(
         self, close_connection_reason: "CloseConnectionReason", connection: "Connection"
     ):
-        logger.debug(
+        logger.trace(
             f"on_disconnect at server socket connectionListener\n\tconnection={connection}"
         )
         self.network_node.inbound_connections.discard(connection)
