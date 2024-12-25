@@ -75,7 +75,7 @@ class KeepAliveHandler(MessageListener):
                                     f"\tping={ping}.\n\tException={str(e)}")
                         self.cleanup()
                         logger.info(error_message)
-                        self.peer_manager.handle_connection_fault(connection)
+                        self.peer_manager.handle_connection_fault(connection=connection)
                         self.listener.on_fault(error_message)
                     else:
                         logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")

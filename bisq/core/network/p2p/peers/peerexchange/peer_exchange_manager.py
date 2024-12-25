@@ -146,7 +146,7 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
                 def on_fault(self, error_message, connection):
                     logger.trace(f"PeerExchangeHandshake failed.\nerrorMessage={error_message}\n"
                                             f"connection={connection}")
-                    self.peer_manager.handle_connection_fault(connection)
+                    self.peer_manager.handle_connection_fault(connection=connection)
 
             get_peers_request_handler = GetPeersRequestHandler(
                 self.network_node,
@@ -182,7 +182,7 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
                     logger.debug(f"PeerExchangeHandshake of outbound connection failed.\n\terrorMessage={error_message}\n\t"
                                 f"nodeAddress={self.node_address}")
 
-                    self.outer.peer_manager.handle_connection_fault(self.node_address)
+                    self.outer.peer_manager.handle_connection_fault(node_address=self.node_address)
                     self.outer.handler_map.pop(self.node_address)
                     
                     if self.remaining_node_addresses:

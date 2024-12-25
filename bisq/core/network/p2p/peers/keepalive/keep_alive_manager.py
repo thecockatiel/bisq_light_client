@@ -79,7 +79,7 @@ class KeepAliveManager(MessageListener, ConnectionListener, PeerManager.Listener
             if not self.stopped:
                 logger.info(f"Sending pong to {connection} failed. That is expected if the "
                             f"peer is offline. Exception: {str(e)}")
-                self.peer_manager.handle_connection_fault(connection)
+                self.peer_manager.handle_connection_fault(connection=connection)
             else:
                 logger.warning("We have stopped already. We ignore that  networkNode.sendMessage.onFailure call.")
 
