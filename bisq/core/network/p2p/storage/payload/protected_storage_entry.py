@@ -4,6 +4,7 @@ from google.protobuf import message as Message
 from typing import TYPE_CHECKING
 
 from bisq.common.crypto.crypto_exception import CryptoException
+from bisq.common.crypto.encryption import Encryption
 from bisq.common.crypto.hash import get_32_byte_hash
 from bisq.common.crypto.sig import Sig, dsa
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -98,9 +99,9 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
             return False
 
         if isinstance(self.protected_storage_payload, MailboxStoragePayload):
-            return self.protected_storage_payload.sender_pub_key_for_add_operation == self.owner_pub_key
+            return self.protected_storage_payload.sender_pub_key_for_add_operation_bytes == self.owner_pub_key_bytes
         else:
-            result = self.owner_pub_key == self.protected_storage_payload.get_owner_pub_key()
+            result = Encryption.is_pubkeys_equal(self.owner_pub_key_bytes, self.protected_storage_payload.get_owner_pub_key())
             if not result:
                 res1 = str(self)
                 res2 = "null"
@@ -146,7 +147,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
             return False
 
     def matches_relevant_pub_key(self, protected_storage_entry: 'ProtectedStorageEntry') -> bool:
-        result = protected_storage_entry.owner_pub_key == self.owner_pub_key
+        result = protected_storage_entry.owner_pub_key_bytes == self.owner_pub_key_bytes
         if not result:
             logger.warning(f"New data entry does not match our stored data. storedData.ownerPubKey={Sig.get_public_key_as_hex_string(protected_storage_entry.owner_pub_key)}\n"
                            f"ownerPubKey={Sig.get_public_key_as_hex_string(self.owner_pub_key)}")
