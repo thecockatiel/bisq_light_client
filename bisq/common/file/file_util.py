@@ -61,7 +61,12 @@ def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
                 file_to_delete = files[0]
                 
                 if file_to_delete.is_file():
-                    if not file_to_delete.unlink(missing_ok=True):
+                    try:
+                        file_to_delete.unlink(missing_ok=True)
+                        deleted = True
+                    except:
+                        deleted = False
+                    if not deleted:
                         logger.error("Failed to delete file: " + str(file_to_delete))
                     else:
                         prune_backup(backup_dir_path, num_max_backup_files)
