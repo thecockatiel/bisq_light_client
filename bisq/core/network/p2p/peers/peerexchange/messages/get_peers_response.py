@@ -36,7 +36,7 @@ class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabiliti
         for peer in proto.reported_peers:
             node_address = NodeAddress(host_name=peer.node_address.host_name, port=peer.node_address.port)
             capabilities = Capabilities.from_int_list(peer.supported_capabilities)
-            reported_peers.add(Peer(node_address=node_address, supported_capabilities=capabilities))
+            reported_peers.add(Peer(node_address=node_address, capabilities=capabilities))
 
         return GetPeersResponse(
             message_version=message_version,
