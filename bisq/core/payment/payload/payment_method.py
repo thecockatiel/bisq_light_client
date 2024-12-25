@@ -214,7 +214,7 @@ class PaymentMethod(PersistablePayload):
         return hash(self.id)
 
     def to_proto_message(self):
-        raise protobuf.PaymentMethod(
+        return protobuf.PaymentMethod(
             id=self.id,
             max_trade_period=self.max_trade_period,
             max_trade_limit=self.max_trade_limit,
