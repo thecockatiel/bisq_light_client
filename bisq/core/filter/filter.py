@@ -1,6 +1,6 @@
 import base64
 from datetime import timedelta
-from typing import Dict, List, Optional, Set
+from typing import Optional
 from bisq.common.crypto.sig import Sig, dsa
 from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
@@ -17,45 +17,45 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
     TTL = int(timedelta(days=180).total_seconds() * 1000)
 
     def __init__(self,
-                 banned_offer_ids: List[str],
-                 node_addresses_banned_from_trading: List[str],
-                 banned_auto_conf_explorers: List[str],
-                 banned_payment_accounts: List[PaymentAccountFilter],
-                 banned_currencies: List[str],
-                 banned_payment_methods: List[str],
-                 arbitrators: List[str],
-                 seed_nodes: List[str],
-                 price_relay_nodes: List[str],
+                 banned_offer_ids: list[str],
+                 node_addresses_banned_from_trading: list[str],
+                 banned_auto_conf_explorers: list[str],
+                 banned_payment_accounts: list[PaymentAccountFilter],
+                 banned_currencies: list[str],
+                 banned_payment_methods: list[str],
+                 arbitrators: list[str],
+                 seed_nodes: list[str],
+                 price_relay_nodes: list[str],
                  prevent_public_btc_network: bool,
-                 btc_nodes: List[str],
+                 btc_nodes: list[str],
                  disable_dao: bool,
                  disable_dao_below_version: str,
                  disable_trade_below_version: str,
-                 mediators: List[str],
-                 refund_agents: List[str],
-                 banned_account_witness_signer_pub_keys: List[str],
-                 btc_fee_receiver_addresses: List[str],
+                 mediators: list[str],
+                 refund_agents: list[str],
+                 banned_account_witness_signer_pub_keys: list[str],
+                 btc_fee_receiver_addresses: list[str],
                  owner_pub_key: dsa.DSAPublicKey = None,
                  owner_pub_key_bytes: bytes = None,
                  creation_date: int = None,
-                 extra_data_map: Dict[str, str] = None,
+                 extra_data_map: dict[str, str] = None,
                  signature_as_base64: Optional[str] = None,
                  signer_pub_key_as_hex: str = None,
-                 banned_privileged_dev_pub_keys: List[str] = None,
+                 banned_privileged_dev_pub_keys: list[str] = None,
                  disable_auto_conf: bool = False,
-                 node_addresses_banned_from_network: Set[str] = None,
+                 node_addresses_banned_from_network: set[str] = None,
                  disable_mempool_validation: bool = False,
                  disable_api: bool = False,
                  disable_pow_message: bool = False,
                  pow_difficulty: float = 0.0,
-                 enabled_pow_versions: List[int] = None,
+                 enabled_pow_versions: list[int] = None,
                  maker_fee_btc: int = 0,
                  taker_fee_btc: int = 0,
                  maker_fee_bsq: int = 0,
                  taker_fee_bsq: int = 0,
-                 delayed_payout_payment_accounts: List[PaymentAccountFilter] = None,
-                 added_btc_nodes: List[str] = None,
-                 added_seed_nodes: List[str] = None,
+                 delayed_payout_payment_accounts: list[PaymentAccountFilter] = None,
+                 added_btc_nodes: list[str] = None,
+                 added_seed_nodes: list[str] = None,
                  uid: str = '') -> None:
         self._banned_offer_ids = banned_offer_ids
         self._node_addresses_banned_from_trading = node_addresses_banned_from_trading
@@ -192,13 +192,13 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             disable_dao_below_version=self._disable_dao_below_version,
             disable_trade_below_version=self._disable_trade_below_version,
             mediators=self._mediators,
-            refund_agents=self._refund_agents,
-            banned_signer_pub_keys=self._banned_account_witness_signer_pub_keys,
+            refundAgents=self._refund_agents, # weird protobuf names
+            bannedSignerPubKeys=self._banned_account_witness_signer_pub_keys, # weird protobuf names
             btc_fee_receiver_addresses=self._btc_fee_receiver_addresses,
             owner_pub_key_bytes=self._owner_pub_key_bytes,
             signer_pub_key_as_hex=self._signer_pub_key_as_hex,
             creation_date=self._creation_date,
-            banned_privileged_dev_pub_keys=self._banned_privileged_dev_pub_keys,
+            bannedPrivilegedDevPubKeys=self._banned_privileged_dev_pub_keys, # weird protobuf names
             disable_auto_conf=self._disable_auto_conf,
             banned_auto_conf_explorers=self._banned_auto_conf_explorers,
             node_addresses_banned_from_network=list(self._node_addresses_banned_from_network),
@@ -211,9 +211,9 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             taker_fee_btc=self._taker_fee_btc,
             maker_fee_bsq=self._maker_fee_bsq,
             taker_fee_bsq=self._taker_fee_bsq,
-            delayedPayoutPaymentAccounts=delayed_payout_payment_accounts,
-            addedBtcNodes=self._added_btc_nodes,
-            addedSeedNodes=self._added_seed_nodes,
+            delayedPayoutPaymentAccounts=delayed_payout_payment_accounts, # weird protobuf names
+            addedBtcNodes=self._added_btc_nodes, # weird protobuf names
+            addedSeedNodes=self._added_seed_nodes, # weird protobuf names
             uid=self._uid
         )
 
