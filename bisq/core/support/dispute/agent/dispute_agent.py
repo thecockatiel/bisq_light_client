@@ -44,8 +44,11 @@ class DisputeAgent(ProtectedStoragePayload, ExpirablePayload, ABC):
     def get_ttl(self) -> int:
         return self.TTL
 
-    def get_owner_pub_key(self) -> bytes:
+    def get_owner_pub_key(self):
         return self.pub_key_ring.signature_pub_key
+    
+    def get_extra_data_map(self):
+        return self.extra_data_map
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, DisputeAgent):

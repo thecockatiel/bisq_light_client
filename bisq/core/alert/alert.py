@@ -112,6 +112,12 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
 
     def show_again_key(self) -> str:
         return f"Update_{self.version}"
+    
+    def get_extra_data_map(self):
+        return self.extra_data_map
+    
+    def get_owner_pub_key(self):
+        return self.owner_pub_key
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Alert):
