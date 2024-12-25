@@ -24,7 +24,7 @@ class DataAndSeqNrPair(NetworkPayload, ExcludeForHashAwareProto):
 
     def to_storage_payload_proto(self, serialize_for_hash: bool):
         if isinstance(self.protected_storage_payload, ExcludeForHashAwareProto):
-            builder = self.protected_storage_payload.to_proto(serialize_for_hash) # only Filter comes here ??
-            return builder
+            storage_payload = self.protected_storage_payload.to_proto(serialize_for_hash) # only Filter comes here ??
+            return storage_payload
         else:
             return self.protected_storage_payload.to_proto_message()
