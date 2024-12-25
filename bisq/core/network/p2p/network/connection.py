@@ -446,10 +446,10 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         close_connection_reason = CloseConnectionReason.UNKNOWN_EXCEPTION
         if isinstance(exception, Socket.timeout):
             close_connection_reason = CloseConnectionReason.SOCKET_TIMEOUT
-            logger.info(f"Shut down caused by exception {exception} on connection={self}")
+            logger.info(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, EOFError):
             close_connection_reason = CloseConnectionReason.TERMINATED
-            logger.warning(f"Shut down caused by exception {exception} on connection={self}")
+            logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error)):
             if self.socket._closed:
                 close_connection_reason = CloseConnectionReason.SOCKET_CLOSED
@@ -458,7 +458,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             logger.info(f"SocketException (expected if connection lost). closeConnectionReason={close_connection_reason}; connection={self}")
         elif isinstance(exception, (ValueError,)):
             close_connection_reason =  CloseConnectionReason.CORRUPTED_DATA
-            logger.warning(f"Shut down caused by exception {exception} on connection={self}")
+            logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         else:
             logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}")
         
@@ -507,15 +507,16 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     if proto is None:
                         if self.stopped:
                             return
-                        if self.proto_input_stream.read() == -1:
-                            logger.warning("proto is null because protoInputStream.read()=-1 (EOF). That is expected if client got stopped without proper shutdown.")
+                        data = self.proto_input_stream.read()
+                        if  data == bytes():
+                            logger.warning("proto is null because EOF was read. That is expected if client got stopped without proper shutdown.")
                         else:
-                            logger.warning("proto is null. protoInputStream.read()=" + self.proto_input_stream.read().decode("utf-8"))
+                            logger.warning("proto is null. protoInputStream.read()=" + data.hex())
                         self.shut_down(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
                         return
                     
                     if self.ban_filter and self.peers_node_address and self.ban_filter.is_peer_banned(self.peers_node_address):
-                        logger.warning("We got a message from a banned peer. proto=%s", str(proto))
+                        logger.warning(f"We got a message from a banned peer. proto={str(proto)}")
                         self.report_invalid_request(RuleViolation.PEER_BANNED)
                         return
 
