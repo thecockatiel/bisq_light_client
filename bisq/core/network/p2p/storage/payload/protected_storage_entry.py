@@ -134,7 +134,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         """
         try:
             hash_of_data_and_seq_nr = get_32_byte_hash(
-                DataAndSeqNrPair(self.protected_storage_payload, self.sequence_number)
+                DataAndSeqNrPair(protected_storage_payload=self.protected_storage_payload, sequence_number=self.sequence_number)
             )
             result = Sig.verify(self.owner_pub_key, hash_of_data_and_seq_nr, self.signature)
             if not result:
