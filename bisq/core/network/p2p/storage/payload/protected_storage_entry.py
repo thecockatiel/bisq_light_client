@@ -149,12 +149,12 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         result = protected_storage_entry.owner_pub_key == self.owner_pub_key
         if not result:
             logger.warning(f"New data entry does not match our stored data. storedData.ownerPubKey={Sig.get_public_key_as_hex_string(protected_storage_entry.owner_pub_key)}\n"
-                           f"ownerPubKey={Sig.get_public_key_as_hex_string(self.owner_pub_key_bytes)}")
+                           f"ownerPubKey={Sig.get_public_key_as_hex_string(self.owner_pub_key)}")
         return result
 
     def __str__(self) -> str:
         return (f"ProtectedStorageEntry {{\n\tPayload: {self.protected_storage_payload}\n\t"
-                f"Owner Public Key: {Sig.get_public_key_as_hex_string(self.owner_pub_key_bytes)}\n\t"
+                f"Owner Public Key: {Sig.get_public_key_as_hex_string(self.owner_pub_key)}\n\t"
                 f"Sequence Number: {self.sequence_number}\n\tSignature: {self.signature.hex()}\n\t"
                 f"Timestamp: {self.creation_time_stamp}\n}}")
     

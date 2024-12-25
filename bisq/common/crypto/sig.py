@@ -1,4 +1,5 @@
 import base64
+from typing import Union
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.backends import default_backend
@@ -111,7 +112,9 @@ class Sig:
             raise KeyConversionException(e) from e
 
     @staticmethod
-    def get_public_key_as_hex_string(sig_public_key: dsa.DSAPublicKey, allow_none: bool = False):
+    def get_public_key_as_hex_string(sig_public_key: Union[dsa.DSAPublicKey, bytes], allow_none: bool = False):
+        if isinstance(sig_public_key, bytes):
+            sig_public_key = Sig.get_public_key_from_bytes(sig_public_key)
         if not sig_public_key:
             if not allow_none:
                 raise KeyConversionException("Public key is None.")
