@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.key_ring import KeyRing
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
@@ -42,8 +43,7 @@ class User(PersistedDataHost):
         self.user_payload = UserPayload()
         self.is_payment_account_import: bool = False
 
-    @property
-    def read_persisted(self, complete_handler: callable):
+    def read_persisted(self, complete_handler: Callable[[], None]):
         assert self.persistence_manager is not None
         self.persistence_manager.read_persisted(
             lambda persisted: (

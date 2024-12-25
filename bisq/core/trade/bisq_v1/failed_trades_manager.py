@@ -5,6 +5,7 @@ from bisq.common.persistence.persistence_manager_source import PersistenceManage
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
+from bisq.core.trade.model.tradable_list import TradableList
 
 if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.bisq_v1.dump_delayed_payout_tx import DumpDelayedPayoutTx
     from bisq.core.trade.bisq_v1.trade_util import TradeUtil
     from bisq.core.trade.model.bisq_v1.trade import Trade
-    from bisq.core.trade.model.tradable_list import TradableList
     from bisq.core.user.preferences import Preferences
     from bisq.core.offer.offer import Offer
     from bisq.core.btc.model.address_entry import AddressEntry
@@ -56,7 +56,7 @@ class FailedTradesManager(PersistedDataHost):
             self.failed_trades, PersistenceManagerSource.PRIVATE, "FailedTrades"
         )
 
-    def read_persisted(self, complete_handler):
+    def read_persisted(self, complete_handler: Callable[[], None]):
         def on_persisted(persisted: "TradableList[Trade]"):
             self.failed_trades.set_all(persisted.list)
             for trade in self.failed_trades:

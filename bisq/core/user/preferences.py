@@ -116,7 +116,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.fiat_currencies_as_observable.add_listener(self.update_trade_currencies)
         self.crypto_currencies_as_observable.add_listener(self.update_trade_currencies)
         
-    def read_persisted(self, complete_handler: Callable[["PreferencesPayload"], None]) -> None:
+    def read_persisted(self, complete_handler: Callable[[], None]) -> None:
         def result_handler(persisted: "PreferencesPayload"):
             self._init_from_persisted_preferences(persisted)
             complete_handler()
@@ -497,6 +497,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.request_persistence()
     
     def set_fiat_currencies(self, currencies: list["FiatCurrency"]) -> None:
+        from bisq.core.locale.fiat_currency import FiatCurrency
         unique_currencies = {FiatCurrency(curr.currency) for curr in currencies}
         self.fiat_currencies_as_observable.clear()
         self.fiat_currencies_as_observable.extend(list(unique_currencies))
