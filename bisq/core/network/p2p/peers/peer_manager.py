@@ -757,7 +757,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             )
             # we don't use sorting by lastActivityDate to avoid attack vectors and keep it more random
             peers_to_remove = random.sample(
-                self.get_persisted_peers(), size - self.MAX_PERSISTED_PEERS
+                list(self.get_persisted_peers()), size - self.MAX_PERSISTED_PEERS
             )
             for peer in peers_to_remove:
                 self.remove_persisted_peer(peer)
