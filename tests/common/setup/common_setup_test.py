@@ -4,7 +4,7 @@ import threading
 import unittest
 from bisq.common.setup.common_setup import CommonSetup
 from bisq.common.user_thread import UserThread
-from utils.test import run_with_reactor, teardown_reactor, twisted_wait
+from utils.twisted import run_with_reactor, teardown_reactor, twisted_wait
 
 class MockExceptionHandler:
     def __init__(self):
