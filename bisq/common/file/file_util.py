@@ -18,7 +18,11 @@ def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) ->
         backup_dir = dir_path.joinpath("backup")
         
         if not backup_dir.exists():
-            if not backup_dir.mkdir(exist_ok=True):
+            try:
+                backup_dir.mkdir(parents=True, exist_ok=True)
+            except:
+                pass
+            if not backup_dir.exists():
                 logger.warning("make dir failed.\nBackupDir=" + str(backup_dir))
         
         orig_file = dir_path.joinpath(file_name)
@@ -30,7 +34,11 @@ def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) ->
             backup_file_dir = backup_dir.joinpath(dir_name)
             
             if not backup_file_dir.exists():
-                if not backup_file_dir.mkdir(exist_ok=True):
+                try:
+                    backup_file_dir.mkdir(parents=True, exist_ok=True)
+                except:
+                    pass
+                if not backup_file_dir.exists():
                     logger.warning("make backupFileDir failed.\nBackupFileDir=" + str(backup_file_dir))
             
             backup_file = backup_file_dir.joinpath(f"{datetime.now().timestamp()}_{file_name}") 
