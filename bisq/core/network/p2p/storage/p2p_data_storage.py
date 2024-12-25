@@ -680,7 +680,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         # We want to allow add operations for equal sequence numbers if we don't have the payload locally. This is
         # the case for non-persistent Payloads that need to be reconstructed from peer and seed nodes each startup.
-        sequence_number_map_value = self.sequence_number_map[hash_of_payload]
+        sequence_number_map_value = self.sequence_number_map.get(hash_of_payload, None)
         if (sequence_number_map_value is not None and
                 protected_storage_entry.sequence_number < sequence_number_map_value.sequence_nr):
             logger.trace(f"## sequenceNr too low hash={hash_of_payload}")
