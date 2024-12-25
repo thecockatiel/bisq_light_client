@@ -1,6 +1,5 @@
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional, Dict
-from dataclasses import dataclass
+from typing import Optional
 
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.network.p2p.storage.messages.add_once_payload import AddOncePayload
@@ -8,11 +7,9 @@ from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePay
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.crypto.sig import Sig, dsa
+from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
 import proto.pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
 logger = get_logger(__name__)
 
@@ -35,7 +32,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
                  sender_pub_key_for_add_operation: 'dsa.DSAPublicKey',
                  owner_pub_key: 'dsa.DSAPublicKey',
                  ttl: int = None,
-                 extra_data_map: Optional[Dict[str, str]] = None):
+                 extra_data_map: Optional[dict[str, str]] = None):
         self.prefixed_sealed_and_signed_message = prefixed_sealed_and_signed_message
         self.sender_pub_key_for_add_operation = sender_pub_key_for_add_operation
         self.owner_pub_key = owner_pub_key
@@ -52,7 +49,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
 
             # We do not permit longer TTL as the default one
             if ttl < self.TTL:
-                self.extra_data_map: Optional[Dict[str, str]] = {}
+                self.extra_data_map: Optional[dict[str, str]] = {}
                 self.extra_data_map[self.EXTRA_MAP_KEY_TTL] = str(ttl)
             else:
                 self.extra_data_map = None
