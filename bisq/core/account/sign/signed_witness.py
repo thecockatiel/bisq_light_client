@@ -124,3 +124,6 @@ class SignedWitness(
             f"     hash={self.hash.hex()}\n"
             f"}}"
         )
+        
+    def __hash__(self):
+        return hash(self.hash)
