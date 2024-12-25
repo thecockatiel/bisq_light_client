@@ -39,7 +39,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
     #/////////////////////////////////////////////////////////////////////////////////////////
 
     def get_mailbox_storage_payload(self) -> MailboxStoragePayload:
-        return cast(MailboxStoragePayload, super().protected_storage_payload)
+        return cast(MailboxStoragePayload, self.protected_storage_payload)
 
     def is_valid_for_add_operation(self) -> bool:
         """

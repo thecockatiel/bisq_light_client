@@ -88,4 +88,4 @@ class SpecificBanksAccountPayload(BankAccountPayload):
         return f"{Res.get(self.payment_method_id)} - {self.get_payment_details_for_trade_popup().replace('\n', ', ')}"
 
     def get_payment_details_for_trade_popup(self) -> str:
-        return f"{super().get_payment_details_for_trade_popup()}\n{Res.get_with_col('payment.accepted.banks')} {', '.join(self.accepted_banks)}"
+        return f"{self.get_payment_details_for_trade_popup()}\n{Res.get_with_col('payment.accepted.banks')} {', '.join(self.accepted_banks)}"

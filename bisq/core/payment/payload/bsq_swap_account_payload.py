@@ -25,5 +25,5 @@ class BsqSwapAccountPayload(PaymentAccountPayload):
         return self.get_payment_details()
 
     def get_age_witness_input_data(self) -> bytes:
-        return super().get_age_witness_input_data_using_bytes(bytes())
+        return self.get_age_witness_input_data_using_bytes(bytes())
 

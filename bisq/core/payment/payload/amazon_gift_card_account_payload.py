@@ -55,7 +55,7 @@ class AmazonGiftCardAccountPayload(PaymentAccountPayload):
 
     def get_age_witness_input_data(self) -> bytes:
         data = f"AmazonGiftCard{self.email_or_mobile_nr}"
-        return super().get_age_witness_input_data_using_bytes(data.encode('utf-8'))
+        return self.get_age_witness_input_data_using_bytes(data.encode('utf-8'))
 
     @property
     def country_not_set(self) -> bool:

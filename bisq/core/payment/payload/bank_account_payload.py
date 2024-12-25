@@ -185,7 +185,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             f"{national_account_id}"
         )
 
-        return super().get_age_witness_input_data(all_data.encode("utf-8"))
+        return self.get_age_witness_input_data_using_bytes(all_data.encode("utf-8"))
 
     @property
     def owner_id(self) -> str:

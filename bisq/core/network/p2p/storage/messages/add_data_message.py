@@ -25,7 +25,7 @@ class AddDataMessage(BroadcastMessage):
         else:
             entry.protected_storage_entry = message
         
-        envelope = super().get_network_envelope_builder()
+        envelope = self.get_network_envelope_builder()
         envelope.add_data_message.CopyFrom(protobuf.AddDataMessage(entry=entry))
 
         return envelope
