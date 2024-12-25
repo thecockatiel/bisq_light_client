@@ -52,22 +52,22 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         mailbox_storage_payload = self.get_mailbox_storage_payload()
 
         # Verify the Entry.receiversPubKey matches the Payload.ownerPubKey. This is a requirement for removal
-        if mailbox_storage_payload.get_owner_pub_key() != self.receivers_pub_key:
+        if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
             logger.debug("Entry receiversPubKey does not match payload owner which is a requirement for adding MailboxStoragePayloads")
             return False
 
-        result = mailbox_storage_payload.sender_pub_key_for_add_operation == self.owner_pub_key
+        result = mailbox_storage_payload.sender_pub_key_for_add_operation_bytes == self.owner_pub_key_bytes
 
         if not result:
             res1 = str(self)
             res2 = "null"
-            if mailbox_storage_payload.get_owner_pub_key():
+            if mailbox_storage_payload.owner_pub_key:
                 if mailbox_storage_payload.sender_pub_key_for_add_operation:
                     res2 = Sig.get_public_key_as_hex_string(mailbox_storage_payload.sender_pub_key_for_add_operation, True)
 
             logger.warning("ProtectedMailboxStorageEntry::isValidForAddOperation() failed. " +
-                    "Entry owner does not match sender key in payload:\nProtectedStorageEntry=%s\n" +
-                    "SenderPubKeyForAddOperation=%s", res1, res2)
+                    f"Entry owner does not match sender key in payload:\nProtectedStorageEntry={res1}\n" +
+                    f"SenderPubKeyForAddOperation={res2}")
         return result
 
     def is_valid_for_remove_operation(self) -> bool:
@@ -81,21 +81,21 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         mailbox_storage_payload = self.get_mailbox_storage_payload()
 
         # Verify the Entry has the correct receiversPubKey for removal
-        if mailbox_storage_payload.get_owner_pub_key() != self.receivers_pub_key:
+        if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
             logger.debug("Entry receiversPubKey does not match payload owner which is a requirement for removing MailboxStoragePayloads")
             return False
 
-        result = mailbox_storage_payload.get_owner_pub_key() and mailbox_storage_payload.get_owner_pub_key() == self.owner_pub_key
+        result = mailbox_storage_payload.owner_pub_key_bytes and mailbox_storage_payload.owner_pub_key_bytes == self.owner_pub_key_bytes
 
         if not result:
             res1 = str(self)
             res2 = "null"
-            if mailbox_storage_payload.get_owner_pub_key():
-                res2 = Sig.get_public_key_as_hex_string(mailbox_storage_payload.get_owner_pub_key(), True)
+            if mailbox_storage_payload.owner_pub_key_bytes:
+                res2 = Sig.get_public_key_as_hex_string(mailbox_storage_payload.owner_pub_key, True)
 
             logger.warning("ProtectedMailboxStorageEntry::isValidForRemoveOperation() failed. " +
-                    "Entry owner does not match Payload owner:\nProtectedStorageEntry=%s\n" +
-                    "PayloadOwner=%s", res1, res2)
+                    f"Entry owner does not match Payload owner:\nProtectedStorageEntry={res1}\n" +
+                    f"PayloadOwner={res2}")
         return result
 
     def matches_relevant_pub_key(self, protected_storage_entry: ProtectedStorageEntry) -> bool:
@@ -110,12 +110,11 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
 
         protected_mailbox_storage_entry = cast(ProtectedMailboxStorageEntry, protected_storage_entry)
 
-        result = protected_mailbox_storage_entry.receivers_pub_key == self.receivers_pub_key
+        result = protected_mailbox_storage_entry.receivers_pub_key_bytes == self.receivers_pub_key_bytes
         if not result:
             logger.warning("ProtectedMailboxStorageEntry::isMetadataEquals() failed due to metadata mismatch. " +
-                    "new.receiversPubKey=%s\nstored.receiversPubKey=%s", 
-                    Sig.get_public_key_as_hex_string(protected_mailbox_storage_entry.receivers_pub_key_bytes, True),
-                    Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True))
+                    f"new.receiversPubKey={Sig.get_public_key_as_hex_string(protected_mailbox_storage_entry.receivers_pub_key_bytes, True)}\n"
+                    f"stored.receiversPubKey={Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True)}")
         return result
 
     #/////////////////////////////////////////////////////////////////////////////////////////
