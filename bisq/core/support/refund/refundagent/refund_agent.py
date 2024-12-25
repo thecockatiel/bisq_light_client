@@ -87,3 +87,6 @@ class RefundAgent(DisputeAgent, CapabilityRequiringPayload):
 
     def get_required_capabilities(self):
         return Capabilities([Capability.REFUND_AGENT])
+    
+    def get_extra_data_map(self):
+        return self.extra_data_map
