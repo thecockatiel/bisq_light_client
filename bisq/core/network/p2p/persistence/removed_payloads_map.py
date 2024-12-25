@@ -1,8 +1,9 @@
+from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
 
 
-class RemovedPayloadsMap:
+class RemovedPayloadsMap(PersistableEnvelope):
     def __init__(self, date_by_hashes: dict["StorageByteArray", int] = None):
         if date_by_hashes is None:
             date_by_hashes = {}

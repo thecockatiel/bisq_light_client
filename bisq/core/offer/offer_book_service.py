@@ -15,12 +15,12 @@ from bisq.core.offer.offer_payload_base import OfferPayloadBase
 from bisq.core.offer.offer import Offer
 from bisq.common.user_thread import UserThread
 from bisq.core.util.json_util import JsonUtil
+from bisq.common.file.json_file_manager import JsonFileManager
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.protected_storage_entry import (
         ProtectedStorageEntry,
     )
-    from bisq.common.file.json_file_manager import JsonFileManager
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.provider.price.price_feed_service import PriceFeedService
