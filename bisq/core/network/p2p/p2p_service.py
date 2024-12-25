@@ -89,10 +89,10 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def start(self, listener: Optional["P2PServiceListener"] = None):
+    async def start(self, listener: Optional["P2PServiceListener"] = None):
         if listener is not None:
             self.add_p2p_service_listener(listener)
-        self.network_node.start(self)
+        await self.network_node.start(self)
 
     def on_all_services_initialized(self):
         if self.network_node.node_address_property.value is not None:
