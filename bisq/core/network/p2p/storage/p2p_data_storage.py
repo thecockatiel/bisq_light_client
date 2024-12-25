@@ -46,6 +46,7 @@ from utils.data import SimpleProperty, combine_simple_properties
 from utils.formatting import to_truncated_string
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
+from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
 
 if TYPE_CHECKING: 
     from utils.clock import Clock
@@ -61,7 +62,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
     from bisq.common.capabilities import Capabilities
     from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-    from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
     from bisq.common.persistence.persistence_manager import PersistenceManager
 
 
