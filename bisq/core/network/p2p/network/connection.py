@@ -510,7 +510,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         if self.proto_input_stream.read() == -1:
                             logger.warning("proto is null because protoInputStream.read()=-1 (EOF). That is expected if client got stopped without proper shutdown.")
                         else:
-                            logger.warning("proto is null. protoInputStream.read()=" + self.proto_input_stream.read())
+                            logger.warning("proto is null. protoInputStream.read()=" + self.proto_input_stream.read().decode("utf-8"))
                         self.shut_down(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
                         return
                     

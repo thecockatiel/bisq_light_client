@@ -417,7 +417,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 if candidate:
                     supported_capabilities = candidate.capabilities
 
-            peer = Peer(peers_node_address, supported_capabilities)
+            peer = Peer(node_address=peers_node_address, capabilities=supported_capabilities)
 
             # If we did not find the capability from our own connection we add a listener,
             # so once we get a connection with that peer and exchange a message containing the capabilities
