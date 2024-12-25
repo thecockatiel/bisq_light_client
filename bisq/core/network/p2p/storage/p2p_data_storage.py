@@ -639,15 +639,10 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         else:
             logger.warning("We got a hash exceeding our permitted size")
 
-    def add_protected_storage_entry(self, protected_storage_entry: "ProtectedStorageEntry", 
-                                  sender: Optional["NodeAddress"],
-                                  listener: Optional["BroadcastHandler.Listener"]) -> bool:
-        return self._add_protected_storage_entry_internal(protected_storage_entry, sender, listener, True)
-
-    def _add_protected_storage_entry_internal(self, protected_storage_entry: "ProtectedStorageEntry",
+    def add_protected_storage_entry(self, protected_storage_entry: "ProtectedStorageEntry",
                                            sender: Optional["NodeAddress"],
                                            listener: Optional["BroadcastHandler.Listener"],
-                                           allow_broadcast: bool) -> bool:
+                                           allow_broadcast: bool = True) -> bool:
         """
         Adds a ProtectedStorageEntry to the local P2P data storage and broadcast if all checks have been successful.
 
