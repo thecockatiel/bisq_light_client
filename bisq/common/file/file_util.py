@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import platform
 import shutil
@@ -78,6 +79,7 @@ def rename_file(file: Path, new_file: Path) -> None:
     
     canonical = new_file.resolve()
     try:
+        # Work around an issue on Windows whereby you can't rename over existing files.
         if (platform.system().lower() == "windows" and canonical.exists()):
             canonical.unlink(missing_ok=True)
         file.rename(canonical)
@@ -102,7 +104,9 @@ def create_new_file(path: Path):
     return path
 
 def create_temp_file(prefix: Optional[str] = None, suffix: Optional[str] = None, dir: Optional[Path] = None):
-    return Path(tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=dir)[1])
+    fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=dir)
+    os.close(fd)
+    return Path(path)
 
 def resource_to_file(resource_path: str, destination_path: Path):
     # we dont have resources like java does, so we just copy the file from our resources directory in the root of the project
