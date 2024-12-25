@@ -83,7 +83,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
         
         #  We need to have both the initial data delivered and the hidden service published
         self.network_ready_property = combine_simple_properties(self.hidden_service_published, self.preliminary_data_received, transform=lambda values: all(values))
-        self.network_ready_property.add_listener(lambda ready: self.on_network_ready() if ready else None)
+        self.network_ready_unsubscribe = self.network_ready_property.add_listener(lambda ready: self.on_network_ready() if ready else None)
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -185,7 +185,8 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
 
     # Called from network_ready_property
     def on_network_ready(self):
-        self.network_ready_property.remove_all_listeners()
+        if self.network_ready_unsubscribe:
+            self.network_ready_unsubscribe()
 
         seed_node = self.request_data_manager.get_node_address_of_preliminary_data_request()
         assert seed_node is not None, "seed_node_of_preliminary_data_request must be present"

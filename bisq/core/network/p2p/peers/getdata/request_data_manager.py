@@ -332,26 +332,19 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         if not self.stopped:
             if node_address not in self.handler_map:
                 class Listener(RequestDataHandler.Listener):
-                    def __init__(
-                        self,
-                        request_data_manager: "RequestDataManager",
-                    ):
-                        super().__init__()
-                        self.request_data_manager = request_data_manager
                         
-                    def on_complete(self, was_truncated: bool):
-                        self.request_data_manager._on_request_data_complete(
+                    def on_complete(self_, was_truncated: bool):
+                        self._on_request_data_complete(
                             node_address, was_truncated, remaining_node_addresses
                         ),
                     
-                    def on_fault(self, error_message: str, conn: "Connection"):
-                        self.request_data_manager._on_request_data_fault(
+                    def on_fault(self_, error_message: str, conn: "Connection"):
+                        self._on_request_data_fault(
                             node_address, error_message, conn, remaining_node_addresses
                         )
 
-                listener = Listener(self)
                 request_data_handler = RequestDataHandler(
-                    self.network_node, self.data_storage, self.peer_manager, listener
+                    self.network_node, self.data_storage, self.peer_manager, Listener()
                 )
                 self.handler_map[node_address] = request_data_handler
                 self.num_repeated_requests += 1

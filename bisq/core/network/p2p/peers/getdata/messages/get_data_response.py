@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from bisq.common.capabilities import Capabilities
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
@@ -57,8 +58,29 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
     def from_proto(proto: 'protobuf.GetDataResponse', resolver: 'NetworkProtoResolver', message_version: int) -> 'GetDataResponse':
         was_truncated = proto.was_truncated
         logger.info(f"\n\n<< Received a GetDataResponse with {readable_file_size(proto.ByteSize())} {' (still data missing)' if was_truncated else ' (all data received)'}\n")
-        data_set = {resolver.from_proto(entry) for entry in proto.data_set}
-        persistable_network_payload_set = {resolver.from_proto(e) for e in proto.persistable_network_payload_items}
+        
+        data_set = set()
+        for entry in proto.data_set:
+            try:
+                data_set.add(resolver.from_proto(entry))
+            except ProtobufferException as e:
+                if "Unknown proto message case" in str(e):
+                    logger.debug(f"Unsupported proto message in GetDataResponse.data_set proto. This is probably expected. proto={type(proto).__name__}")
+                    continue
+                else:
+                    raise
+        
+        persistable_network_payload_set = set()
+        for e in proto.persistable_network_payload_items:
+            try:
+                persistable_network_payload_set.add(resolver.from_proto(e))
+            except ProtobufferException as e:
+                if "Unknown proto message case" in str(e):
+                    logger.debug(f"Unsupported proto message in GetDataResponse.persistable_network_payload_items proto. This is probably expected. proto={type(proto).__name__}")
+                    continue
+                else:
+                    raise
+
         return GetDataResponse(
             message_version=message_version,
             data_set=data_set,
