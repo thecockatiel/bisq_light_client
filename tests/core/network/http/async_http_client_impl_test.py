@@ -9,7 +9,7 @@ from bisq.common.setup.log_setup import (
 )
 from pathlib import Path
 
-from utils.test import run_with_reactor, teardown_reactor
+from utils.twisted import run_with_reactor, teardown_reactor
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath(".testdata")

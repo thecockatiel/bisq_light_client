@@ -4,7 +4,7 @@ from bisq.common.setup.log_setup import configure_logging, get_logger, set_custo
 from utils.random import next_random_int
 from pathlib import Path
 
-from utils.test import run_with_reactor, teardown_reactor
+from utils.twisted import run_with_reactor, teardown_reactor
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath("testdata")
