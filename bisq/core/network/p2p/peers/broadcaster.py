@@ -96,6 +96,6 @@ class Broadcaster(BroadcastHandler.ResultHandler):
     ###########################################################################################
 
     def on_completed(self, broadcast_handler: 'BroadcastHandler') -> None:
-        self.broadcast_handlers.remove(broadcast_handler)
+        self.broadcast_handlers.discard(broadcast_handler)
         if self.shut_down_requested:
             self.do_shut_down()

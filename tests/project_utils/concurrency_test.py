@@ -22,8 +22,7 @@ class TestThreadSafeSet(unittest.TestCase):
         self.safe_set.add(1)
         self.safe_set.remove(1)
         self.assertFalse(1 in self.safe_set)
-        with self.assertRaises(KeyError):
-            self.safe_set.remove(2)
+        self.assertFalse(self.safe_set.remove(2))    
 
     def test_discard(self):
         self.safe_set.add(1)
@@ -81,6 +80,49 @@ class TestThreadSafeSet(unittest.TestCase):
             t.start()
         for t in threads:
             t.join()
+
+    def test_set_conversion(self):
+        items = set({1, 2, 3, 4, 5})
+        b = set(items)
+        c = ThreadSafeSet(b)
+        d = set(c)
+        for item in items:
+            self.safe_set.add(item)
+        # Convert ThreadSafeSet to regular set
+        regular_set = set(self.safe_set)
+        self.assertEqual(regular_set, items)
+        self.assertIsInstance(regular_set, set)
+        self.assertNotIsInstance(regular_set, ThreadSafeSet)
+
+    def test_update_regular_set(self):
+        # Initialize regular set with some values
+        regular_set = {1, 2, 3}
+        
+        # Add different values to ThreadSafeSet
+        self.safe_set.add(3)  # Overlapping value
+        self.safe_set.add(4)
+        self.safe_set.add(5)
+        
+        # Update regular set with ThreadSafeSet
+        regular_set.update(self.safe_set)
+        
+        # Verify the result contains all values
+        self.assertEqual(regular_set, {1, 2, 3, 4, 5})
+        
+    def test_conversion_and_update_regular_set(self):
+        self.safe_set.add(1) 
+        self.safe_set.add(2)
+        self.safe_set.add(3)
+        
+        normal_set = set(self.safe_set)
+        
+        another_set = ThreadSafeSet([4,5,6])
+        
+        # Update regular set with ThreadSafeSet
+        normal_set.update(another_set)
+        
+        # Verify the result contains all values
+        self.assertEqual(normal_set, {1, 2, 3, 4, 5, 6})
 
 class TestThreadSafeWeakSet(unittest.TestCase):
     def setUp(self):
