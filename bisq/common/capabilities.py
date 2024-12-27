@@ -28,6 +28,9 @@ class Capabilities:
     def add_all(self, capabilities: Optional[list[Capability]] = None):
         if capabilities:
             self.capabilities = self.capabilities.union(capabilities)
+            
+    def is_empty(self) -> bool:
+        return not self.capabilities
 
     def contains_all(self, required_items: Iterable[Capability]) -> bool:
         return self.capabilities.issuperset(required_items)
@@ -37,9 +40,6 @@ class Capabilities:
     
     def __iter__(self):
         return iter(self.capabilities)
-
-    def is_empty(self) -> bool:
-        return not self.capabilities
     
     def __eq__(self, other):
         if isinstance(other, Capabilities):
@@ -47,8 +47,14 @@ class Capabilities:
         else:
             return False
     
+    def __len__(self):
+        return len(self.capabilities)
+    
     def __hash__(self):
         return None
+    
+    def __str__(self) -> str:
+        return str(self.to_int_list(self))
 
     @staticmethod
     def to_int_list(capabilities_obj: 'Capabilities') -> list[int]:
@@ -84,14 +90,8 @@ class Capabilities:
             mandatory_capability = Capabilities.MANDATORY_CAPABILITY
         return any(c == mandatory_capability for c in capabilities.capabilities)        
 
-    def __str__(self) -> str:
-        return str(self.to_int_list(self))
-
     def pretty_print(self) -> str:
         return ", ".join([f"{cap.name} [{cap.value}]" for cap in sorted(self.capabilities, key=lambda x: x.value)])
-
-    def __len__(self):
-        return len(self.capabilities)
 
     # We return true if our capabilities have less capabilities than the parameter value
     def has_less(self, other: 'Capabilities') -> bool:
