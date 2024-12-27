@@ -195,7 +195,7 @@ class BroadcastHandler:
         # Can be BundleOfEnvelopes or a single BroadcastMessage
         broadcast_message = self._get_message(broadcast_requests_for_connection)
         future = self.network_node.send_message(connection, broadcast_message)
-        future.add_done_callback(lambda: self._on_send_to_peer_completed(connection, broadcast_requests_for_connection, future))
+        future.add_done_callback(lambda f: self._on_send_to_peer_completed(connection, broadcast_requests_for_connection, f))
     
     def _on_send_to_peer_completed(self, connection: "Connection", broadcast_requests_for_connection: List["BroadcastRequest"], future: Future):
         try:
