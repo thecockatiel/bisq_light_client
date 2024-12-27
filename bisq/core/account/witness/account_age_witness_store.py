@@ -19,6 +19,6 @@ class AccountAgeWitnessStore(PersistableNetworkPayloadStore[AccountAgeWitness]):
         return protobuf.AccountAgeWitnessStore(items=proto_list)
 
     @staticmethod
-    def from_proto(proto: protobuf.AccountAgeWitness):
+    def from_proto(proto: protobuf.AccountAgeWitnessStore):
         list = [AccountAgeWitness.from_proto(item) for item in proto.items]
-        return AccountAgeWitness(list)
+        return AccountAgeWitnessStore(list)
