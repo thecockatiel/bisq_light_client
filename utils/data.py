@@ -53,7 +53,7 @@ class SimpleProperty(Generic[T]):
             self.on_remove_listener(0)
 
     def _notify_listeners(self, event: SimplePropertyChangeEvent[T]) -> None:
-        for listener in self._listeners:
+        for listener in self._listeners.copy():
             listener(event)
 
     # Property decorator syntax support
@@ -123,7 +123,7 @@ class ObservableSet(set[T]):
         self._listeners.discard(listener)
         
     def _notify(self, e: ObservableChangeEvent[T]):
-        for listener in self._listeners:
+        for listener in self._listeners.copy():
             listener(e)
             
     def add(self, element: T) -> bool:
@@ -177,7 +177,7 @@ class ObservableMap(dict[K, V]):
         self._listeners.clear()
         
     def _notify(self, e: ObservableChangeEvent[tuple[K,V]]):
-        for listener in self._listeners:
+        for listener in self._listeners.copy():
             listener(e)
             
     def __setitem__(self, key: K, value: V) -> None:
@@ -225,7 +225,7 @@ class ObservableList(list[T]):
         self._listeners.clear()
         
     def _notify(self, e: ObservableChangeEvent[T]):
-        for listener in self._listeners:
+        for listener in self._listeners.copy():
             listener(e)
             
     def append(self, element: T) -> None:
