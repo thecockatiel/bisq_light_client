@@ -7,6 +7,7 @@ from google.protobuf.any_pb2 import Any
 
 from bisq.common.proto import Proto
 from bisq.common.setup.log_setup import get_logger
+from utils.ordered_containers import OrderedSet
 
 T = TypeVar('T', bound=message.Message)
 
@@ -76,5 +77,5 @@ class ProtoUtil:
         return [] if not protocol_string_list else list(protocol_string_list)
 
     @staticmethod
-    def protocol_string_list_to_set(protocol_string_list: List[str]) -> Set[str]:
-        return set() if not protocol_string_list else set(protocol_string_list)
+    def protocol_string_list_to_set(protocol_string_list: List[str]) -> "OrderedSet[str]":
+        return OrderedSet() if not protocol_string_list else OrderedSet(protocol_string_list)

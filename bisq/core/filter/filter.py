@@ -11,6 +11,7 @@ from bisq.core.filter.payment_account_filter import PaymentAccountFilter
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 import proto.pb_pb2 as protobuf
+from utils.ordered_containers import OrderedSet
 from utils.time import get_time_ms
 
 class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto):
@@ -43,7 +44,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
                  signer_pub_key_as_hex: str = None,
                  banned_privileged_dev_pub_keys: list[str] = None,
                  disable_auto_conf: bool = None,
-                 node_addresses_banned_from_network: set[str] = None,
+                 node_addresses_banned_from_network: OrderedSet[str] = None,
                  disable_mempool_validation: bool = None,
                  disable_api: bool = None,
                  disable_pow_message: bool = None,
@@ -100,7 +101,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         self.disable_auto_conf = disable_auto_conf or False
         
         # added at v1.5.5
-        self.node_addresses_banned_from_network = node_addresses_banned_from_network or set()
+        self.node_addresses_banned_from_network = node_addresses_banned_from_network or OrderedSet()
         self.disable_api = disable_api or False
         
         # added at v1.6.0
