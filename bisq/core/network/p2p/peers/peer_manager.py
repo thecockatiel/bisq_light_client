@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 import random
 from datetime import timedelta
-from typing import Optional, Set, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from bisq.common.capability import Capability
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
@@ -18,17 +18,17 @@ from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.time import get_time_ms
+from bisq.common.capabilities import Capabilities
+from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 
 
 if TYPE_CHECKING:
     from bisq.common.clock_watcher import ClockWatcher
-    from bisq.core.network.p2p.peers.peerexchange.peer import Peer
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.common.persistence.persistence_manager import PersistenceManager
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.common.capabilities import Capabilities
 
 logger = get_logger(__name__)
 
@@ -93,7 +93,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
         self.network_node = network_node
         self.clock_watcher = clock_watcher
-        self.seed_node_addresses: Set["NodeAddress"] = set(
+        self.seed_node_addresses: set["NodeAddress"] = set(
             seed_node_repository.get_seed_node_addresses()
         )
         self.persistence_manager = persistence_manager
@@ -103,9 +103,9 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self.peer_list = PeerList()
 
         # Peers we got reported from other peers
-        self.reported_peers: Set[Peer] = set()
+        self.reported_peers = set["Peer"]()
         # Most recent peers with activity date of last 30 min.
-        self.latest_live_peers: Set[Peer] = set()
+        self.latest_live_peers = set["Peer"]()
 
         self.check_max_connections_timer: Timer = None
         self.stopped = False
@@ -328,7 +328,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
     def add_to_reported_peers(
         self,
-        reported_peers_to_add: Set["Peer"],
+        reported_peers_to_add: set["Peer"],
         connection: "Connection",
         capabilities: "Capabilities",
     ):
@@ -384,8 +384,8 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             logger.info(f"Num of latest_live_peers={len(self.latest_live_peers)}")
         return self.latest_live_peers
 
-    def _get_connected_reported_peers(self) -> Set["Peer"]:
-        result: Set["Peer"] = set()
+    def _get_connected_reported_peers(self) -> set["Peer"]:
+        result: set["Peer"] = set()
 
         # networkNode.getConfirmedConnections includes connections where peers_node_address is present
         for connection in self.network_node.get_confirmed_connections():
@@ -711,7 +711,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 logger.trace(result)
             logger.debug(f"Number of reported peers: {len(self.reported_peers)}")
 
-    def print_new_reported_peers(self, reported_peers: Set["Peer"]):
+    def print_new_reported_peers(self, reported_peers: set["Peer"]):
         if self.PRINT_REPORTED_PEERS_DETAILS:
             peers_details = "\n\t".join(str(peer) for peer in reported_peers)
             logger.trace(f"We received new reportedPeers:\n\t{peers_details}")
