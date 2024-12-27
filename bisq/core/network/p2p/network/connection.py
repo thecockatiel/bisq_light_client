@@ -545,7 +545,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     network_envelope = self.network_proto_resolver.from_proto(proto)
                 except ProtobufferException as e:
                     if "Unknown proto message case" in str(e):
-                        logger.debug(f"Unsupported proto message. This is probably expected. proto={type(proto).__name__}")
+                        logger.debug(f"Unsupported proto message. This is probably expected. original error={e}")
                         return
                     else:
                         raise
