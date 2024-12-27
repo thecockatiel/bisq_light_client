@@ -140,7 +140,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
             result = Sig.verify(self.owner_pub_key, hash_of_data_and_seq_nr, self.signature)
             if not result:
                 logger.warning(f"Invalid signature for {self.protected_storage_payload.__class__.__name__}.\n"
-                               f"Serialized data as hex={self.protected_storage_payload.to_proto_message().SerializeToString().hex()}")
+                               f"Serialized data as hex={self.protected_storage_payload.serialize_for_hash().hex()}")
             return result
         except CryptoException as e:
             logger.error(f"ProtectedStorageEntry::isSignatureValid() exception {str(e)}")
