@@ -85,7 +85,7 @@ class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequir
 
     @staticmethod
     def from_proto(proto: protobuf.BsqSwapOfferPayload) -> "BsqSwapOfferPayload":
-        extra_data_map = proto.extra_data if proto.extra_data else None
+        extra_data_map = dict(proto.extra_data) if proto.extra_data else None
         return BsqSwapOfferPayload(
             id=proto.id,
             date=proto.date,
