@@ -16,14 +16,14 @@ if TYPE_CHECKING:
 
 @dataclass(kw_only=True)
 class RemoveMailboxDataMessage(BroadcastMessage):
-    protected_storage_entry: ProtectedMailboxStorageEntry
+    protected_mailbox_storage_entry: ProtectedMailboxStorageEntry
 
     # PROTO BUFFER
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
         envelope.remove_mailbox_data_message.CopyFrom(
             protobuf.RemoveMailboxDataMessage(
-                protected_storage_entry=self.protected_storage_entry.to_proto_message()
+                protected_storage_entry=self.protected_mailbox_storage_entry.to_proto_message()
             )
         )
         return envelope
@@ -36,10 +36,10 @@ class RemoveMailboxDataMessage(BroadcastMessage):
     ):
         return RemoveMailboxDataMessage(
             message_version=message_version,
-            protected_storage_entry=ProtectedMailboxStorageEntry.from_proto(
+            protected_mailbox_storage_entry=ProtectedMailboxStorageEntry.from_proto(
                 proto.protected_storage_entry, resolver
             ),
         )
         
     def __hash__(self):
-        return hash(self.protected_storage_entry)
+        return hash(self.protected_mailbox_storage_entry)
