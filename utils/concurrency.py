@@ -29,6 +29,10 @@ class ThreadSafeSet(Generic[T]):
     def discard(self, item: T):
         with self._write_lock:
             self._set.discard(item)
+    
+    def update(self, items: Iterable[T]):
+        with self._write_lock:
+            self._set.update(items)
 
     def clear(self):
         with self._write_lock:
