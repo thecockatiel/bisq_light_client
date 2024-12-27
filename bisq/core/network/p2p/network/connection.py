@@ -124,6 +124,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 if self.ban_filter and self.ban_filter.is_peer_banned(peers_node_address):
                     logger.warning("We created an outbound connection with a banned peer")
                     self.report_invalid_request(RuleViolation.PEER_BANNED)
+            UserThread.execute(lambda: self.connection_listener.on_connection(self))
         except Exception as e:
             self.handle_exception(e)
 
