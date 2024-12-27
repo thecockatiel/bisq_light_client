@@ -46,7 +46,7 @@ class AppendOnlyDataStoreService():
             if isinstance(service, HistoricalDataStoreService):
                 service.get_map_of_all_data()
             else:
-                return service.get_map(payload)
+                return service.get_map()
         else:
             return {}
         
