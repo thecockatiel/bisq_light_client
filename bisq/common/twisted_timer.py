@@ -57,7 +57,8 @@ class TwistedTimer(Timer):
 
     def _stop(self):
         self._stopped = True
-        self._deferred.cancel()
+        if self._deferred:
+            self._deferred.cancel()
 
     def stop(self):
         reactor.callFromThread(self._stop)
