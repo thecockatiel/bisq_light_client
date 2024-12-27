@@ -1,4 +1,4 @@
-from typing import List, Set, Optional
+from typing import Iterable, Optional
 
 from bisq.common.capability import Capability
 from bisq.common.setup.log_setup import get_logger
@@ -19,17 +19,17 @@ class Capabilities:
     # This helps to clean network from very old inactive but still running nodes.
     MANDATORY_CAPABILITY = Capability.DAO_STATE
 
-    def __init__(self, capabilities: Optional[List[Capability]] = None):
+    def __init__(self, capabilities: Optional[list[Capability]] = None):
         self.capabilities: frozenset[Capability] = frozenset(capabilities) if capabilities else frozenset()
 
     def set(self, capabilities: Optional[frozenset[Capability]] = None):
         self.capabilities = capabilities
 
-    def add_all(self, capabilities: Optional[List[Capability]] = None):
+    def add_all(self, capabilities: Optional[list[Capability]] = None):
         if capabilities:
             self.capabilities = self.capabilities.union(capabilities)
 
-    def contains_all(self, required_items: Set[Capability]) -> bool:
+    def contains_all(self, required_items: Iterable[Capability]) -> bool:
         return self.capabilities.issuperset(required_items)
 
     def __contains__(self, capability):
@@ -51,11 +51,11 @@ class Capabilities:
         return None
 
     @staticmethod
-    def to_int_list(capabilities_obj: 'Capabilities') -> List[int]:
+    def to_int_list(capabilities_obj: 'Capabilities') -> list[int]:
         return sorted([cap.value for cap in capabilities_obj.capabilities])
 
     @staticmethod
-    def from_int_list(capabilities_list: List[int]) -> 'Capabilities':
+    def from_int_list(capabilities_list: list[int]) -> 'Capabilities':
         valid_capabilities = {
             cap for cap in Capability if 0 <= cap.value < len(Capability)
         }
