@@ -34,6 +34,9 @@ class Capabilities:
 
     def __contains__(self, capability):
         return capability in self.capabilities
+    
+    def __iter__(self):
+        return iter(self.capabilities)
 
     def is_empty(self) -> bool:
         return not self.capabilities
