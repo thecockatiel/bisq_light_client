@@ -107,5 +107,4 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
                 self.extra_data_map == other.extra_data_map)
 
     def __hash__(self):
-        return hash((self.prefixed_sealed_and_signed_message, self.sender_pub_key_for_add_operation_bytes,
-                     self.owner_pub_key_bytes))
+        return hash(self.serialize_for_hash())
