@@ -452,7 +452,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                     self.add_persistable_network_payload_from_initial_request(payload)
             else:
                 # We don't broadcast here as we are only connected to the seed node and would be pointless
-                self.add_persistable_network_payload(payload, sender, False, False, False)
+                self._add_persistable_network_payload_internal(payload, sender, False, False, False)
 
         logger.info(f"Processing {len(persistable_network_payload_set)} persistableNetworkPayloads took {self.clock.millis() - ts} ms.")
 
@@ -521,7 +521,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 elif isinstance(network_envelope, RefreshOfferMessage):
                     self.refresh_ttl(network_envelope, peers_node_address)
                 elif isinstance(network_envelope, AddPersistableNetworkPayloadMessage):
-                    self.add_persistable_network_payload(
+                    self._add_persistable_network_payload_internal(
                         network_envelope.persistable_network_payload,
                         peers_node_address,
                         True,
