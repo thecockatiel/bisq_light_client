@@ -224,7 +224,7 @@ class BroadcastHandler:
             # If we only have 1 message we avoid the overhead of the BundleOfEnvelopes and send the message directly
             return broadcast_requests[0].message
         else:
-            return BundleOfEnvelopes([broadcast_request.message for broadcast_request in broadcast_requests])
+            return BundleOfEnvelopes(envelopes=[broadcast_request.message for broadcast_request in broadcast_requests])
         
     def _maybe_notify_listeners(self, broadcast_requests: List["BroadcastRequest"]):
         num_of_completed_broadcasts_target = max(1, min(self.num_peers_for_broadcast.get(), 3))
