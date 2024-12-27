@@ -47,7 +47,7 @@ class DisputeValidation:
                 
                 taker_contract_signature = dispute.taker_contract_signature
                 if taker_contract_signature:
-                    Sig.verify_message(contract.taker_pub_key_ring.signature_pub_key,
+                    result = Sig.verify_message(contract.taker_pub_key_ring.signature_pub_key,
                              dispute.contract_as_json,
                              taker_contract_signature)
                     if not result:
