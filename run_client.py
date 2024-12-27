@@ -5,7 +5,8 @@ from collections.abc import Callable
 from datetime import timedelta
 import os
 import sys
-import threading
+
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python' # Prevents using cpp implementation of protobuf, and thus prevents the random dictionary order issue
 
 from utils.concurrency import AtomicInt
 
