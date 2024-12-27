@@ -21,9 +21,9 @@ class AddDataMessage(BroadcastMessage):
         message: Message = self.protected_storage_entry.to_proto_message()
 
         if isinstance(self.protected_storage_entry, ProtectedMailboxStorageEntry):
-            entry.protected_mailbox_storage_entry = message
+            entry.protected_mailbox_storage_entry.CopyFrom(message)
         else:
-            entry.protected_storage_entry = message
+            entry.protected_storage_entry.CopyFrom(message)
         
         envelope = self.get_network_envelope_builder()
         envelope.add_data_message.CopyFrom(protobuf.AddDataMessage(entry=entry))
