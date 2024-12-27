@@ -99,10 +99,10 @@ def configure_logging(log_file: Path, log_level="INFO"):
             encoding='utf-8'
         )
         file_handler.setFormatter(formatter)
-        file_handler.setLevel(DEFAULT_LOG_LEVEL)
+        file_handler.setLevel(log_level)
         bisq_logger.addHandler(file_handler)
         
-    bisq_logger.setLevel(log_level) # default is info
+    bisq_logger.setLevel(log_level)
     
     if log_file:
         bisq_logger.info(f"Log file at: {log_file}")
