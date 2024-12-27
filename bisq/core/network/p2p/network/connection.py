@@ -302,7 +302,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     ####################################
 
     def set_peers_node_address(self, peerNodeAddress: 'NodeAddress'):
-        assert peerNodeAddress, "peerNodeAddress must not be null"
+        assert peerNodeAddress, "peerNodeAddress must not be None"
         self.peers_node_address = peerNodeAddress
         from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         if isinstance(self, InboundConnection):
@@ -331,7 +331,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
         if not self.stopped:
-            peers_node_address = str(self.peers_node_address) if self.peers_node_address else "null"
+            peers_node_address = str(self.peers_node_address) if self.peers_node_address else "None"
             logger.debug(
                 f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                 f"ShutDown connection:"
@@ -468,7 +468,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def process_senders_node_address_message(self, senders_node_address_message: SendersNodeAddressMessage) -> bool:
         sender_node_address = senders_node_address_message.sender_node_address
-        assert sender_node_address, "sender_node_address must not be null at SendersNodeAddressMessage"
+        assert sender_node_address, "sender_node_address must not be None at SendersNodeAddressMessage"
         
         if self.peers_node_address:
             if self.peers_node_address != sender_node_address:
@@ -492,7 +492,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     self.thread_name_set = True
 
                 if self.socket is not None and self.socket._closed:
-                    logger.warning(f'Socket is null or closed socket={self.socket}')
+                    logger.warning(f'Socket is None or closed socket={self.socket}')
                     self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                     return
                 try:
@@ -501,7 +501,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     ts = get_time_ms()
                     
                     if self.socket is not None and self.socket._closed:
-                        logger.warning(f'Socket is null or closed socket={self.socket}')
+                        logger.warning(f'Socket is None or closed socket={self.socket}')
                         self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                         return
                     
@@ -510,9 +510,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                             return
                         data = self.proto_input_stream.read()
                         if  data == bytes():
-                            logger.warning("proto is null because EOF was read. That is expected if client got stopped without proper shutdown.")
+                            logger.warning("proto is None because EOF was read. That is expected if client got stopped without proper shutdown.")
                         else:
-                            logger.warning("proto is null. protoInputStream.read()=" + data.hex())
+                            logger.warning("proto is None. protoInputStream.read()=" + data.hex())
                         self.shut_down(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
                         return
                     
@@ -655,4 +655,4 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def get_sender_node_address_as_string(self, network_envelope):
         node_address = self.get_sender_node_address(network_envelope)
-        return "null" if node_address is None else node_address.get_full_address()
+        return "None" if node_address is None else node_address.get_full_address()
