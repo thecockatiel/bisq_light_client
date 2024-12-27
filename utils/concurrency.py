@@ -2,13 +2,13 @@ from collections.abc import Callable, ItemsView
 import threading
 import weakref
 
-from typing import Iterator, Dict, List, Optional, Set, TypeVar, Generic
+from typing import Iterable, Iterator, Dict, List, Optional, TypeVar, Generic
 
 T = TypeVar('T')
 
-class ThreadSafeSet(Set[T]):
-    def __init__(self, initial: Optional[Set[T]] = None):
-        self._set: Set[T] = set(initial) if initial is not None else set()
+class ThreadSafeSet(Generic[T]):
+    def __init__(self, initial: Optional[Iterable[T]] = None):
+        self._set: set[T] = set(initial) if initial is not None else set()
         self._read_lock = threading.RLock()
         self._write_lock = threading.Lock()
 
@@ -34,6 +34,10 @@ class ThreadSafeSet(Set[T]):
         with self._write_lock:
             self._set.clear()
 
+    def copy(self):
+        with self._read_lock:
+            return self._set.copy()
+
     def __iter__(self) -> Iterator[T]:
         with self._read_lock:
             return iter(self._set.copy())
@@ -49,11 +53,20 @@ class ThreadSafeSet(Set[T]):
     def __str__(self):
         with self._read_lock:
             return str(self._set)
+    
+    def __eq__(self, other):
+        if isinstance(other, ThreadSafeSet):
+            with self._read_lock:
+                return self._set == other._set
+        if isinstance(other, set):
+            with self._read_lock:
+                return self._set == other
+        return False
 
 
 class ThreadSafeWeakSet(Generic[T]):
     def __init__(self):
-        self._set: Set[weakref.ReferenceType[T]] = set()
+        self._set: set[weakref.ReferenceType[T]] = set()
         self._read_lock = threading.RLock()
         self._write_lock = threading.Lock()
 
