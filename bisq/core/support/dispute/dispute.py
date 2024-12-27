@@ -221,7 +221,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         )
         
         if proto.extra_data:
-            dispute.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(proto.extra_data)
+            dispute.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(dict(proto.extra_data))
         
         if proto.chat_message:
             for chat_message in proto.chat_message:

@@ -76,7 +76,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
             PrefixedSealedAndSignedMessage.from_payload_proto(proto.prefixed_sealed_and_signed_message),
             Sig.get_public_key_from_bytes(proto.sender_pub_key_for_add_operation_bytes),
             Sig.get_public_key_from_bytes(proto.owner_pub_key_bytes),
-            extra_data_map=proto.extra_data if bool(proto.extra_data) else None
+            extra_data_map=dict(proto.extra_data) if bool(proto.extra_data) else None
         )
 
     # API
