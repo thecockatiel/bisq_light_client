@@ -101,13 +101,6 @@ class NewTor(TorMode):
         config.HiddenServiceStatistics = 1
         config.CookieAuthentication = 1
         config.AvoidDiskWrites = 1
-        if config_data.get("SocksPort", None):
-            config.SOCKSPort = int(config_data.get("SocksPort"))
-            del config_data["SocksPort"]
-        else:    
-            config.SOCKSPort = Utils.find_free_system_port()
-        
-        
         config.CookieAuthFile = str(self.tor_dir.joinpath('.tor', 'control_auth_cookie'))
         config.PidFile = str(self.tor_dir.joinpath('pid'))
         
@@ -128,11 +121,17 @@ class NewTor(TorMode):
         config.GeoIPFile = str(tor_bin_dir.parent.joinpath("data", "geoip"))
         config.GeoIPv6File = str(tor_bin_dir.parent.joinpath("data", "geoip6"))
         
+        if config_data.get("SocksPort", None):
+            socks_port = int(config_data.get("SocksPort"))
+            del config_data["SocksPort"]
+        else:    
+            socks_port = Utils.find_free_system_port()
+        
         control_port = None
         if config_data.get("ControlPort", None):
             control_port = int(config_data.get("ControlPort"))
             del config_data["ControlPort"]
-        
+            
         for key, value in config_data.items():
             setattr(config, key, value)
 
@@ -147,6 +146,7 @@ class NewTor(TorMode):
                    progress_updates=lambda percent, tag, summary: logger.trace(f"Tor: {percent}%: {tag} - {summary}"),
                    kill_on_stderr=True,
                    _tor_config=config,
+                   socks_port=socks_port,
                    control_port=control_port,
                 )
         )
