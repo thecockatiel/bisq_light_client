@@ -80,9 +80,6 @@ class CustomRotatingFileHandler(RotatingFileHandler):
         return default_name
 
 def configure_logging(log_file: Path, log_level="INFO"):
-    if not log_file:
-        raise ValueError("log_file must be set at configure_logging")
-    
     log_level = getattr(logging, log_level.upper(), DEFAULT_LOG_LEVEL)
     # Create formatter with pattern matching Java configuration
     formatter = logging.Formatter(
