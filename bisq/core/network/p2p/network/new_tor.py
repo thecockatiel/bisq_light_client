@@ -181,6 +181,8 @@ class NewTor(TorMode):
 
         if len(parts) == 2:
             key, value = parts
+            if key.startswith('--'):
+                key = key[2:]
             if key in config_data:
                 if isinstance(config_data[key], list):
                     config_data[key].append(value)
