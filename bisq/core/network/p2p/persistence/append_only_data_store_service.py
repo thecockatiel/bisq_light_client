@@ -44,7 +44,7 @@ class AppendOnlyDataStoreService():
         service = self.find_service(payload)
         if service:
             if isinstance(service, HistoricalDataStoreService):
-                service.get_map_of_all_data()
+                return service.get_map_of_all_data()
             else:
                 return service.get_map()
         else:
