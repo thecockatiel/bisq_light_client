@@ -31,7 +31,7 @@ class NewTor(TorMode):
     When asked, the class checks, whether command line parameters such as
     --torrcFile and --torrcOptions are set and if so, takes these settings into
     account. Then, a fresh set of Tor binaries is installed and Tor is launched.
-    Finally, a {@link Tor} instance is returned for further use.
+    Finally, a Tor instance is returned for further use.
     """
     def __init__(
         self,
@@ -176,6 +176,9 @@ class NewTor(TorMode):
             return False
         # split line by whitespace
         parts = line.split(None, 1)
+        if len(parts) == 1 and "=" in parts[0]:
+            parts = parts[0].split("=", 1)
+
         if len(parts) == 2:
             key, value = parts
             if key in config_data:
