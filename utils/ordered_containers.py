@@ -27,18 +27,6 @@ class OrderedSet(Generic[T]):
     def update(self, items: Iterable[T]):
         self._dict.update(dict.fromkeys(items))
         
-    def __iter__(self):
-        return iter(self._dict)
-        
-    def __len__(self):
-        return len(self._dict)
-        
-    def __contains__(self, item: T):
-        return item in self._dict
-        
-    def __repr__(self):
-        return f"{self.__class__.__name__}({list(self)})"
-        
     def union(self, other):
         return OrderedSet(list(self) + list(other))
         
@@ -70,9 +58,21 @@ class OrderedSet(Generic[T]):
         
     def symmetric_difference_update(self, other: "OrderedSet[T]"):
         self._dict = dict.fromkeys(self.symmetric_difference(other))
+
+    def __iter__(self):
+        return iter(self._dict)
+        
+    def __len__(self):
+        return len(self._dict)
+        
+    def __contains__(self, item: T):
+        return item in self._dict
+        
+    def __repr__(self):
+        return f"{self.__class__.__name__}({list(self)})"
     
     def __eq__(self, other):
-        if not isinstance(other, OrderedSet) or not isinstance(other, set):
+        if not isinstance(other, OrderedSet) and not isinstance(other, set):
             return False
         return list(self) == list(other)
     
