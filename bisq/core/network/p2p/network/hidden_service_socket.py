@@ -1,4 +1,4 @@
-
+from pathlib import Path
 import socket
 from typing import TYPE_CHECKING, Optional
 from twisted.internet import reactor
@@ -36,22 +36,34 @@ class HiddenServiceSocket:
     async def initialize(self) -> "OnionIListeningPort":
         # ensure hs parent dir perm be 700
         self._tor_network_node.tor_mode.get_hidden_service_directory().parent.chmod(0o700) # same as self.tor_dir, but more explicit.
-            
+        
+        # find if we are already running this hidden service and on which port it was listening before, so we can reuse it.
+        found_hidden_service = None
+        for hidden_service in self._tor_network_node.tor._config.HiddenServices:
+            if Path(hidden_service.dir) == Path(self._hidden_service_dir):
+                found_hidden_service = hidden_service
+                # example of found_hidden_service.ports: ['9999 127.0.0.1:62442']
+                self._local_port = int(found_hidden_service.ports[0].split(':')[1])
+                logger.info(f"Hidden service was already published ({found_hidden_service.ports[0]}), adjusting local port to listen on that port.")
+                break
         
         self._server_socket = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('127.0.0.1', self._local_port))
         sock.listen(5)
         
-        progress_updates=lambda percent, tag, summary: logger.trace(f"Tor Hidden Service: {percent}%: {tag} - {summary}")
-        # NOTE: this is probably a brittle way to create a hidden service, but it's the simplest way to do it for now.
-        self._onion_service: "FilesystemOnionService"  = await as_future(FilesystemOnionService.create(
-            reactor,
-            self._tor_network_node.tor._config,
-            self._hidden_service_dir,
-            ['%d 127.0.0.1:%d' % (self._hidden_service_port, self._local_port)],
-            version=3,
-            progress=progress_updates,
-        ))
+        if not found_hidden_service:
+            progress_updates=lambda percent, tag, summary: logger.trace(f"Tor Hidden Service: {percent}%: {tag} - {summary}")
+            # NOTE: this is probably a brittle way to create a hidden service, but it's the simplest way to do it for now.
+            self._onion_service: "FilesystemOnionService"  = await as_future(FilesystemOnionService.create(
+                reactor,
+                self._tor_network_node.tor._config,
+                self._hidden_service_dir,
+                ['%d 127.0.0.1:%d' % (self._hidden_service_port, self._local_port)],
+                version=3,
+                progress=progress_updates,
+            ))
+        else:
+            self._onion_service = found_hidden_service
         
     @property
     def server_socket(self):

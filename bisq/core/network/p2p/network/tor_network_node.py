@@ -154,7 +154,7 @@ class TorNetworkNode(NetworkNode):
 
         except Exception as e:
             logger.error(f"Starting tor node failed: {e}", exc_info=e)
-            if isinstance(e.__cause__, IOError):
+            if isinstance(e.__cause__, IOError) or "Trying to add hidden service" in str(e):
                 def notify_failure():
                     for listener in self.setup_listeners:
                         listener.on_setup_failed(RuntimeError(str(e)))
