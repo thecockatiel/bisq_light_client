@@ -20,7 +20,11 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      // "args": ["--logLevel", "DEBUG"],
+      "args": [
+        // "--logLevel=DEBUG",
+        // "--torControlPort=9052",
+        // "--torControlHost=127.0.0.1"
+      ],
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
