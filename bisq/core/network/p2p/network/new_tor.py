@@ -151,9 +151,9 @@ class NewTor(TorMode):
                 )
         )
         logger.info(
-            "\n################################################################\n"
-            f"Tor started after {get_time_ms() - ts1} ms. Listening on {config.SOCKSPort[0]} Start publishing hidden service.\n"
-            "################################################################"
+            "\n##################################################################################\n"
+            f"Tor started after {get_time_ms() - ts1} ms. Listening on {config.SOCKSPort[0]}. Can start publishing hidden service.\n"
+            "##################################################################################"
         )
 
         return result
