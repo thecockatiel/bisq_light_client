@@ -69,7 +69,7 @@ class StoreService(Generic[T], ABC):
             except:
                 logger.warning(f"make dir failed.\ndbDir={self.storage_dir.absolute()}")
                 
-        resource_file_name = f"{file_name}_{postfix}"
+        resource_file_name = f"{file_name}{postfix}"
         destination_file = self.storage_dir.joinpath(resource_file_name)
         if not destination_file.exists():
             try:
@@ -77,7 +77,7 @@ class StoreService(Generic[T], ABC):
                 resource_to_file(resource_file_name, destination_file)
                 return True
             except ResourceNotFoundException as e:
-                logger.error(f"Could not find resourceFile {resource_file_name}. That is expected if none is provided yet.")
+                logger.debug(f"Could not find resourceFile {resource_file_name}. That is expected if none is provided yet.")
             except Exception as e:
                 logger.error(f"Could not copy resourceFile {resource_file_name} to {destination_file.absolute()}.\n {e}", exc_info=e)
         else:
