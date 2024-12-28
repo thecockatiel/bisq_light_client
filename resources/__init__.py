@@ -13,5 +13,5 @@ def resource_readlines(resource_name: str) -> str:
     except FileNotFoundError:
             return None
 
-def get_resource_path():
+def get_resources_path():
     return Path(__resource_dir)

@@ -8,7 +8,7 @@ from typing import Optional
 
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.common.setup.log_setup import get_logger
-from resources import get_resource_path
+from resources import get_resources_path
 
 logger = get_logger(__name__)
 
@@ -123,7 +123,7 @@ def create_temp_file(prefix: Optional[str] = None, suffix: Optional[str] = None,
 
 def resource_to_file(resource_path: str, destination_path: Path):
     # we dont have resources like java does, so we just copy the file from our resources directory in the root of the project
-    from_path = get_resource_path().joinpath(resource_path)
+    from_path = get_resources_path().joinpath(resource_path)
     if not from_path.exists():
         raise ResourceNotFoundException(str(from_path))
     return shutil.copy(from_path, destination_path)
