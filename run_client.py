@@ -130,7 +130,7 @@ class MainApp(GracefulShutDownHandler, UncaughtExceptionHandler):
                 self.stop()
                 
     def read_maps_from_resources(self, complete_handler: Callable):
-        post_fix = "_" + GLOBAL_CONTAINER.config.base_currency_network.name.lower()
+        post_fix = "_" + GLOBAL_CONTAINER.config.base_currency_network.name
         GLOBAL_CONTAINER.p2p_data_storage.read_from_resources(post_fix, complete_handler)
 
     def read_all_persisted(self, complete_handler: Callable):
