@@ -317,17 +317,19 @@ class Contract(NetworkPayload):
         my_json = JsonUtil.object_to_json(self)
         diff = string_difference(my_json, peers_contract_as_json)
         if diff:
-            logger.warning("Diff of both contracts: \n%s", diff)
-            logger.warning("\n\n------------------------------------------------------------\n"
+            logger.warning(f"Diff of both contracts: \n{diff}")
+            logger.warning(
+                    "\n\n------------------------------------------------------------\n"
                     "Contract as json\n"
-                    "%s"
-                    "\n------------------------------------------------------------\n",
-                    my_json)
-            logger.warning("\n\n------------------------------------------------------------\n"
+                    f"{my_json}"
+                    "\n------------------------------------------------------------\n"
+                )
+            logger.warning(
+                    "\n\n------------------------------------------------------------\n"
                     "Peers contract as json\n"
-                    "%s"
-                    "\n------------------------------------------------------------\n",
-                    peers_contract_as_json)
+                    f"{peers_contract_as_json}"
+                    "\n------------------------------------------------------------\n"
+                )
         else:
             logger.debug("Both contracts are the same")
         

@@ -419,7 +419,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     # Runs in same thread as Connection
 
     def report_invalid_request(self, rule_violation: 'RuleViolation'):
-        logger.info("We got reported the ruleViolation %s at connection with address%s and uid %s", rule_violation.name, self.peers_node_address, self.uid)
+        logger.info(f"We got reported the ruleViolation {rule_violation.name} at connection with address {self.peers_node_address} and uid {self.uid}")
         num_rule_violations = self.rule_violations.get(rule_violation, 0) + 1
         self.rule_violations.put(rule_violation, num_rule_violations) 
 
@@ -522,7 +522,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         return
 
                 except Socket.error as e:
-                    logger.warning("Socket error: %s", str(e))
+                    logger.warning(f"Socket error: {e}")
                     break
                 except EOFError:
                     logger.warning("EOF Error")
@@ -594,7 +594,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     logger.debug(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}\n\tconnection={self}")
 
                     if CloseConnectionReason.PEER_BANNED.name == proto.close_connection_message.reason:
-                        logger.warning("We got shut down because we are banned by the other peer. Peer: %s", str(self.peers_node_address))
+                        logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
                         self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
                         return
                 elif not self.stopped:
