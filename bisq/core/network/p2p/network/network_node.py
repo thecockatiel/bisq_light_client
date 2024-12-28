@@ -153,7 +153,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self, peers_node_address_or_connection: Union["NodeAddress", "Connection"], network_envelope: NetworkEnvelope
     ):
         assert peers_node_address_or_connection, "peers_node_address_or_connection must not be null"
-            
+        
+        peers_node_address = None
         if isinstance(peers_node_address_or_connection, NodeAddress):
             peers_node_address: "NodeAddress" = peers_node_address_or_connection
         
@@ -182,6 +183,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                     self._make_connection, peers_node_address, network_envelope
                 )
         else:
+            peers_node_address = peers_node_address_or_connection.peers_node_address
             future = self.send_message_executor.submit(
                         self._send_message_using_connection, peers_node_address_or_connection, network_envelope
                     )
