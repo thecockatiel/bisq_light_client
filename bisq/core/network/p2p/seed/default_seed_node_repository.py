@@ -35,7 +35,7 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
             banned_seed_nodes = {self.get_node_address(n) for n in self.config.banned_seed_nodes if n}
             self.cache.difference_update(banned_seed_nodes)
 
-            logger.info("Seed nodes: %s", self.cache)
+            logger.info(f"Seed nodes: {self.cache}")
         except Exception as e:
             logger.error("exception in DefaultSeedNodeRepository", exc_info=e)
             raise

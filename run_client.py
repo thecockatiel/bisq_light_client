@@ -15,7 +15,7 @@ _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
 
 
 if sys.version_info[:3] < _min_python_version_tuple:
-    sys.exit("Error: Bisq light client requires Python version >= %s..." % MIN_PYTHON_VERSION)
+    sys.exit(f"Error: Bisq light client requires Python version >= {MIN_PYTHON_VERSION}...")
 
 from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
 from utils.aio import as_future, get_asyncio_loop
