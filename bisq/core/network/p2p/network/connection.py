@@ -159,7 +159,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 UserThread.execute(lambda: self.connection_statistics.add_send_msg_metrics(get_time_ms() - ts, network_envelope_size))
         except Exception as t:
             self.handle_exception(t)
-            raise RuntimeError(t)
+            raise RuntimeError(t) from t
         
     def test_capability(self, network_envelope: 'NetworkEnvelope' = None, capability_requiring_payload: 'CapabilityRequiringPayload' = None) -> bool:
         if capability_requiring_payload is not None:
