@@ -32,10 +32,10 @@ class Res:
     
     @staticmethod
     def get(key: str, *args):
-        return Res.resources.get(key, "").format(*args)
+        return Res.resources.get(key, key).format(*args)
     
     @staticmethod
     def get_with_col(key: str, *args):
-        return Res.resources.get(key, "").format(*args) + ":"
+        return Res.resources.get(key, key).format(*args) + ":"
     
 Res.setup()
