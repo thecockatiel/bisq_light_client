@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
+@dataclass
 class Socks5Proxy:
     host: str
     port: int
