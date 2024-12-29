@@ -87,11 +87,12 @@ class LimitedRunningTor(TorMode):
 
         # Start validation request handler
         validation_task = asyncio.create_task(handle_validation_request())
+        exception = None
         
         async with aiohttp.ClientSession(connector=proxy_connector, timeout=client_timeout) as session:
             while not connected and retry_times > 0 and ((get_time_ms() - ts1) <= two_minutes_in_millis):
                 try:
-                    logger.info("Connecting to limited running tor")
+                    logger.info(f"Trying to connect to limited running tor proxy and hidden service. Attempt {4 - retry_times} of 3.")
                     async with session.get(
                         f"http://{self.hiddenservice_hostname}:{self.hiddenservice_port}/validate",
                         headers={"X-Validation-Token": validation_token}
@@ -110,12 +111,16 @@ class LimitedRunningTor(TorMode):
 
                 except Exception as e:
                     retry_times -= 1
-                    logger.error(f"Error while testing limited running tor: {str(e)}", exc_info=e)
+                    exception = e
                     await asyncio.sleep(1)
 
         server.close()
         if not connected:
-            raise Exception("Couldn't validate already running tor proxy and hidden service after retrying 3 times.")
+            msg = "Couldn't validate already running tor proxy and hidden service after retrying 3 times."
+            if exception:
+                raise Exception(msg + f" Error: {exception}") from exception
+            else:
+                raise Exception(msg)
 
     def get_hidden_service_directory(self) -> Path:
         return None
