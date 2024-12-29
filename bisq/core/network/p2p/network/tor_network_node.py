@@ -1,8 +1,8 @@
+from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
 from utils.aio import as_future, run_in_thread
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
-from concurrent.futures import ThreadPoolExecutor
 import socks
 import socket
 
@@ -42,12 +42,17 @@ class TorNetworkNode(NetworkNode):
         super().__init__(
             service_port, network_proto_resolver, ban_filter, max_connections
         )
-
+        
+        if isinstance(tor_mode, LimitedRunningTor):
+            self.service_port = tor_mode.hiddenservice_port
+            self._socks_proxy = Socks5Proxy(tor_mode.proxy_host, tor_mode.proxy_port, tor_mode.proxy_username, tor_mode.proxy_password)
+        else:
+            self._socks_proxy: Optional["Socks5Proxy"] = None
+        
         self.hidden_service_socket: "HiddenServiceSocket" = None
         self.shut_down_timeout_timer: "Timer" = None
         self.tor: Optional["Tor"] = None
         self.tor_mode = tor_mode
-        self._socks_proxy: Optional["Socks5Proxy"] = None
         self.__shutdown_in_progress = False
 
     async def start(self, setup_listener: Optional["SetupListener"] = None):
@@ -56,19 +61,24 @@ class TorNetworkNode(NetworkNode):
         if setup_listener:
             self.add_setup_listener(setup_listener)
 
-        await self.create_tor_and_hidden_service(Utils.find_free_system_port(), self.service_port)
+        if isinstance(self.tor_mode, LimitedRunningTor):
+            local_port = self.tor_mode.hiddenservice_target_port
+        else: 
+            local_port = Utils.find_free_system_port()
+        await self.create_tor_and_hidden_service(local_port, self.service_port)
         
     def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
         assert peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address"
-        assert self.tor, "Tor instance not ready"
-        assert self.tor._config, "Tor config not ready"
+        assert self.socks_proxy, "Tor proxy not ready"
         sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(240) # Connection.SOCKET_TIMEOUT_SEC
         sock.set_proxy(
             proxy_type=socks.SOCKS5,
             addr="127.0.0.1",
-            port=int(self.tor._config.SOCKSPort[0]),
+            port=self.socks_proxy.port,
             rdns=True,
+            username=self.socks_proxy.username,
+            password=self.socks_proxy.password,
         )
         sock.connect((peer_node_address.host_name, peer_node_address.port))
         return sock
@@ -78,7 +88,7 @@ class TorNetworkNode(NetworkNode):
         if not self._socks_proxy:
             assert self.tor, "Tor instance not ready at get_socks_proxy"
             assert self.tor._config, "Tor config not ready at get_socks_proxy"
-            self._socks_proxy = Socks5Proxy("127.0.0.1", self.tor._config.SOCKSPort[0])
+            self._socks_proxy = Socks5Proxy("127.0.0.1", int(self.tor._config.SOCKSPort[0]))
         return self._socks_proxy
     
     def get_socks_proxy(self) -> Socks5Proxy:
@@ -132,9 +142,12 @@ class TorNetworkNode(NetworkNode):
                     
             UserThread.execute(call_listeners)
             
-            self.hidden_service_socket = HiddenServiceSocket(local_port, str(self.tor_mode.get_hidden_service_directory()), service_port, self)
+            self.hidden_service_socket = HiddenServiceSocket(local_port, self.tor_mode.get_hidden_service_directory(), service_port, self.tor)
             
             await self.hidden_service_socket.initialize()
+            
+            if isinstance(self.tor_mode, LimitedRunningTor):
+                self.hidden_service_socket._onion_hostname = self.tor_mode.hiddenservice_hostname
             
             node_address = NodeAddress.from_full_address(f"{self.hidden_service_socket.service_name}:{self.hidden_service_socket.hidden_service_port}")
             self.node_address_property.set(node_address)

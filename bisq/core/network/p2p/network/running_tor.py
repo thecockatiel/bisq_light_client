@@ -63,8 +63,8 @@ class RunningTor(TorMode):
             except Exception as e:
                 retry_times -= 1
                 logger.error("Couldn't connect to Tor.", exc_info=e)
-
-        return None
+                
+        raise Exception("Couldn't connect to Tor after retrying 3 times.")
 
     def get_hidden_service_directory(self) -> Path:
         return self.tor_dir.joinpath(TorMode.HIDDEN_SERVICE_DIRECTORY)
