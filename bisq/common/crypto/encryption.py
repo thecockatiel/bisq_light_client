@@ -1,9 +1,10 @@
 from io import BytesIO
-import hmac as builtin_hmac
+import hmac
+import hashlib
 import secrets
 from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import hmac, padding, serialization, hashes
+from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
 from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
@@ -89,7 +90,7 @@ class Encryption:
         """Verify HMAC for given message"""
         try:
             hmac_test = Encryption.get_hmac(message, secret_key)
-            return builtin_hmac.compare_digest(hmac_test, hmac_value)
+            return hmac.compare_digest(hmac_test, hmac_value)
         except Exception as e:
             logger.error("Could not verify hmac", exc_info=e)
             raise RuntimeError("Could not verify hmac") from e
@@ -97,9 +98,8 @@ class Encryption:
     @staticmethod
     def get_hmac(payload: bytes, secret_key: bytes) -> bytes:
         """Generate HMAC for given payload and key"""
-        h = hmac.HMAC(secret_key, hashes.SHA256())
-        h.update(payload)
-        return h.finalize()
+        h = hmac.HMAC(secret_key, payload, digestmod=hashlib.sha256)
+        return h.digest()
 
     ##########################################################################################
     # Symmetric with Hmac
