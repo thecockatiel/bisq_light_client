@@ -31,9 +31,12 @@ async def is_tor_socks_port_async(host: str, port: int) -> bool:
     except (ConnectionError, asyncio.TimeoutError):
         return False
     finally:
-        if writer:
-            writer.close()
-            await writer.wait_closed()
+        try:
+            if writer:
+                writer.close()
+                await writer.wait_closed()
+        except:
+            pass    
         
     
 def detect_tor_socks_proxy() -> Optional[Tuple[str, int]]:
@@ -51,6 +54,7 @@ def parse_tor_hidden_service_port(tor_hiddenservice_port: str) -> tuple[int, int
     """returns hidden service port and target port as tuple"""
     if not tor_hiddenservice_port:
         raise ValueError("tor_hiddenservice_port is empty")
+    tor_hiddenservice_port = tor_hiddenservice_port.strip("'\"")
     parts = tor_hiddenservice_port.split(None, 1)
     if len(parts) == 1:
         port = int(parts[0])

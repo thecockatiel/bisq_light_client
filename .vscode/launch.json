@@ -22,8 +22,14 @@
       "console": "integratedTerminal",
       "args": [
         // "--logLevel=DEBUG",
+        // #################################
         // "--torControlPort=9052",
         // "--torControlHost=127.0.0.1"
+        // #################################
+        // "--torProxyHost=127.0.0.1",
+        // "--torProxyPort=9050",
+        // "--torProxyHiddenServiceName=s2cuw6nu5nydypyrliaqltfpqkjrfkhd3tjas3jhpoqahsmb6zvqeiyd.onion",
+        // "--torProxyHiddenServicePort='9999 127.0.0.1:65018'",
       ],
       "env": {
         "PYTHONPATH": "${workspaceFolder}"

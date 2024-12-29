@@ -10,6 +10,8 @@ from typing import Any, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.config.config_exception import ConfigException
 from bisq.common.config.config_file_reader import ConfigFileReader
+from utils.tor import parse_tor_hidden_service_port
+
 
 def _random_app_name():
     try:
@@ -63,6 +65,26 @@ def get_if_is_file_and_exists_and_is_readable_or_none(path: Path) -> Optional[Pa
         return path
     return None
 
+
+class ConditionalArgumentAction(argparse.Action):
+    def __init__(
+        self,
+        unavailable_if: list[str] = None,
+        available_if: list[str] = None,
+        needs: list[str] = None,
+        *args,
+        **kwargs,
+    ):
+        # checks are run later after parse
+        self.unavailable_if = unavailable_if
+        self.available_if = available_if
+        self.needs = needs
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+
+
 class DisabledArgumentAction(argparse.Action):
     def __init__(self, disable_message: str = None, *args, **kwargs):
         self.disable_message = disable_message
@@ -72,11 +94,75 @@ class DisabledArgumentAction(argparse.Action):
         msg = self.disable_message or f"Option '{option_string}' is currently disabled"
         parser.error(msg)
 
+
 class CustomArgumentParser(argparse.ArgumentParser):
     def add_disabled_argument(self, *args, disable_message: str = None, **kwargs):
-        kwargs['action'] = DisabledArgumentAction
-        kwargs['disable_message'] = disable_message
+        kwargs["action"] = DisabledArgumentAction
+        kwargs["disable_message"] = disable_message
         return self.add_argument(*args, **kwargs)
+
+    def add_conditional_argument(
+        self,
+        *args,
+        unavailable_if: list[str] = None,
+        available_if: list[str] = None,
+        needs: list[str] = None,
+        **kwargs,
+    ):
+        kwargs["action"] = ConditionalArgumentAction
+        kwargs["unavailable_if"] = unavailable_if
+        kwargs["available_if"] = available_if
+        kwargs["needs"] = needs
+        return self.add_argument(*args, **kwargs)
+
+    def parse_known_args(self, *args, **kw_args):
+        namespace, args = super().parse_known_args(*args, **kw_args)
+        for action in self._actions:
+            if isinstance(action, ConditionalArgumentAction):
+                if action.unavailable_if and getattr(namespace, action.dest) is not None:
+                    for arg in action.unavailable_if:
+                        if getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is present."
+                            )
+                if action.available_if and getattr(namespace, action.dest) is not None:
+                    for arg in action.available_if:
+                        if not getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is not present."
+                            )
+                if action.needs and getattr(namespace, action.dest) is not None:
+                        for arg in action.needs:
+                            if not getattr(namespace, arg):
+                                self.error(
+                                    f"Option '{action.dest}' requires '{arg}' to be present." + (f" all needed options: {action.needs}" if len(action.needs) > 1 else "")
+                                )
+        return namespace, args
+
+    def parse_known_intermixed_args(self, *args, **kw_args):
+        namespace, extras = super().parse_known_intermixed_args(*args, **kw_args)
+        for action in self._actions:
+            if isinstance(action, ConditionalArgumentAction):
+                if action.unavailable_if and getattr(namespace, action.dest) is not None:
+                    for arg in action.unavailable_if:
+                        if getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is present."
+                            )
+                if action.available_if and getattr(namespace, action.dest) is not None:
+                    for arg in action.available_if:
+                        if not getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is not present."
+                            )
+                if action.needs and getattr(namespace, action.dest) is not None:
+                    for arg in action.needs:
+                        if not getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' requires '{arg}' to be present." + (f" all needed options: {action.needs}" if len(action.needs) > 1 else "")
+                            )
+        return namespace, extras
+
 
 class Config:
     # Default values for certain options
@@ -195,11 +281,22 @@ class Config:
             options["torControlPort"] or Config.UNSPECIFIED_PORT
         )
         self.tor_control_password: str = options["torControlPassword"] or ""
-        self.tor_control_cookie_file = get_if_is_file_and_exists_and_is_readable_or_none(
-            options["torControlCookieFile"]
+        self.tor_control_cookie_file = (
+            get_if_is_file_and_exists_and_is_readable_or_none(
+                options["torControlCookieFile"]
+            )
         )
-        self.use_tor_control_safe_cookie_auth: bool = options["torControlUseSafeCookieAuth"] or False
+        self.use_tor_control_safe_cookie_auth: bool = (
+            options["torControlUseSafeCookieAuth"] or False
+        )
         self.tor_stream_isolation: bool = options["torStreamIsolation"] or False
+        self.tor_proxy_host: str = options["torProxyHost"] or ""
+        self.tor_proxy_port: int = options["torProxyPort"] or Config.UNSPECIFIED_PORT
+        self.tor_proxy_username: str = options["torProxyUsername"] or ""
+        self.tor_proxy_password: str = options["torProxyPassword"] or ""
+        self.tor_proxy_hidden_service_name: str = options["torProxyHiddenServiceName"] or ""
+        self.tor_proxy_hidden_service_port: int = options["torProxyHiddenServicePort"][0] if options["torProxyHiddenServicePort"] else Config.UNSPECIFIED_PORT
+        self.tor_proxy_hidden_service_target_port: int = options["torProxyHiddenServicePort"][1] if options["torProxyHiddenServicePort"] else Config.UNSPECIFIED_PORT
         self.referral_id: str = options["referralId"] or ""
         self.use_dev_mode: bool = options["useDevMode"] or False
         self.use_dev_mode_header: bool = options["useDevModeHeader"] or False
@@ -209,7 +306,11 @@ class Config:
         self.providers: list[str] = options["providers"] or []
         self.seed_nodes: list[str] = options["seedNodes"] or []
         self.ban_list: list[str] = options["banList"] or []
-        self.use_localhost_for_p2p: bool = not self.base_currency_network.is_mainnet() and (options["useLocalhostForP2P"] or False)
+        self.use_localhost_for_p2p: (
+            bool
+        ) = not self.base_currency_network.is_mainnet() and (
+            options["useLocalhostForP2P"] or False
+        )
         self.max_connections: int = options["maxConnections"] or 12
         self.socks5_proxy_btc_address: str = options["socks5ProxyBtcAddress"] or ""
         self.socks5_proxy_http_address: str = options["socks5ProxyHttpAddress"] or ""
@@ -224,16 +325,21 @@ class Config:
         self.use_all_provided_nodes: bool = options["useAllProvidedNodes"] or False
         self.user_agent: str = options["userAgent"] or "Bisq"
         self.num_connections_for_btc: int = (
-            options["numConnectionsForBtc"] or Config.DEFAULT_NUM_CONNECTIONS_FOR_BTC_PROVIDED
+            options["numConnectionsForBtc"]
+            or Config.DEFAULT_NUM_CONNECTIONS_FOR_BTC_PROVIDED
         )
         self.rpc_user = options["rpcUser"] or ""
         self.rpc_password = options["rpcPassword"] or ""
         self.rpc_host = options["rpcHost"] or ""
         self.rpc_port = options["rpcPort"] or Config.UNSPECIFIED_PORT
-        self.rpc_block_notification_port = options["rpcBlockNotificationPort"] or Config.UNSPECIFIED_PORT
+        self.rpc_block_notification_port = (
+            options["rpcBlockNotificationPort"] or Config.UNSPECIFIED_PORT
+        )
         self.rpc_block_notification_host = options["rpcBlockNotificationHost"] or ""
         self.dump_blockchain_data: bool = options["dumpBlockchainData"] or False
-        self.full_dao_node: bool = options["fullDaoNode"] or Config.DEFAULT_FULL_DAO_NODE
+        self.full_dao_node: bool = (
+            options["fullDaoNode"] or Config.DEFAULT_FULL_DAO_NODE
+        )
         self.genesis_tx_id: str = options["genesisTxId"] or ""
         self.genesis_block_height: int = options["genesisBlockHeight"] or -1
         self.genesis_total_supply: int = options["genesisTotalSupply"] or -1
@@ -241,18 +347,28 @@ class Config:
         self.allow_faulty_delayed_txs: bool = options["allowFaultyDelayedTxs"] or False
         self.api_password: str = options["apiPassword"] or ""
         self.api_port: int = options["apiPort"] or 9998
-        self.prevent_periodic_shutdown_at_seed_node: bool = options["preventPeriodicShutdownAtSeedNode"] or False
-        self.republish_mailbox_entries: bool = options["republishMailboxEntries"] or False
-        self.bypass_mempool_validation: bool = options["bypassMempoolValidation"] or False
+        self.prevent_periodic_shutdown_at_seed_node: bool = (
+            options["preventPeriodicShutdownAtSeedNode"] or False
+        )
+        self.republish_mailbox_entries: bool = (
+            options["republishMailboxEntries"] or False
+        )
+        self.bypass_mempool_validation: bool = (
+            options["bypassMempoolValidation"] or False
+        )
         self.dao_node_api_url: str = options["daoNodeApiUrl"] or "http://localhost"
         self.dao_node_api_port: int = options["daoNodeApiPort"] or 8082
         self.is_bm_full_node: bool = options["isBmFullNode"] or False
         self.bm_oracle_node_pub_key: str = options["bmOracleNodePubKey"] or ""
         self.bm_oracle_node_priv_key: str = options["bmOracleNodePrivKey"] or ""
-        self.seed_node_reporting_server_url: str = options["seedNodeReportingServerUrl"] or ""
-        
+        self.seed_node_reporting_server_url: str = (
+            options["seedNodeReportingServerUrl"] or ""
+        )
+
         # Create all appDataDir subdirectories and assign to their respective properties
-        btc_network_dir = self.app_data_dir.joinpath(self.base_currency_network.name.lower())
+        btc_network_dir = self.app_data_dir.joinpath(
+            self.base_currency_network.name.lower()
+        )
         btc_network_dir.mkdir(parents=True, exist_ok=True)
 
         self.key_storage_dir = btc_network_dir.joinpath("keys")
@@ -334,11 +450,12 @@ class Config:
             type=Path,
             metavar="<File>",
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--nodePort",
             help="Port to listen on",
             type=int,
             metavar="<Integer>",
+            unavailable_if=["torProxyHiddenServicePort"],
         )
         parser.add_argument(
             "--maxMemory",
@@ -509,7 +626,7 @@ class Config:
             type=str,
             metavar="<host:port>",
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torrcFile",
             help=(
                 "An existing torrc-file to be sourced for Tor. Note that torrc-entries, "
@@ -517,8 +634,14 @@ class Config:
             ),
             type=Path,
             metavar="<File>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torrcOptions",
             help=(
                 "A list of torrc-entries to amend to Bisq's torrc. Note that "
@@ -527,34 +650,64 @@ class Config:
             ),
             type=_parse_regex(_torrc_options_re),
             metavar="<String>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torUseBridgesFile",
             help="Use lines from 'bridges' file in Tor data directory as bridge entries, if exists. Defaults to True.",
             type=_parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torControlHost",
             help="The control hostname of an already running Tor service to be used by Bisq.",
             type=str,
             metavar="<String>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torControlPort",
             help="The control port of an already running Tor service to be used by Bisq.",
             type=int,
             metavar="<port>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torControlPassword",
             help="The password for controlling the already running Tor service.",
             type=str,
             metavar="<String>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
-        parser.add_argument(
+        parser.add_conditional_argument(
             "--torControlCookieFile",
             help=(
                 "The cookie file for authenticating against the already "
@@ -562,6 +715,12 @@ class Config:
             ),
             type=Path,
             metavar="<File>",
+            unavailable_if=[
+                "torProxyHost",
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
         )
         parser.add_argument(
             "--torControlUseSafeCookieAuth",
@@ -579,6 +738,62 @@ class Config:
             metavar="<Boolean>",
             nargs="?",
             const=True,
+        )
+        parser.add_conditional_argument(
+            "--torProxyHost",
+            help="The proxy hostname of an already running Tor service to be used by Bisq.",
+            type=str,
+            metavar="<String>",
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+            needs=[
+                "torProxyPort",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
+        )
+        parser.add_conditional_argument(
+            "--torProxyPort",
+            help="The proxy port of an already running Tor service to be used by Bisq.",
+            type=int,
+            metavar="<port>",
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+            needs=[
+                "torProxyHost",
+                "torProxyHiddenServiceName",
+                "torProxyHiddenServicePort",
+            ],
+        )
+        parser.add_conditional_argument(
+            "--torProxyUsername",
+            help="The proxy username of an already running Tor service to be used by Bisq.",
+            type=str,
+            metavar="<String>",
+            available_if=['torProxyPort', 'torProxyHost'],
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+        )
+        parser.add_conditional_argument(
+            "--torProxyPassword",
+            help="The proxy password of an already running Tor service to be used by Bisq.",
+            type=str,
+            metavar="<String>",
+            available_if=['torProxyPort', 'torProxyHost'],
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+        )
+        parser.add_conditional_argument(
+            "--torProxyHiddenServiceName",
+            help="The published hidden service hostname of an already running Tor service to be used by Bisq.",
+            type=str,
+            metavar="<String>",
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+            needs=["torProxyHost", "torProxyPort", "torProxyHiddenServicePort"],
+        )
+        parser.add_conditional_argument(
+            "--torProxyHiddenServicePort",
+            help="The hidden service port of an already running Tor service to be used by Bisq. This is the same syntax as the 'HiddenServicePort' option of Tor, but does not support unix paths and can only be passed once.",
+            type=parse_tor_hidden_service_port,
+            metavar="<VIRTPORT [TARGET[:PORT]]>",
+            unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
+            needs=["torProxyHost", "torProxyPort", "torProxyHiddenServiceName"],
         )
         parser.add_argument(
             "--msgThrottlePerSec",
@@ -813,4 +1028,3 @@ class Config:
         )
 
         return parser
-

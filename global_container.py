@@ -1035,17 +1035,7 @@ class GlobalContainer:
                 self.network_proto_resolver,
                 self.bridge_address_provider,
                 self.ban_filter,
-                self.config.max_connections,
-                self.config.use_localhost_for_p2p,
-                self.config.node_port,
-                self.config.app_data_dir,
-                self.config.tor_dir,
-                self.config.torrc_file,
-                self.config.torrc_options,
-                self.config.tor_control_host,
-                self.config.tor_control_port,
-                self.config.tor_control_password,
-                self.config.tor_use_bridges_file,
+                self.config,
             )
 
         return GlobalContainer._network_node_provider

@@ -19,21 +19,26 @@ class TorMode(ABC):
     The sub-directory where the private_key file sits in.
     """
     
-    def __init__(self, tor_dir: Path) -> None:
+    def __init__(self, tor_dir: Optional[Path]) -> None:
         super().__init__()
+        # tor_dir can be None if the user is providing the proxy and hidden service info
         self.tor_dir = tor_dir
-        self.tor_dir.mkdir(parents=True, exist_ok=True)
-        self.tor_dir.joinpath(".tor").mkdir(parents=True, exist_ok=True)
-        """points to the place, where we will persist private key and address data"""
+        if self.tor_dir is not None:
+            self.tor_dir.mkdir(parents=True, exist_ok=True)
+            self.tor_dir.joinpath(".tor").mkdir(parents=True, exist_ok=True)
+            """points to the place, where we will persist private key and address data"""
         
     @abstractmethod
     def get_tor(self) -> Future[Optional["Tor"]]:
+        """returns none if we are connecting to limited running tor instance"""
         pass
     
     @abstractmethod
-    def get_hidden_service_directory(self) -> Path:
+    def get_hidden_service_directory(self) -> Optional[Path]:
+        """returns none if we are connecting to limited running tor instance"""
         pass
     
     def do_rolling_backup(self):
-        """Do a rolling backup of the 'private_key' file."""
-        rolling_backup(self.tor_dir.joinpath(TorMode.HIDDEN_SERVICE_DIRECTORY), "private_key", 20)
+        """Do a rolling backup of the 'private_key' file. Does nothing if tor_dir is None (LimitedRunningTor)."""
+        if self.tor_dir is not None:
+            rolling_backup(self.tor_dir.joinpath(TorMode.HIDDEN_SERVICE_DIRECTORY), "private_key", 20)
