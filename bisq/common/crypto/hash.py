@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import hashes
 from Crypto.Hash import RIPEMD160
 from Crypto.Hash import keccak
 import zlib
+import hashlib
 
 import struct
 
@@ -10,9 +11,7 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload
 
 def get_sha256_hash(data: bytes):
-    hasher = hashes.Hash(hashes.SHA256())
-    hasher.update(data)
-    return hasher.finalize()
+    return hashlib.sha256(data).digest()
 
 
 def get_sha256_hash_from_string(message: str):
@@ -25,9 +24,7 @@ def get_sha256_hash_from_integer(data: int):
 
 def get_sha256_ripemd160_hash(data: bytes):
     # This will use the RIPEMD160 hash of SHA256(data)
-    sha256_hash = hashes.Hash(hashes.SHA256())
-    sha256_hash.update(data)
-    sha256_digest = sha256_hash.finalize()
+    sha256_digest = get_sha256_hash(data)
 
     h = RIPEMD160.new()
     h.update(sha256_digest)
