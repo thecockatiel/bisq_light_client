@@ -46,3 +46,20 @@ def detect_tor_socks_proxy() -> Optional[Tuple[str, int]]:
         if is_tor_socks_port(*net_addr):
             return net_addr
     return None
+
+def parse_tor_hidden_service_port(tor_hiddenservice_port: str) -> tuple[int, int]:
+    """returns hidden service port and target port as tuple"""
+    if not tor_hiddenservice_port:
+        raise ValueError("tor_hiddenservice_port is empty")
+    parts = tor_hiddenservice_port.split(None, 1)
+    if len(parts) == 1:
+        port = int(parts[0])
+        return port, port
+    elif len(parts) == 2:
+        if ":" in parts[1]:
+            _, target_port = parts[1].split(":")
+        else:
+            target_port = parts[1]
+        return int(parts[0]), int(target_port)
+    else:
+        raise ValueError(f"Invalid tor_hiddenservice_port: {tor_hiddenservice_port}")
