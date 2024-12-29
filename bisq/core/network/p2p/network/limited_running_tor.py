@@ -56,8 +56,8 @@ class LimitedRunningTor(TorMode):
             ssl=False,
         )
         client_timeout = aiohttp.ClientTimeout(
-            sock_connect=240,
-            sock_read=240,
+            sock_connect=10,
+            sock_read=10,
         )
         
         # Start server to receive validation request
@@ -88,10 +88,10 @@ class LimitedRunningTor(TorMode):
         # Start validation request handler
         validation_task = asyncio.create_task(handle_validation_request())
         
-        while not connected and retry_times > 0 and ((get_time_ms() - ts1) <= two_minutes_in_millis):
-            try:
-                logger.info("Connecting to limited running tor")
-                async with aiohttp.ClientSession(connector=proxy_connector, timeout=client_timeout) as session:
+        async with aiohttp.ClientSession(connector=proxy_connector, timeout=client_timeout) as session:
+            while not connected and retry_times > 0 and ((get_time_ms() - ts1) <= two_minutes_in_millis):
+                try:
+                    logger.info("Connecting to limited running tor")
                     async with session.get(
                         f"http://{self.hiddenservice_hostname}:{self.hiddenservice_port}/validate",
                         headers={"X-Validation-Token": validation_token}
@@ -108,10 +108,10 @@ class LimitedRunningTor(TorMode):
                                 )
                                 connected = True
 
-            except Exception as e:
-                retry_times -= 1
-                logger.error(f"Error while testing limited running tor: {str(e)}", exc_info=e)
-                await asyncio.sleep(1)
+                except Exception as e:
+                    retry_times -= 1
+                    logger.error(f"Error while testing limited running tor: {str(e)}", exc_info=e)
+                    await asyncio.sleep(1)
 
         server.close()
         if not connected:
