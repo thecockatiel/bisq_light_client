@@ -19,7 +19,9 @@ if sys.version_info[:3] < _min_python_version_tuple:
 
 from utils.aio import as_future, get_asyncio_loop
 from global_container import GLOBAL_CONTAINER
-
+# Force initialization of services 
+GLOBAL_CONTAINER.signed_witness_service
+GLOBAL_CONTAINER.account_age_witness_service
 
 import asyncio
 from twisted.internet import reactor

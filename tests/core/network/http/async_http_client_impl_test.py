@@ -1,7 +1,6 @@
 from utils.aio import get_asyncio_loop
 from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-import logging
 from bisq.common.setup.log_setup import (
     configure_logging,
     get_logger,
@@ -9,7 +8,8 @@ from bisq.common.setup.log_setup import (
 )
 from pathlib import Path
 
-from utils.twisted import run_with_reactor, teardown_reactor
+from utils.twisted import cancel_delayed_calls, wrap_with_ensure_deferred
+
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath(".testdata")
@@ -19,17 +19,13 @@ set_custom_log_level("TRACE")
 
 from bisq.core.network.p2p.network.bridge_address_provider import BridgeAddressProvider
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
-import unittest
+import unittest as _unittest
+from twisted.trial import unittest
 import asyncio
-
-from twisted.internet import reactor
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
-from bisq.core.protocol.network.core_network_proto_resolver import (
-    CoreNetworkProtoResolver,
-)
 from utils.clock import Clock
 
 logger = get_logger(__name__)
@@ -37,9 +33,13 @@ logger = get_logger(__name__)
 disabled = True
 
 
-@unittest.skipIf(disabled, "Disabled test because it requires running Tor instances")
+@_unittest.skipIf(disabled, "Disabled test because it requires running Tor instances")
 class TestTorNetworkNode(unittest.TestCase):
     def setUp(self):
+        from bisq.core.protocol.network.core_network_proto_resolver import (
+            CoreNetworkProtoResolver,
+        )
+        
         self.base_dir = testdata_dir.joinpath("nodes")
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.tor_dir_1 = self.base_dir.joinpath("tor_dir_1")
@@ -70,9 +70,8 @@ class TestTorNetworkNode(unittest.TestCase):
         self.node1_ready = asyncio.Event()
 
     def tearDown(self):
-        async def shutdown():
-            # Cancel all pending calls
-            teardown_reactor()
+        async def shutdown(): 
+            cancel_delayed_calls()
             # Shutdown nodes
             await asyncio.gather(
                 self._shutdown_node(self.node1),
@@ -101,7 +100,7 @@ class TestTorNetworkNode(unittest.TestCase):
 
         return TestSetupListener()
 
-    @run_with_reactor
+    @wrap_with_ensure_deferred
     async def test_async_http_client_impl(self):
 
         # Start both nodes
@@ -130,4 +129,4 @@ class TestTorNetworkNode(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    _unittest.main()
