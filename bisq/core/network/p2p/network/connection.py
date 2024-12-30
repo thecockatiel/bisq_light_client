@@ -217,7 +217,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
         # clean list
         while len(self.message_time_stamps) > self.get_msg_throttle_per_10_sec():
-            self.message_time_stamps.remove(0)
+            self.message_time_stamps.pop(0)
 
         return (self._violates_throttle_limit(now, 1, self.get_msg_throttle_per_sec()) or
                 self._violates_throttle_limit(now, 10, self.get_msg_throttle_per_10_sec()))
