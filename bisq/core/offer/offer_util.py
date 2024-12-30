@@ -455,12 +455,12 @@ class OfferUtil:
             if spent_by_transaction_input:
                 spending_tx = (spent_by_transaction_input.connected_transaction 
                              if spent_by_transaction_input.connected_transaction else "null")
-                spending_transaction = str(spending_tx) # TODO: check stringification later
+                spending_transaction = str(spending_tx)
                 # This is an exceptional case so we do not translate the error msg
                 error_msg = (
                     f"The output of the maker fee tx is already spent.\n{extra_string}\n\n"
                     f"Transaction input which spent the reserved funds for that offer: '"
-                    f"{spent_by_transaction_input.connected_transaction.get_tx_id()}:" # TODO: check stringification later
+                    f"{spent_by_transaction_input.connected_transaction.get_tx_id()}:"
                     f"{spent_by_transaction_input.connected_output.index if spent_by_transaction_input.connected_output else 'null'}'"
                 )
                 logger.error(f"spent_by_transaction_input {spent_by_transaction_input}")

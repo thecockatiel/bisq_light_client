@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
+from bitcoinj.core.sha_256_hash import Sha256Hash
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
@@ -35,10 +36,10 @@ class Transaction:
 
         raise RuntimeError("Transaction Not implemented yet")
 
-    def get_tx_id(self) -> bytes:
+    def get_tx_id(self) -> "Sha256Hash":
         raise RuntimeError("Transaction.get_tx_id Not implemented yet")
 
-    def get_w_tx_id(self) -> bytes:
+    def get_w_tx_id(self) -> "Sha256Hash":
         raise RuntimeError("Transaction.get_w_tx_id Not implemented yet")
 
     def bitcoin_serialize(self) -> bytes:
@@ -62,3 +63,9 @@ class Transaction:
 
     def serialize(self) -> bytes:
         raise RuntimeError("Transaction.serialize Not implemented yet")
+
+    def to_debug_str(self, chain, indent):
+        raise RuntimeError("Transaction.to_debug_str Not implemented yet")
+    
+    def __str__(self):
+        return self.to_debug_str(None, None)

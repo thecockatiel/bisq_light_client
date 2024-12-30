@@ -90,7 +90,7 @@ class TradeDataValidation:
         # input.getConnectedOutput() is null as the tx is not committed at that point
 
         outpoint = input_tx.outpoint
-        if outpoint.hash.hex() != str(deposit_tx.get_tx_id()) or outpoint.index != 0: # TODO: check tx id stringification
+        if str(outpoint.hash) != str(deposit_tx.get_tx_id()) or outpoint.index != 0:
             raise TradeDataInvalidInputException(
                 f"Input of delayed payout transaction does not point to output of deposit tx.\n"
                 f"Delayed payout tx={delayed_payout_tx}\n"
@@ -104,8 +104,8 @@ class TradeDataValidation:
             raise TradeDataInvalidTxException("Deposit transaction is None or has unexpected input count")
 
         deposit_tx = trade.deposit_tx
-        tx_id_input0 = deposit_tx.inputs[0].outpoint.hash.hex()
-        tx_id_input1 = deposit_tx.inputs[1].outpoint.hash.hex()
+        tx_id_input0 = str(deposit_tx.inputs[0].outpoint.hash)
+        tx_id_input1 = str(deposit_tx.inputs[1].outpoint.hash)
         contract_maker_tx_id = trade.contract.offer_payload.offer_fee_payment_tx_id
         contract_taker_tx_id = trade.contract.taker_fee_tx_id
         
