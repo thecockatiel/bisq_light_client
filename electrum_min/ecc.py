@@ -23,8 +23,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# NOTE: This is a limited port of electrum's ecc.py module. It is used to sign and verify messages.
-
 import base64
 import hashlib
 import functools
@@ -34,13 +32,19 @@ from ctypes import (
     CFUNCTYPE, POINTER, cast
 )
 
+from bisq.common.setup.log_setup import get_logger
+
 from .util import bfh, assert_bytes, to_bytes, InvalidPassword, randrange
-from .crypto import (sha256d)
+from .crypto import (sha256d, aes_encrypt_with_iv, aes_decrypt_with_iv, hmac_oneshot)
 from . import constants
-from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED
+
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
+
+from .ecc_fast import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED
+
+_logger = get_logger(__name__)
 
 
 # Some unit tests need to create ECDSA sigs without grinding the R value (and just use RFC6979).
@@ -126,8 +130,9 @@ def _x_and_y_from_pubkey_bytes(pubkey: bytes) -> Tuple[int, int]:
     pubkey_ptr = create_string_buffer(64)
     ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
         _libsecp256k1.ctx, pubkey_ptr, pubkey, len(pubkey))
-    if not ret:
-        raise InvalidECPointException('public key could not be parsed or is invalid')
+    if 1 != ret:
+        raise InvalidECPointException(
+            f'public key could not be parsed or is invalid: {pubkey.hex()!r}')
 
     pubkey_serialized = create_string_buffer(65)
     pubkey_size = c_size_t(65)
@@ -238,13 +243,14 @@ class ECPubkey(object):
         return self._y
 
     def _to_libsecp256k1_pubkey_ptr(self):
-        pubkey = create_string_buffer(64)
-        public_pair_bytes = self.get_public_key_bytes(compressed=False)
+        """pointer to `secp256k1_pubkey` C struct"""
+        pubkey_ptr = create_string_buffer(64)
+        pk_bytes = self.get_public_key_bytes(compressed=False)
         ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
-            _libsecp256k1.ctx, pubkey, public_pair_bytes, len(public_pair_bytes))
-        if not ret:
-            raise Exception('public key could not be parsed or is invalid')
-        return pubkey
+            _libsecp256k1.ctx, pubkey_ptr, pk_bytes, len(pk_bytes))
+        if 1 != ret:
+            raise Exception(f'public key could not be parsed or is invalid: {pk_bytes.hex()!r}')
+        return pubkey_ptr
 
     @classmethod
     def _from_libsecp256k1_pubkey_ptr(cls, pubkey) -> 'ECPubkey':

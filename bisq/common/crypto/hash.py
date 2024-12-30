@@ -1,11 +1,9 @@
 from typing import TYPE_CHECKING
-from cryptography.hazmat.primitives import hashes
-from Crypto.Hash import RIPEMD160
 from Crypto.Hash import keccak
 import zlib
 import hashlib
-
 import struct
+from electrum_min.crypto import ripemd
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -25,16 +23,11 @@ def get_sha256_hash_from_integer(data: int):
 def get_sha256_ripemd160_hash(data: bytes):
     # This will use the RIPEMD160 hash of SHA256(data)
     sha256_digest = get_sha256_hash(data)
-
-    h = RIPEMD160.new()
-    h.update(sha256_digest)
-    return h.digest()
+    return ripemd(sha256_digest)
 
 
 def get_ripemd160_hash(data: bytes):
-    h = RIPEMD160.new()
-    h.update(data)
-    return h.digest()
+    return ripemd(data)
 
 def get_keccak1600_hash(data: bytes):
     k = keccak.new(digest_bits=256)
