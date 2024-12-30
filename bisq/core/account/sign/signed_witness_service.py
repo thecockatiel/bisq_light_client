@@ -203,8 +203,8 @@ class SignedWitnessService:
                 logger.warning(err)
                 return err
             
-            account_age_witness_hash_as_hex = account_age_witness.get_hash().hex()
-            signature_base64 = base64.b64encode(ec_key.sign_message(account_age_witness_hash_as_hex))
+            account_age_witness_hash = account_age_witness.get_hash()
+            signature_base64 = base64.b64encode(ec_key.sign_message(account_age_witness_hash))
             signed_witness = SignedWitness(
                 SignedWitnessVerificationMethod.ARBITRATOR,
                 account_age_witness_hash=account_age_witness.get_hash(),

@@ -226,8 +226,8 @@ class DisputeAgentManager(Generic[T], ABC):
     # An invited disputeAgent will sign at registration his storageSignaturePubKey with that protected key and attach the signature and pubKey to his data.
     # Other users will check the signature with the list of public keys hardcoded in the app.
     def sign_storage_signature_pub_key(self, key: ECPrivkey):
-        key_to_sign_as_hex = Sig.get_public_key_as_hex_string(self.key_ring.pub_key_ring.signature_pub_key)
-        return key.sign_message(key_to_sign_as_hex) # passes LowRSigningKey tests.
+        key_to_sign= Sig.get_public_key_bytes(self.key_ring.pub_key_ring.signature_pub_key)
+        return key.sign_message(key_to_sign) # passes LowRSigningKey tests.
     
     def get_registration_key(self, priv_key_big_int_string: str):
         try:
