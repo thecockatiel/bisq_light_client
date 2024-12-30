@@ -2,6 +2,15 @@
 from typing import Any, Optional, Set
 import secrets
 
+
+def to_string(x, enc) -> str:
+    if isinstance(x, (bytes, bytearray)):
+        return x.decode(enc)
+    if isinstance(x, str):
+        return x
+    else:
+        raise TypeError("Not a string or bytes like object")
+
 def to_bytes(something, encoding='utf8') -> bytes:
     """
     cast string to bytes() like object, but for python2 support it's bytearray copy
@@ -69,3 +78,12 @@ class InvalidPassword(Exception):
             return _("Incorrect password")
         else:
             return str(self.message)
+        
+class WalletFileException(Exception):
+    def __init__(self, message='', *, should_report_crash: bool = False):
+        Exception.__init__(self, message)
+        self.should_report_crash = should_report_crash
+
+        
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))

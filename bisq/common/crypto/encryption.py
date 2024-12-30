@@ -5,7 +5,6 @@ import secrets
 from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
-from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
 from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
 from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
