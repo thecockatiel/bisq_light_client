@@ -2,6 +2,31 @@
 from typing import Any, Optional, Set
 import secrets
 
+def parse_max_spend(amt: Any) -> Optional[int]:
+    """Checks if given amount is "spend-max"-like.
+    Returns None or the positive integer weight for "max". Never raises.
+
+    When creating invoices and on-chain txs, the user can specify to send "max".
+    This is done by setting the amount to '!'. Splitting max between multiple
+    tx outputs is also possible, and custom weights (positive ints) can also be used.
+    For example, to send 40% of all coins to address1, and 60% to address2:
+    ```
+    address1, 2!
+    address2, 3!
+    ```
+    """
+    if not (isinstance(amt, str) and amt and amt[-1] == '!'):
+        return None
+    if amt == '!':
+        return 1
+    x = amt[:-1]
+    try:
+        x = int(x)
+    except ValueError:
+        return None
+    if x > 0:
+        return x
+    return None
 
 def to_string(x, enc) -> str:
     if isinstance(x, (bytes, bytearray)):
@@ -24,6 +49,13 @@ def to_bytes(something, encoding='utf8') -> bytes:
     else:
         raise TypeError("Not a string or bytes like object")
 
+def chunks(items, size: int):
+    """Break up items, an iterable, into chunks of length size."""
+    if size < 1:
+        raise ValueError(f"size must be positive, not {repr(size)}")
+    for i in range(0, len(items), size):
+        yield items[i: i + size]
+        
 def inv_dict(d: dict):
     return {v: k for k, v in d.items()}
 
@@ -87,3 +119,10 @@ class WalletFileException(Exception):
         
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
+
+class classproperty(property):
+    """~read-only class-level @property
+    from https://stackoverflow.com/a/13624858 by denis-ryzhkov
+    """
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
