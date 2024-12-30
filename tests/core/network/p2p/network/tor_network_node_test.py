@@ -4,7 +4,7 @@ from bisq.common.setup.log_setup import configure_logging, get_logger, set_custo
 from utils.random import next_random_int
 from pathlib import Path
 
-from utils.twisted import run_with_reactor, teardown_reactor
+from utils.twisted import cancel_delayed_calls, wrap_with_ensure_deferred
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath("testdata")
@@ -14,7 +14,8 @@ set_custom_log_level("TRACE")
 
 from bisq.core.network.p2p.network.bridge_address_provider import BridgeAddressProvider
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
-import unittest
+import unittest as _unittest
+from twisted.trial import unittest
 import asyncio
 
 import shutil
@@ -23,16 +24,16 @@ from twisted.internet import reactor
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
-from bisq.core.protocol.network.core_network_proto_resolver import CoreNetworkProtoResolver
 from utils.clock import Clock
 
 logger = get_logger(__name__)
 
 disabled = True
 
-@unittest.skipIf(disabled, "Disabled test because it requires running 2 Tor instances")
+@_unittest.skipIf(disabled, "Disabled test because it requires running 2 Tor instances")
 class TestTorNetworkNode(unittest.TestCase):
     def setUp(self):
+        from bisq.core.protocol.network.core_network_proto_resolver import CoreNetworkProtoResolver
         self.base_dir = testdata_dir.joinpath("nodes")
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.tor_dir_1 = self.base_dir.joinpath("tor_dir_1")
@@ -73,8 +74,7 @@ class TestTorNetworkNode(unittest.TestCase):
 
     def tearDown(self):
         async def shutdown():
-            # Cancel all pending calls
-            teardown_reactor()
+            cancel_delayed_calls()
             # Shutdown nodes
             await asyncio.gather(
                 self._shutdown_node(self.node1),
@@ -112,7 +112,7 @@ class TestTorNetworkNode(unittest.TestCase):
                 received_event.set()
         return TestMessageListener()
 
-    @run_with_reactor
+    @wrap_with_ensure_deferred
     async def test_peer_communication(self):
         
         # Start both nodes
@@ -152,5 +152,4 @@ class TestTorNetworkNode(unittest.TestCase):
         self.assertTrue(len(self.received_messages) == 1)
 
 if __name__ == '__main__':
-    unittest.main()
-    # TODO: check why test does not exit after shutdown
+    _unittest.main()

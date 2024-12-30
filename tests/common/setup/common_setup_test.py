@@ -1,11 +1,13 @@
+from datetime import timedelta
+import utils.aio
 import asyncio 
 import sys
 import threading
-import unittest
+import unittest as _unittest
 from bisq.common.setup.common_setup import CommonSetup
 from bisq.common.user_thread import UserThread
-from utils.twisted import run_with_reactor, teardown_reactor, twisted_wait
-
+from utils.twisted import wrap_with_ensure_deferred, twisted_wait, cancel_delayed_calls
+from twisted.trial import unittest
 class MockExceptionHandler:
     def __init__(self):
         self.exception_caught = False
@@ -13,17 +15,14 @@ class MockExceptionHandler:
     def handle_uncaught_exception(self, exception, shutdown):
         self.exception_caught = True
 
-def raise_error():
-    raise Exception("Test unhandled error")
-
 class TestExceptionHandler(unittest.TestCase):
     
     def tearDown(self):
         sys.excepthook = sys.__excepthook__
         threading.excepthook = threading.__excepthook__
-        teardown_reactor()
+        cancel_delayed_calls()
     
-    @run_with_reactor
+    @wrap_with_ensure_deferred
     async def test_uncaught_exception_handler_for_user_thread_executed_methods(self):
         mock_handler = MockExceptionHandler()
         CommonSetup.setup_uncaught_exception_handler(mock_handler)
@@ -32,24 +31,30 @@ class TestExceptionHandler(unittest.TestCase):
 
         e = asyncio.Event()
         
-        timer = UserThread.execute(raise_error)
+        def raise_error():
+            raise Exception("Test unhandled error")
         
-        await twisted_wait(0.1)
+        UserThread.execute(raise_error)
         
-        timer._deferred.addBoth(lambda _: e.set())
+        # Wait for the error to be processed
+        def check_handler():
+            if mock_handler.exception_caught:
+                e.set()
+        
+        # Keep checking until handler catches exception
+        check_timer = UserThread.run_periodically(check_handler, timedelta(milliseconds=100))
 
         try:
             await asyncio.wait_for(e.wait(), 5)
-            await twisted_wait(0.5)
         except asyncio.TimeoutError:
             self.fail("Test timed out waiting for exception handler")
-        
-        
-        await twisted_wait(0.5)
+        finally:
+            check_timer.stop()
             
         self.assertTrue(mock_handler.exception_caught)
+        self.flushLoggedErrors()
         
-    @run_with_reactor
+    @wrap_with_ensure_deferred
     async def test_uncaught_exception_handler_for_threads(self):
         mock_handler = MockExceptionHandler()
         CommonSetup.setup_uncaught_exception_handler(mock_handler)
@@ -66,4 +71,4 @@ class TestExceptionHandler(unittest.TestCase):
         self.assertTrue(mock_handler.exception_caught)
 
 if __name__ == '__main__':
-    unittest.main()
+    _unittest.main()

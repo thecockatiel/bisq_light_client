@@ -171,3 +171,6 @@ electrum_min/*.dylib
 
 .testdata
 testdata
+
+_trial_temp
+_trial_temp-*
