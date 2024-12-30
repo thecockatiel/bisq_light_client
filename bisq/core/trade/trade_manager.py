@@ -729,7 +729,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         for trade in self.closed_tradable_manager.get_trades_stream_with_funds_locked_in():
             deposit_tx = trade.get_deposit_tx()
             if deposit_tx is not None:
-                confidence = self.btc_wallet_service.get_confidence_for_tx_id(str(deposit_tx.get_tx_id())) # TODO Check stringification
+                confidence = self.btc_wallet_service.get_confidence_for_tx_id(str(deposit_tx.get_tx_id()))
                 if confidence is not None and confidence.confidence_type != TransactionConfidenceType.BUILDING:
                     trade_tx_exception = TradeTxException(Res.get("error.closedTradeWithUnconfirmedDepositTx", trade.get_short_id()))
                 else:

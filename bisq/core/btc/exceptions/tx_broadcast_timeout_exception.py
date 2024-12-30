@@ -16,7 +16,7 @@ class TxBroadcastTimeoutException(TxBroadcastException):
         """
         super().__init__(
             f"The transaction was not broadcasted in {delay} "
-            f"seconds. txId={local_tx.get_tx_id()}" # TODO: check stringification
+            f"seconds. txId={local_tx.get_tx_id()}"
         )
         self._local_tx = local_tx
         self._delay = delay

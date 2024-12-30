@@ -283,7 +283,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                             
                             def on_success(self_, transaction: "Transaction"):
                                 # after successful publish we send peer the tx
-                                dispute.dispute_payout_tx_id = str(transaction.get_tx_id()) # TODO: check stringification
+                                dispute.dispute_payout_tx_id = str(transaction.get_tx_id())
                                 self.send_peer_published_payout_tx_message(transaction, dispute, contract)
                                 self.update_trade_or_open_offer_manager(trade_id)
 
@@ -307,7 +307,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                         "We already got a payout tx. That might be the case if the other peer "
                         f"did not get the payout tx and opened a dispute. TradeId = {trade_id}"
                     )
-                    dispute.dispute_payout_tx_id = str(payout_tx.get_tx_id()) # TODO: check stringification
+                    dispute.dispute_payout_tx_id = str(payout_tx.get_tx_id())
                     self.send_peer_published_payout_tx_message(payout_tx, dispute, contract)
                     success = True
             else:
@@ -381,7 +381,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             )
         )
 
-        dispute.dispute_payout_tx_id = str(committed_dispute_payout_tx.get_tx_id()) # TODO: stringification
+        dispute.dispute_payout_tx_id = str(committed_dispute_payout_tx.get_tx_id())
         self.btc_wallet_service.print_tx(
             "Disputed payoutTx received from peer", committed_dispute_payout_tx
         )
