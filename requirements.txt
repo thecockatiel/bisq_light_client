@@ -11,5 +11,7 @@ PySocks>=1.7.1
 requests~=2.28
 sortedcontainers~=2.4
 async-timeout~=4.0
+aiorpcx~=0.22
+certifi>=2022.9.24
 
 pypiwin32; platform_system == "Windows"
