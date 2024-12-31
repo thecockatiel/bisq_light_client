@@ -2,8 +2,19 @@ from typing import TYPE_CHECKING, Optional
 
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
+from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import opcodes
-from electrum_min.transaction import SCRIPTPUBKEY_TEMPLATE_P2PKH, SCRIPTPUBKEY_TEMPLATE_P2SH, SCRIPTPUBKEY_TEMPLATE_WITNESS_V0, MalformedBitcoinScript, OPPushDataGeneric, match_script_against_template, script_GetOp
+from electrum_min.transaction import (
+    SCRIPTPUBKEY_TEMPLATE_P2PKH,
+    SCRIPTPUBKEY_TEMPLATE_P2SH,
+    SCRIPTPUBKEY_TEMPLATE_P2WPKH,
+    SCRIPTPUBKEY_TEMPLATE_P2WSH,
+    SCRIPTPUBKEY_TEMPLATE_WITNESS_V0,
+    MalformedBitcoinScript,
+    OPPushDataGeneric,
+    match_script_against_template,
+    script_GetOp,
+)
 
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
@@ -33,7 +44,7 @@ class Script:
 
         # segwit address (version 0)
         if match_script_against_template(decoded, SCRIPTPUBKEY_TEMPLATE_WITNESS_V0):
-            return SegwitAddress.from_hash(decoded[1][1], params, witver)
+            return SegwitAddress.from_hash(decoded[1][1], params, 0)
 
         # segwit address (version 1-16)
         future_witness_versions = list(range(opcodes.OP_1, opcodes.OP_16 + 1))
@@ -43,3 +54,17 @@ class Script:
                 return SegwitAddress.from_hash(decoded[1][1], params, witver)
 
         return MalformedBitcoinScript("Unknown script type")
+
+    def get_script_type(self) -> Optional["ScriptType"]:
+        decoded = [x for x in script_GetOp(self.program)]
+
+        if match_script_against_template(decoded, SCRIPTPUBKEY_TEMPLATE_P2PKH):
+            return ScriptType.P2PKH
+        elif match_script_against_template(decoded, SCRIPTPUBKEY_TEMPLATE_P2SH):
+            return ScriptType.P2SH
+        elif match_script_against_template(decoded, SCRIPTPUBKEY_TEMPLATE_P2WPKH):
+            return ScriptType.P2WPKH
+        elif match_script_against_template(decoded, SCRIPTPUBKEY_TEMPLATE_P2WSH):
+            return ScriptType.P2WSH
+        else:
+            return None
