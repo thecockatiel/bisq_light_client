@@ -320,13 +320,9 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
         for tx_input in deposit_tx.inputs:
             funding_tx_id = str(tx_input.outpoint.hash)
             if not maker_fee_tx_found:
-                maker_fee_tx_found = funding_tx_id == str(
-                    maker_fee_tx.get_tx_id()
-                )
+                maker_fee_tx_found = funding_tx_id == maker_fee_tx.get_tx_id()
             if not taker_fee_tx_found:
-                taker_fee_tx_found = funding_tx_id == str(
-                    taker_fee_tx.get_tx_id()
-                )
+                taker_fee_tx_found = funding_tx_id == taker_fee_tx.get_tx_id()
 
         assert maker_fee_tx_found, "makerFeeTx not found at deposit_tx inputs"
         assert taker_fee_tx_found, "takerFeeTx not found at deposit_tx inputs"
@@ -338,9 +334,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
         funding_tx_id = str(
             delayed_payout_tx_outpoint.hash
         )
-        assert funding_tx_id == str(
-            deposit_tx.get_tx_id()
-        ), "First input at delayed_payout_tx does not connect to deposit_tx"
+        assert funding_tx_id == deposit_tx.get_tx_id(), "First input at delayed_payout_tx does not connect to deposit_tx"
 
     def verify_delayed_payout_tx_receivers(
         self, delayed_payout_tx: "Transaction", dispute: "Dispute"

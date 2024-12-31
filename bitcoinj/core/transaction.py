@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from functools import cached_property
+from typing import TYPE_CHECKING, Optional, Sequence
 
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from electrum_min.transaction import Transaction as ElectrumTransaction
+from utils.wrappers import LazySequenceWrapper
 
 if TYPE_CHECKING:
-    from bitcoinj.core.transaction_input import TransactionInput
     from bitcoinj.core.transaction_output import TransactionOutput
+    from bitcoinj.core.transaction_input import TransactionInput
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.network_parameters import NetworkParameters
 
@@ -14,14 +17,10 @@ if TYPE_CHECKING:
 class Transaction:
 
     def __init__(
-        self, params: "NetworkParameters", payload_bytes: bytes = None, offset=0
+        self, params: "NetworkParameters", payload_bytes: bytes = None
     ) -> None:
+        self._electrum_transaction = ElectrumTransaction(payload_bytes)
         self.params = params
-        self.offset = offset
-        self.payload_bytes = payload_bytes
-        self.lock_time = 0
-        self.inputs: list["TransactionInput"] = []
-        self.outputs: list["TransactionOutput"] = []
 
         self.updated_at: Optional[datetime] = None
         """
@@ -33,17 +32,29 @@ class Transaction:
 
         self.included_in_best_chain_at: Optional[datetime] = None
         """Date of the block that includes this transaction on the best chain"""
+    
+    @property
+    def lock_time(self):
+        return self._electrum_transaction.locktime
+    
+    @cached_property
+    def inputs(self):
+        from bitcoinj.core.transaction_input import TransactionInput
+        return LazySequenceWrapper(self._electrum_transaction.inputs, lambda tx_input, idx: TransactionInput(self, tx_input, idx))
+    
+    @cached_property
+    def outputs(self):
+        from bitcoinj.core.transaction_output import TransactionOutput
+        return LazySequenceWrapper(self._electrum_transaction.outputs, lambda tx_output, idx: TransactionOutput(self, tx_output, idx))
 
-        raise RuntimeError("Transaction Not implemented yet")
+    def get_tx_id(self) -> str:
+        return self._electrum_transaction.txid()
 
-    def get_tx_id(self) -> "Sha256Hash":
-        raise RuntimeError("Transaction.get_tx_id Not implemented yet")
-
-    def get_w_tx_id(self) -> "Sha256Hash":
-        raise RuntimeError("Transaction.get_w_tx_id Not implemented yet")
+    def get_wtx_id(self) -> "Sha256Hash":
+        return self._electrum_transaction.wtxid()
 
     def bitcoin_serialize(self) -> bytes:
-        raise RuntimeError("Transaction.bitcoin_serialize Not implemented yet")
+        return bytes.fromhex(self._electrum_transaction.serialize_to_network())
 
     def get_update_time(self):
         """
@@ -62,9 +73,15 @@ class Transaction:
         raise RuntimeError("Transaction.get_confidence Not implemented yet")
 
     def serialize(self) -> bytes:
-        raise RuntimeError("Transaction.serialize Not implemented yet")
+        return self._electrum_transaction.serialize_as_bytes()
+    
+    def has_witnesses(self):
+        return any(input.has_witness for input in self.inputs)
+    
+    def get_message_size(self):
+        return self._electrum_transaction.estimated_total_size()
 
-    def to_debug_str(self, chain, indent):
+    def to_debug_str(self, chain = None, indent = None):
         raise RuntimeError("Transaction.to_debug_str Not implemented yet")
     
     def __str__(self):

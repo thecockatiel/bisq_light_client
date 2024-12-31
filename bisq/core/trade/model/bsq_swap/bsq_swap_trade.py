@@ -155,7 +155,7 @@ class BsqSwapTrade(TradeModel):
     
     def apply_transaction(self, transaction: "Transaction"):
         self._transaction = transaction
-        self.tx_id = str(transaction.get_tx_id()) # TODO
+        self.tx_id = transaction.get_tx_id()
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Getters
