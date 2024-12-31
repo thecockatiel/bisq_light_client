@@ -7,15 +7,12 @@ import hashlib
 import struct
 from typing import List, Tuple, NamedTuple, Union, Iterable, Sequence, Optional
 
-import electrum_ecc as ecc
-
-from bisq.common.crypto.hash import get_sha256_ripemd160_hash as hash_160
-from bisq.common.setup.log_setup import get_logger
-from electrum_min.crypto import hmac_oneshot
-
 from electrum_min.util import bfh, BitcoinException
 from electrum_min import constants
-from electrum_min.bitcoin import EncodeBase58Check, DecodeBase58Check
+from electrum_min import ecc
+from electrum_min.crypto import hash_160, hmac_oneshot
+from electrum_min.bitcoin import rev_hex, int_to_hex, EncodeBase58Check, DecodeBase58Check
+from electrum_min.elogging import get_logger
 
 
 _logger = get_logger(__name__)
@@ -52,7 +49,7 @@ def CKD_priv(parent_privkey: bytes, parent_chaincode: bytes, child_index: int) -
     is_hardened_child = bool(child_index & BIP32_PRIME)
     return _CKD_priv(parent_privkey=parent_privkey,
                      parent_chaincode=parent_chaincode,
-                     child_index=int.to_bytes(child_index, length=4, byteorder="big", signed=False),
+                     child_index=bfh(rev_hex(int_to_hex(child_index, 4))),
                      is_hardened_child=is_hardened_child)
 
 
@@ -88,7 +85,7 @@ def CKD_pub(parent_pubkey: bytes, parent_chaincode: bytes, child_index: int) -> 
     if child_index & BIP32_PRIME: raise Exception('not possible to derive hardened child from parent pubkey')
     return _CKD_pub(parent_pubkey=parent_pubkey,
                     parent_chaincode=parent_chaincode,
-                    child_index=int.to_bytes(child_index, length=4, byteorder="big", signed=False))
+                    child_index=bfh(rev_hex(int_to_hex(child_index, 4))))
 
 
 # helper function, callable with arbitrary 'child_index' byte-string.
@@ -526,4 +523,3 @@ class KeyOriginInfo:
         xfp = [struct.unpack("<I", self.fingerprint)[0]]
         xfp.extend(self.path)
         return xfp
-
