@@ -47,7 +47,7 @@ class TradeDataValidation:
             raise TradeDataInvalidLockTimeException(error_msg)
 
         # Validate seq num (0xFFFFFFFE = TransactionInput.NO_SEQUENCE - 1)
-        if delayed_payout_tx.inputs[0].sequence_number != 0xFFFFFFFE:
+        if delayed_payout_tx.inputs[0].nsequence != 0xFFFFFFFE:
             error_msg = "Sequence number must be 0xFFFFFFFE"
             logger.error(error_msg)
             logger.error(str(delayed_payout_tx))
@@ -90,7 +90,7 @@ class TradeDataValidation:
         # input.getConnectedOutput() is null as the tx is not committed at that point
 
         outpoint = input_tx.outpoint
-        if str(outpoint.hash) != str(deposit_tx.get_tx_id()) or outpoint.index != 0:
+        if str(outpoint.hash) != deposit_tx.get_tx_id() or outpoint.index != 0:
             raise TradeDataInvalidInputException(
                 f"Input of delayed payout transaction does not point to output of deposit tx.\n"
                 f"Delayed payout tx={delayed_payout_tx}\n"

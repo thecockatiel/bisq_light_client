@@ -341,7 +341,7 @@ class Trade(TradeModel, ABC):
             
     def apply_deposit_tx(self, tx: "Transaction"):
         self.deposit_tx = tx
-        self.deposit_tx_id = str(self.deposit_tx.get_tx_id()) # TODO
+        self.deposit_tx_id = self.deposit_tx.get_tx_id()
         self.setup_confidence_listener()
         
     def get_deposit_tx(self) -> Optional["Transaction"]:
@@ -499,7 +499,7 @@ class Trade(TradeModel, ABC):
         
     def set_payout_tx(self, payout_tx: "Transaction"):
         self.payout_tx = payout_tx
-        self.payout_tx_id = str(payout_tx.get_tx_id()) # TODO
+        self.payout_tx_id = payout_tx.get_tx_id()
 
     def set_asset_tx_proof_result(self, asset_tx_proof_result: "AssetTxProofResult"):
         self.asset_tx_proof_result_property.value = asset_tx_proof_result
@@ -545,7 +545,7 @@ class Trade(TradeModel, ABC):
                            f"Block got mined at: {datetime.fromtimestamp(block_time/1000)}")
             else:
                 logger.debug(f"depositTx not confirmed yet. We don't start counting remaining trade period yet. "
-                           f"txId={str(deposit_tx.get_tx_id())}") # TODO
+                           f"txId={deposit_tx.get_tx_id()}")
                 start_time = now
         else:
             start_time = now

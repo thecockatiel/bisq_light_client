@@ -35,8 +35,8 @@ class WalletService(ABC):
     def get_transaction(hash_or_tx_id: Union[bytes, Optional[str]]) -> Optional["Transaction"]:
         if hash_or_tx_id is None:
             return None
-        if isinstance(hash_or_tx_id, str):
-            hash_or_tx_id = get_sha256_hash(hash_or_tx_id)
+        if isinstance(hash_or_tx_id, bytes):
+            hash_or_tx_id = hash_or_tx_id.hex()
         raise RuntimeError("WalletService.get_transaction Not implemented yet")
     
     def get_tx_from_serialized_tx(self, tx: bytes) -> Optional["Transaction"]:

@@ -46,6 +46,6 @@ class CloneAddressEntryForSharedMakerFee(Task['PlaceOfferModel']):
                     if (address_string is not None and 
                             address_string == str(address) and 
                             output.spent_by is None):
-                        return str(transaction.get_tx_id())
+                        return transaction.get_tx_id()
         
         return None

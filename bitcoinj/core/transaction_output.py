@@ -2,33 +2,28 @@ from typing import TYPE_CHECKING, Optional
 
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from bitcoinj.script.script import Script
 
 if TYPE_CHECKING:
-    from bitcoinj.script.script import Script
+    from electrum_min.transaction import TxOutput as ElectrumTxOutput
+    from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_input import TransactionInput
 
 
 # TODO
 class TransactionOutput:
 
-    def __init__(self):
-        self.spent_by: "TransactionInput" = None
-        self.parent = None
-
-    @property
-    def index(self) -> int:
-        raise NotImplementedError("index not implemented in TransactionOutput")
+    def __init__(self, tx: "Transaction", ec_tx_output: "ElectrumTxOutput", index: int):
+        self.parent = tx
+        self._ec_tx_output = ec_tx_output 
+        self.index = index
+        self.spent_by: Optional["TransactionInput"] = None
 
     def get_value(self) -> Coin:
-        raise NotImplementedError("get_value not implemented in TransactionOutput")
+        return self._ec_tx_output.value
 
     def get_script_pub_key(self) -> Script:
-        raise NotImplementedError(
-            "get_script_pub_key not implemented in TransactionOutput"
-        )
+        return Script(self._ec_tx_output.scriptpubkey)
 
-    def get_parent_transaction_hash(self) -> Optional["Sha256Hash"]:
-        """Returns the transaction hash that owns this output."""
-        raise NotImplementedError(
-            "get_parent_transaction_hash not implemented in TransactionOutput"
-        )
+    def get_parent_transaction_hash(self) -> Optional[str]:
+        return self.parent.get_tx_id()
