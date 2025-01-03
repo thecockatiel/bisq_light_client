@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import secrets
-from typing import Dict, Optional
+from typing import Optional
 import binascii
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
@@ -24,7 +24,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
 
     def __init__(self, payment_method_id: str, id: str, 
                  max_trade_period: int = -1, 
-                 exclude_from_json_data_map: Optional[Dict[str, str]] = None):
+                 exclude_from_json_data_map: Optional[dict[str, str]] = None):
         """Constructor for PaymentAccountPayload"""
         self.payment_method_id = payment_method_id
         self.id = id
