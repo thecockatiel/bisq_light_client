@@ -340,6 +340,7 @@ class Config:
         self.full_dao_node: bool = (
             options["fullDaoNode"] or Config.DEFAULT_FULL_DAO_NODE
         )
+        self.full_dao_node_option_set_explicitly: bool = options["fullDaoNode"] is not None
         self.genesis_tx_id: str = options["genesisTxId"] or ""
         self.genesis_block_height: int = options["genesisBlockHeight"] or -1
         self.genesis_total_supply: int = options["genesisTotalSupply"] or -1
