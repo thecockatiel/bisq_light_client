@@ -22,5 +22,5 @@ class CheckNumberOfUnconfirmedTransactions(Task["PlaceOfferModel"]):
             self.model.wallet_service.is_unconfirmed_transactions_limit_hit()
             or self.model.bsq_wallet_service.is_unconfirmed_transactions_limit_hit()
         ):
-            self.failed(Res.get("shared.unconfirmedTransactionsLimitReached"))
-        self.complete()  # TODO: java sanity check
+            return self.failed(Res.get("shared.unconfirmedTransactionsLimitReached"))
+        self.complete()
