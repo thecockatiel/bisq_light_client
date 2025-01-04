@@ -96,7 +96,8 @@ async def run_in_thread(func: Callable[...,_T], *args: _R):
 
 def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
     '''Run a function in current thread's asyncio loop and return a future'''
-    return asyncio.run_coroutine_threadsafe(coro, get_asyncio_loop())
+    concurrent_future = asyncio.run_coroutine_threadsafe(coro, get_asyncio_loop())
+    return asyncio.wrap_future(concurrent_future, loop=get_asyncio_loop())
 
 from twisted.internet import asyncioreactor
 asyncioreactor.install(create_event_loop())
