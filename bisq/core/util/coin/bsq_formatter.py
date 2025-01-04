@@ -1,6 +1,7 @@
 from typing import Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.core.dao.governance.proposal.proposal_validation_exception import ProposalValidationException
 from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.util.coin.coin_formatter import CoinFormatter
@@ -8,6 +9,7 @@ from bisq.core.util.coin.immutable_coin_formatter import ImmutableCoinFormatter
 from bisq.core.util.decimal_format import DecimalFormat
 from bisq.core.util.formatting_util import FormattingUtils
 from bisq.core.util.parsing_utils import ParsingUtils
+from bisq.core.util.validation.btc_address_validator import BtcAddressValidator
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.monetary_format import MonetaryFormat 
 from bisq.core.dao.governance.param.param import Param
@@ -112,13 +114,12 @@ class BsqFormatter(CoinFormatter):
                 return FormattingUtils.format_to_percent(ParsingUtils.parse_percent_string_to_double(input_value))
             case ParamType.BLOCK:
                 return str(self.parse_param_value_to_blocks(param, input_value))
-            # TODO: implement ?
-            # case ParamType.ADDRESS:
-            #     validation_result = BtcAddressValidator().validate(input_value)
-            #     if validation_result.is_valid:
-            #         return input_value
-            #     else:
-            #         raise ProposalValidationException(validation_result.error_message)
+            case ParamType.ADDRESS:
+                validation_result = BtcAddressValidator().validate(input_value)
+                if validation_result.is_valid:
+                    return input_value
+                else:
+                    raise ProposalValidationException(validation_result.error_message)
             case _:
                 logger.warning(f"Param type {param.param_type} not handled at parse_param_value_to_string")
                 return Res.get("shared.na")
