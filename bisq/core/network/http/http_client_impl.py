@@ -35,6 +35,8 @@ class HttpClientImpl(HttpClient):
     
     @base_url.setter
     def base_url(self, value: str):
+        if isinstance(value, str) and not value.startswith("http") and ".onion" in value:
+            value = f"http://{value}"
         parsed = parse_and_validate_url(value)
         if parsed:
             self._base_url = value.rstrip('/')
