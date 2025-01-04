@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.trade.model.bsq_swap.bsq_swap_buyer_trade import BsqSwapBuyerTrade
 from bisq.core.trade.model.bsq_swap.bsq_swap_trade_state import BsqSwapTradeState
-from bisq.core.trade.model.taker_trade import TakerTrade
+from bisq.core.trade.model.maker_trade import MakerTrade
 from bitcoinj.base.coin import Coin
 import uuid
 import proto.pb_pb2 as protobuf
@@ -11,7 +11,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer import Offer
 
 
-class BsqSwapBuyerAsMakerTrade(BsqSwapBuyerTrade, TakerTrade): # TODO JAVA SANITY CHECK: why TakerTrade ?
+class BsqSwapBuyerAsMakerTrade(BsqSwapBuyerTrade, MakerTrade):
     def __init__(self, 
                  offer: 'Offer',
                  amount: 'Coin',
