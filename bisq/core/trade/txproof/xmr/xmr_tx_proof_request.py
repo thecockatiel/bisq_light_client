@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
+    """
+    Requests for the XMR tx proof for a particular trade from a particular service.
+    Repeats every 90 sec requests if tx is not confirmed or found yet until MAX_REQUEST_PERIOD of 12 hours is reached.
+    """
     REPEAT_REQUEST_PERIOD = timedelta(milliseconds=90)
     MAX_REQUEST_PERIOD = timedelta(hours=12)
     
@@ -157,4 +161,7 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
 
     def _is_timeout_reached(self):
         return (get_time_ms() - self.first_request) > XmrTxProofRequest.MAX_REQUEST_PERIOD.total_seconds() * 1000
+    
+    def __hash__(self):
+        return hash((self.model.trade_id, self.model.service_address, self.model.recipient_address, self.model.tx_hash, self.model.tx_key, self.model.amount, self.model.trade_date))
 
