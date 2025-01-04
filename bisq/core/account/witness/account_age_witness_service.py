@@ -94,7 +94,6 @@ class AccountAgeWitnessService:
         def get_display_string(self):
             if self.hash_str:  # Only showing in DEBUG mode
                 return f"{self.display_string} {self.hash_str}"
-            # TODO: check Res.get values later for string formatting
             return self.display_string.format(self.days_until_limit_lifted)
 
         def is_limit_lifted(self):
