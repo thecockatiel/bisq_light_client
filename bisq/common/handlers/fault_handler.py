@@ -7,5 +7,5 @@ class FaultHandler(Callable[[str, Exception], None], ABC):
     def handle_fault(self, error_message: str, exception: Exception) -> None:
         pass
 
-    def __call__(self) -> None:
-        self.handle_fault()
+    def __call__(self, error_message: str, exception: Exception) -> None:
+        self.handle_fault(error_message, exception)
