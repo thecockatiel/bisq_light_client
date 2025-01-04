@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import TYPE_CHECKING, Optional, Dict, Any
 from datetime import timedelta
 from bisq.common.crypto.sig import Sig, dsa
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
@@ -9,7 +9,11 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
 from bisq.common.protocol.network.get_data_response_priority import (
     GetDataResponsePriority,
 )
+import bisq.common.version as Version
 import proto.pb_pb2 as protobuf
+
+if TYPE_CHECKING:
+    from bisq.core.user.preferences import Preferences
 
 
 class Alert(ProtectedStoragePayload, ExpirablePayload):
@@ -99,17 +103,21 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         self.owner_pub_key = owner_pub_key
         self.owner_pub_key_bytes = Sig.get_public_key_bytes(owner_pub_key)
 
-    def is_new_version(self) -> bool:
-        # TODO:
+    def is_new_version(self, preferences: "Preferences") -> bool:
+        # regular release: always notify user
+        # pre-release: if user has set preference to receive pre-release notification
+        if self.is_update_info or (self.is_pre_release_info and preferences.is_notify_on_pre_release()):
+            return Version.is_new_version(self.version)
         return False
 
     def is_software_update_notification(self) -> bool:
         return self.is_update_info or self.is_pre_release_info
 
-    def can_show_popup(self) -> bool:
-        # TODO:
-        return False
-
+    def can_show_popup(self, preferences: "Preferences") -> bool:
+        # only show popup if its version is newer than current
+        # and only if user has not checked "don't show again"
+        return self.is_new_version(preferences) and not preferences.show_again(self.show_again_key())
+        
     def show_again_key(self) -> str:
         return f"Update_{self.version}"
     
