@@ -5,7 +5,7 @@ from functools import partial
 import inspect
 import platform
 import threading
-from typing import Any, Optional, Tuple, Union, Coroutine, TypeVar
+from typing import Any, Awaitable, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
 _T = TypeVar("T")
 _R = TypeVar("R")
@@ -93,6 +93,10 @@ def is_async_callable(obj):
 async def run_in_thread(func: Callable[...,_T], *args: _R):
     '''Run a function in a separate thread, and await its completion.'''
     return await get_asyncio_loop().run_in_executor(None, func, *args)
+
+def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
+    '''Run a function in current thread's asyncio loop and return a future'''
+    return asyncio.run_coroutine_threadsafe(coro, get_asyncio_loop())
 
 from twisted.internet import asyncioreactor
 asyncioreactor.install(create_event_loop())
