@@ -437,10 +437,10 @@ class Trade(TradeModel, ABC):
     def get_amount_as_long(self):
         return self.amount_as_long
     
-    def get_amount(self) -> "Coin":
+    def get_amount(self):
         return self.amount_property.value
     
-    def get_volume(self) -> "Volume":
+    def get_volume(self):
         try:
             if self.get_amount() is not None and self.get_price() is not None:
                 volume_by_amount = self.get_price().get_volume_by_amount(self.get_amount())
