@@ -780,6 +780,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def is_full_bm_accounting_node(self) -> bool:
         return self.pref_payload.is_full_bm_accounting_node
     
+    def is_notify_on_pre_release(self) -> bool:
+        return self.pref_payload.notify_on_pre_release
+    
     def get_user_has_raised_trade_limit(self):
         return self.pref_payload.user_has_raised_trade_limit
     
