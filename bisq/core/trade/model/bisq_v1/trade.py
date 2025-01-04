@@ -525,7 +525,7 @@ class Trade(TradeModel, ABC):
         deposit_tx = self.get_deposit_tx()
         start_time = 0
         
-        if deposit_tx is not None and self.get_date() is not None: # TODO: java sanity check, get_date always not null ?
+        if deposit_tx is not None:
             if deposit_tx.get_confidence().depth > 0:
                 trade_time = self.get_date().timestamp() * 1000  # Convert to milliseconds
                 # Use included_in_best_chain_at when available, otherwise use update_time
