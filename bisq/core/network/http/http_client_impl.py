@@ -39,9 +39,12 @@ class HttpClientImpl(HttpClient):
         if parsed:
             self._base_url = value.rstrip('/')
             self._base_url_host_is_onion = parsed.hostname.endswith(".onion")
+            if parsed.scheme == "http" and (parsed.hostname == "localhost" or parsed.hostname.endswith(".local")):
+                self.ignore_socks5_proxy = True
         else:
             self._base_url = None
             self._base_url_host_is_onion = False
+            self.ignore_socks5_proxy = False
 
     def shut_down(self):
         try:
