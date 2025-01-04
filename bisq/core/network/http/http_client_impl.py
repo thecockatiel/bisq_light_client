@@ -43,6 +43,8 @@ class HttpClientImpl(HttpClient):
             self._base_url_host_is_onion = parsed.hostname.endswith(".onion")
             if parsed.scheme == "http" and (parsed.hostname == "localhost" or parsed.hostname.endswith(".local")):
                 self.ignore_socks5_proxy = True
+            else:
+                self.ignore_socks5_proxy = False
         else:
             self._base_url = None
             self._base_url_host_is_onion = False
