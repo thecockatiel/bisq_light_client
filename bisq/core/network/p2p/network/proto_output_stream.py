@@ -32,7 +32,7 @@ class ProtoOutputStream:
                 if not self.is_connection_active.get():
                     # Connection was closed by us.
                     return
-                logger.error("Failed to write envelope", e)
+                logger.error("Failed to write envelope", exc_info=e)
                 raise BisqRuntimeException("Failed to write envelope", e)
 
     def on_connection_shutdown(self):
@@ -43,7 +43,7 @@ class ProtoOutputStream:
         try:
             self.output_stream.close()
         except Exception as t:
-            logger.error("Failed to close connection", t)
+            logger.error("Failed to close connection", exc_info=t)
         finally:
             self.lock.release()
 
