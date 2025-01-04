@@ -1,6 +1,6 @@
 
-from bisq.core.network.http.http_client import HttpClient
+from bisq.core.network.http.async_http_client import AsyncHttpClient
 
 
-class AssetTxProofHttpClient(HttpClient):
+class AssetTxProofHttpClient(AsyncHttpClient):
     pass

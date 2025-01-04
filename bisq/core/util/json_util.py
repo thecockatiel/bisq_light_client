@@ -20,3 +20,7 @@ class JsonUtil:
             else:
                 resolved_dict[key] = value
         return resolved_dict
+    
+    @staticmethod
+    def parse_json(input: str):
+        return json.loads(input)
