@@ -52,7 +52,7 @@ class XmrRawTxParser(AssetTxProofParser[XmrTxProofRequestResult, XmrTxProofModel
                     )
                 )
             
-            unlock_time = json_data.get("unlock_time", None)
+            unlock_time = data.get("unlock_time", None)
             if unlock_time is None:
                 return XmrTxProofRequestResult.ERROR.with_detail(
                     XmrTxProofRequestDetail.API_INVALID.with_error(
