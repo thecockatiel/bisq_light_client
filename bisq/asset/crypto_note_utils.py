@@ -1,9 +1,30 @@
 from bisq.common.crypto.hash import get_keccak1600_hash
+from bisq.common.setup.log_setup import get_logger
 
+logger = get_logger(__name__)
 
 class CryptoNoteException(Exception):
-    def __init__(self, msg_or_exception):
-        super().__init__(msg_or_exception)
+    pass
+
+def get_raw_spend_key_and_view_key(address: str):
+    try:
+        # See https://monerodocs.org/public-address/standard-address/
+        decoded = MoneroBase58.decode(address)
+        # Standard addresses are of length 69 and addresses with integrated payment ID of length 77.
+        
+        if len(decoded) <= 65:
+            raise CryptoNoteException(f"The address we received is too short. address={address}")
+        
+        # If the length is not as expected but still can be truncated we log an error and continue.
+        if len(decoded) != 69 and len(decoded) != 77:
+            logger.warning(f"The address we received is not in the expected format. address={address}")
+        
+        # We remove the network type byte, the checksum (4 bytes) and optionally the payment ID (8 bytes if present)
+        # So extract the 64 bytes after the first byte, which are the 32 byte public spend key + the 32 byte public view key
+        decoded_slice = decoded[1:65]
+        return decoded_slice.hex()
+    except Exception as e:
+        raise CryptoNoteException(e)
         
 class MoneroBase58():
     ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
