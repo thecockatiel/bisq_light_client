@@ -1,5 +1,4 @@
-from typing_extensions import TypedDict
-
+from typing import TypedDict
 
 # the json data structure retrieved from the pricenode query
 class PricenodeDto(TypedDict):
