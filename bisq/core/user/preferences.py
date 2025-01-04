@@ -590,12 +590,10 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             self.request_persistence()
 
     def set_rpc_user(self, value: str) -> None:
-        # TODO: Sanity check on java code?
         # We only persist if we have not set the program argument
         if not self.rpc_user_from_options:
             self.pref_payload.rpc_user = value
-        self.pref_payload.rpc_user = value
-        self.request_persistence()
+            self.request_persistence()
 
     def set_rpc_pw(self, value: str) -> None:
         # We only persist if we have not set the program argument
