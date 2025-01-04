@@ -45,3 +45,23 @@ class AssetTxProofResult(Enum):
                f",\n     numConfirmations={self.num_confirmations}" + \
                f",\n     numRequiredConfirmations={self.num_required_confirmations}" + \
                f"\n}} {super().__str__()}"
+
+    def with_num_success_results(self, num_success_results: int) -> 'AssetTxProofResult':
+        self.num_success_results = num_success_results
+        return self
+
+    def with_num_required_success_results(self, num_required_success_results: int) -> 'AssetTxProofResult':
+        self.num_required_success_results = num_required_success_results
+        return self
+
+    def with_num_confirmations(self, num_confirmations: int) -> 'AssetTxProofResult':
+        self.num_confirmations = num_confirmations
+        return self
+
+    def with_num_required_confirmations(self, num_required_confirmations: int) -> 'AssetTxProofResult':
+        self.num_required_confirmations = num_required_confirmations
+        return self
+
+    def with_details(self, details: str) -> 'AssetTxProofResult':
+        self.details = details
+        return self
