@@ -28,6 +28,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeDict
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from utils.time import get_time_ms
+from utils.hackyway import create_fake_copy_of_instance
 
 if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
@@ -81,15 +82,11 @@ class AccountAgeWitnessService:
             obj._value_ = value
             return obj
 
-        # NOTE: the hash needs to be consumed immediately after being set, because in enums it's class variable and they share states
-        # this is the case also in java implementation. needs to be double checked ...
         def add_hash(self, hash_str: str):
-            self.hash_str = hash_str
-            return self
+            return create_fake_copy_of_instance(self, {"hash_str": hash_str})
 
         def set_days_until_limit_lifted(self, days):
-            self.days_until_limit_lifted = days
-            return self
+            return create_fake_copy_of_instance(self, {"days_until_limit_lifted": days})
 
         def get_display_string(self):
             if self.hash_str:  # Only showing in DEBUG mode
