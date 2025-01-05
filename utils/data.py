@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Iterable, Literal, Optional, Set, TypeVar, Generic
+from typing import Any, Iterable, Literal, Optional, Set, TypeVar, Generic, Union
 from dataclasses import dataclass, field
 
 T = TypeVar("T")
@@ -75,9 +75,21 @@ class SimpleProperty(Generic[T]):
         return hash(self._value)
 
 
-__unset_value = "UNSET"
+class UnsetValue:
+    """Behaves like a None"""
+    
+    def __eq__(self, other):
+        return other is None
 
-def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[list[Any]], T]) -> SimpleProperty[T]:
+    def __bool__(self):
+        return False
+
+    def __repr__(self):
+        return 'UNSET_VALUE'
+    
+__unset_value = UnsetValue()
+
+def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[list[Union[Any, Literal["UNSET"]]]], T]) -> SimpleProperty[T]:
     results = [__unset_value] * len(properties)
     listeners = {}
 
