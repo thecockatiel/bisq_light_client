@@ -614,7 +614,7 @@ class Trade(TradeModel, ABC):
     def is_withdrawn(self) -> bool:
         return self.get_trade_phase().value == TradePhase.WITHDRAWN.value
 
-    def get_payout_tx(self) -> "Transaction":
+    def get_payout_tx(self) -> Optional["Transaction"]:
         if self.payout_tx is None:
             self.payout_tx = self.btc_wallet_service.get_transaction(self.payout_tx_id) if self.payout_tx_id else None
         return self.payout_tx
