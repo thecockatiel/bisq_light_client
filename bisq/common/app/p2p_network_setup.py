@@ -46,12 +46,12 @@ class P2PNetworkSetup:
         
         self.add_p2p_message_filter()
         
-        def handle_network_binding(*args):
-            state: str = args[0]
-            warning: str = args[1]
-            num_p2p_peers: int = args[2]
-            hidden_service: bool = args[3]
-            data_received: bool = args[4]
+        def handle_network_binding(results: list):
+            state: str = results[0]
+            warning: str = results[1]
+            num_p2p_peers: int = results[2]
+            hidden_service: bool = results[3]
+            data_received: bool = results[4]
             result = ""
             
             if warning is not None and num_p2p_peers == 0:
