@@ -1,9 +1,8 @@
 from enum import Enum
 from typing import Optional
+from utils.hackyway import create_fake_copy_of_instance
 
 # numbers in front of the enum names are ignored, it is set in __new__, it's just for better readability
-
-# TODO: java sanity check
 
 class XmrTxProofRequestDetail(Enum):
     # Pending
@@ -38,16 +37,13 @@ class XmrTxProofRequestDetail(Enum):
         return obj
     
     def with_error(self, error_msg: str) -> 'XmrTxProofRequestDetail':
-        self.error_msg = error_msg
-        return self
+        return create_fake_copy_of_instance(self, {"error_msg": error_msg})
 
     def with_num_confirmations(self, num_confirmations: int) -> 'XmrTxProofRequestDetail':
-        self.num_confirmations = num_confirmations
-        return self
+        return create_fake_copy_of_instance(self, {"num_confirmations": num_confirmations})
 
     def __str__(self) -> str:
         return (f"XmrTxProofRequestDetail {{\n"
                 f"     num_confirmations={self.num_confirmations},\n"
                 f"     error_msg='{self.error_msg}'\n"
                 f"}}")
-
