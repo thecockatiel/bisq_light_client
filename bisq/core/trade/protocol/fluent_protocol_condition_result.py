@@ -1,7 +1,6 @@
-
 from enum import Enum
 from typing import Optional
-
+from utils.hackyway import create_fake_copy_of_instance
 
 class FluentProtocolConditionResult(Enum):
     VALID = True
@@ -20,6 +19,5 @@ class FluentProtocolConditionResult(Enum):
         obj._value_ = value
         return obj
     
-    def with_info(self, info: str): # NOTE: even in java enum data is shared between instances
-        self.info = info
-        return self
+    def with_info(self, info: str):
+        return create_fake_copy_of_instance(self, {"info": info})
