@@ -126,16 +126,12 @@ class DisputeProtocol(TradeProtocol):
             )
             .with_event(event)
             .add_precondition(
-                self.trade.process_model.trade_peer.mediated_payout_tx_signature
-                is None,
+                (self.trade.process_model.trade_peer.mediated_payout_tx_signature 
+                 is None) or (self.trade.payout_tx is None),
                 lambda: error_message_handler(
-                    "We have received already the signature from the peer."
+                    "We either have received already the signature from the peer or Payout tx is already published."
                 ),
             )
-            .add_precondition(
-                self.trade.payout_tx is None,
-                lambda: error_message_handler("Payout tx is already published."),
-            )  # TODO: JAVA SANITY CHECK: subsequent calls to add_precondition with handler replaces the previous handler
         ).with_setup(
             self.tasks(
                 ApplyFilter,
