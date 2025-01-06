@@ -65,8 +65,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.trade_message: "TradeMessage" = None # transient
         
         # Added in v1.2.0
-        self._delayed_payout_tx_signature: Optional[bytes] = None # transient
-        self._prepared_delayed_payout_tx: Optional["Transaction"] = None # transient
+        self.delayed_payout_tx_signature: Optional[bytes] = None # transient
+        self.prepared_delayed_payout_tx: Optional["Transaction"] = None # transient
         
         # Added in v1.4.0
         # MessageState of the last message sent from the seller to the buyer in the take offer process.
