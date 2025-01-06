@@ -72,7 +72,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         # MessageState of the last message sent from the seller to the buyer in the take offer process.
         # It is used only in a task which would not be executed after restart, so no need to persist it.
         self._deposit_tx_message_state_property = SimpleProperty(MessageState.UNDEFINED) # transient
-        self._deposit_tx: "Transaction" = None # transient
+        self.deposit_tx: "Transaction" = None # transient
         
         self._take_offer_fee_tx_id: Optional[str] = None
         self._payout_tx_signature: Optional[bytes] = None
