@@ -164,7 +164,7 @@ class Transaction:
         if self.is_coin_base:
             try:
                 script = self.inputs[0].script_sig.hex()
-                script2 = self.outputs[0].script_pubkey.hex()
+                script2 = self.outputs[0].script_pub_key.hex()
             except Exception:
                 script = "???"
                 script2 = "???"

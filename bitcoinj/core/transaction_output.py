@@ -32,7 +32,7 @@ class TransactionOutput:
         return Script(self._ec_tx_output.scriptpubkey)
     
     @property
-    def script_pubkey(self) -> bytes:
+    def script_pub_key(self) -> bytes:
         return self._ec_tx_output.scriptpubkey
 
     def get_parent_transaction_hash(self) -> Optional[str]:
