@@ -1,0 +1,2 @@
+class VerificationException(RuntimeError):
+    pass
