@@ -3,9 +3,9 @@ import unittest
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 
 
-class TransactionTest(unittest.TestCase):
+class TransactionSignatureTest(unittest.TestCase):
 
-    def test_witness_transaction(self):
+    def test_transaction_signatures(self):
         sig_canonical = [
             "300602010002010001",
             "3008020200ff020200ff01",
@@ -62,8 +62,6 @@ class TransactionTest(unittest.TestCase):
                 # Expected for non-hex strings in the JSON that we should ignore
                 if "non-hexadecimal" not in str(e):
                     raise e
-
-
 
 if __name__ == "__main__":
     unittest.main()
