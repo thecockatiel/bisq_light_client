@@ -41,6 +41,11 @@ class TransactionInput:
     def witness(self) -> Optional[str]:
         return self._ec_tx_input.witness.hex() if self.has_witness else None
     
+    @witness.setter
+    def witness(self, value: str) -> None:
+        # TODO: used by trade_wallet_service.seller_adds_buyer_witness_to_deposit_tx. needs to be investigated
+        raise NotImplementedError("TransactionInput.witness.setter Not implemented yet")
+    
     @property
     def has_witness(self) -> bool:
         return self._ec_tx_input.is_segwit()

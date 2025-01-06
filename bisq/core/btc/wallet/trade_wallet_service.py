@@ -109,3 +109,12 @@ class TradeWalletService:
                                     buyer_multi_sig_pub_key: bytes,
                                     seller_multi_sig_pub_key: bytes) -> "Transaction":
         raise RuntimeError("TradeWalletService.finalize_mediated_payout_tx Not implemented yet")
+
+    def seller_adds_buyer_witness_to_deposit_tx(self, my_deposit_tx: "Transaction", buyers_deposit_tx_with_witness: "Transaction") -> None:
+        number_inputs = len(my_deposit_tx.inputs)
+        for i in range(number_inputs):
+            tx_input = my_deposit_tx.inputs[i]
+            witness_from_buyer = buyers_deposit_tx_with_witness.inputs[i].witness
+
+            if not tx_input.witness and witness_from_buyer:
+                tx_input.witness = witness_from_buyer
