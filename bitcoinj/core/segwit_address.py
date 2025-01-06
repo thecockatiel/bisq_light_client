@@ -2,6 +2,7 @@ from typing import Optional, Union
 from bitcoinj.core.address import Address
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.crypto.ec_utils import is_compressed_pubkey
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.segwit_addr import Encoding, bech32_decode, convertbits, encode_segwit_address
 from bisq.common.crypto.encryption import Encryption, ECPubkey, ECPrivkey
@@ -98,6 +99,5 @@ class SegwitAddress(Address):
     
     @staticmethod
     def from_key(key: Union["ECPubkey", "ECPrivkey"], params: "NetworkParameters") -> "SegwitAddress":
-        # only compressed keys allowed
-        # but we don't have the utilities to check that here
+        assert is_compressed_pubkey(key.get_public_key_bytes())
         return SegwitAddress.from_hash(Encryption.get_public_key_bytes(key), params)
