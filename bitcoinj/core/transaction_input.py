@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING, Optional
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.core.verification_exception import VerificationException
+from bitcoinj.script.script import Script
+from electrum_min.bitcoin import witness_push
 
 if TYPE_CHECKING:
     from electrum_min.transaction import TxInput as ElectrumTxInput
@@ -11,7 +14,10 @@ if TYPE_CHECKING:
 # TODO
 class TransactionInput:
     NO_SEQUENCE = 0xFFFFFFFF
-    SEQUENCE_LOCKTIME_DISABLE_FLAG = 1 < 31
+    SEQUENCE_LOCKTIME_DISABLE_FLAG = 1 << 31
+    SEQUENCE_LOCKTIME_TYPE_FLAG = 1 << 22
+    SEQUENCE_LOCKTIME_MASK = 0x0000ffff
+    UNCONNECTED = 0xFFFFFFFF
     
     def __init__(self, tx: "Transaction", ec_tx_input: "ElectrumTxInput", index: int):
         self.parent = tx
@@ -47,6 +53,10 @@ class TransactionInput:
         raise NotImplementedError("TransactionInput.witness.setter Not implemented yet")
     
     @property
+    def witness_elements(self):
+        return self._ec_tx_input.witness_elements()
+    
+    @property
     def has_witness(self) -> bool:
         return self._ec_tx_input.is_segwit()
 
@@ -65,3 +75,36 @@ class TransactionInput:
     @property
     def script_sig(self) -> Optional[bytes]:
         return self._ec_tx_input.script_sig
+    
+    @property
+    def script_pub_key(self) -> Optional[bytes]:
+        return self._ec_tx_input.scriptpubkey
+    
+    def get_script_sig(self) -> Optional[Script]:
+        """ 
+        Returns the script that is fed to the referenced output (scriptPubKey) script in order to satisfy it: usually
+        contains signatures and maybe keys, but can contain arbitrary data if the output script accepts it.
+        """
+        # Transactions that generate new coins don't actually have a script. Instead this
+        # parameter is overloaded to be something totally different.
+        script = None
+        if self.script_sig:
+            script = Script(self.script_sig)
+        return script
+
+    def verify(self, output: "TransactionOutput") -> None:
+        """
+        Verifies that this input can spend the given output. Note that this input must be a part of a transaction.
+        Also note that the consistency of the outpoint will be checked, even if this input has not been connected.
+        :param output: The output that this input is supposed to spend.
+        :raises ScriptException: If the script doesn't verify.
+        :raises VerificationException: If the outpoint doesn't match the given output.
+        """
+        if output.parent:
+            if self.outpoint.hash != output.parent.get_tx_id():
+                raise VerificationException("This input does not refer to the tx containing the output.")
+            if self.outpoint.index != output.index:
+                raise VerificationException("This input refers to a different output on the given tx.")
+        
+        pub_key = output.get_script_pub_key()
+        self.get_script_sig().correctly_spends(self.parent, self.index, self.witness_elements, output.get_value(), pub_key, Script.ALL_VERIFY_FLAGS)

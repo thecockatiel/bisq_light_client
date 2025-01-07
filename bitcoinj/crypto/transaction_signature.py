@@ -1,9 +1,48 @@
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
+from bitcoinj.core.verification_exception import VerificationException
+from electrum_min.ecc import CURVE_ORDER, der_sig_from_r_and_s, get_r_and_s_from_der_sig
+
+HALF_CURVE_ORDER = CURVE_ORDER // 2
 
 
-#TODO
+# TODO
 class TransactionSignature:
+
+    def __init__(self, r: int, s: int, sig_hash_flags: int):
+        self.r = r
+        self.s = s
+        self.sig_hash_flags = sig_hash_flags
+
+    def to_der(self):
+        return der_sig_from_r_and_s(self.r, self.s)
     
+    @property
+    def sig_hash_mode(self) -> "TransactionSigHash":
+        mode = self.sig_hash_flags & 0x1F
+        if mode == TransactionSigHash.NONE.int_value:
+            return TransactionSigHash.NONE
+        elif mode == TransactionSigHash.SINGLE.int_value:
+            return TransactionSigHash.SINGLE
+        else:
+            return TransactionSigHash.ALL
+
+    @staticmethod
+    def calc_sig_hash_value(mode: "TransactionSigHash", anyone_can_pay: bool) -> int:
+        """ "Calculates the byte used in the protocol to represent the combination of mode and anyoneCanPay."""
+        # enforce compatibility since this code was made before the SigHash enum was updated
+        if not (
+            mode == TransactionSigHash.ALL
+            or mode == TransactionSigHash.NONE
+            or mode == TransactionSigHash.SINGLE
+        ):
+            raise ValueError("Invalid sig_hash mode")
+
+        sighash_flags = mode.int_value
+        if anyone_can_pay:
+            sighash_flags |= TransactionSigHash.ANYONECANPAY.int_value
+
+        return sighash_flags
+
     @staticmethod
     def is_encoding_canonical(signature: bytes):
         """
@@ -21,35 +60,78 @@ class TransactionSignature:
         # in which case a single 0 byte is necessary and even required).
         if len(signature) < 9 or len(signature) > 73:
             return False
-        
-        hash_type = (signature[-1] & 0xff) & ~TransactionSigHash.ANYONECANPAY.int_value # mask the byte to prevent sign-extension hurting us
-        if hash_type < TransactionSigHash.ALL.int_value or hash_type > TransactionSigHash.SINGLE.int_value:
+
+        hash_type = (
+            signature[-1] & 0xFF
+        ) & ~TransactionSigHash.ANYONECANPAY.int_value  # mask the byte to prevent sign-extension hurting us
+        if (
+            hash_type < TransactionSigHash.ALL.int_value
+            or hash_type > TransactionSigHash.SINGLE.int_value
+        ):
             return False
-        
+
         #                    "wrong type"                  "wrong length marker"
-        if (signature[0] & 0xff) != 0x30 or (signature[1] & 0xff) != len(signature) - 3:
+        if (signature[0] & 0xFF) != 0x30 or (signature[1] & 0xFF) != len(signature) - 3:
             return False
-        
-        len_r = signature[3] & 0xff
+
+        len_r = signature[3] & 0xFF
         if 5 + len_r >= len(signature) or len_r == 0:
             return False
-        len_s = signature[5 + len_r] & 0xff
-        
+        len_s = signature[5 + len_r] & 0xFF
+
         if len_r + len_s + 7 != len(signature) or len_s == 0:
             return False
-        
+
         #       R value type mismatch              R value negative
-        if (signature[2] & 0xff) != 0x02 or (signature[4] & 0x80) == 0x80:
+        if (signature[2] & 0xFF) != 0x02 or (signature[4] & 0x80) == 0x80:
             return False
         if len_r > 1 and signature[4] == 0x00 and (signature[5] & 0x80) != 0x80:
-            return False # R value excessively padded
-        
+            return False  # R value excessively padded
+
         #        S value type mismatch                    S value negative
-        if (signature[len_r + 4] & 0xff) != 0x02 or (signature[len_r + 6] & 0x80) == 0x80:
+        if (signature[len_r + 4] & 0xFF) != 0x02 or (
+            signature[len_r + 6] & 0x80
+        ) == 0x80:
             return False
-        
-        if len_s > 1 and signature[len_r + 6] == 0x00 and (signature[len_r + 7] & 0x80) != 0x80:
-            return False # S value excessively padded
-        
+
+        if (
+            len_s > 1
+            and signature[len_r + 6] == 0x00
+            and (signature[len_r + 7] & 0x80) != 0x80
+        ):
+            return False  # S value excessively padded
+
         return True
-        
+
+    @staticmethod
+    def decode_from_bitcoin(
+        bytes_: bytes, require_canonical_encoding: bool, require_canonical_s_value: bool
+    ) -> "TransactionSignature":
+        """
+        Returns a decoded signature.
+
+        Args:
+            bytes_ (bytes): The bytes representing the Bitcoin signature.
+            require_canonical_encoding (bool): If the encoding of the signature must be canonical.
+            require_canonical_s_value (bool): If the S-value must be canonical (below half the order of the curve).
+        Returns:
+            bytes: The decoded signature.
+        Raises:
+            SignatureDecodeException: if the signature is unparseable in some way.
+            VerificationException: if the signature is invalid.
+        """
+
+        if (
+            require_canonical_encoding
+            and not TransactionSignature.is_encoding_canonical(bytes_)
+        ):
+            raise VerificationException("Signature encoding is not canonical.")
+
+        r, s = get_r_and_s_from_der_sig(bytes_)
+        if require_canonical_s_value and s > HALF_CURVE_ORDER:
+            # its canonical if s is below half the order of the curve
+            raise VerificationException("S-value is not canonical.")
+
+        # In Bitcoin, any value of the final byte is valid, but not necessarily canonical. See docs for
+        # isEncodingCanonical to learn more about this. So we must store the exact byte found.
+        return TransactionSignature(r, s, bytes_[-1])
