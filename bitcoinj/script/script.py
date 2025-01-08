@@ -679,7 +679,7 @@ class Script:
             sig_hash = tx_containing_this.hash_for_signature(index, connected_script, signature.sig_hash_flags)
             sig_valid = ECPubkey(pub_key).verify_message_hash(sig_hash, signature.to_der())
         except Exception as e:
-            if "Reached past end of ASN.1 stream" not in str(e):
+            if 'Bad signature' not in str(e):
                 raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Signature parsing failed", e)
 
         if opcode == opcodes.OP_CHECKSIG:
@@ -738,7 +738,7 @@ class Script:
         while len(sigs) > 0:
             pub_key = pubkeys.pop(0)
             try:
-                sig = TransactionSignature.decode_from_bitcoin(sigs.pop(0), require_canonical, False)
+                sig = TransactionSignature.decode_from_bitcoin(sigs[0], require_canonical, False)
                 hash = tx_containing_this.hash_for_signature(index, connected_script, sig.sig_hash_flags)
                 if ECPubkey(pub_key).verify_message_hash(hash, sig.to_der()):
                     sigs.pop(0)

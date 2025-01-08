@@ -58,6 +58,11 @@ class TransactionSignature:
         # Where R and S are not negative (their first byte has its highest bit not set), and not
         # excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
         # in which case a single 0 byte is necessary and even required).
+        
+        # Empty signatures, while not strictly DER encoded, are allowed.
+        if len(signature) == 0:
+            return True
+        
         if len(signature) < 9 or len(signature) > 73:
             return False
 
