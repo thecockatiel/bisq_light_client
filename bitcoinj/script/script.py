@@ -553,7 +553,7 @@ class Script:
 
         # There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
         tx_lock_time = tx_containing_this.lock_time
-        from bitcoinj.core.transaction_input import Transaction
+        from bitcoinj.core.transaction import Transaction
         if not (
             (tx_lock_time < Transaction.LOCKTIME_THRESHOLD and n_lock_time < Transaction.LOCKTIME_THRESHOLD) or
             (tx_lock_time >= Transaction.LOCKTIME_THRESHOLD and n_lock_time >= Transaction.LOCKTIME_THRESHOLD)
