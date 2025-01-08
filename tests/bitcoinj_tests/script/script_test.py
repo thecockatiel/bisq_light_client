@@ -3,8 +3,10 @@ from pathlib import Path
 import unittest
  
 from bitcoinj.core.legacy_address import LegacyAddress
+from bitcoinj.core.sha_256_hash import Sha256Hash
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.transaction_input import TransactionInput
+from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.utils import encode_mpi
 from bitcoinj.params.test_net3_params import TestNet3Params
@@ -174,6 +176,44 @@ class ScriptTest(unittest.TestCase):
             )
         ]
         return tx
+    
+    def parse_script_pubkeys(self, inputs: list):
+        script_pub_keys = {}
+        for input in inputs:
+            hash = input[0]
+            index = input[1]
+            if index == -1:
+                index = 4294967295
+            script = input[2]
+            script_pub_keys[TransactionOutPoint(index, hash)] = self.parse_script_string(script)
+        return script_pub_keys
+    
+    def test_data_driven_valid_transaction(self):
+        data = {}
+        with open(Path(__file__).parent.joinpath("tx_valid.json")) as f:
+            data = json.load(f)
+            
+        for test in data:
+            if isinstance(test, list) and len(test) == 1 and isinstance(test[0], str):
+                continue # skip comment
+            transaction = None
+            try:
+                script_pub_keys = self.parse_script_pubkeys(test[0])
+                transaction = Transaction(TESTNET, bytes.fromhex(test[1]))
+                Transaction.verify(TESTNET, transaction)
+                verify_flags = self.parse_verify_flags(test[2])
+                
+                for i, input in enumerate(transaction.inputs):
+                    self.assertTrue(input.outpoint in script_pub_keys)
+                    input.get_script_sig().correctly_spends(transaction, i, None, None, script_pub_keys[input.outpoint], verify_flags)
+            except Exception as e:
+                print(e)
+                if transaction:
+                    print(transaction)
+                print("----------------------------------------------------------------")
+                print(f"test that failed: {test}")
+                print("----------------------------------------------------------------")
+                raise
          
     
 if __name__ == '__main__':
