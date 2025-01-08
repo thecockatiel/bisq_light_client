@@ -136,6 +136,12 @@ opcode_to_name = {
     0xff: "INVALIDOPCODE",    
 }
 
+opcodename_to_opcode = {v: k for k, v in opcode_to_name.items()}
+opcodename_to_opcode["OP_FALSE"] = opcodes.OP_FALSE.value
+opcodename_to_opcode["OP_TRUE"] = opcodes.OP_TRUE.value
+opcodename_to_opcode["NOP2"] = opcodes.OP_NOP2.value
+opcodename_to_opcode["NOP3"] = opcodes.OP_NOP3.value
+
 def get_opcode_name(opcode: int):
     return opcode_to_name.get(opcode, f"NON_OP({opcode})")
 
@@ -144,3 +150,6 @@ def get_push_data_name(opcode: int):
 
 def is_opcode(opcode: int):
     return opcode > opcodes.OP_PUSHDATA4
+
+def get_opcode(opcode_name: str):
+    return opcodename_to_opcode.get(opcode_name, opcodes.OP_INVALIDOPCODE.value)
