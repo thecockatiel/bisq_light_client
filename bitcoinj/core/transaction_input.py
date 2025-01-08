@@ -89,6 +89,8 @@ class TransactionInput:
         script = None
         if self.script_sig:
             script = Script(self.script_sig)
+        elif not script:
+            script = Script(self.script_pub_key)
         return script
 
     def verify(self, output: "TransactionOutput") -> None:
