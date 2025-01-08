@@ -44,6 +44,10 @@ class Transaction:
     @property
     def lock_time(self):
         return self._electrum_transaction.locktime
+    
+    @lock_time.setter
+    def lock_time(self, value: int):
+        self._electrum_transaction.locktime = value
 
     @cached_property
     def inputs(self):
@@ -66,6 +70,10 @@ class Transaction:
     @property
     def version(self):
         return self._electrum_transaction.version
+
+    @version.setter
+    def version(self, value: int):
+        self._electrum_transaction.version = value
 
     def get_tx_id(self) -> str:
         return self._electrum_transaction.txid()
