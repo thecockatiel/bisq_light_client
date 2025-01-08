@@ -23,9 +23,8 @@ class TransactionInput:
         self.parent = tx
         self._ec_tx_input = ec_tx_input
         self.index = index
-        output = TransactionOutput(tx, tx._electrum_transaction.outputs()[index], index)
-        self.outpoint = TransactionOutPoint(output)
-        self.value = output.get_value()
+        self.outpoint = TransactionOutPoint(ec_tx_input.prevout.out_idx, ec_tx_input.prevout.txid.hex(), from_tx=tx)
+        self.value: Optional[Coin] = None
 
     @property
     def connected_transaction(self) -> Optional["Transaction"]:

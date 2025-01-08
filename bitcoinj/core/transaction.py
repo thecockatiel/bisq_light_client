@@ -3,9 +3,11 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Optional, Union
 
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
+from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from electrum_min.bitcoin import opcodes
 from electrum_min.transaction import Transaction as ElectrumTransaction, TxOutput
@@ -138,6 +140,41 @@ class Transaction:
         if self._electrum_transaction.get_fee() is None:
             return None
         return Coin.value_of(self._electrum_transaction.get_fee())
+    
+    @staticmethod
+    def verify(network: "NetworkParameters", tx: "Transaction") -> None:
+        if len(tx.inputs) == 0 or len(tx.outputs) == 0:
+            raise VerificationException.EMPTY_INPUTS_OR_OUTPUTS()
+        
+        if tx.get_message_size() > Block.MAX_BLOCK_SIZE:
+            raise VerificationException.LARGER_THAN_MAX_BLOCK_SIZE()
+        
+        outpoints = set()
+        for tx_in in tx.inputs:
+            if tx_in.outpoint in outpoints:
+                raise VerificationException.DUPLICATED_OUTPOINT()
+            outpoints.add(tx_in.outpoint)
+        
+        value_out = Coin.ZERO()
+        for tx_out in tx.outputs:
+            value = tx_out.get_value()
+            if value.signum() < 0:
+                raise VerificationException.NEGATIVE_VALUE_OUTPUT()
+            try:
+                value_out = value_out.add(value)
+            except:
+                raise VerificationException.EXCESSIVE_VALUE()
+            
+            if network.has_max_money() and value_out > network.get_max_money():
+                raise VerificationException.EXCESSIVE_VALUE()
+            
+        if tx.is_coin_base:
+            if len(tx.inputs[0].script_pub_key) < 2 or len(tx.inputs[0].script_pub_key) > 100:
+                raise VerificationException.COINBASE_SCRIPT_SIZE_OUT_OF_RANGE()
+        else:
+            for tx_in in tx.inputs:
+                if tx_in.is_coin_base:
+                    raise VerificationException.UNEXPECTED_COINBASE_INPUT()
 
     def hash_for_witness_signature(
         self,
