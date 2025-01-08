@@ -9,6 +9,7 @@ from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.utils import encode_mpi
+from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.params.test_net3_params import TestNet3Params
 from bitcoinj.params.main_net_params import MainNetParams
 from bitcoinj.script.script import Script
@@ -214,7 +215,53 @@ class ScriptTest(unittest.TestCase):
                 print(f"test that failed: {test}")
                 print("----------------------------------------------------------------")
                 raise
-         
+    
+    def test_data_driven_invalid_transaction(self):
+        data = {}
+        with open(Path(__file__).parent.joinpath("tx_invalid.json")) as f:
+            data = json.load(f)
+            
+        for test in data:
+            if isinstance(test, list) and len(test) == 1 and isinstance(test[0], str):
+                continue # skip comment
+            
+            script_pub_keys = self.parse_script_pubkeys(test[0])
+            try:
+                transaction = Transaction(TESTNET, bytes.fromhex(test[1]))
+                transaction._electrum_transaction.deserialize()
+                valid = True
+            except:
+                transaction = None
+                valid = False
+                
+            verify_flags = self.parse_verify_flags(test[2])
+            
+            if transaction:
+                try:
+                    Transaction.verify(TESTNET, transaction)
+                except VerificationException as e:
+                    valid = False
+                
+                out_points = set[TransactionOutPoint]()
+                for i, input in enumerate(transaction.inputs):
+                    if input.outpoint in out_points:
+                        valid = False
+                    out_points.add(input.outpoint)
+                
+                for i, input in enumerate(transaction.inputs):
+                    if not valid:
+                        break
+                    self.assertTrue(input.outpoint in script_pub_keys)
+                    try:
+                        input.get_script_sig().correctly_spends(transaction, i, None, None, script_pub_keys[input.outpoint], verify_flags)
+                    except VerificationException as e:
+                        valid = False
+                
+            if valid:
+                print("----------------------------------------------------------------")
+                print(f"test that failed: {test}")
+                print("----------------------------------------------------------------")
+                self.fail("Test was expected to be invalid, but was valid instead")
     
 if __name__ == '__main__':
     unittest.main()
