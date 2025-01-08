@@ -20,7 +20,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_utils import ScriptUtils
 from bitcoinj.script.script_verify_flag import ScriptVerifyFlag
 from electrum_min.bitcoin import opcodes
-from electrum_min.transaction import TxInput, TxOutpoint, TxOutput 
+from electrum_min.transaction import SerializationError, TxInput, TxOutpoint, TxOutput 
 
 TESTNET = TestNet3Params()
 MAINNET = MainNetParams()
@@ -226,37 +226,32 @@ class ScriptTest(unittest.TestCase):
                 continue # skip comment
             
             script_pub_keys = self.parse_script_pubkeys(test[0])
-            try:
-                transaction = Transaction(TESTNET, bytes.fromhex(test[1]))
-                transaction._electrum_transaction.deserialize()
-                valid = True
-            except:
-                transaction = None
-                valid = False
-                
+            transaction = Transaction(TESTNET, bytes.fromhex(test[1]))
             verify_flags = self.parse_verify_flags(test[2])
+            valid = True
             
-            if transaction:
+            try:
+                Transaction.verify(TESTNET, transaction)
+            except VerificationException as e:
+                valid = False
+                if isinstance(e.args[0], SerializationError):
+                    continue # cannot check further because it throws error when enumerating inputs
+            
+            out_points = set[TransactionOutPoint]()
+            for i, input in enumerate(transaction.inputs):
+                if input.outpoint in out_points:
+                    valid = False
+                out_points.add(input.outpoint)
+            
+            for i, input in enumerate(transaction.inputs):
+                if not valid:
+                    break
+                self.assertTrue(input.outpoint in script_pub_keys)
                 try:
-                    Transaction.verify(TESTNET, transaction)
+                    input.get_script_sig().correctly_spends(transaction, i, None, None, script_pub_keys[input.outpoint], verify_flags)
                 except VerificationException as e:
                     valid = False
-                
-                out_points = set[TransactionOutPoint]()
-                for i, input in enumerate(transaction.inputs):
-                    if input.outpoint in out_points:
-                        valid = False
-                    out_points.add(input.outpoint)
-                
-                for i, input in enumerate(transaction.inputs):
-                    if not valid:
-                        break
-                    self.assertTrue(input.outpoint in script_pub_keys)
-                    try:
-                        input.get_script_sig().correctly_spends(transaction, i, None, None, script_pub_keys[input.outpoint], verify_flags)
-                    except VerificationException as e:
-                        valid = False
-                
+            
             if valid:
                 print("----------------------------------------------------------------")
                 print(f"test that failed: {test}")

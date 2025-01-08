@@ -143,6 +143,12 @@ class Transaction:
     
     @staticmethod
     def verify(network: "NetworkParameters", tx: "Transaction") -> None:
+        # since we use electrum under the hood, the first check is to run deserialize on it.
+        try:
+            tx._electrum_transaction.deserialize()
+        except Exception as e:
+            raise VerificationException(e) from e
+        
         if len(tx.inputs) == 0 or len(tx.outputs) == 0:
             raise VerificationException.EMPTY_INPUTS_OR_OUTPUTS()
         
