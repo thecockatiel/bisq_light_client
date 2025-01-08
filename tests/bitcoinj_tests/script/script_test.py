@@ -1,12 +1,23 @@
+import json
+from pathlib import Path
 import unittest
  
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.transaction import Transaction
+from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
+from bitcoinj.core.utils import encode_mpi
 from bitcoinj.params.test_net3_params import TestNet3Params
 from bitcoinj.params.main_net_params import MainNetParams
 from bitcoinj.script.script import Script
-from bitcoinj.script.script_pattern import ScriptPattern 
+from bitcoinj.script.script_error import ScriptError
+from bitcoinj.script.script_exception import ScriptException
+from bitcoinj.script.script_opcodes import get_opcode
+from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.script.script_utils import ScriptUtils
+from bitcoinj.script.script_verify_flag import ScriptVerifyFlag
+from electrum_min.bitcoin import opcodes
+from electrum_min.transaction import TxInput, TxOutpoint, TxOutput 
 
 TESTNET = TestNet3Params()
 MAINNET = MainNetParams()
@@ -59,7 +70,110 @@ class ScriptTest(unittest.TestCase):
         stack = []
         Script.execute_script(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS)
         self.assertEqual(0, len(stack[0]), "OP_0 push length")
+
+    def parse_script_string(self, string: str):
+        words = string.split()
+        out = bytearray()
+
+        for w in words:
+            if w == "":
+                continue
+            if w.isdigit() or (w.startswith('-') and w[1:].isdigit()):
+                val = int(w)
+                if -1 <= val <= 16:
+                    out.append(ScriptUtils.encode_to_op_n(val))
+                else:
+                    ScriptUtils.write_bytes(out, bytes(reversed(encode_mpi(val, False))))
+            elif w.startswith("0x"):
+                out.extend(bytes.fromhex(w[2:]))
+            elif len(w) >= 2 and w.startswith("'") and w.endswith("'"):
+                ScriptUtils.write_bytes(out, w[1:-1].encode('utf-8'))
+            elif get_opcode(w) != opcodes.OP_INVALIDOPCODE:
+                out.append(get_opcode(w))
+            elif w.startswith("OP_") and get_opcode(w[3:]) != opcodes.OP_INVALIDOPCODE:
+                out.append(get_opcode(w[3:]))
+            else:
+                raise RuntimeError(f"Invalid word: '{w}'")
+
+        return Script(bytes(out))
+    
+    def parse_verify_flags(self, string: str):
+        flags = set()
+        if string != "NONE":
+            for flag in string.split(","):
+                try:
+                    flags.add(ScriptVerifyFlag[flag.strip()])
+                except KeyError:
+                    print(f"Cannot handle verify flag {flag} -- ignored.")
+        return flags
+    
+    def test_data_driven_scripts(self):
+        data = {}
+        with open(Path(__file__).parent.joinpath("script_tests.json")) as f:
+            data = json.load(f)
+            
+        for test in data:
+            if len(test) == 1:
+                continue # skip comment
+            if len(test) > 4 and 'with not enough bytes' in test[4]:
+                # skip disabled test for python
+                continue
+            verify_flags = self.parse_verify_flags(test[2])
+            expected_error = ScriptError.from_mnemonic(test[3])
+            try:
+                script_sig = self.parse_script_string(test[0])
+                script_pub_key = self.parse_script_string(test[1])
+                tx_credit = self.build_crediting_transaction(script_pub_key)
+                tx_spend = self.build_spending_transaction(tx_credit, script_sig)
+                script_sig.correctly_spends(tx_spend, 0, None, None, script_pub_key, verify_flags)
+                if expected_error != ScriptError.SCRIPT_ERR_OK:
+                    self.fail(f"Expected error {expected_error} but no error was thrown")
+            except ScriptException as e:
+                if expected_error != e.args[0]:
+                    self.fail(f"Expected error {expected_error} but got {e.args[0]}")
+    
+    def build_crediting_transaction(self, script: Script):
+        tx = Transaction(TESTNET)
+        tx.version = 1
+        tx.lock_time = 0
         
+        tx_input = TxInput(
+            prevout=TxOutpoint(bytes(32), 4294967295),
+            nsequence=TransactionInput.NO_SEQUENCE,
+            script_sig=bytes([0,0]),
+            is_coinbase_output=False,
+            witness=None,
+        )
+        setattr(tx_input, "_TxInput__scriptpubkey", bytes([0,0]))
+        tx._electrum_transaction._inputs = [tx_input]
+        tx._electrum_transaction._outputs = [
+            TxOutput(
+                scriptpubkey=script.program,
+                value=0,
+            )
+        ]
+        return tx
+    
+    def build_spending_transaction(self, crediting_tx: Transaction, script: Script):
+        tx = Transaction(TESTNET)
+        tx.version = 1
+        tx.lock_time = 0
+        tx._electrum_transaction._inputs = [
+            TxInput(
+                prevout=TxOutpoint(bytes(32), 4294967295),
+                nsequence=TransactionInput.NO_SEQUENCE,
+                script_sig=script.program,
+                is_coinbase_output=False,
+                witness=None,
+            )
+        ]
+        tx._electrum_transaction._outputs = [
+            TxOutput(
+                scriptpubkey=bytes(),
+                value=crediting_tx.outputs[0].value,
+            )
+        ]
+        return tx
          
     
 if __name__ == '__main__':
