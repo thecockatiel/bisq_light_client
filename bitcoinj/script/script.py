@@ -390,11 +390,11 @@ class Script:
                     case opcodes.OP_ROT:
                         if len(stack) < 3:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_ROT on a stack with size < 3")
-                        stack[-3:], stack[-2:], stack[-1:] = stack[-2:], stack[-1:], stack[-3:]
+                        stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-3]
                     case opcodes.OP_SWAP | opcodes.OP_TUCK:
                         if len(stack) < 2:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SWAP on a stack with size < 2")
-                        stack[-2:], stack[-1:] = stack[-1:], stack[-2:]
+                        stack[-2], stack[-1] = stack[-1], stack[-2]
                         if opcode == opcodes.OP_TUCK:
                             stack.append(stack[-2])
                     case opcodes.OP_SIZE:
