@@ -1,3 +1,4 @@
+from bitcoinj.core.signature_decode_exception import SignatureDecodeException
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.verification_exception import VerificationException
 from electrum_min.ecc import CURVE_ORDER, der_sig_from_r_and_s, get_r_and_s_from_der_sig
@@ -132,7 +133,10 @@ class TransactionSignature:
         ):
             raise VerificationException("Signature encoding is not canonical.")
 
-        r, s = get_r_and_s_from_der_sig(bytes_)
+        try:
+            r, s = get_r_and_s_from_der_sig(bytes_)
+        except Exception as e:
+            raise SignatureDecodeException(e)
         if require_canonical_s_value and s > HALF_CURVE_ORDER:
             # its canonical if s is below half the order of the curve
             raise VerificationException("S-value is not canonical.")
