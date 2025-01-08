@@ -21,7 +21,7 @@ class ScriptUtils:
     @staticmethod
     def decode_from_op_n(opcode: int):
         if not ((opcode == opcodes.OP_0 or opcode == opcodes.OP_1NEGATE) or (opcodes.OP_1 <= opcode <= opcodes.OP_16)):
-            raise ValueError(f"decode_from_op_n called on non OP_N opcode: {opcodes(opcode).name}")
+            raise ValueError(f"decode_from_op_n called on non OP_N opcode: {opcodes[opcode].name}")
         if opcode == opcodes.OP_0:
             return 0
         elif opcode == opcodes.OP_1NEGATE:
