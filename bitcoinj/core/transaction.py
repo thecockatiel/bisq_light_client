@@ -169,7 +169,7 @@ class Transaction:
                 raise VerificationException.EXCESSIVE_VALUE()
             
         if tx.is_coin_base:
-            if len(tx.inputs[0].script_pub_key) < 2 or len(tx.inputs[0].script_pub_key) > 100:
+            if len(tx.inputs[0].script_sig) < 2 or len(tx.inputs[0].script_sig) > 100:
                 raise VerificationException.COINBASE_SCRIPT_SIZE_OUT_OF_RANGE()
         else:
             for tx_in in tx.inputs:
