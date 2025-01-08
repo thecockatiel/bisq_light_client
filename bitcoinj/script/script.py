@@ -190,7 +190,7 @@ class Script:
                     raise ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.")
 
                 p2sh_stack_copy = p2sh_stack.copy()
-                if not self.cast_to_bool(p2sh_stack.pop()):
+                if not ScriptUtils.cast_to_bool(p2sh_stack.pop()):
                     raise ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, f"P2SH script execution resulted in a non-true stack: {ScriptUtils.stack_to_string(p2sh_stack_copy)}")
 
     @staticmethod
@@ -347,11 +347,11 @@ class Script:
                     case opcodes.OP_2ROT:
                         if len(stack) < 6:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2ROT on a stack with size < 6")
-                        stack[-6:], stack[-4:], stack[-2:] = stack[-4:], stack[-2:], stack[-6:]
+                        stack[-6], stack[-5], stack[-4], stack[-3], stack[-2], stack[-1] = stack[-4], stack[-3], stack[-2], stack[-1], stack[-6], stack[-5]
                     case opcodes.OP_2SWAP:
                         if len(stack) < 4:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2SWAP on a stack with size < 4")
-                        stack[-4:], stack[-2:] = stack[-2:], stack[-4:]
+                        stack[-4], stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-4], stack[-3]
                     case opcodes.OP_IFDUP:
                         if len(stack) < 1:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_IFDUP on an empty stack")
@@ -668,7 +668,7 @@ class Script:
 
         out_stream = bytearray()
         try:
-            Script.write_bytes(out_stream, sig_bytes)
+            ScriptUtils.write_bytes(out_stream, sig_bytes)
         except:
             raise # cannot happen
         connected_script = Script.remove_all_instances_of_op(connected_script, bytes(out_stream))
@@ -729,7 +729,7 @@ class Script:
         for sig in sigs:
             out_stream = bytearray()
             try:
-                Script.write_bytes(out_stream, sig)
+                ScriptUtils.write_bytes(out_stream, sig)
             except:
                 raise # Cannot happen
             connected_script = Script.remove_all_instances_of_op(connected_script, bytes(out_stream))
