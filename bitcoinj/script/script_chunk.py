@@ -32,13 +32,6 @@ def is_shortest_possible_push_data(op_code: int, data: Union[bytes, None]) -> bo
 
 def chunk_to_string(chunk: tuple[int, Optional[bytes], int]):
     opcode, data, _ = chunk
-    result = ""
-    if is_opcode(opcode):
-        result += get_opcode_name(opcode)
-    elif data:
-        # Data chunk
-        result += get_push_data_name(opcode) + f"[{data.hex()}]"
-    else:
-        # small num
-        result += str(ScriptUtils.decode_from_op_n(opcode))
-    return result
+    if not data:
+        return get_opcode_name(opcode)
+    return f"{get_push_data_name(opcode)}[{data.hex()}]"
