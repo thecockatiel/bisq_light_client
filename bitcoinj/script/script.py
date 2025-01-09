@@ -4,6 +4,7 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.utils import encode_mpi, sha1
+from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script_utils import ScriptUtils
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script_chunk import chunk_to_string, is_shortest_possible_push_data
@@ -680,8 +681,11 @@ class Script:
             signature = TransactionSignature.decode_from_bitcoin(sig_bytes, require_canonical, ScriptVerifyFlag.LOW_S in verify_flags)
             sig_hash = tx_containing_this.hash_for_signature(index, connected_script, signature.sig_hash_flags)
             sig_valid = ECPubkey(pub_key).verify_message_hash(signature.to_der(), sig_hash)
+        except VerificationException.NoncanonicalSignature as e:
+            raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Script contains non-canonical signature")
         except Exception as e:
-            if 'Bad signature' not in str(e):
+            # FIXME: brittle message checking
+            if pub_key and 'Bad signature' not in str(e):
                 raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Signature parsing failed", e)
 
         if opcode == opcodes.OP_CHECKSIG:

@@ -2,15 +2,16 @@ from typing import Type
 
 
 class VerificationException(RuntimeError):
-    EMPTY_INPUTS_OR_OUTPUTS: Type["EmptyInputsOrOutputs"] = None
-    LARGER_THAN_MAX_BLOCK_SIZE: Type["LargerThanMaxBlockSize"] = None
-    DUPLICATED_OUTPOINT: Type["DuplicatedOutPoint"] = None
-    NEGATIVE_VALUE_OUTPUT: Type["NegativeValueOutput"] = None
-    EXCESSIVE_VALUE: Type["ExcessiveValue"] = None
-    COINBASE_SCRIPT_SIZE_OUT_OF_RANGE: Type["CoinbaseScriptSizeOutOfRange"] = None
-    BLOCK_VERSION_OUT_OF_DATE: Type["BlockVersionOutOfDate"] = None
-    UNEXPECTED_COINBASE_INPUT: Type["UnexpectedCoinbaseInput"] = None
-    COINBASE_HEIGHT_MISMATCH: Type["CoinbaseHeightMismatch"] = None
+    EmptyInputsOrOutputs: Type["EmptyInputsOrOutputs"] = None
+    LargerThanMaxBlockSize: Type["LargerThanMaxBlockSize"] = None
+    DuplicatedOutPoint: Type["DuplicatedOutPoint"] = None
+    NegativeValueOutput: Type["NegativeValueOutput"] = None
+    ExcessiveValue: Type["ExcessiveValue"] = None
+    CoinbaseScriptSizeOutOfRange: Type["CoinbaseScriptSizeOutOfRange"] = None
+    BlockVersionOutOfDate: Type["BlockVersionOutOfDate"] = None
+    UnexpectedCoinbaseInput: Type["UnexpectedCoinbaseInput"] = None
+    CoinbaseHeightMismatch: Type["CoinbaseHeightMismatch"] = None
+    NoncanonicalSignature: Type["NoncanonicalSignature"] = None
 
 
 class EmptyInputsOrOutputs(VerificationException):
@@ -57,13 +58,18 @@ class CoinbaseHeightMismatch(VerificationException):
     def __init__(self, message):
         super().__init__(message)
 
+class NoncanonicalSignature(VerificationException):
+    def __init__(self):
+        super().__init__("Signature encoding is not canonical")
 
-VerificationException.EMPTY_INPUTS_OR_OUTPUTS = EmptyInputsOrOutputs
-VerificationException.LARGER_THAN_MAX_BLOCK_SIZE = LargerThanMaxBlockSize
-VerificationException.DUPLICATED_OUTPOINT = DuplicatedOutPoint
-VerificationException.NEGATIVE_VALUE_OUTPUT = NegativeValueOutput
-VerificationException.EXCESSIVE_VALUE = ExcessiveValue
-VerificationException.COINBASE_SCRIPT_SIZE_OUT_OF_RANGE = CoinbaseScriptSizeOutOfRange
-VerificationException.BLOCK_VERSION_OUT_OF_DATE = BlockVersionOutOfDate
-VerificationException.UNEXPECTED_COINBASE_INPUT = UnexpectedCoinbaseInput
-VerificationException.COINBASE_HEIGHT_MISMATCH = CoinbaseHeightMismatch
+
+VerificationException.EmptyInputsOrOutputs = EmptyInputsOrOutputs
+VerificationException.LargerThanMaxBlockSize = LargerThanMaxBlockSize
+VerificationException.DuplicatedOutPoint = DuplicatedOutPoint
+VerificationException.NegativeValueOutput = NegativeValueOutput
+VerificationException.ExcessiveValue = ExcessiveValue
+VerificationException.CoinbaseScriptSizeOutOfRange = CoinbaseScriptSizeOutOfRange
+VerificationException.BlockVersionOutOfDate = BlockVersionOutOfDate
+VerificationException.UnexpectedCoinbaseInput = UnexpectedCoinbaseInput
+VerificationException.CoinbaseHeightMismatch = CoinbaseHeightMismatch
+VerificationException.NoncanonicalSignature = NoncanonicalSignature
