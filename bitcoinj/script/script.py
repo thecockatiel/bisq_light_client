@@ -677,7 +677,7 @@ class Script:
         try:
             signature = TransactionSignature.decode_from_bitcoin(sig_bytes, require_canonical, ScriptVerifyFlag.LOW_S in verify_flags)
             sig_hash = tx_containing_this.hash_for_signature(index, connected_script, signature.sig_hash_flags)
-            sig_valid = ECPubkey(pub_key).verify_message_hash(sig_hash, signature.to_der())
+            sig_valid = ECPubkey(pub_key).verify_message_hash(signature.to_der(), sig_hash)
         except Exception as e:
             if 'Bad signature' not in str(e):
                 raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Signature parsing failed", e)
@@ -739,8 +739,8 @@ class Script:
             pub_key = pubkeys.pop(0)
             try:
                 sig = TransactionSignature.decode_from_bitcoin(sigs[0], require_canonical, False)
-                hash = tx_containing_this.hash_for_signature(index, connected_script, sig.sig_hash_flags)
-                if ECPubkey(pub_key).verify_message_hash(hash, sig.to_der()):
+                sig_hash = tx_containing_this.hash_for_signature(index, connected_script, sig.sig_hash_flags)
+                if ECPubkey(pub_key).verify_message_hash(sig.to_der(), sig_hash):
                     sigs.pop(0)
             except:
                 # There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
