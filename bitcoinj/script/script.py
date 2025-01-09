@@ -213,10 +213,12 @@ class Script:
         cursor = 0
 
         while cursor < len(input_script):
+            skip = Script.equals_range(input_script, cursor, chunk_to_remove)
+            
             opcode = input_script[cursor] & 0xFF
             cursor += 1
-            additional_bytes = 0
             
+            additional_bytes = 0
             if 0 <= opcode < opcodes.OP_PUSHDATA1:
                 additional_bytes = opcode
             elif opcode == opcodes.OP_PUSHDATA1:
@@ -226,7 +228,7 @@ class Script:
             elif opcode == opcodes.OP_PUSHDATA4:
                 additional_bytes = int.from_bytes(input_script[cursor:cursor+4], 'little') + 4
 
-            if not Script.equals_range(input_script, cursor, chunk_to_remove):
+            if not skip:
                 output.append(opcode)
                 output.extend(input_script[cursor:cursor + additional_bytes])
                 
