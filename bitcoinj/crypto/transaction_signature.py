@@ -131,7 +131,7 @@ class TransactionSignature:
             require_canonical_encoding
             and not TransactionSignature.is_encoding_canonical(bytes_)
         ):
-            raise VerificationException("Signature encoding is not canonical.")
+            raise VerificationException.NoncanonicalSignature("Signature encoding is not canonical.")
 
         try:
             r, s = get_r_and_s_from_der_sig(bytes_)
