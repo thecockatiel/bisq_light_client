@@ -213,14 +213,14 @@ class Transaction:
                     + input.outpoint.index.to_bytes(4, "little")
                     for input in self.inputs
                 )
-            )
+            ).hash_bytes
 
         if not anyone_can_pay and sign_all:
             hash_sequence = Sha256Hash.twice_of(
                 b"".join(
                     input.nsequence.to_bytes(4, "little") for input in self.inputs
                 )
-            )
+            ).hash_bytes
 
         if sign_all:
             hash_outputs = Sha256Hash.twice_of(
@@ -230,7 +230,7 @@ class Transaction:
                     + output.script_pub_key
                     for output in self.outputs
                 )
-            )
+            ).hash_bytes
         elif basic_sig_hash_type == TransactionSigHash.SINGLE.int_value and index < len(
             self.outputs
         ):
@@ -239,7 +239,7 @@ class Transaction:
                 output.value.to_bytes(8, "little")
                 + get_var_int_bytes(len(output.script_pub_key))
                 + output.script_pub_key
-            )
+            ).hash_bytes
 
         bos = bytearray()
         bos.extend(self.version.to_bytes(4, "little"))
@@ -275,6 +275,7 @@ class Transaction:
             raise
         
         for i, tx_in in enumerate(tx.inputs()):
+            tx_in.script_sig = b''
             setattr(tx_in, "_TxInput__scriptpubkey", None)
             tx_in.witness = None
             
@@ -311,7 +312,7 @@ class Transaction:
             tx._inputs.append(input)
         
         tx.invalidate_ser_cache()
-        bos = bytes.fromhex(tx.serialize_to_network(include_sigs=True, force_legacy=False))
+        bos = bytes.fromhex(tx.serialize_to_network(include_sigs=True, force_legacy=True))
         bos = bos + (0x000000ff & sig_hash_type).to_bytes(4, "little")
         return Sha256Hash.twice_of(bos).hash_bytes
 

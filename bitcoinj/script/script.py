@@ -131,10 +131,24 @@ class Script:
             pubkey = ECPubkey(witness_elements[1])
             script_code = ScriptBuilder.create_p2pkh_output_script(pubkey.get_public_key_bytes())
             sig_hash = tx_containing_this.hash_for_witness_signature(script_sig_index, script_code, value, signature.sig_hash_mode, False)
-            valid_sig = pubkey.verify_message_hash(sig_hash, signature.to_der())
+            valid_sig = pubkey.verify_message_hash(signature.to_der(), sig_hash)
             if not valid_sig:
                 raise ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature")
+        elif ScriptPattern.is_p2pkh(script_pub_key):
+            if len(self.decoded) != 2:
+                raise ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, f"Invalid size: {len(self.decoded)}")
             
+            signature = None
+            try:
+                # self.decoded[0][1] ~= chunks.get(0).data
+                signature = TransactionSignature.decode_from_bitcoin(self.decoded[0][1], True, True)
+            except Exception as e:
+                raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", e)
+            pubkey = ECPubkey(self.decoded[1][1]) # self.decoded[1][1] ~= chunks.get(1).data
+            sig_hash = tx_containing_this.hash_for_signature(script_sig_index, script_pub_key, signature.sig_hash_mode, False)
+            valid_sig = pubkey.verify_message_hash(signature.to_der(), sig_hash)
+            if not valid_sig:
+                raise ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature")
         else:
             # Clone the transaction because executing the script involves editing it, and if we die, we'll leave
             # the tx half broken (also it's not so thread safe to work on it directly.
@@ -506,7 +520,7 @@ class Script:
                             raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH256 on an empty stack")
                         stack.append(sha256d(stack.pop()))
                     case opcodes.OP_CODESEPARATOR:
-                        last_code_sep_location = start_location + 1
+                        last_code_sep_location = start_location
                     case opcodes.OP_CHECKSIG | opcodes.OP_CHECKSIGVERIFY:
                         if tx_containing_this is None:
                             raise ValueError("Script attempted signature check but no tx was provided")
