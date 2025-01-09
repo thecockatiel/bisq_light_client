@@ -189,6 +189,32 @@ class ScriptTest(unittest.TestCase):
             script_pub_keys[TransactionOutPoint(index, hash)] = self.parse_script_string(script)
         return script_pub_keys
     
+    #################################################################################################
+    #################################################################################################
+    """
+    Important note: The tests below only work if electrum_min.ecc#get_r_and_s_from_der_sig
+    is edited to not normalize the r and s values and also parse der using custom compiled libsecp256k1
+    to use _libsecp256k1.ecdsa_signature_parse_der_lax for getting the r and s values
+    this is because the test data comes from bitcoinj.
+    
+    so the function would look like this in ecc file:
+    
+    def get_r_and_s_from_der_sig(der_sig: bytes) -> Tuple[int, int]:
+        assert isinstance(der_sig, bytes)
+        sig = create_string_buffer(64)
+        ret = _libsecp256k1.ecdsa_signature_parse_der_lax(_libsecp256k1.ctx, sig, der_sig, len(der_sig))
+        if not ret:
+            raise Exception("Bad signature")
+        # ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
+        compact_signature = create_string_buffer(64)
+        _libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
+        r = int.from_bytes(compact_signature[:32], byteorder="big")
+        s = int.from_bytes(compact_signature[32:], byteorder="big")
+        return r, s
+    """
+    #################################################################################################
+    #################################################################################################
+    
     def test_data_driven_valid_transaction(self):
         data = {}
         with open(Path(__file__).parent.joinpath("tx_valid.json")) as f:
