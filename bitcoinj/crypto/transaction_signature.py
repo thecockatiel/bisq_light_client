@@ -5,6 +5,8 @@ from electrum_min.ecc import CURVE_ORDER, der_sig_from_r_and_s, get_r_and_s_from
 
 HALF_CURVE_ORDER = CURVE_ORDER // 2
 
+def _is_s_canonical(s: int) -> bool:
+    return s <= HALF_CURVE_ORDER
 
 # TODO
 class TransactionSignature:
@@ -137,7 +139,7 @@ class TransactionSignature:
             r, s = get_r_and_s_from_der_sig(bytes_)
         except Exception as e:
             raise SignatureDecodeException(e)
-        if require_canonical_s_value and s > HALF_CURVE_ORDER:
+        if require_canonical_s_value and not _is_s_canonical(s):
             # its canonical if s is below half the order of the curve
             raise VerificationException("S-value is not canonical.")
 
