@@ -40,5 +40,5 @@ def chunk_to_string(chunk: tuple[int, Optional[bytes], int]):
         result += get_push_data_name(opcode) + f"[{data.hex()}]"
     else:
         # small num
-        result += ScriptUtils.decode_from_op_n(opcode)
+        result += str(ScriptUtils.decode_from_op_n(opcode))
     return result
