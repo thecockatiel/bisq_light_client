@@ -207,8 +207,7 @@ class Contract(NetworkPayload):
             self.taker_payment_account_payload = my_payment_account_payload
             self.maker_payment_account_payload = peers_payment_account_payload
 
-    @property
-    def hash_of_peers_payment_account_payload(self, my_pub_key_ring: PubKeyRing) -> bytes:
+    def get_hash_of_peers_payment_account_payload(self, my_pub_key_ring: PubKeyRing) -> bytes:
         return self.hash_of_takers_payment_account_payload if self.is_my_role_maker(my_pub_key_ring) else self.hash_of_makers_payment_account_payload
 
     @property
