@@ -84,6 +84,9 @@ class WalletService(ABC):
     def get_confidence_for_address_from_block_height(self, address: "Address", target_height: int) -> "TransactionConfidence":
         raise RuntimeError("WalletService.get_confidence_for_address_from_block_height Not implemented yet")
     
+    def get_balance_for_address(self, address: "Address") -> "Coin":
+        raise RuntimeError("WalletService.get_balance_for_address Not implemented yet")
+    
     @staticmethod
     def maybe_add_network_tx_to_wallet(serialized_transaction: bytes, wallet: "Wallet") -> "Transaction":
         raise RuntimeError(
