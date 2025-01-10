@@ -44,3 +44,9 @@ def parse_resource_bundle(path: Path) -> dict[str, str]:
                     value = _unescape(value)
                     resources[key] = value
         return resources
+
+def long_unsigned_right_shift(number: int, bits: int) -> int:
+    """Python equivalent of Java's >>> on longs"""   
+    if number < 0:
+        number = number + (1 << 64)
+    return (number >> bits) & ((2 ** 64 - 1) >> bits)
