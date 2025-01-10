@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 
+from bisq.core.btc.wallet.wallet_service import WalletService
 from bitcoinj.base.coin import Coin
+from bitcoinj.wallet.wallet import Wallet
 
 
 if TYPE_CHECKING:
@@ -13,6 +15,9 @@ if TYPE_CHECKING:
 # TODO
 class TradeWalletService:
     MIN_DELAYED_PAYOUT_TX_FEE = Coin.value_of(1000)
+    
+    def __init__(self):
+        self.wallet: Optional["Wallet"] = None
 
     def get_wallet_tx(self, tx_id: str) -> "Transaction":
         raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
@@ -96,21 +101,29 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
         )
-        
-    def finalize_mediated_payout_tx(self,
-                                    deposit_tx: "Transaction",
-                                    buyer_signature: bytes,
-                                    seller_signature: bytes,
-                                    buyer_payout_amount: Coin,
-                                    seller_payout_amount: Coin,
-                                    buyer_payout_address: str,
-                                    seller_payout_address: str,
-                                    multi_sig_key_pair: "DeterministicKey",
-                                    buyer_multi_sig_pub_key: bytes,
-                                    seller_multi_sig_pub_key: bytes) -> "Transaction":
-        raise RuntimeError("TradeWalletService.finalize_mediated_payout_tx Not implemented yet")
 
-    def seller_adds_buyer_witness_to_deposit_tx(self, my_deposit_tx: "Transaction", buyers_deposit_tx_with_witness: "Transaction") -> None:
+    def finalize_mediated_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_signature: bytes,
+        seller_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address: str,
+        seller_payout_address: str,
+        multi_sig_key_pair: "DeterministicKey",
+        buyer_multi_sig_pub_key: bytes,
+        seller_multi_sig_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.finalize_mediated_payout_tx Not implemented yet"
+        )
+
+    def seller_adds_buyer_witness_to_deposit_tx(
+        self,
+        my_deposit_tx: "Transaction",
+        buyers_deposit_tx_with_witness: "Transaction",
+    ) -> None:
         number_inputs = len(my_deposit_tx.inputs)
         for i in range(number_inputs):
             tx_input = my_deposit_tx.inputs[i]
@@ -118,3 +131,39 @@ class TradeWalletService:
 
             if not tx_input.witness and witness_from_buyer:
                 tx_input.witness = witness_from_buyer
+
+    def finalize_unconnected_delayed_payout_tx(
+        self,
+        delayed_payout_tx: "Transaction",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+        buyer_signature: bytes,
+        seller_signature: bytes,
+        value: Coin,
+    ) -> None:
+        raise RuntimeError(
+            "TradeWalletService.finalize_unconnected_delayed_payout_tx Not implemented yet"
+        )
+    
+    def finalize_delayed_payout_tx(
+        self,
+        delayed_payout_tx: "Transaction",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+        buyer_signature: bytes,
+        seller_signature: bytes,
+    ) -> "Transaction":
+        input = delayed_payout_tx.inputs[0]
+        self.finalize_unconnected_delayed_payout_tx(
+            delayed_payout_tx,
+            buyer_pub_key,
+            seller_pub_key,
+            buyer_signature,
+            seller_signature,
+            input.value,
+        )
+        
+        WalletService.check_wallet_consistency(self.wallet)
+        assert input.connected_output is not None, "input.connected_output must not be None"
+        input.verify(input.connected_output)
+        return delayed_payout_tx
