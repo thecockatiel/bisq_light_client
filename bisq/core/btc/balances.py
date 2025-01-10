@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bitcoinj.base.coin import Coin
-from utils.custom_iterators import distinct, not_none_iterator
+from utils.custom_iterators import distinct_iterator, not_none_iterator
 from utils.data import SimpleProperty
 
 if TYPE_CHECKING:
@@ -64,7 +64,7 @@ class Balances:
     def update_reserved_balance(self):
         balance_sum = sum(
             self.btc_wallet_service.get_balance_for_address(address).value
-            for address in distinct(
+            for address in distinct_iterator(
                 not_none_iterator(
                     self.btc_wallet_service.get_address_entry(open_offer.get_id(), AddressEntryContext.RESERVED_FOR_TRADE)
                     for open_offer in self.open_offer_manager.get_observable_list() 

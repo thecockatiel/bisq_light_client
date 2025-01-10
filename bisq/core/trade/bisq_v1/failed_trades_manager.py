@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from datetime import timedelta, datetime
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Iterator, Optional, List
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.setup.log_setup import get_logger
@@ -96,7 +96,7 @@ class FailedTradesManager(PersistedDataHost):
             (trade for trade in self.failed_trades if trade.get_id() == id), None
         )
 
-    def get_trades_stream_with_funds_locked_in(self):
+    def get_trades_stream_with_funds_locked_in(self) -> Iterator['Trade']:
         return filter(lambda trade: trade.is_funds_locked_in, self.failed_trades)
 
     def un_fail_trade(self, trade: "Trade"):
