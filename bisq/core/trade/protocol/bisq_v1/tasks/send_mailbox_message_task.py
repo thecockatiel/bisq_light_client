@@ -23,7 +23,7 @@ class SendMailboxMessageTask(TradeTask, ABC):
         super().__init__(task_handler, model)
 
     @abstractmethod
-    def get_trade_mailbox_message(self) -> "TradeMailboxMessage":
+    def get_trade_mailbox_message(self, id: str) -> "TradeMailboxMessage":
         pass
 
     @abstractmethod
