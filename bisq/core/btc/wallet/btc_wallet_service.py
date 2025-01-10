@@ -137,3 +137,10 @@ class BtcWalletService(WalletService, DaoStateListener):
     def print_tx(trade_prefix: str, tx: "Transaction") -> None:
         logger.info(f"\n{trade_prefix}:\n{tx}")
     
+    def get_address_entry(self, offer_id: str, context: "AddressEntryContext") -> Optional["AddressEntry"]:
+        address_list = self.get_address_entry_list_as_immutable_list()
+        return next(
+            (entry for entry in address_list 
+             if offer_id == entry.offer_id and context == entry.context),
+            None
+        )
