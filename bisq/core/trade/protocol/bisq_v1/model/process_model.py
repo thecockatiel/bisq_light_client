@@ -71,7 +71,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         # Added in v1.4.0
         # MessageState of the last message sent from the seller to the buyer in the take offer process.
         # It is used only in a task which would not be executed after restart, so no need to persist it.
-        self._deposit_tx_message_state_property = SimpleProperty(MessageState.UNDEFINED) # transient
+        self.deposit_tx_message_state_property = SimpleProperty(MessageState.UNDEFINED) # transient
         self.deposit_tx: "Transaction" = None # transient
         
         self._take_offer_fee_tx_id: Optional[str] = None
@@ -98,7 +98,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         # We want to indicate the user the state of the message delivery of the
         # CounterCurrencyTransferStartedMessage. As well we do an automatic re-send in case it was not ACKed yet.
         # To enable that even after restart we persist the state.
-        self._payment_started_message_state_property = SimpleProperty(MessageState.UNDEFINED)
+        self.payment_started_message_state_property = SimpleProperty(MessageState.UNDEFINED)
         
         # Added in v 1.9.7
         self._burning_man_selection_height: int = 0
@@ -128,7 +128,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             change_output_value=self._change_output_value,
             use_savings_wallet=self.use_savings_wallet,
             funds_needed_for_trade_as_long=self.funds_needed_for_trade_as_long,
-            payment_started_message_state=self._payment_started_message_state_property.value.name,
+            payment_started_message_state=self.payment_started_message_state_property.value.name,
             buyer_payout_amount_from_mediation=self.buyer_payout_amount_from_mediation,
             seller_payout_amount_from_mediation=self.seller_payout_amount_from_mediation,
             burning_man_selection_height=self._burning_man_selection_height,
@@ -248,7 +248,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.set_payment_started_message_state(message_state)
         
     def set_payment_started_message_state(self, message_state: "MessageState"):
-        self._payment_started_message_state_property.value = message_state
+        self.payment_started_message_state_property.value = message_state
         if self.trade_manager is not None:
             self.trade_manager.request_persistence()
         
@@ -257,7 +257,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.set_deposit_tx_message_state(message_state)
         
     def set_deposit_tx_message_state(self, message_state: "MessageState"):
-        self._deposit_tx_message_state_property.value = message_state
+        self.deposit_tx_message_state_property.value = message_state
         if self.trade_manager is not None:
             self.trade_manager.request_persistence()
             
