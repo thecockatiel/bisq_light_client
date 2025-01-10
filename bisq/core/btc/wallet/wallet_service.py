@@ -97,3 +97,7 @@ class WalletService(ABC):
     @staticmethod
     def maybe_add_self_tx_to_wallet(transaction: "Transaction", wallet: "Wallet"):
         raise RuntimeError("WalletService.maybe_add_self_tx_to_wallet Not implemented yet")
+    
+    @staticmethod
+    def check_wallet_consistency(wallet: "Wallet"):
+        raise RuntimeError("WalletService.check_wallet_consistency Not implemented yet")
