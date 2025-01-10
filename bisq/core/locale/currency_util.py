@@ -1,3 +1,4 @@
+from typing import Optional
 from bisq.asset.asset import Asset
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
@@ -164,3 +165,9 @@ def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
 
 def get_all_fiat_currencies() -> list["FiatCurrency"]:
     return SORTED_BY_NAME_FIAT_CURRENCIES
+
+def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
+    return crypto_currency_map.get(currency_code, None)
+
+def get_fiat_currency(currency_code: str) -> Optional["FiatCurrency"]:
+    return CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(currency_code, None)
