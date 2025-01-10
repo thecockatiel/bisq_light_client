@@ -20,7 +20,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_utils import ScriptUtils
 from bitcoinj.script.script_verify_flag import ScriptVerifyFlag
 from electrum_min.bitcoin import opcodes
-from electrum_min.transaction import SerializationError, TxInput, TxOutpoint, TxOutput 
+from electrum_min.transaction import MalformedBitcoinScript, SerializationError, TxInput, TxOutpoint, TxOutput 
 
 TESTNET = TestNet3Params()
 MAINNET = MainNetParams()
@@ -118,9 +118,6 @@ class ScriptTest(unittest.TestCase):
         for test in data:
             if len(test) == 1:
                 continue # skip comment
-            if len(test) > 4 and 'with not enough bytes' in test[4]:
-                # skip disabled test for python
-                continue
             verify_flags = self.parse_verify_flags(test[2])
             expected_error = ScriptError.from_mnemonic(test[3])
             try:
@@ -133,6 +130,9 @@ class ScriptTest(unittest.TestCase):
                     self.fail(f"Expected error {expected_error} but no error was thrown")
             except ScriptException as e:
                 if expected_error != e.args[0]:
+                    self.fail(f"Expected error {expected_error} but got {e.args[0]}")
+            except MalformedBitcoinScript as e:
+                if expected_error != ScriptError.SCRIPT_ERR_BAD_OPCODE:
                     self.fail(f"Expected error {expected_error} but got {e.args[0]}")
     
     def build_crediting_transaction(self, script: Script):
