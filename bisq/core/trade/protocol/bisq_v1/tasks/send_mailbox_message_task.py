@@ -67,11 +67,11 @@ class SendMailboxMessageTask(TradeTask, ABC):
 
                 def on_stored_in_mailbox(self_):
                     logger.info(f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}")
-                    self._on_stored_in_mailbox()
+                    self.on_stored_in_mailbox()
                     
                 def on_fault(self_, error_message: str):
                     logger.error(f"{message.__class__.__name__} failed: Peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}")
-                    self._on_fault(error_message, message)
+                    self.on_fault(error_message, message)
 
             self.process_model.p2p_service.mailbox_message_service.send_encrypted_mailbox_message(
                 peers_node_address,
@@ -82,11 +82,11 @@ class SendMailboxMessageTask(TradeTask, ABC):
         except Exception as e:
             self.failed(exc=e)
 
-    def _on_stored_in_mailbox(self):
+    def on_stored_in_mailbox(self):
         self.set_state_stored_in_mailbox()
         self.complete()
 
-    def _on_fault(self, error_message: str, message: "TradeMessage"):
+    def on_fault(self, error_message: str, message: "TradeMessage"):
         self.set_state_fault()
         self.append_to_error_message(
             f"Sending message failed: message={message}\nerrorMessage={error_message}"
