@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from concurrent.futures import Future
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, Iterator, Optional, Union, cast
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.clock_watcher_listener import ClockWatcherListener
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
@@ -705,8 +705,8 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
             self.init_persisted_trade(trade)
         self.add_trade(trade)
 
-    def get_trades_stream_with_funds_locked_in(self) -> list['Trade']:
-        return [trade for trade in self.get_observable_list() if trade.is_funds_locked_in]
+    def get_trades_stream_with_funds_locked_in(self) -> Iterator['Trade']:
+        return (trade for trade in self.get_observable_list() if trade.is_funds_locked_in)
 
     def get_set_of_failed_or_closed_trade_ids_from_locked_in_funds(self) -> set[str]:
 

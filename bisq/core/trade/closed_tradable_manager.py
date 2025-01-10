@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterator, Optional
 from collections import Counter as Multiset
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
@@ -140,8 +140,8 @@ class ClosedTradableManager(PersistedDataHost):
     def get_safe_date_for_sensitive_data_clearing(self): 
         return datetime.now() - timedelta(days=self.preferences.get_clear_data_after_days())
 
-    def get_trades_stream_with_funds_locked_in(self):
-        return [t for t in self.get_closed_trades() if t.is_funds_locked_in]
+    def get_trades_stream_with_funds_locked_in(self) -> Iterator['Trade']:
+        return (t for t in self.get_closed_trades() if t.is_funds_locked_in)
 
     def get_closed_trade_node_addresses(self) -> Multiset:
         if self.closed_trade_node_address_cache is None:
