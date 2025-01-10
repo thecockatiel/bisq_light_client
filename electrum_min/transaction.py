@@ -547,7 +547,7 @@ def script_GetOp(_bytes : bytes):
                 except struct.error: raise MalformedBitcoinScript()
                 i += 4
 
-            if nSize > _bytes_len - i:
+            if i + nSize > _bytes_len:
                 raise MalformedBitcoinScript(f"Push of data element that is larger than remaining data: {nSize} vs {_bytes_len - i}")
 
             vch = _bytes[i:i + nSize]
