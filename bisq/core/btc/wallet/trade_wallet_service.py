@@ -86,6 +86,22 @@ class TradeWalletService:
         timeout_sec: Optional[int] = None,
     ) -> None:
         raise RuntimeError("TradeWalletService.broadcast_tx Not implemented yet")
+    
+    def seller_signs_and_finalizes_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin, 
+        buyer_payout_address_string: str,
+        seller_payout_address_string: str,
+        multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.seller_signs_and_finalizes_payout_tx Not implemented yet"
+        )
 
     def sign_mediated_payout_tx(
         self,
