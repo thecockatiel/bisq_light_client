@@ -5,6 +5,7 @@ from bisq.core.provider.mempool.mempool_request import MempoolRequest
 
 
 if TYPE_CHECKING:
+    from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
     from bisq.core.dao.burningman.burning_man_presentation_service import BurningManPresentationService
     from bisq.common.config.config import Config
     from bisq.core.dao.dao_facade import DaoFacade
@@ -42,3 +43,10 @@ class MempoolService:
             self.outstanding_requests -= 1
         request.add_done_callback(on_done)
         return request
+    
+    def can_request_be_made(self, offer_payload: "OfferPayload" = None) -> bool:
+        can = self.dao_state_service.parse_block_chain_complete and self.outstanding_requests < 5 # limit max simultaneous lookups
+        if offer_payload:
+            #  when validating a new offer, wait 1 block for the tx to propagate
+            can = can and offer_payload.block_height_at_offer_creation < self.dao_state_service.get_chain_height()
+        return can
