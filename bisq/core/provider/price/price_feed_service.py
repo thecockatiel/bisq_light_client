@@ -50,7 +50,7 @@ class PriceFeedService:
         self.currency_code_property: SimpleProperty[Optional[str]] = SimpleProperty(
             None
         )
-        self.update_counter = SimpleProperty(0)
+        self.update_counter_property = SimpleProperty(0)
         self.epoch_in_millis_at_last_request: int = 0
         self.retry_delay: int = 1
         self.request_ts: int = 0
@@ -233,7 +233,7 @@ class PriceFeedService:
 
     def set_bisq_market_price(self, currency_code: str, price: "Price") -> None:
         if self.apply_price_to_cache(currency_code, price):
-            self.update_counter.set(self.update_counter.get() + 1)
+            self.update_counter_property.set(self.update_counter_property.get() + 1)
 
     def get_last_request_timestamp(self) -> datetime:
         return datetime.fromtimestamp(self.epoch_in_millis_at_last_request / 1000)
@@ -241,7 +241,7 @@ class PriceFeedService:
     def apply_initial_bisq_market_price(self, price_by_currency_code: Dict[str, "Price"]) -> None:
         for currency_code, price in price_by_currency_code.items():
             self.apply_price_to_cache(currency_code, price)
-        self.update_counter.set(self.update_counter.get() + 1)
+        self.update_counter_property.set(self.update_counter_property.get() + 1)
 
     def apply_price_to_cache(self, currency_code: str, price: "Price") -> bool:
         if currency_code not in self.cache or not self.cache[currency_code].is_externally_provided_price:
@@ -324,7 +324,7 @@ class PriceFeedService:
             if self.fault_handler is not None:
                 self.fault_handler(error_message, PriceRequestException(error_message))
 
-        self.update_counter.set(self.update_counter.get() + 1)
+        self.update_counter_property.set(self.update_counter_property.get() + 1)
         return result
 
     def request_all_prices(
