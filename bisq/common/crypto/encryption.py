@@ -1,3 +1,4 @@
+import base64
 from io import BytesIO
 import hmac
 import hashlib
@@ -6,6 +7,7 @@ from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
+from electrum_min.crypto import sha256d
 from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
 from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
@@ -229,6 +231,14 @@ class Encryption:
                 f"Error creating ec public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
             )
             raise KeyConversionException(e) from e
+    
+    @staticmethod
+    def verify_ec_message_is_from_pubkey(message: str, signature_base64: str, pubkey_bytes: bytes):
+        sig_bytes = base64.b64decode(signature_base64)
+        msg_hash = sha256d(message)
+        pubkey, _, __ = ECPubkey.from_signature65(sig_bytes, msg_hash)
+        if pubkey.get_public_key_bytes() != pubkey_bytes:
+            raise CryptoException("Signature is not from the given public key.")
         
     ##########################################################################################
     # Helpers
