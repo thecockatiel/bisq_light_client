@@ -41,6 +41,9 @@ class MarketAlertFilter(PersistablePayload):
         if self.not_contains_alert_id(alert_id):
             self.alert_ids.append(alert_id)
 
+    def contains_alert_id(self, alert_id: str) -> bool:
+        return alert_id in self.alert_ids
+
     def not_contains_alert_id(self, alert_id: str) -> bool:
         return alert_id not in self.alert_ids
 
