@@ -804,6 +804,18 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     
     def get_phone_key_and_token(self):
         return self.pref_payload.phone_key_and_token
+    
+    def is_use_trade_notifications(self):
+        return self.pref_payload.use_trade_notifications
+    
+    def is_use_market_notifications(self):
+        return self.pref_payload.use_market_notifications
+    
+    def is_use_price_notifications(self):
+        return self.pref_payload.use_price_notifications
+    
+    def is_use_sound_for_mobile_notifications(self):
+        return self.pref_payload.use_sound_for_mobile_notifications
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
