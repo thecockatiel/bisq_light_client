@@ -196,3 +196,9 @@ def get_currency_name_by_code(currency_code: str) -> str:
             return fiat_currency.name
         logger.debug(f"No currency name available {currency_code}")
         return currency_code
+
+def get_currency_pair(currency_code: str) -> str:
+    if is_fiat_currency(currency_code):
+        return Res.base_currency_code + "/" + currency_code
+    else:
+        return currency_code + "/" + Res.base_currency_code
