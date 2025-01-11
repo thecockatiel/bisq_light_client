@@ -2,11 +2,12 @@ from dataclasses import dataclass, field
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope 
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 import proto.pb_pb2 as protobuf
+from utils.random import next_random_int
 
 
 @dataclass(kw_only=True)
 class Ping(NetworkEnvelope, KeepAliveMessage):
-    nonce: int
+    nonce: int = field(default_factory=next_random_int)
     last_round_trip_time: int = field(default=0)
 
     # Convert the Ping object to a protobuf NetworkEnvelope.
