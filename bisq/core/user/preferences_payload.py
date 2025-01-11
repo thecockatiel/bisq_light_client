@@ -58,7 +58,7 @@ class PreferencesPayload(PersistableEnvelope):
                  custom_bridges: Optional[str] = None,
                  bitcoin_nodes_option_ordinal: int = 0,
                  referral_id: str = None,
-                 phone_key_and_token: str = None,
+                 phone_key_and_token: Optional[str] = None,
                  use_sound_for_mobile_notifications: bool = True,
                  use_trade_notifications: bool = True,
                  use_market_notifications: bool = True,
