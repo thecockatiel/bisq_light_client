@@ -2,13 +2,17 @@ from typing import Optional
 from bisq.asset.asset import Asset
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
+from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.currency_data import (
     COUNTRY_TO_CURRENCY_CODE_MAP,
     CURRENCY_CODE_TO_DATA_MAP,
 )
 from bisq.core.locale.fiat_currency import FiatCurrency
+from bisq.core.locale.res import Res
 from bisq.core.locale.trade_currency import TradeCurrency
+
+logger = get_logger(__name__)
 
 # NOTE: ported from https://github.com/bisq-network/bisq/blob/release/v1.9.17/core/src/main/java/bisq/core/locale/CurrencyUtil.java
 
@@ -146,22 +150,24 @@ def get_main_crypto_currencies() -> list["CryptoCurrency"]:
     
     return result
 
+REMOVED_CRYPTO_CURRENCIES = {
+    "BCH": CryptoCurrency("BCH", "Bitcoin Cash"),
+    "BCHC": CryptoCurrency("BCHC", "Bitcoin Clashic"),
+    "ACH": CryptoCurrency("ACH", "AchieveCoin"),
+    "SC": CryptoCurrency("SC", "Siacoin"),
+    "PPI": CryptoCurrency("PPI", "PiedPiper Coin"),
+    "PEPECASH": CryptoCurrency("PEPECASH", "Pepe Cash"),
+    "GRC": CryptoCurrency("GRC", "Gridcoin"),
+    "LTZ": CryptoCurrency("LTZ", "LitecoinZ"),
+    "ZOC": CryptoCurrency("ZOC", "01coin"),
+    "BURST": CryptoCurrency("BURST", "Burstcoin"),
+    "STEEM": CryptoCurrency("STEEM", "Steem"),
+    "DAC": CryptoCurrency("DAC", "DACash"),
+    "RDD": CryptoCurrency("RDD", "ReddCoin"),
+}
+
 def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
-    result = list["CryptoCurrency"]()
-    result.append(CryptoCurrency("BCH", "Bitcoin Cash"))
-    result.append(CryptoCurrency("BCHC", "Bitcoin Clashic"))
-    result.append(CryptoCurrency("ACH", "AchieveCoin"))
-    result.append(CryptoCurrency("SC", "Siacoin"))
-    result.append(CryptoCurrency("PPI", "PiedPiper Coin"))
-    result.append(CryptoCurrency("PEPECASH", "Pepe Cash"))
-    result.append(CryptoCurrency("GRC", "Gridcoin"))
-    result.append(CryptoCurrency("LTZ", "LitecoinZ"))
-    result.append(CryptoCurrency("ZOC", "01coin"))
-    result.append(CryptoCurrency("BURST", "Burstcoin"))
-    result.append(CryptoCurrency("STEEM", "Steem"))
-    result.append(CryptoCurrency("DAC", "DACash"))
-    result.append(CryptoCurrency("RDD", "ReddCoin"))
-    return result
+    return list(REMOVED_CRYPTO_CURRENCIES.values())
 
 def get_all_fiat_currencies() -> list["FiatCurrency"]:
     return SORTED_BY_NAME_FIAT_CURRENCIES
@@ -171,3 +177,22 @@ def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
 
 def get_fiat_currency(currency_code: str) -> Optional["FiatCurrency"]:
     return CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(currency_code, None)
+
+def get_currency_name_by_code(currency_code: str) -> str:
+    if is_crypto_currency(currency_code):
+        # We might not find the name in case we have a call for a removed asset.
+        # If BTC is the code (used in tests) we also want return Bitcoin as name.
+        found_currency = get_crypto_currency(currency_code)
+        if not found_currency:
+            found_currency = REMOVED_CRYPTO_CURRENCIES.get(currency_code, None)
+        if found_currency:
+            return found_currency.name
+        if currency_code == "BTC":
+            return "Bitcoin"
+        return Res.get("shared.na")
+    else:
+        fiat_currency = get_fiat_currency(currency_code)
+        if fiat_currency:
+            return fiat_currency.name
+        logger.debug(f"No currency name available {currency_code}")
+        return currency_code
