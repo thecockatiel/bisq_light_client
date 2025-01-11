@@ -31,7 +31,7 @@ class TradeEvents:
 
     def on_all_services_initialized(self):
         def on_trade_changed(e: ObservableChangeEvent["Trade"]):
-            if e.removed_elements:
+            if e.added_elements:
                 for trade in e.added_elements:
                     self._set_trade_phase_listener(trade)
 
