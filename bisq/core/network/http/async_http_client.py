@@ -9,21 +9,21 @@ class AsyncHttpClient(Protocol):
     has_pending_request: bool
     ignore_socks5_proxy: bool
 
-    async def get(
+    def get(
         self,
         url: str,
         params: dict[str, str] = {},
         headers: dict[str, str] = {},
         timeout: asyncio.TimeoutError = None,
-    ) -> str: ...
+    ) -> asyncio.Task[str]: ...
 
-    async def post(
+    def post(
         self,
         url: str,
         data: dict[str, str] = None,
         params: dict[str, str] = {},
         headers: dict[str, str] = {},
         timeout: asyncio.TimeoutError = None,
-    ) -> str: ...
+    ) -> asyncio.Task[str]: ...
 
     def shut_down(self) -> None: ...
