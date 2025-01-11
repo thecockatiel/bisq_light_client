@@ -556,7 +556,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.pref_payload.referral_id = referral_id
         self.request_persistence()
         
-    def set_phone_key_and_token(self, phone_key_and_token: str) -> None:
+    def set_phone_key_and_token(self, phone_key_and_token: Optional[str]) -> None:
         self.pref_payload.phone_key_and_token = phone_key_and_token
         self.request_persistence()
 
