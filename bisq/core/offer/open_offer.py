@@ -147,3 +147,6 @@ class OpenOffer(Tradable):
                 f"\n     triggerPrice={self.trigger_price},"
                 f"\n     bsqSwapOfferHasMissingFunds={self.bsq_swap_offer_has_missing_funds}"
                 "\n}}")
+
+    def __hash__(self):
+        return hash((self.offer, self.arbitrator_node_address, self.mediator_node_address, self.refund_agent_node_address, self.trigger_price))
