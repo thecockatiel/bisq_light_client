@@ -1,5 +1,8 @@
 from typing import Optional
 
+from bisq.common.setup.log_setup import get_logger
+
+logger = get_logger(__name__)
 
 # TODO
 class BurningManCandidate:
@@ -12,7 +15,8 @@ class BurningManCandidate:
         # enforce the version by the filter to ensure users have updated.
         # See: https://github.com/bisq-network/bisq/issues/6699
         self.most_recent_address: Optional[str] = None
-
+        self.accumulated_burn_amount = 0
+        self.accumulated_decayed_burn_amount = 0
         self.capped_burn_amount_share = 0.0
 
     def get_receiver_address(
@@ -31,3 +35,7 @@ class BurningManCandidate:
             return self.receiver_address
         else:
             return self.most_recent_address
+
+    def get_all_addresses(self) -> set[str]:
+        logger.warning("BurningManCandidate.get_all_addresses() not implemented yet. this should not be used.")
+        return set()

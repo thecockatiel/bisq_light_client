@@ -60,8 +60,10 @@ class BurningManService:
             limit_capping_rounds = (
                 not DelayedPayoutTxReceiverService.is_proposal_412_activated()
             )
-            
-        raise NotImplementedError("BurningManService.get_active_burning_man_candidates Not implemented yet")
+
+        raise NotImplementedError(
+            "BurningManService.get_active_burning_man_candidates Not implemented yet"
+        )
 
     def get_active_burning_man_candidates_by_name(
         self,
@@ -77,4 +79,22 @@ class BurningManService:
                 not DelayedPayoutTxReceiverService.is_proposal_412_activated()
             )
 
-        raise NotImplementedError("BurningManService.get_active_burning_man_candidates_by_name Not implemented yet")
+        raise NotImplementedError(
+            "BurningManService.get_active_burning_man_candidates_by_name Not implemented yet"
+        )
+
+    def get_burning_man_candidates_by_name(
+        chain_height: int, limit_capping_rounds: bool = None
+    ) -> dict[str, "BurningManCandidate"]:
+        from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import (
+            DelayedPayoutTxReceiverService,
+        )
+
+        if limit_capping_rounds is None:
+            limit_capping_rounds = (
+                not DelayedPayoutTxReceiverService.is_proposal_412_activated()
+            )
+
+        raise NotImplementedError(
+            "BurningManService.get_burning_man_candidates_by_name Not implemented yet"
+        )
