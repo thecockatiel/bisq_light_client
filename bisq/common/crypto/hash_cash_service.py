@@ -18,8 +18,6 @@ from concurrent.futures import ProcessPoolExecutor
 
 logger = get_logger(__name__)
 
-
-# TODO: add tests
 class HashCashService(ProofOfWorkService):
     def __init__(self):
         super().__init__(0)
