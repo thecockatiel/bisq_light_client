@@ -1,11 +1,12 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 from bisq.core.dao.governance.param.param import Param
+from bisq.core.dao.state.model.dao_state import DaoState
+from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 from bisq.core.dao.dao_setup_service import DaoSetupService
 
 if TYPE_CHECKING:
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
-    from proto.pb_pb2 import DaoState
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
     from bisq.core.dao.state.dao_state_listener import DaoStateListener
 
@@ -66,6 +67,16 @@ class DaoStateService(DaoSetupService):
             raise RuntimeError(
                 "We got a call which would change the daoState outside of the allowed event phase"
             )
-    
+
     def get_last_block(self):
         return None
+
+    def get_tx(self, tx_id: str):
+        return None
+
+    def get_param_change_list(self, param: "Param"):
+        values = list[Coin]()
+        for param_change in self.dao_state.param_change_list:
+            if param_change.param_name == param.name:
+                values.append(self.get_param_value_as_coin(param, param_change.value))
+        return values
