@@ -42,6 +42,12 @@ class Equihash:
         self.table_capacity = int(self.N * 1.1)
         self.hash_upper_bound = self.get_hash_upper_bound(difficulty)
 
+    def __setstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+
     @staticmethod
     def get_hash_upper_bound(difficulty: float) -> list[int]:
         return bytes_to_ints_be(
@@ -206,6 +212,12 @@ class EquihashPuzzleSolution:
         self.nonce = nonce
         self.inputs = inputs
 
+    def __setstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state: dict):
+        self.__dict__.update(state)
+
     def verify(self) -> bool:
         return self.equihash.with_hash_prefix(self.seed, self.nonce).verify(self.inputs)
 
@@ -213,35 +225,41 @@ class EquihashPuzzleSolution:
         input_num = len(self.inputs)
         bit_len = 64 + input_num * self.equihash.input_bits
         byte_len = (bit_len + 7) // 8
-        
+
         # Create padded bytes array (padding to multiple of 4)
         padded_bytes = bytearray((byte_len + 3) & -4)
-        
+
         # Pack nonce into first 8 bytes as two 32-bit ints
-        struct.pack_into('>II', padded_bytes, 0, 
-                        to_unsigned_int(self.nonce >> 32), 
-                        to_unsigned_int(self.nonce))
-        
+        struct.pack_into(
+            ">II",
+            padded_bytes,
+            0,
+            to_unsigned_int(self.nonce >> 32),
+            to_unsigned_int(self.nonce),
+        )
+
         off = 64
         buf = 0
         int_idx = 8  # Start after nonce (8 bytes = 2 ints)
-        
+
         for v in self.inputs:
             off -= self.equihash.input_bits
             # Convert to unsigned long
             buf |= (to_unsigned_int(v) & 0xFFFFFFFF) << off
-            
+
             if off <= 32:
                 # Pack the top 32 bits
-                struct.pack_into('>I', padded_bytes, int_idx, to_unsigned_int(buf >> 32))
+                struct.pack_into(
+                    ">I", padded_bytes, int_idx, to_unsigned_int(buf >> 32)
+                )
                 int_idx += 4
                 buf <<= 32
                 off += 32
-        
+
         if off < 64:
             # Pack remaining bits
-            struct.pack_into('>I', padded_bytes, int_idx, to_unsigned_int(buf >> 32))
-        
+            struct.pack_into(">I", padded_bytes, int_idx, to_unsigned_int(buf >> 32))
+
         # Return exact length if not multiple of 4
         return bytes(padded_bytes if (byte_len & 3) == 0 else padded_bytes[:byte_len])
 
