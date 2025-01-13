@@ -74,7 +74,15 @@ class TestEquiHash(unittest.TestCase):
         self.assertEqual(72, len(solution_bytes))
         self.assertEqual(str(solution), str(round_tripped_solution))
         
-    
+    def test_java_solution_can_be_verified(self):
+        equihash = Equihash(90, 5, 2.0)
+        seed = bytes(32)
+        
+        java_solution_bytes = bytes.fromhex("0000000000000001005bdef707975e9a4064fc4d67e5b79b21a4431a7f0da1de3b5fee01b576fa782685303c4a2a9fb42a77305a705dda45331ab0109557e3de4a15c3694ae3a450")
+        nonce, inputs = deserialize_equihash_puzzle_solution(java_solution_bytes, equihash)
+        java_solution = EquihashPuzzleSolution(equihash, seed, nonce, inputs)
+        self.assertTrue(java_solution.verify())
+        
     @unittest.skip("disabled")
     def test_benchmark_find_solution(self):
         adjusted_difficulty = Equihash.adjust_difficulty(2.0)

@@ -147,7 +147,7 @@ class Equihash:
         return sublist_stack.pop() if sublist_stack else []
 
     def with_hash_prefix(self, seed: bytes, nonce: int):
-        return EquihashWithHashPrefix(seed + nonce.to_bytes(4, "big"), self)
+        return EquihashWithHashPrefix(seed + nonce.to_bytes(8, "big"), self)
 
 
 def deserialize_equihash_puzzle_solution(data: bytes, equihash: "Equihash"):
