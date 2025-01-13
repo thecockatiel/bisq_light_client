@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from bisq.common.crypto.equihash_proof_of_work_service import EquihashProofOfWorkService
 from bisq.common.crypto.hash_cash_service import HashCashService
 
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
 POW_INSTANCE_HOLDER: list["ProofOfWorkService"] = [
     HashCashService(),
-    
+    EquihashProofOfWorkService(1),
 ]
 
 def pow_service_for_version(version: int) -> Optional["ProofOfWorkService"]:
