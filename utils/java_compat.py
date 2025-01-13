@@ -95,3 +95,7 @@ def unsigned_compare(list1: list[int], list2: list[int]) -> int:
         if a != b:
             return -1 if a < b else 1
     return len(list1) - len(list2)  # If all equal, compare lengths
+
+def to_unsigned_int(value: int) -> int:
+    """Converts a signed int to an unsigned int"""
+    return value & 0xFFFFFFFF
