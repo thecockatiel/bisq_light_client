@@ -85,3 +85,13 @@ def get_exponent_double(value: float) -> int:
     # frexp returns mantissa and exponent where value = mantissa * 2**exponent
     mantissa, exponent = math.frexp(abs(value))
     return exponent - 1
+
+def unsigned_compare(list1: list[int], list2: list[int]) -> int:
+    """equivalent of UnsignedInts.lexicographicalComparator().compare() of java's com.google.common.primitives"""
+    min_len = min(len(list1), len(list2))
+    for i in range(min_len):
+        a = list1[i] & 0xffffffff  # Convert to unsigned 32-bit
+        b = list2[i] & 0xffffffff
+        if a != b:
+            return -1 if a < b else 1
+    return len(list1) - len(list2)  # If all equal, compare lengths
