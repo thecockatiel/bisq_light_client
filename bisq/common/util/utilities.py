@@ -46,3 +46,13 @@ def bytes_to_ints_be(bytes_data: bytes) -> list[int]:
         val = int.from_bytes(bytes_data[i:i + 4], byteorder='big', signed=True)
         result.append(val)
     return result
+
+def ints_to_bytes_be(ints: list[int]) -> bytes:
+    result = bytearray(len(ints) * 4)
+    for i, v in enumerate(ints):
+        pos = i * 4
+        result[pos] = (v >> 24) & 0xFF
+        result[pos + 1] = (v >> 16) & 0xFF
+        result[pos + 2] = (v >> 8) & 0xFF
+        result[pos + 3] = v & 0xFF
+    return bytes(result)
