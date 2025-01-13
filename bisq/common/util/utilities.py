@@ -43,6 +43,6 @@ def copy_right_aligned(src: bytes, new_length: int) -> bytes:
 def bytes_to_ints_be(bytes_data: bytes) -> list[int]:
     result = []
     for i in range(0, len(bytes_data) - 3, 4):
-        val = (bytes_data[i] << 24) | (bytes_data[i + 1] << 16) | (bytes_data[i + 2] << 8) | bytes_data[i + 3]
+        val = int.from_bytes(bytes_data[i:i + 4], byteorder='big', signed=True)
         result.append(val)
     return result
