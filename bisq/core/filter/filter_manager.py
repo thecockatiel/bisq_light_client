@@ -8,6 +8,7 @@ from bisq.common.config.config import Config
 from bisq.common.config.config_file_editor import ConfigFileEditor
 from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.common.crypto.hash import get_sha256_hash
+from bisq.common.crypto.proof_of_work_service_instance_holder import pow_service_for_version
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.filter.filter import Filter
@@ -17,6 +18,7 @@ import bisq.common.version as Version
 from bisq.core.network.p2p.p2p_service_listener import P2PServiceListener
 
 if TYPE_CHECKING:
+    from bisq.core.offer.offer import Offer
     from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -388,18 +390,17 @@ class FilterManager:
                 filter.banned_account_witness_signer_pub_keys is not None and
                 any(e == witness_signer_pub_key_as_hex for e in filter.banned_account_witness_signer_pub_keys))
 
-    # TODO:
-    # def is_proof_of_work_valid(self, offer: Offer) -> bool:
-    #     filter = self.get_filter()
-    #     if filter is None:
-    #         return True
+    def is_proof_of_work_valid(self, offer: "Offer") -> bool:
+        filter = self.get_filter()
+        if filter is None:
+            return True
 
-    #     assert offer.bsq_swap_offer_payload.is_present(), "Offer payload must be BsqSwapOfferPayload"
-    #     pow = offer.bsq_swap_offer_payload.get().proof_of_work
-    #     service = ProofOfWorkService.for_version(pow.version)
-    #     return (service.is_present() and 
-    #             pow.version in self.get_enabled_pow_versions() and
-    #             service.get().verify(pow, offer.id, str(offer.owner_node_address), filter.pow_difficulty))
+        assert offer.bsq_swap_offer_payload is not None, "Offer payload must be BsqSwapOfferPayload"
+        pow = offer.bsq_swap_offer_payload.get_proof_of_work()
+        service = pow_service_for_version(pow.version)
+        return (service is not None and 
+                pow.version in self.get_enabled_pow_versions() and
+                service.verify_with_ids(pow, offer.id, str(offer.owner_node_address), filter.pow_difficulty))
 
     def get_enabled_pow_versions(self) -> List[int]:
         filter = self.get_filter()
