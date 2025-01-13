@@ -1,6 +1,11 @@
+from decimal import Decimal
+import math
 from pathlib import Path
 import re
 
+INTEGER_MIN_VALUE = 0x80000000
+INTEGER_MAX_VALUE = 0x7fffffff
+DOUBLE_MIN_VALUE = 4.9E-324
 
 def java_arrays_byte_hashcode(bytes_array: bytes):
     result = 1
@@ -50,3 +55,33 @@ def long_unsigned_right_shift(number: int, bits: int) -> int:
     if number < 0:
         number = number + (1 << 64)
     return (number >> bits) & ((2 ** 64 - 1) >> bits)
+
+def int_unsigned_right_shift(number: int, bits: int) -> int:
+    """Python equivalent of Java's >>> on longs"""
+    bits = bits & 31
+    number = number & 0xFFFFFFFF
+    return (number >> bits) & (0xFFFFFFFF >> bits)
+
+def next_down_double(d: float) -> float:
+    if math.isnan(d) or d == float('-inf'):
+        return d
+    if d == 0.0:
+        return -DOUBLE_MIN_VALUE # Java's -Double.MIN_VALUE
+    return math.nextafter(d, float('-inf'))
+
+def get_exponent_double(value: float) -> int:
+    """
+    Returns the unbiased exponent of a floating point value,
+    equivalent to Java's Math.getExponent(double d)
+    
+    If the argument is NaN or infinite, then the result is Double. MAX_EXPONENT + 1.
+    If the argument is zero or subnormal, then the result is Double. MIN_EXPONENT -1.
+    """
+    if math.isnan(value) or math.isinf(value):
+        return 1024
+    
+    if value == 0.0 or Decimal(value).is_subnormal():
+        return -1023
+    # frexp returns mantissa and exponent where value = mantissa * 2**exponent
+    mantissa, exponent = math.frexp(abs(value))
+    return exponent - 1
