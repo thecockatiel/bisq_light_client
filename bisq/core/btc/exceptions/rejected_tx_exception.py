@@ -19,6 +19,10 @@ class RejectedTxException(RuntimeError):
         self.reject_message = reject_message
         obj_hash = reject_message.get_rejected_object_hash()
         self.tx_id = str(obj_hash) if obj_hash is not None else None
+        
+    @property
+    def message(self) -> str:
+        return self.args[0]
 
     def __str__(self) -> str:
         return (
