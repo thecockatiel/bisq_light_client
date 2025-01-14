@@ -11,6 +11,7 @@ from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
+from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
 from utils.data import ObservableMap
@@ -91,32 +92,19 @@ class DisputeAgentManager(Generic[T], ABC):
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    class DisputeAgentHashMapListener(HashMapChangedListener):
-        def __init__(self, manager: "DisputeAgentManager"):
-            self.manager = manager
-
-        def on_added(self, protected_storage_entries):
-            for entry in protected_storage_entries:
-                if self.manager.is_expected_instance(entry):
-                    self.manager.update_map()
-
-        def on_removed(self, protected_storage_entries):
-            for entry in protected_storage_entries:
-                if self.manager.is_expected_instance(entry):
-                    self.manager.update_map()
-                    self.manager.remove_accepted_dispute_agent_from_user(entry)
-
-    class DisputeAgentBootstrapListener:
-        def __init__(self, manager: "DisputeAgentManager"):
-            self.manager = manager
-
-        def on_data_received(self):
-            self.manager.start_republish_dispute_agent()
-
     def on_all_services_initialized(self) -> None:
-        self.dispute_agent_service.add_hash_set_changed_listener(
-            self.DisputeAgentHashMapListener(self)
-        )
+        class DisputeAgentHashMapListener(HashMapChangedListener):
+            def on_added(self_, protected_storage_entries):
+                for entry in protected_storage_entries:
+                    if self.is_expected_instance(entry):
+                        self.update_map()
+
+            def on_removed(self_, protected_storage_entries):
+                for entry in protected_storage_entries:
+                    if self.is_expected_instance(entry):
+                        self.update_map()
+                        self.remove_accepted_dispute_agent_from_user(entry)
+        self.dispute_agent_service.add_hash_set_changed_listener(DisputeAgentHashMapListener())
 
         self.persisted_accepted_dispute_agents = list(self.get_accepted_dispute_agents_from_user())
         self.clear_accepted_dispute_agents_at_user()
@@ -127,9 +115,10 @@ class DisputeAgentManager(Generic[T], ABC):
             if p2p_service.is_bootstrapped:
                 self.start_republish_dispute_agent()
             else:
-                p2p_service.add_p2p_service_listener(
-                    self.DisputeAgentBootstrapListener(self)
-                )
+                class Listener(BootstrapListener):
+                    def on_data_received(self_):
+                        self.start_republish_dispute_agent()
+                p2p_service.add_p2p_service_listener(Listener())
 
         self.filter_manager.filter_property.add_listener(
             lambda e: self.update_map()
