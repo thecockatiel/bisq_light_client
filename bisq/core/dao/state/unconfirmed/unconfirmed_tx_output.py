@@ -40,7 +40,8 @@ class UnconfirmedTxOutput(PersistablePayload, ImmutableDaoStateModel):
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_key(self) -> "TxOutputKey":
+    @property
+    def key(self) -> "TxOutputKey":
         return TxOutputKey(self.tx_id, self.index)
 
     def __str__(self) -> str:
