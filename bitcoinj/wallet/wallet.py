@@ -1,10 +1,17 @@
+from typing import TYPE_CHECKING
 from bitcoinj.core.address import Address
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
+from utils.concurrency import ThreadSafeSet
 
+if TYPE_CHECKING:
+    from bitcoinj.wallet.listeners.wallet_change_event_listener import WalletChangeEventListener
 
 # TODO
 class Wallet:
+    
+    def __init__(self):
+        self.change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
 
     def find_key_from_pub_key_hash(
         self,
@@ -24,3 +31,12 @@ class Wallet:
 
     def fresh_receive_address(self, script_type: ScriptType) -> "Address":
         raise NotImplementedError("fresh_receive_address not implemented yet")
+
+    def add_change_event_listener(self, listener: "WalletChangeEventListener"):
+        self.change_listeners.add(listener)
+
+    def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
+        if listener in self.change_listeners:
+            self.change_listeners.discard(listener)
+            return True
+        return False
