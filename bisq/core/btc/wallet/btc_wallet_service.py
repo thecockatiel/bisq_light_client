@@ -9,10 +9,12 @@ from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.core.transaction import Transaction
 
 logger = get_logger(__name__)
+
 
 # TODO
 class BtcWalletService(WalletService, DaoStateListener):
@@ -122,12 +124,14 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.get_arbitrator_address_entry Not implemented yet"
         )
-        
-    def get_multi_sig_key_pair(self, trade_id: str, pub_key: bytes) -> "DeterministicKey":
+
+    def get_multi_sig_key_pair(
+        self, trade_id: str, pub_key: bytes
+    ) -> "DeterministicKey":
         raise RuntimeError(
             "BtcWalletService.get_multi_sig_key_pair Not implemented yet"
         )
-        
+
     def reset_coin_locked_in_multi_sig_address_entry(self, offer_id: str) -> None:
         raise RuntimeError(
             "BtcWalletService.reset_coin_locked_in_multi_sig_address_entry Not implemented yet"
@@ -136,11 +140,40 @@ class BtcWalletService(WalletService, DaoStateListener):
     @staticmethod
     def print_tx(trade_prefix: str, tx: "Transaction") -> None:
         logger.info(f"\n{trade_prefix}:\n{tx}")
-    
-    def get_address_entry(self, offer_id: str, context: "AddressEntryContext") -> Optional["AddressEntry"]:
+
+    def get_address_entry(
+        self, offer_id: str, context: "AddressEntryContext"
+    ) -> Optional["AddressEntry"]:
         address_list = self.get_address_entry_list_as_immutable_list()
         return next(
-            (entry for entry in address_list 
-             if offer_id == entry.offer_id and context == entry.context),
-            None
+            (
+                entry
+                for entry in address_list
+                if offer_id == entry.offer_id and context == entry.context
+            ),
+            None,
         )
+
+    def get_funded_available_address_entries(self) -> list["AddressEntry"]:
+        return [
+            entry
+            for entry in self.get_available_address_entries()
+            if self.get_balance_for_address(entry.get_address()).is_positive()
+        ]
+
+    def get_saving_wallet_balance(self):
+        return Coin.value_of(
+            sum(
+                self.get_balance_for_address(entry.get_address()).value
+                for entry in self.get_funded_available_address_entries()
+            )
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Find inputs and change
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_inputs_and_change(
+        required: Coin,
+    ) -> tuple[list["RawTransactionInput"], Coin]:
+        raise RuntimeError("BtcWalletService.get_inputs_and_change Not implemented yet")

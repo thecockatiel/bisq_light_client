@@ -7,6 +7,7 @@ from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
+    from bitcoinj.wallet.listeners.wallet_change_event_listener import WalletChangeEventListener
     from bitcoinj.core.address import Address
     from bisq.core.btc.listeners.address_confidence_listener import AddressConfidenceListener
     from bitcoinj.wallet.wallet import Wallet
@@ -31,6 +32,7 @@ class WalletService(ABC):
         self.fee_service = fee_service
         
         self.params = self.wallets_setup.params
+        self.wallet: Optional["Wallet"] = None
     
     def get_transaction(hash_or_tx_id: Union[bytes, Optional[str]]) -> Optional["Transaction"]:
         if hash_or_tx_id is None:
@@ -104,3 +106,9 @@ class WalletService(ABC):
     @staticmethod
     def check_wallet_consistency(wallet: "Wallet"):
         raise RuntimeError("WalletService.check_wallet_consistency Not implemented yet")
+
+    def add_change_event_listener(self, listener: "WalletChangeEventListener"):
+        self.wallet.add_change_event_listener(listener)
+
+    def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
+        self.wallet.remove_change_event_listener(listener)
