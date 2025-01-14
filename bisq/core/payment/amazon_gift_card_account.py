@@ -39,22 +39,22 @@ class AmazonGiftCardAccount(PaymentAccount):
 
     @property
     def email_or_mobile_nr(self):
-        return self._get_amazon_gift_card_account_payload().email_or_mobile_nr
+        return self._amazon_gift_card_account_payload.email_or_mobile_nr
 
     @email_or_mobile_nr.setter
     def email_or_mobile_nr(self, email_or_mobile_nr: str):
-        self._get_amazon_gift_card_account_payload().email_or_mobile_nr = (
+        self._amazon_gift_card_account_payload.email_or_mobile_nr = (
             email_or_mobile_nr
         )
 
     @property
     def country_not_set(self):
-        return self._get_amazon_gift_card_account_payload().country_not_set
+        return self._amazon_gift_card_account_payload.country_not_set
 
     @property
     def country(self):
         if self._country is None:
-            country_code = self._get_amazon_gift_card_account_payload().country_code
+            country_code = self._amazon_gift_card_account_payload.country_code
             code = find_country_by_code(country_code)
             if code:
                 self._country = code
@@ -63,7 +63,8 @@ class AmazonGiftCardAccount(PaymentAccount):
     @country.setter
     def country(self, country: Country):
         self._country = country
-        self._get_amazon_gift_card_account_payload().country_code = country.code
-
-    def _get_amazon_gift_card_account_payload(self):
+        self._amazon_gift_card_account_payload.country_code = country.code
+    
+    @property
+    def _amazon_gift_card_account_payload(self):
         return cast(AmazonGiftCardAccountPayload, self.payment_account_payload)
