@@ -15,25 +15,34 @@ class TransactionOutput:
 
     def __init__(self, tx: "Transaction", ec_tx_output: "ElectrumTxOutput", index: int):
         self.parent = tx
-        self._ec_tx_output = ec_tx_output 
+        self._ec_tx_output = ec_tx_output
         self.index = index
         self.spent_by: Optional["TransactionInput"] = None
 
     def get_value(self) -> Coin:
-        assert isinstance(self._ec_tx_output.value, int) # we don't expend spend max like here
+        assert isinstance(
+            self._ec_tx_output.value, int
+        )  # we don't expend spend max like here
         return Coin.value_of(self._ec_tx_output.value)
-    
+
     @property
     def value(self) -> int:
-        assert isinstance(self._ec_tx_output.value, int) # we don't expend spend max like here
+        assert isinstance(
+            self._ec_tx_output.value, int
+        )  # we don't expend spend max like here
         return self._ec_tx_output.value
 
     def get_script_pub_key(self) -> Script:
         return Script(self._ec_tx_output.scriptpubkey)
-    
+
     @property
     def script_pub_key(self) -> bytes:
         return self._ec_tx_output.scriptpubkey
 
     def get_parent_transaction_hash(self) -> Optional[str]:
         return self.parent.get_tx_id()
+
+    def is_mine(self, transaction_bad) -> bool:
+        """Returns true if this output is to a key, or an address we have the keys for, in the wallet."""
+        # TODO: raise NotImplementedError("TransactionOutput.is_mine not implemented yet")
+        return False
