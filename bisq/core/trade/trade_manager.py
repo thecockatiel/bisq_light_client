@@ -26,6 +26,7 @@ from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.trade.bisq_v1.trade_result_handler import TradeResultHandler
 from bisq.core.trade.bisq_v1.trade_tx_exception import TradeTxException
+from bisq.core.trade.bsq_swap.bsq_swap_take_offer_request_verification import BsqSwapTakeOfferRequestVerification
 from bisq.core.trade.model.bisq_v1.buyer_as_maker_trade import BuyerAsMakerTrade
 from bisq.core.trade.model.bisq_v1.buyer_as_taker_trade import BuyerAsTakerTrade
 from bisq.core.trade.model.bisq_v1.seller_as_maker_trade import SellerAsMakerTrade
@@ -314,13 +315,14 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         self.get_observable_list().add_listener(lambda x: self.on_trades_changed())
         self.on_trades_changed()
 
-        for address_entry in self.btc_wallet_service.get_address_entries_for_available_balance_stream():
-            if address_entry.offer_id:
-                logger.warning(f"Swapping pending OFFER_FUNDING entries at startup. offerId={address_entry.offer_id}")
-                self.btc_wallet_service.swap_trade_entry_to_available_entry(
-                    address_entry.offer_id, 
-                    AddressEntryContext.OFFER_FUNDING
-                )
+        # TODO:
+        # for address_entry in self.btc_wallet_service.get_address_entries_for_available_balance_stream():
+        #     if address_entry.offer_id:
+        #         logger.warning(f"Swapping pending OFFER_FUNDING entries at startup. offerId={address_entry.offer_id}")
+        #         self.btc_wallet_service.swap_trade_entry_to_available_entry(
+        #             address_entry.offer_id, 
+        #             AddressEntryContext.OFFER_FUNDING
+        #         )
 
     def get_trade_protocol(self, trade: "TradeModel") -> 'TradeProtocol':
         uid = trade.uid
