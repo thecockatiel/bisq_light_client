@@ -39,12 +39,14 @@ class Balances:
         self.locked_balance_property = SimpleProperty(Coin.value_of(0))
 
     def on_all_services_initialized(self):
-        self.open_offer_manager.get_observable_list().add_listener(lambda c: self.update_balance())
-        self.trade_manager.get_observable_list().add_listener(lambda change: self.update_balance())
-        self.refund_manager.get_disputes_as_observable_list().add_listener(lambda c: self.update_balance())
-        self.btc_wallet_service.add_balance_listener(lambda balance, tx: self.update_balance())
-        self.btc_wallet_service.add_new_best_block_listener(lambda block: self.update_balance())
-        self.update_balance()
+        # TODO:
+        pass
+        # self.open_offer_manager.get_observable_list().add_listener(lambda c: self.update_balance())
+        # self.trade_manager.get_observable_list().add_listener(lambda change: self.update_balance())
+        # self.refund_manager.get_disputes_as_observable_list().add_listener(lambda c: self.update_balance())
+        # self.btc_wallet_service.add_balance_listener(lambda balance, tx: self.update_balance())
+        # self.btc_wallet_service.add_new_best_block_listener(lambda block: self.update_balance())
+        # self.update_balance()
 
     def update_balance(self):
         # Need to delay a bit to get the balances correct
