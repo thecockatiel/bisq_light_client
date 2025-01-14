@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 from datetime import timedelta
-from math import abs
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.offer.open_offer_state import OpenOfferState
