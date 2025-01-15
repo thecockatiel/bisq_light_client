@@ -56,6 +56,7 @@ class NetworkParameters(ABC):
         self.bip32_header_P2PKH_priv = None
         self.bip32_header_P2WPKH_pub = None
         self.bip32_header_P2WPKH_priv = None
+        self.port = -1
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, NetworkParameters):

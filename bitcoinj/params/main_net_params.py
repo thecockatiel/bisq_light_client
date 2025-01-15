@@ -17,6 +17,7 @@ class MainNetParams(NetworkParameters):
         self.bip32_header_P2PKH_priv = 0x0488ade4; # The 4 byte header that serializes in base58 to "xprv"
         self.bip32_header_P2WPKH_pub = 0x04b24746; # The 4 byte header that serializes in base58 to "zpub".
         self.bip32_header_P2WPKH_priv = 0x04b2430c; # The 4 byte header that serializes in base58 to "zprv"
+        self.port = 8333
 
     def get_max_money(self) -> Coin:
         return Coin.COIN().multiply(21000000)
