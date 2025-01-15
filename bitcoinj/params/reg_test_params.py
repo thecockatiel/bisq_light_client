@@ -12,3 +12,4 @@ class RegTestParams(MainNetParams):
         self.bip32_header_P2PKH_priv = 0x04358394 # The 4 byte header that serializes in base58 to "tprv"
         self.bip32_header_P2WPKH_pub = 0x045f1cf6 # The 4 byte header that serializes in base58 to "vpub".
         self.bip32_header_P2WPKH_priv = 0x045f18bc # The 4 byte header that serializes in base58 to "vprv"
+        self.port = 18444
