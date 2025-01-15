@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
 from electrum_min.crypto import sha256d
 from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
-from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES
+from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
@@ -174,11 +174,13 @@ class Encryption:
             raise RuntimeError("Couldn't generate key") from e
 
     @staticmethod
-    def get_public_key_bytes(public_key: Union[PUBLIC_KEY_TYPES, ECPubkey, ECPrivkey, bytes]) -> bytes:
+    def get_public_key_bytes(public_key: Union[PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES, ECPubkey, ECPrivkey, bytes]) -> bytes:
         if isinstance(public_key, bytes):
             return public_key
         if isinstance(public_key, ECPubkey) or isinstance(public_key, ECPrivkey):
             return public_key.get_public_key_bytes()
+        if hasattr(public_key, "public_key"):
+            public_key = public_key.public_key() # in case we are passed a private key
         return public_key.public_bytes(
             encoding=serialization.Encoding.DER,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
