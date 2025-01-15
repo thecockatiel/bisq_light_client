@@ -1,8 +1,7 @@
 from abc import ABC
-from typing import Generic, Iterator, List, Optional, TypeVar
-from collections.abc import Callable, Collection
+from typing import TypeVar
+from collections.abc import Callable
 
-from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.common.protocol.persistable.persistable_list import PersistableList
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from utils.data import ObservableChangeEvent, ObservableList
