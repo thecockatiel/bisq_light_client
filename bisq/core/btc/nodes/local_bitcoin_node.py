@@ -1,7 +1,6 @@
 import socket
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
-from utils.aio import get_asyncio_loop
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
@@ -23,7 +22,7 @@ class LocalBitcoinNode:
         self.port = config.network_parameters.port
         self.detected: Optional[bool] = None
 
-    async def should_be_used(self) -> bool:
+    def should_be_used(self) -> bool:
         """
         Returns whether Bisq should use a local Bitcoin node, meaning that a node was
         detected and conditions under which it should be ignored have not been met. If
@@ -47,7 +46,7 @@ class LocalBitcoinNode:
             or base_currency_network.is_dao_testnet()
         )
 
-    async def is_detected(self) -> bool:
+    def is_detected(self) -> bool:
         """
         Returns whether a local Bitcoin node was detected. The check is triggered in case
         it has not been performed. No further monitoring is performed, so if the node
@@ -56,20 +55,20 @@ class LocalBitcoinNode:
         disconnection and reconnection of the local Bitcoin node is actually handled.
         """
         if self.detected is None:
-            self.detected = await self._detect(self.port)
+            self.detected = self._detect(self.port)
         return self.detected
 
     @staticmethod
-    async def _detect(port: int) -> bool:
+    def _detect(port: int) -> bool:
         """
         Detect whether a Bitcoin node is running on localhost by attempting to connect
         to the node's port.
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(LocalBitcoinNode.CONNECTION_TIMEOUT_SEC)
-        sock.setblocking(False)
+        sock.setblocking(True)
         try:
-            await get_asyncio_loop().sock_connect(sock, ("127.0.0.1", port))
+            sock.connect(("127.0.0.1", port))
             logger.info(f"Local Bitcoin node detected on port {port}")
             return True
         except socket.error:
