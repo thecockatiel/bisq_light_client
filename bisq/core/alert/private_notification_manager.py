@@ -156,7 +156,6 @@ class PrivateNotificationManager(MessageListener):
     ) -> bool:
         message_as_hex = private_notification.message.encode("utf-8").hex()
         try:
-            # TODO: check later for correctness
             Encryption.verify_ec_message_is_from_pubkey(
                 message_as_hex,
                 private_notification.signature_as_base64,
