@@ -169,6 +169,14 @@ class BtcWalletService(WalletService, DaoStateListener):
             )
         )
 
+    def get_address_entries_for_trade(self):
+        return [
+            entry
+            for entry in self.get_address_entry_list_as_immutable_list()
+            if entry.context == AddressEntryContext.MULTI_SIG
+            or entry.context == AddressEntryContext.TRADE_PAYOUT
+        ]
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Find inputs and change
     # ///////////////////////////////////////////////////////////////////////////////////////////
