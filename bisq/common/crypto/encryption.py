@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
 from electrum_min.crypto import sha256d
-from electrum_min.ecc import ECPrivkey, ECPubkey, string_to_number
+from electrum_min.ecc import ECPrivkey, ECPubkey, msg_magic, string_to_number
 from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
@@ -237,7 +237,7 @@ class Encryption:
     @staticmethod
     def verify_ec_message_is_from_pubkey(message: str, signature_base64: str, pubkey_bytes: bytes):
         sig_bytes = base64.b64decode(signature_base64)
-        msg_hash = sha256d(message)
+        msg_hash = sha256d(msg_magic(message.encode('utf-8')))
         pubkey, _, __ = ECPubkey.from_signature65(sig_bytes, msg_hash)
         if pubkey.get_public_key_bytes() != pubkey_bytes:
             raise CryptoException("Signature is not from the given public key.")
