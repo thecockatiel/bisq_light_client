@@ -1,28 +1,36 @@
 # tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.18/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
 
 # TODO: fix class initializers when implemented for those who are still not done
-
 from utils.di import DependencyProvider
 
 
 class GlobalContainer:
     ############################################################################### (not listed in ModuleForAppWithP2p)
     _config = None
+    _bisq_setup = None
+    _domain_initialisation = None
     _provider = None
     _corrupted_storage_file_handler = None
     _bsq_formatter = None
     _removed_payloads_service = None
+    _mempool_service = None
+    _wallet_app_setup = None
+    _trade_limits = None
 
     _arbitrator_manager = None
     _arbitrator_service = None
+    _arbitration_manager = None
+    _mediation_manager = None
     _mediator_manager = None
     _mediator_service = None
+    _refund_manager = None
     _refund_agent_manager = None
     _refund_agent_service = None
     _arbitration_dispute_list_service = None
     _mediation_dispute_list_service = None
     _refund_dispute_list_service = None
 
+    _trader_chat_manager = None
     _mailbox_message_service = None
     _ignored_mailbox_service = None
     _bsq_swap_trade_manager = None
@@ -34,6 +42,23 @@ class GlobalContainer:
     _create_offer_service = None
     _offer_util = None
     _cleanup_mailbox_messages_service = None
+    _xmr_tx_proof_service = None
+
+    _mobile_message_encryption = None
+    _mobile_notification_validator = None
+    _mobile_model = None
+    _mobile_notification_service = None
+
+    _my_offer_taken_events = None
+    _trade_events = None
+    _dispute_msg_events = None
+
+    _price_alert = None
+    _market_alerts = None
+
+    _trigger_price_service = None
+
+    _open_bsq_swap_offer_service = None
 
     @property
     def config(self):
@@ -44,6 +69,91 @@ class GlobalContainer:
             GlobalContainer._config = Config("bisq_light_client", user_data_dir())
 
         return GlobalContainer._config
+
+    @property
+    def bisq_setup(self):
+        if GlobalContainer._bisq_setup is None:
+            from bisq.core.app.bisq_setup import BisqSetup
+
+            GlobalContainer._bisq_setup = BisqSetup(
+                self.domain_initialisation,
+                self.p2p_network_setup,
+                self.wallet_app_setup,
+                self.wallets_manager,
+                self.wallets_setup,
+                self.btc_wallet_service,
+                self.p2p_service,
+                self.private_notification_manager,
+                self.signed_witness_storage_service,
+                self.trade_manager,
+                self.open_offer_manager,
+                self.preferences,
+                self.user,
+                self.alert_manager,
+                self.unconfirmed_bsq_change_output_list_service,
+            )
+        return GlobalContainer._bisq_setup
+
+    @property
+    def domain_initialisation(self):
+        if GlobalContainer._domain_initialisation is None:
+            from bisq.core.app.domain_initialisation import DomainInitialisation
+
+            GlobalContainer._domain_initialisation = DomainInitialisation(
+                self.clock_watcher,
+                self.trade_limits,
+                self.arbitration_manager,
+                self.mediation_manager,
+                self.refund_manager,
+                self.trader_chat_manager,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.bsq_swap_trade_manager,
+                self.failed_trades_manager,
+                self.xmr_tx_proof_service,
+                self.open_offer_manager,
+                self.balances,
+                self.wallet_app_setup,
+                self.arbitrator_manager,
+                self.mediator_manager,
+                self.refund_agent_manager,
+                self.private_notification_manager,
+                self.p2p_service,
+                self.fee_service,
+                self.dao_setup,
+                self.trade_statistics_manager,
+                self.account_age_witness_service,
+                self.signed_witness_service,
+                self.price_feed_service,
+                self.filter_manager,
+                self.vote_result_service,
+                self.mobile_notification_service,
+                self.my_offer_taken_events,
+                self.trade_events,
+                self.dispute_msg_events,
+                self.price_alert,
+                self.market_alerts,
+                self.user,
+                self.dao_state_snapshot_service,
+                self.trigger_price_service,
+                self.mempool_service,
+                self.open_bsq_swap_offer_service,
+                self.mailbox_message_service,
+            )
+        return GlobalContainer._domain_initialisation
+
+    @property
+    def p2p_network_setup(self):
+        if GlobalContainer._p2p_network_setup is None:
+            from bisq.common.app.p2p_network_setup import P2PNetworkSetup
+
+            GlobalContainer._p2p_network_setup = P2PNetworkSetup(
+                self.price_feed_service,
+                self.p2p_service,
+                self.preferences,
+                self.filter_manager,
+            )
+        return GlobalContainer._p2p_network_setup
 
     @property
     def provider(self):
@@ -111,6 +221,47 @@ class GlobalContainer:
         return GlobalContainer._removed_payloads_service
 
     @property
+    def mempool_service(self):
+        if GlobalContainer._mempool_service is None:
+            from bisq.core.provider.mempool.mempool_service import (
+                MempoolService,
+            )
+
+            GlobalContainer._mempool_service = MempoolService(
+                self.socks5_proxy_provider,
+                self.config,
+                self.preferences,
+                self.filter_manager,
+                self.dao_facade,
+                self.dao_state_service,
+                self.burning_man_presentation_service,
+            )
+        return GlobalContainer._mempool_service
+
+    @property
+    def wallet_app_setup(self):
+        if GlobalContainer._wallet_app_setup is None:
+            from bisq.core.app.wallet_app_setup import WalletAppSetup
+
+            GlobalContainer._wallet_app_setup = WalletAppSetup(
+                self.core_context,
+                self.wallets_manager,
+                self.wallets_setup,
+                self.fee_service,
+                self.config,
+                self.preferences,
+            )
+        return GlobalContainer._wallet_app_setup
+
+    @property
+    def trade_limits(self):
+        if GlobalContainer._trade_limits is None:
+            from bisq.core.payment.trade_limits import TradeLimits
+
+            GlobalContainer._trade_limits = TradeLimits(self.dao_state_service)
+        return GlobalContainer._trade_limits
+
+    @property
     def arbitrator_manager(self):
         if GlobalContainer._arbitrator_manager is None:
             from bisq.core.support.dispute.arbitration.arbitrator.arbitrator_manager import (
@@ -125,6 +276,30 @@ class GlobalContainer:
                 self.config.use_dev_privilege_keys,
             )
         return GlobalContainer._arbitrator_manager
+
+    @property
+    def arbitration_manager(self):
+        if GlobalContainer._arbitration_manager is None:
+            from bisq.core.support.dispute.arbitration.arbitration_manager import (
+                ArbitrationManager,
+            )
+
+            GlobalContainer._arbitration_manager = ArbitrationManager(
+                self.p2p_service,
+                self.trade_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_setup,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.open_offer_manager,
+                self.dao_facade,
+                self.key_ring,
+                self.arbitration_dispute_list_service,
+                self.config,
+                self.price_feed_service,
+            )
+        return GlobalContainer._arbitration_manager
 
     @property
     def arbitrator_service(self):
@@ -156,6 +331,30 @@ class GlobalContainer:
         return GlobalContainer._mediator_manager
 
     @property
+    def mediation_manager(self):
+        if GlobalContainer._mediation_manager is None:
+            from bisq.core.support.dispute.mediation.mediation_manager import (
+                MediationManager,
+            )
+
+            GlobalContainer._mediation_manager = MediationManager(
+                self.p2p_service,
+                self.trade_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_setup,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.open_offer_manager,
+                self.dao_facade,
+                self.key_ring,
+                self.mediation_dispute_list_service,
+                self.config,
+                self.price_feed_service,
+            )
+        return GlobalContainer._mediation_manager
+
+    @property
     def mediator_service(self):
         if GlobalContainer._mediator_service is None:
             from bisq.core.support.dispute.mediation.mediator.mediator_service import (
@@ -167,6 +366,32 @@ class GlobalContainer:
                 self.filter_manager,
             )
         return GlobalContainer._mediator_service
+
+    @property
+    def refund_manager(self):
+        if GlobalContainer._refund_manager is None:
+            from bisq.core.support.refund.refund_manager import (
+                RefundManager,
+            )
+
+            GlobalContainer._refund_manager = RefundManager(
+                self.p2p_service,
+                self.trade_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_setup,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.open_offer_manager,
+                self.dao_facade,
+                self.delayed_payout_tx_receiver_service,
+                self.key_ring,
+                self.refund_dispute_list_service,
+                self.config,
+                self.price_feed_service,
+                self.mempool_service,
+            )
+        return GlobalContainer._refund_manager
 
     @property
     def refund_agent_manager(self):
@@ -251,6 +476,23 @@ class GlobalContainer:
                 )
             )
         return GlobalContainer._refund_dispute_list_service
+
+    @property
+    def trader_chat_manager(self):
+        if GlobalContainer._trader_chat_manager is None:
+            from bisq.core.support.traderchat.trader_chat_manager import (
+                TraderChatManager,
+            )
+
+            GlobalContainer._trader_chat_manager = TraderChatManager(
+                self.p2p_service,
+                self.wallets_setup,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.pub_key_ring,
+            )
+        return GlobalContainer._trader_chat_manager
 
     @property
     def mailbox_message_service(self):
@@ -412,6 +654,178 @@ class GlobalContainer:
             )
         return GlobalContainer._cleanup_mailbox_messages_service
 
+    @property
+    def xmr_tx_proof_service(self):
+        if GlobalContainer._xmr_tx_proof_service is None:
+            from bisq.core.trade.txproof.xmr.xmr_tx_proof_service import (
+                XmrTxProofService,
+            )
+
+            GlobalContainer._xmr_tx_proof_service = XmrTxProofService(
+                self.filter_manager,
+                self.preferences,
+                self.trade_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.mediation_manager,
+                self.refund_manager,
+                self.p2p_service,
+                self.wallets_setup,
+                self.socks5_proxy_provider,
+            )
+        return GlobalContainer._xmr_tx_proof_service
+
+    @property
+    def mobile_message_encryption(self):
+        if GlobalContainer._mobile_message_encryption is None:
+            from bisq.core.notifications.mobile_message_encryption import (
+                MobileMessageEncryption,
+            )
+
+            GlobalContainer._mobile_message_encryption = MobileMessageEncryption()
+        return GlobalContainer._mobile_message_encryption
+
+    @property
+    def mobile_notification_validator(self):
+        if GlobalContainer._mobile_notification_validator is None:
+            from bisq.core.notifications.mobile_notification_validator import (
+                MobileNotificationValidator,
+            )
+
+            GlobalContainer._mobile_notification_validator = (
+                MobileNotificationValidator()
+            )
+        return GlobalContainer._mobile_notification_validator
+
+    @property
+    def mobile_model(self):
+        if GlobalContainer._mobile_model is None:
+            from bisq.core.notifications.mobile_model import MobileModel
+
+            GlobalContainer._mobile_model = MobileModel()
+        return GlobalContainer._mobile_model
+
+    @property
+    def mobile_notification_service(self):
+        if GlobalContainer._mobile_notification_service is None:
+            from bisq.core.notifications.mobile_notification_service import (
+                MobileNotificationService,
+            )
+
+            GlobalContainer._mobile_notification_service = MobileNotificationService(
+                self.preferences,
+                self.mobile_message_encryption,
+                self.mobile_notification_validator,
+                self.mobile_model,
+                self.http_client,
+                self.config.use_localhost_for_p2p,
+            )
+        return GlobalContainer._mobile_notification_service
+
+    @property
+    def my_offer_taken_events(self):
+        if GlobalContainer._my_offer_taken_events is None:
+            from bisq.core.notifications.alerts.my_offer_taken_events import (
+                MyOfferTakenEvents,
+            )
+
+            GlobalContainer._my_offer_taken_events = MyOfferTakenEvents(
+                self.mobile_notification_service,
+                self.open_offer_manager,
+            )
+        return GlobalContainer._my_offer_taken_events
+
+    @property
+    def trade_events(self):
+        if GlobalContainer._trade_events is None:
+            from bisq.core.notifications.alerts.trade_events import (
+                TradeEvents,
+            )
+
+            GlobalContainer._trade_events = TradeEvents(
+                self.trade_manager,
+                self.key_ring,
+                self.mobile_notification_service,
+            )
+        return GlobalContainer._trade_events
+
+    @property
+    def dispute_msg_events(self):
+        if GlobalContainer._dispute_msg_events is None:
+            from bisq.core.notifications.alerts.dispute_msg_events import (
+                DisputeMsgEvents,
+            )
+
+            GlobalContainer._dispute_msg_events = DisputeMsgEvents(
+                self.refund_manager,
+                self.mediation_manager,
+                self.p2p_service,
+                self.mobile_notification_service,
+            )
+        return GlobalContainer._dispute_msg_events
+
+    @property
+    def price_alert(self):
+        if GlobalContainer._price_alert is None:
+            from bisq.core.notifications.alerts.price.price_alert import PriceAlert
+
+            GlobalContainer._price_alert = PriceAlert(
+                self.price_feed_service,
+                self.mobile_notification_service,
+                self.user,
+            )
+        return GlobalContainer._price_alert
+
+    @property
+    def market_alerts(self):
+        if GlobalContainer._market_alerts is None:
+            from bisq.core.notifications.alerts.market.market_alerts import MarketAlerts
+
+            GlobalContainer._market_alerts = MarketAlerts(
+                self.offer_book_service,
+                self.mobile_notification_service,
+                self.user,
+                self.price_feed_service,
+                self.key_ring,
+            )
+        return GlobalContainer._market_alerts
+
+    @property
+    def trigger_price_service(self):
+        if GlobalContainer._trigger_price_service is None:
+            from bisq.core.offer.bisq_v1.trigger_price_service import (
+                TriggerPriceService,
+            )
+
+            GlobalContainer._trigger_price_service = TriggerPriceService(
+                self.p2p_service,
+                self.open_offer_manager,
+                self.mempool_service,
+                self.price_feed_service,
+            )
+        return GlobalContainer._trigger_price_service
+
+    @property
+    def open_bsq_swap_offer_service(self):
+        if GlobalContainer._open_bsq_swap_offer_service is None:
+            from bisq.core.offer.bsq_swap.open_bsq_swap_offer_service import (
+                OpenBsqSwapOfferService,
+            )
+
+            GlobalContainer._open_bsq_swap_offer_service = OpenBsqSwapOfferService(
+                self.open_offer_manager,
+                self.btc_wallet_service,
+                self.bsq_wallet_service,
+                self.fee_service,
+                self.p2p_service,
+                self.dao_facade,
+                self.offer_book_service,
+                self.offer_util,
+                self.filter_manager,
+                self.pub_key_ring,
+            )
+        return GlobalContainer._open_bsq_swap_offer_service
+
     ############################################################################### ModuleForAppWithP2p
     _key_storage = None
     _key_ring = None
@@ -561,6 +975,7 @@ class GlobalContainer:
 
     _delayed_payout_tx_receiver_service = None
     _burning_man_service = None
+    _burning_man_presentation_service = None
 
     @property
     def delayed_payout_tx_receiver_service(self):
@@ -585,6 +1000,20 @@ class GlobalContainer:
                 self.dao_state_service,
             )
         return GlobalContainer._burning_man_service
+
+    @property
+    def burning_man_presentation_service(self):
+        if GlobalContainer._burning_man_presentation_service is None:
+            from bisq.core.dao.burningman.burning_man_presentation_service import (
+                BurningManPresentationService,
+            )
+
+            GlobalContainer._burning_man_presentation_service = (
+                BurningManPresentationService(
+                    self.burning_man_service,
+                )
+            )
+        return GlobalContainer._burning_man_presentation_service
 
     ###############################################################################
     _trade_manager = None
@@ -1077,6 +1506,7 @@ class GlobalContainer:
     _bsq_wallet_service = None
     _trade_wallet_service = None
     _providers_repository = None
+    _balances = None
     _price_feed_service = None
     _fee_service = None
     _tx_fee_estimation_service = None
@@ -1157,6 +1587,22 @@ class GlobalContainer:
         return GlobalContainer._providers_repository
 
     @property
+    def balances(self):
+        if GlobalContainer._balances is None:
+            from bisq.core.btc.balances import Balances
+
+            GlobalContainer._balances = Balances(
+                self.trade_manager,
+                self.btc_wallet_service,
+                self.open_offer_manager,
+                self.closed_tradable_manager,
+                self.failed_trades_manager,
+                self.refund_manager,
+            )
+
+        return GlobalContainer._balances
+
+    @property
     def price_feed_service(self):
         if GlobalContainer._price_feed_service is None:
             from bisq.core.provider.price.price_feed_service import PriceFeedService
@@ -1195,11 +1641,27 @@ class GlobalContainer:
         return GlobalContainer._tx_fee_estimation_service
 
     ############################################################################### TODO: Daomodule
+    _dao_setup = None
     _dao_facade = None
 
     _genesis_tx_info = None
     _dao_state = None
     _dao_state_service = None
+    _dao_state_snapshot_service = None
+    _unconfirmed_bsq_balance_service = None
+
+    _vote_result_service = None
+
+    @property
+    def dao_setup(self):
+        if GlobalContainer._dao_setup is None:
+            from bisq.core.dao.dao_setup import DaoSetup
+
+            GlobalContainer._dao_setup = DaoSetup(
+                # TODO
+            )
+
+        return GlobalContainer._dao_setup
 
     @property
     def dao_facade(self):
@@ -1247,6 +1709,87 @@ class GlobalContainer:
 
         return GlobalContainer._dao_state_service
 
+    @property
+    def unconfirmed_bsq_change_output_list_service(self):
+        if GlobalContainer._unconfirmed_bsq_change_output_list_service is None:
+            from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import (
+                UnconfirmedBsqChangeOutputListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._unconfirmed_bsq_change_output_list_service = (
+                UnconfirmedBsqChangeOutputListService(
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    )
+                )
+            )
+
+        return GlobalContainer._unconfirmed_bsq_change_output_list_service
+
+    @property
+    def dao_state_snapshot_service(self):
+        if GlobalContainer._dao_state_snapshot_service is None:
+            from bisq.core.dao.state.dao_state_snapshot_service import (
+                DaoStateSnapshotService,
+            )
+
+            GlobalContainer._dao_state_snapshot_service = DaoStateSnapshotService(
+                # TODO
+            )
+
+        return GlobalContainer._dao_state_snapshot_service
+
+    @property
+    def vote_result_service(self):
+        if GlobalContainer._vote_result_service is None:
+            from bisq.core.dao.governance.voteresult.vote_result_service import (
+                VoteResultService,
+            )
+
+            GlobalContainer._vote_result_service = VoteResultService(
+                # TODO
+            )
+
+        return GlobalContainer._vote_result_service
+
+    ############################################################################### Alert module
+    _alert_manager = None
+    _private_notification_manager = None
+
+    @property
+    def alert_manager(self):
+        if GlobalContainer._alert_manager is None:
+            from bisq.core.alert.alert_manager import AlertManager
+
+            GlobalContainer._alert_manager = AlertManager(
+                self.p2p_service,
+                self.key_ring,
+                self.user,
+                self.config.ignore_dev_msg,
+                self.config.use_dev_privilege_keys,
+            )
+        return GlobalContainer._alert_manager
+
+    @property
+    def private_notification_manager(self):
+        if GlobalContainer._private_notification_manager is None:
+            from bisq.core.alert.private_notification_manager import (
+                PrivateNotificationManager,
+            )
+
+            GlobalContainer._private_notification_manager = PrivateNotificationManager(
+                self.p2p_service,
+                self.network_node,
+                self.mailbox_message_service,
+                self.key_ring,
+                self.config.ignore_dev_msg,
+                self.config.use_dev_privilege_keys,
+            )
+        return GlobalContainer._private_notification_manager
+
     ############################################################################### Filter module
     _filter_manager = None
 
@@ -1279,4 +1822,3 @@ class GlobalContainer:
 
 
 GLOBAL_CONTAINER = GlobalContainer()
-
