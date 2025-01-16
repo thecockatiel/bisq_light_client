@@ -816,6 +816,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     
     def is_use_sound_for_mobile_notifications(self):
         return self.pref_payload.use_sound_for_mobile_notifications
+    
+    def is_tac_accepted_v120(self):
+        return self.pref_payload.tac_accepted_v120
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
