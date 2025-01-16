@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from bisq.core.notifications.alerts.dispute_msg_events import DisputeMsgEvents
     from bisq.core.alert.private_notification_manager import PrivateNotificationManager
     from bisq.core.notifications.alerts.price.price_alert import PriceAlert
-    from bisq.core.notifications.alerts.my_offers_taken import MyOfferTakenEvents
+    from bisq.core.notifications.alerts.my_offer_taken_events import MyOfferTakenEvents
     from bisq.core.notifications.alerts.trade_events import TradeEvents
     from bisq.core.notifications.mobile_notification_service import (
         MobileNotificationService,
