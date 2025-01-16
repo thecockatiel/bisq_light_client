@@ -1,6 +1,9 @@
+import base64
 import unittest
 
-from bisq.common.crypto.encryption import Encryption
+from bisq.common.crypto.encryption import Encryption, ECPrivkey, rsa
+from bisq.common.crypto.sig import Sig, dsa
+from bisq.core.alert.alert import Alert
 
 class TestEncryption(unittest.TestCase):
     def setUp(self):
@@ -50,7 +53,43 @@ class TestEncryption(unittest.TestCase):
         self.assertFalse(Encryption.verify_hmac(payload, bytes.fromhex("00"), secret_key))
         self.assertTrue(Encryption.get_payload_with_hmac(payload, secret_key).hex(), self.text_message_payload_with_hmac_hex)
 
+    def test_verify_ec_message_is_from_pubkey_data_from_java(self):
+        signing_key = ECPrivkey.from_secret_scalar(10)
+        alert_msg_as_hex = "foo bar".encode().hex()
+        try:
+            Encryption.verify_ec_message_is_from_pubkey(
+                alert_msg_as_hex,
+                "Hyd8jbtqZS9WsAxJI8YOpZZFNoYiihN97pupWEVJoOKXXeRvE3+4u7kn0UkKwUxuAvvvROMarma9uKAV7U7QTnY=",
+                signing_key.get_public_key_bytes()
+            )
+            verified = True
+        except Exception as e:
+            verified = False
+        self.assertTrue(verified)
         
+    def test_verify_ec_message_is_from_pubkey_flow(self):
+        alert = Alert("foo bar", False, False, "1")
+        alert_msg_as_hex = alert.message.encode().hex()
+        signing_key = ECPrivkey.from_secret_scalar(10)
+        signature_as_base64 = base64.b64encode(signing_key.sign_message(alert_msg_as_hex, True)).decode("utf-8")
+        # check that it's same procedure as java as we expect
+        self.assertEqual(signature_as_base64, "Hyd8jbtqZS9WsAxJI8YOpZZFNoYiihN97pupWEVJoOKXXeRvE3+4u7kn0UkKwUxuAvvvROMarma9uKAV7U7QTnY=")
+        
+        dsa_key = Sig.get_private_key_from_bytes(bytes.fromhex("3082014b0201003082012c06072a8648ce3804013082011f02818100fd7f53811d75122952df4a9c2eece4e7f611b7523cef4400c31e3f80b6512669455d402251fb593d8d58fabfc5f5ba30f6cb9b556cd7813b801d346ff26660b76b9950a5a49f9fe8047b1022c24fbba9d7feb7c61bf83b57e7c6a8a6150f04fb83f6d3c51ec3023554135a169132f675f3ae2b61d72aeff22203199dd14801c70215009760508f15230bccb292b982a2eb840bf0581cf502818100f7e1a085d69b3ddecbbcab5c36b857b97994afbbfa3aea82f9574c0b3d0782675159578ebad4594fe67107108180b449167123e84c281613b7cf09328cc8a6e13c167a8b547c8d28e0a3ae1e2bb3a675916ea37f0bfa213562f1fb627a01243bcca4f1bea8519089a883dfe15ae59f06928b665e807b552564014c3bfecf492a04160214494239658dfa3f12ed932725a5058510a902c85a"))
+        alert.set_sig_and_pub_key(
+            signature_as_base64,
+            dsa_key.public_key(),
+        )
+        try:
+            Encryption.verify_ec_message_is_from_pubkey(
+                alert_msg_as_hex,
+                signature_as_base64,
+                signing_key.get_public_key_bytes()
+            )
+            verified = True
+        except Exception as e:
+            verified = False
+        self.assertTrue(verified)
 
 if __name__ == '__main__':
     unittest.main()
