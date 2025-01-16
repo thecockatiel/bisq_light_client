@@ -7,6 +7,7 @@ from aiohttp_socks import ProxyType, ProxyConnector
 import bisq.common.version as Version
 from bisq.core.network.http.async_http_client import AsyncHttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
+from bisq.core.network.http.http_response_error import HttpResponseError
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import get_logger
@@ -166,8 +167,14 @@ class AsyncHttpClientImpl(AsyncHttpClient):
                     allow_redirects=True,
                 ) as response:
                     if response.status != 200:
-                        raise Exception(
-                            f"Received errorMsg '{response.text}' with responseCode {response.status} from {self.base_url} {url}. Response took: {get_time_ms() - ts} ms. params: {params}"
+                        response_text = response.text()
+                        raise HttpResponseError(
+                            f"Server responded with non-200 status code: {response.status}",
+                            response.status,
+                            response_text,
+                            f"{self.base_url} {url}",
+                            (get_time_ms() - ts),
+                            params
                         )
 
                     response = await response.text()
