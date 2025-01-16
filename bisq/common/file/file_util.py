@@ -127,3 +127,10 @@ def resource_to_file(resource_path: str, destination_path: Path):
     if not from_path.exists():
         raise ResourceNotFoundException(str(from_path))
     return shutil.copy(from_path, destination_path)
+
+def get_usable_space(path: Path) -> int:
+    try:
+        return shutil.disk_usage(path).free
+    except Exception as e:
+        logger.error(f"Failed to get usable space for {path}: {str(e)}")
+        return 0
