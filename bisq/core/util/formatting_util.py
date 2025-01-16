@@ -7,6 +7,7 @@ from bisq.core.locale.currency_util import is_fiat_currency
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
+from utils.formatting import readable_file_size
 
 if TYPE_CHECKING:
     from bisq.core.monetary.altcoin import Altcoin
@@ -168,4 +169,8 @@ class FormattingUtils:
             MathUtils.round_double(value * 100.0, 2)
         ).replace(",", ".")
 
+    @staticmethod
+    def format_bytes(amount: int):
+        return readable_file_size(amount)
+    
     # TODO: implement rest
