@@ -30,7 +30,7 @@ class LocalBitcoinNode:
         the local node should be ignored, a call to this method will not trigger an
         unnecessary detection attempt.
         """
-        return not self.should_be_ignored() and self.is_detected()
+        return not self.should_be_ignored() and await self.is_detected()
 
     def should_be_ignored(self) -> bool:
         """
