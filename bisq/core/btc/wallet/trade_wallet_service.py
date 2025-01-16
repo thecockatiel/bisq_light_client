@@ -18,6 +18,7 @@ class TradeWalletService:
     
     def __init__(self):
         self.wallet: Optional["Wallet"] = None
+        self.aes_key: Optional[bytes] = None
 
     def get_wallet_tx(self, tx_id: str) -> "Transaction":
         raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
