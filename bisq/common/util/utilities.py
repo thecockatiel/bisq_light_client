@@ -56,3 +56,6 @@ def ints_to_bytes_be(ints: list[int]) -> bytes:
         result[pos + 2] = (v >> 8) & 0xFF
         result[pos + 3] = v & 0xFF
     return bytes(result)
+
+def is_qubes_os() -> bool:
+    return platform.system().lower() == "linux" and "qubes" in platform.platform().lower()
