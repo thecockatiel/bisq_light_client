@@ -689,6 +689,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
     def get_bsq_block_chain_explorers(self):
         return BSQ_MAIN_NET_EXPLORERS
+
+    def get_bsq_block_chain_explorer(self):
+        return self.pref_payload.bsq_block_chain_explorer
     
     def show_again(self, key: str):
         return key not in self.pref_payload.dont_show_again_map or not self.pref_payload.dont_show_again_map.get(key)
