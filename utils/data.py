@@ -89,7 +89,7 @@ class UnsetValue:
     
 __unset_value = UnsetValue()
 
-def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[list[Union[Any, Literal["UNSET"]]]], T]) -> SimpleProperty[T]:
+def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[list[Union[Any, UnsetValue]]], T]) -> SimpleProperty[T]:
     results = [__unset_value] * len(properties)
     listeners = {}
 
