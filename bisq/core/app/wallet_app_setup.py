@@ -47,7 +47,7 @@ class WalletAppSetup:
 
         self.btc_info_binding: Optional[SimpleProperty[str]] = None
         self.btc_sync_progress_property = SimpleProperty(-1.0)
-        self.wallet_service_error_msg_propery = SimpleProperty("")
+        self.wallet_service_error_msg_property = SimpleProperty("")
         self.btc_splash_sync_icon_id_property = SimpleProperty("")
         self.btc_info_property = SimpleProperty(
             Res.get("mainView.footer.btcInfo.initializing")
