@@ -19,6 +19,12 @@ if sys.version_info[:3] < _min_python_version_tuple:
 
 from utils.aio import as_future, get_asyncio_loop
 from global_container import GLOBAL_CONTAINER
+
+# Exit fast if help requested
+if GLOBAL_CONTAINER.config.help_requested:
+    GLOBAL_CONTAINER.config.parser.print_help()
+    sys.exit(0)
+    
 # Force initialization of services 
 GLOBAL_CONTAINER.signed_witness_service
 GLOBAL_CONTAINER.account_age_witness_service
