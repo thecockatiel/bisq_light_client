@@ -1,4 +1,4 @@
-from bisq.core.network.http.http_client import HttpClient
+from bisq.core.network.http.async_http_client import AsyncHttpClient
 from bisq.core.network.p2p.p2p_service import P2PService
 from bisq.core.provider.http_client_provider import HttpClientProvider
 import bisq.common.version as Version
@@ -8,11 +8,11 @@ from bisq.core.provider.price.pricenode_dto import PricenodeDto
 
 
 class PriceProvider(HttpClientProvider):
-    def __init__(self, http_client: HttpClient, base_url: str):
+    def __init__(self, http_client: AsyncHttpClient, base_url: str):
         super().__init__(http_client, base_url, False)
         self.shut_down_requested = False
 
-    def get_all(self) -> "PricenodeDto":
+    async def get_all(self) -> "PricenodeDto":
         if self.shut_down_requested:
             return {
                 "data": [],
@@ -29,7 +29,7 @@ class PriceProvider(HttpClientProvider):
             hs_version = ", HSv3" if len(host_name) > 22 else ", HSv2"
 
         user_agent = f"bisq/{Version.VERSION}{hs_version}"
-        json_response = self.http_client.get(
+        json_response = await self.http_client.get(
             "/getAllMarketPrices", headers={"User-Agent": user_agent}
         )
 

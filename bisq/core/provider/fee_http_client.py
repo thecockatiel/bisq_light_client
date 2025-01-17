@@ -1,5 +1,5 @@
-from bisq.core.network.http.http_client_impl import HttpClientImpl
+from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
 
 
-class FeeHttpClient(HttpClientImpl):
+class FeeHttpClient(AsyncHttpClientImpl):
     pass

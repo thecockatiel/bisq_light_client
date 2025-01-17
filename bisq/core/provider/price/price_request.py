@@ -1,5 +1,6 @@
-from concurrent.futures import CancelledError, ThreadPoolExecutor, Future
+from asyncio import CancelledError, Future
 from typing import TYPE_CHECKING, Optional
+from utils.aio import as_future
 
 from bisq.core.provider.price.price_request_exception import PriceRequestException
 
@@ -10,12 +11,9 @@ if TYPE_CHECKING:
 # TODO: replace thread pool executor and shutdown flow 
 class PriceRequest:
     def __init__(self):
-        self.executor = ThreadPoolExecutor(
-            max_workers=5,
-            thread_name_prefix="PriceRequest",
-        )
         self.provider: Optional["PriceProvider"] = None
         self.shut_down_requested = False
+        self.request_future: Optional[Future] = None
 
     def request_all_prices(self, provider: "PriceProvider") -> Future["PricenodeDto"]:
         self.provider = provider
@@ -33,7 +31,7 @@ class PriceRequest:
                 except Exception as e:
                     result_future.set_exception(PriceRequestException(e, base_url))
 
-        future = self.executor.submit(provider.get_all)
+        self.request_future = future = as_future(provider.get_all())
         future.add_done_callback(callback)
         return result_future
 
@@ -41,4 +39,5 @@ class PriceRequest:
         self.shut_down_requested = True
         if self.provider is not None:
             self.provider.shut_down()
-        self.executor.shutdown(wait=True, cancel_futures=True)
+        if self.request_future:
+            self.request_future.cancel()
