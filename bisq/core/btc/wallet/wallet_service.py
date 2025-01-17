@@ -174,3 +174,7 @@ class WalletService(ABC):
 
     def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
         self.wallet.remove_change_event_listener(listener)
+
+    def shut_down(self):
+        # TODO
+        pass

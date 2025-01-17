@@ -24,6 +24,7 @@ class WalletsSetup:
         self.chain_height_property = SimpleProperty(0)
         self.wallets_setup_failed = SimpleProperty(False)
         self.wallet_config: Optional["WalletConfig"] = None
+        self.shut_down_complete = SimpleProperty(False)
     
     @property
     def is_download_complete(self):
@@ -41,3 +42,9 @@ class WalletsSetup:
 
     def get_wallet_config(self):
         return self.wallet_config
+
+    def shut_down(self):
+        # TODO
+        self.shut_down_complete.set(True)
+        pass 
+    
