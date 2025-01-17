@@ -25,7 +25,7 @@ class MasterTimer:
                         MasterTimer.logger.error(f"Error executing listener: {e}")
                 time.sleep(MasterTimer.FRAME_INTERVAL_MS / 1000.0)
 
-        timer_thread = threading.Thread(target=run_timer, daemon=True)
+        timer_thread = threading.Thread(target=run_timer, daemon=True, name="MasterTimerThread")
         timer_thread.start()
 
     @staticmethod
