@@ -56,8 +56,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.connection_listeners: ThreadSafeSet["ConnectionListener"] = ThreadSafeSet()
         self.setup_listeners: ThreadSafeSet["SetupListener"] = ThreadSafeSet()
 
-        self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2)
-        self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3)
+        self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2, thread_name_prefix="NetworkNode.connection_executor")
+        self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3, thread_name_prefix="NetworkNode.send_message_executor")
 
         self.__shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
