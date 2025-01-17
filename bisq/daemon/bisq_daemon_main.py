@@ -15,9 +15,10 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
         self._grpc_server: Optional["GrpcServer"] = None
 
     @staticmethod
-    def main():
+    async def main():
         # entry point
         BisqDaemonMain().execute()
+        await BisqDaemonMain.keep_running()
 
     # /////////////////////////////////////////////////////////////////////////////////////
     # // First synchronous execution tasks

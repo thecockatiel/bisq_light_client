@@ -21,13 +21,12 @@ class BisqHeadlessAppMain(BisqExecutable):
         self.trade_limits: "TradeLimits" = None
 
     @staticmethod
-    def main():
+    async def main():
         BisqHeadlessAppMain().execute()
+        await BisqHeadlessAppMain.keep_running()
 
     def do_execute(self):
         super().do_execute()
-
-        as_future(self.keep_running())
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // First synchronous execution tasks
