@@ -540,12 +540,10 @@ class BisqSetup:
                         self.disk_space_warning_handler(message)
             except Exception as e:
                 logger.error(e)
-
-        as_future(
-            run_in_thread(
-                get_usable_space,
-                self.config.app_data_dir,
-            )
+        
+        run_in_thread(
+            get_usable_space,
+            self.config.app_data_dir,
         ).add_done_callback(on_done)
 
     def get_last_bisq_version(self) -> Optional[str]:

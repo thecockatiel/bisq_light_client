@@ -10,7 +10,7 @@ from typing import Any, Awaitable, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
 _T = TypeVar("T")
 _R = TypeVar("R")
-
+_K = TypeVar("K")
 
 def _get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
     """Returns the asyncio event loop that is *running in this thread*, if any."""
@@ -91,10 +91,6 @@ def is_async_callable(obj):
             return is_async_callable(obj.func)
     return False
 
-async def run_in_thread(func: Callable[...,_T], *args: _R):
-    '''Run a function in a separate thread, and await its completion.'''
-    return await get_asyncio_loop().run_in_executor(None, func, *args)
-
 def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
     '''Run a function in current thread's asyncio loop and return a future'''
     concurrent_future = asyncio.run_coroutine_threadsafe(coro, get_asyncio_loop())
@@ -103,7 +99,8 @@ def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
 from twisted.internet import asyncioreactor
 asyncioreactor.install(create_event_loop())
 
-from twisted.internet import reactor
+from twisted.internet import reactor, threads
+
 def stop_reactor_and_exit(status_code: int = 0):
     try:
         if reactor.running:
@@ -111,3 +108,7 @@ def stop_reactor_and_exit(status_code: int = 0):
     except:
         pass
     sys.exit(status_code)
+
+def run_in_thread(func: Callable[..., _T], *args: _R, **kwargs: _K) -> asyncio.Future[_T]:
+    '''Run a function in a separate thread, and await its completion.'''
+    return as_future(threads.deferToThread(func, *args, **kwargs))
