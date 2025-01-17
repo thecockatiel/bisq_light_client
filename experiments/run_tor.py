@@ -3,12 +3,13 @@
 from pathlib import Path
 from utils.aio import as_future
 from twisted.internet import reactor
-from global_container import GLOBAL_CONTAINER
+from global_container import GLOBAL_CONTAINER, GlobalContainer, set_global_container
 from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging
 
+set_global_container(GlobalContainer())
 configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 async def main():

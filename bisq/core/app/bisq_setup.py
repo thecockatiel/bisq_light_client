@@ -202,7 +202,7 @@ class BisqSetup:
         self.wallet_initialized = SimpleProperty(False)
         self.all_basic_services_initialized: bool = False
         self.p2p_network_and_wallet_initialized: Optional["SimpleProperty[bool]"] = None
-        self.bisq_setup_listeners: set["BisqSetupListener"] = []
+        self.bisq_setup_listeners= set["BisqSetupListener"]()
 
         MemPoolSpaceTxBroadcaster.init(
             socks5_proxy_provider, preferences, local_bitcoin_node, config

@@ -5,7 +5,7 @@ from bisq.core.app.bisq_setup_listener import BisqSetupListener
 
 if TYPE_CHECKING:
     from global_container import GlobalContainer
-    from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
+    from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 
 # Keeping the name injector is intentional. we may replace global container with an actual injector in the future
 
@@ -13,12 +13,12 @@ class HeadlessApp(UncaughtExceptionHandler, BisqSetupListener, ABC):
 
     @property
     @abstractmethod
-    def graceful_shutdown_handler(self) -> "GracefulShutDownHandler":
+    def graceful_shut_down_handler(self) -> "GracefulShutDownHandler":
         pass
 
-    @graceful_shutdown_handler.setter
+    @graceful_shut_down_handler.setter
     @abstractmethod
-    def graceful_shutdown_handler(self, value: "GracefulShutDownHandler"):
+    def graceful_shut_down_handler(self, value: "GracefulShutDownHandler"):
         pass
     
     @property

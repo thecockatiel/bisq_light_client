@@ -4,10 +4,11 @@ from datetime import timedelta
 import sys
 from typing import TYPE_CHECKING, Optional
 
+from utils.aio import stop_reactor_and_exit
 from bisq.common.config.config_exception import ConfigException
 from bisq.common.persistence.persistence_manager import PersistenceManager
 from bisq.common.setup.common_setup import CommonSetup
-from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
+from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
 from bisq.common.user_thread import UserThread
@@ -18,10 +19,12 @@ from global_container import GlobalContainer, set_global_container
 from utils.concurrency import AtomicInt
 from utils.dir import user_data_dir
 from threading import Timer
+from bisq.common.setup.log_setup import configure_logging, get_logger
+from bisq.common.config.config import Config
 
 if TYPE_CHECKING:
     from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-    from bisq.common.config.config import Config
+import traceback
 
 logger = get_logger(__name__)
 
@@ -53,15 +56,15 @@ class BisqExecutable(
             self._config = Config(self.app_name, user_data_dir())
             if self._config.help_requested:
                 self._config.parser.print_help()
-                return sys.exit(BisqExecutable.EXIT_SUCCESS)
-            self.setup_injector() # We want to do this as early as possible
+                return stop_reactor_and_exit(BisqExecutable.EXIT_SUCCESS)
+            configure_logging(log_file=self._config.app_data_dir.joinpath("bisq.log"), log_level=self._config.log_level)
         except ConfigException as e:
             print(f"error: {e}")
-            return sys.exit(BisqExecutable.EXIT_FAILURE)
+            return stop_reactor_and_exit(BisqExecutable.EXIT_FAILURE)
         except Exception as e:
             print(f"fault: An unexpected error occurred. Please file a report at https://github.com/thecockatiel/bisq_light_client")
-            print(e)
-            return sys.exit(BisqExecutable.EXIT_FAILURE)
+            traceback.print_exc()
+            return stop_reactor_and_exit(BisqExecutable.EXIT_FAILURE)
         
         self.do_execute()
         
@@ -97,6 +100,7 @@ class BisqExecutable(
         # As the handler method might be overwritten by subclasses and they use the application as handler
         # we need to setup the handler after the application is created.
         CommonSetup.setup_uncaught_exception_handler(self)
+        self.setup_injector()
         
         self._has_downgraded = self._injector.bisq_setup.has_downgraded()
         if self._has_downgraded:
@@ -111,7 +115,12 @@ class BisqExecutable(
     # // We continue with a series of synchronous execution tasks
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
+    @abstractmethod
+    def init_core_module(self):
+        pass
+    
     def setup_injector(self):
+        self.init_core_module()
         self._injector = GlobalContainer()
         self._injector._config = self._config
         set_global_container(self._injector)
@@ -170,7 +179,7 @@ class BisqExecutable(
         if self._injector is None:
             logger.info("Shut down called before injector was created")
             result_handler()
-            return sys.exit(BisqExecutable.EXIT_SUCCESS)
+            return stop_reactor_and_exit(BisqExecutable.EXIT_SUCCESS)
 
         def timeout_handler():
             logger.warning("Graceful shutdown not completed in 10 sec. Triggering timeout handler.")
@@ -178,7 +187,9 @@ class BisqExecutable(
 
         # We do not use the UserThread to avoid that the timeout would not get triggered in case the UserThread
         # would get blocked by a shutdown routine.
-        Timer(10.0, timeout_handler).start()
+        exit_timer = Timer(10.0, timeout_handler)
+        exit_timer.daemon = True
+        exit_timer.start()
 
         try:
             self._injector.clock_watcher.shut_down()
@@ -219,13 +230,13 @@ class BisqExecutable(
             logger.info("PersistenceManager flushAllDataToDiskAtShutdown started")
             PersistenceManager.flush_all_data_to_disk_at_shutdown(lambda: self._on_flush_complete(result_handler, status))
         else:
-            UserThread.run_after(lambda: sys.exit(status), timedelta(milliseconds=100))
+            UserThread.run_after(lambda: stop_reactor_and_exit(status), timedelta(milliseconds=100))
 
     def _on_flush_complete(self, result_handler: Callable[[], None], status: int):
         logger.info("Graceful shutdown completed. Exiting now.")
         result_handler()
-        UserThread.run_after(lambda: sys.exit(status), timedelta(milliseconds=100))
-    
+        UserThread.run_after(lambda: stop_reactor_and_exit(status), timedelta(milliseconds=100))
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // UncaughtExceptionHandler implementation
     # ///////////////////////////////////////////////////////////////////////////////////////////

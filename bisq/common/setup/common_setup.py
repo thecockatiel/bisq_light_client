@@ -11,7 +11,7 @@ from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
 
 from bisq.common.ascii_logo import show_ascii_logo
-from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
+from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from signal import signal, SIGINT, SIGTERM
 
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
@@ -28,10 +28,10 @@ logger = get_logger(__name__)
 
 class CommonSetup:
     @staticmethod
-    def setup_sig_int_handlers(graceful_shutdown_handler: GracefulShutDownHandler):
+    def setup_sig_int_handlers(graceful_shut_down_handler: GracefulShutDownHandler):
         def signal_handler(sig: int, frame):
             logger.info(f"Received signal {sig}")
-            UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
+            UserThread.execute(lambda: graceful_shut_down_handler.graceful_shut_down(lambda: None))
 
         if platform.system() == 'Windows':
             try:
@@ -39,18 +39,18 @@ class CommonSetup:
                 signal(SIGTERM, signal_handler)
             except Exception as e:
                 logger.warning(f"Could not set up signal handlers on windows: {e}")
-                
-            # Add keyboard interrupt handler as fallback
-            def keyboard_interrupt_handler():
-                while True:
-                    try:
-                        input()
-                    except (KeyboardInterrupt, EOFError):
-                        UserThread.execute(lambda: graceful_shutdown_handler.graceful_shut_down(lambda: None))
-                        return
-            
+
             if threading.current_thread() is threading.main_thread():
-                keyboard_thread = threading.Thread(target=keyboard_interrupt_handler, daemon=True)
+                # Add keyboard interrupt handler as fallback
+                def keyboard_interrupt_handler():
+                    while True:
+                        try:
+                            input()
+                        except (KeyboardInterrupt, EOFError):
+                            UserThread.execute(lambda: graceful_shut_down_handler.graceful_shut_down(lambda: None))
+                            break
+            
+                keyboard_thread = threading.Thread(target=keyboard_interrupt_handler, daemon=True, name="KeyboardInterruptHandlerThread")
                 keyboard_thread.start()
         else:
             # Unix-like systems
@@ -60,7 +60,7 @@ class CommonSetup:
     @staticmethod
     def setup_uncaught_exception_handler(uncaught_exception_handler: UncaughtExceptionHandler):
         def exception_handler(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType, thread: threading.Thread = None):
-            if exc_type.__name__ == "CancelledError":
+            if exc_type.__name__ in  ["CancelledError", "AsyncioCancelledError", "SystemExit"]:
                 return
             
             if isinstance(exc_value, MemoryError):
@@ -87,12 +87,12 @@ class CommonSetup:
         log.startLoggingWithObserver(on_twisted_log, 0)
 
     @staticmethod
-    def setup(config: "Config", graceful_shutdown_handler: GracefulShutDownHandler):
+    def setup(config: "Config", graceful_shut_down_handler: GracefulShutDownHandler):
         show_ascii_logo()
         Version.set_base_crypto_network_id(config.base_currency_network.value)
         Version.print_version()
         Profiler.print_system_load()
-        CommonSetup.setup_sig_int_handlers(graceful_shutdown_handler)
+        CommonSetup.setup_sig_int_handlers(graceful_shut_down_handler)
         DevEnv.setup(config)
 
     @staticmethod

@@ -71,7 +71,9 @@ class WalletAppSetup:
         wallet_initialized_handler: Callable[[], None],
     ):
         logger.info(f"Initialize WalletAppSetup with partial python port of BitcoinJ")
-
+        download_complete_handler() # For now to make setup work
+        wallet_initialized_handler() # For now to make setup work
+        
         # wallet_service_exception = SimpleProperty[Exception]()
 
         # def handle_btc_info(info: list[Union[Literal['UNSET'], Any]]):

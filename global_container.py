@@ -24,8 +24,10 @@ class GlobalContainer:
     _config = None
     _bisq_setup = None
     _domain_initialisation = None
+    _p2p_network_setup = None
     _provider = None
     _corrupted_storage_file_handler = None
+    _btc_formatter = None
     _bsq_formatter = None
     _removed_payloads_service = None
     _mempool_service = None
@@ -74,6 +76,8 @@ class GlobalContainer:
     _trigger_price_service = None
 
     _open_bsq_swap_offer_service = None
+    _local_bitcoin_node = None
+    _app_startup_state = None
 
     @property
     def config(self):
@@ -106,6 +110,15 @@ class GlobalContainer:
                 self.user,
                 self.alert_manager,
                 self.unconfirmed_bsq_change_output_list_service,
+                self.config,
+                self.account_age_witness_service,
+                self.btc_formatter,
+                self.local_bitcoin_node,
+                self.app_startup_state,
+                self.socks5_proxy_provider,
+                self.mediator_manager,
+                self.refund_manager,
+                self.arbitration_manager,
             )
         return GlobalContainer._bisq_setup
 
@@ -209,6 +222,14 @@ class GlobalContainer:
                 CorruptedStorageFileHandler()
             )
         return GlobalContainer._corrupted_storage_file_handler
+
+    @property
+    def btc_formatter(self):
+        if GlobalContainer._btc_formatter is None:
+            from bisq.core.util.coin.immutable_coin_formatter import ImmutableCoinFormatter
+
+            GlobalContainer._btc_formatter = ImmutableCoinFormatter(self.config.base_currency_network_parameters.get_monetary_format())
+        return GlobalContainer._btc_formatter
 
     @property
     def bsq_formatter(self):
@@ -846,6 +867,31 @@ class GlobalContainer:
                 self.pub_key_ring,
             )
         return GlobalContainer._open_bsq_swap_offer_service
+
+    @property
+    def local_bitcoin_node(self):
+        if GlobalContainer._local_bitcoin_node is None:
+            from bisq.core.btc.nodes.local_bitcoin_node import (
+                LocalBitcoinNode,
+            )
+
+            GlobalContainer._local_bitcoin_node = LocalBitcoinNode(
+                self.config
+            )
+        return GlobalContainer._local_bitcoin_node
+
+    @property
+    def app_startup_state(self):
+        if GlobalContainer._app_startup_state is None:
+            from bisq.core.app.app_startup_state import (
+                AppStartupState,
+            )
+
+            GlobalContainer._app_startup_state = AppStartupState(
+                self.wallets_setup,
+                self.p2p_service,
+            )
+        return GlobalContainer._app_startup_state
 
     ############################################################################### ModuleForAppWithP2p
     _key_storage = None
@@ -1512,9 +1558,9 @@ class GlobalContainer:
     @property
     def http_client(self):
         if GlobalContainer._http_client is None:
-            from bisq.core.network.http.http_client_impl import HttpClientImpl
+            from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
 
-            GlobalContainer._http_client = HttpClientImpl(
+            GlobalContainer._http_client = AsyncHttpClientImpl(
                 None, self.socks5_proxy_provider
             )
 
@@ -1627,9 +1673,10 @@ class GlobalContainer:
     def price_feed_service(self):
         if GlobalContainer._price_feed_service is None:
             from bisq.core.provider.price.price_feed_service import PriceFeedService
+            from bisq.core.provider.price_http_client import PriceHttpClient
 
             GlobalContainer._price_feed_service = PriceFeedService(
-                self.http_client,
+                PriceHttpClient(None, self.socks5_proxy_provider),
                 self.fee_service,
                 self.providers_repository,
                 self.preferences,
@@ -1669,7 +1716,7 @@ class GlobalContainer:
     _dao_state = None
     _dao_state_service = None
     _dao_state_snapshot_service = None
-    _unconfirmed_bsq_balance_service = None
+    _unconfirmed_bsq_change_output_list_service = None
 
     _vote_result_service = None
 
@@ -1731,6 +1778,19 @@ class GlobalContainer:
         return GlobalContainer._dao_state_service
 
     @property
+    def dao_state_snapshot_service(self):
+        if GlobalContainer._dao_state_snapshot_service is None:
+            from bisq.core.dao.state.dao_state_snapshot_service import (
+                DaoStateSnapshotService,
+            )
+
+            GlobalContainer._dao_state_snapshot_service = DaoStateSnapshotService(
+                # TODO
+            )
+
+        return GlobalContainer._dao_state_snapshot_service
+
+    @property
     def unconfirmed_bsq_change_output_list_service(self):
         if GlobalContainer._unconfirmed_bsq_change_output_list_service is None:
             from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import (
@@ -1749,19 +1809,6 @@ class GlobalContainer:
             )
 
         return GlobalContainer._unconfirmed_bsq_change_output_list_service
-
-    @property
-    def dao_state_snapshot_service(self):
-        if GlobalContainer._dao_state_snapshot_service is None:
-            from bisq.core.dao.state.dao_state_snapshot_service import (
-                DaoStateSnapshotService,
-            )
-
-            GlobalContainer._dao_state_snapshot_service = DaoStateSnapshotService(
-                # TODO
-            )
-
-        return GlobalContainer._dao_state_snapshot_service
 
     @property
     def vote_result_service(self):

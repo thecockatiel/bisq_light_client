@@ -302,7 +302,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         # Does not contain inbound and outbound connection with the same peer node address
         return {conn.peers_node_address for conn in self.get_confirmed_connections()}
 
-    def shut_down(self, shutdown_complete_handler: Optional[Callable[[], None]] = None) -> None:
+    def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None) -> None:
         logger.info("NetworkNode shutdown started")
 
         if not self.__shut_down_in_progress:
@@ -317,8 +317,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             if num_connections == 0:
                 logger.info("Shutdown immediately because no connections are open.")
-                if shutdown_complete_handler:
-                    shutdown_complete_handler()
+                if shut_down_complete_handler:
+                    shut_down_complete_handler()
                 return
 
             logger.info(f"Shutdown {num_connections} connections")
@@ -327,8 +327,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             def timeout_handler():
                 logger.info("Shutdown completed due timeout")
-                if shutdown_complete_handler:
-                    shutdown_complete_handler()
+                if shut_down_complete_handler:
+                    shut_down_complete_handler()
 
             timer = UserThread.run_after(
                 timeout_handler, timedelta(milliseconds=1500)
@@ -345,13 +345,13 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                     timer.stop()
                     self.connection_executor.shutdown(wait=False)
                     self.send_message_executor.shutdown(wait=False)
-                    if shutdown_complete_handler:
-                        shutdown_complete_handler()
+                    if shut_down_complete_handler:
+                        shut_down_complete_handler()
 
             for connection in all_connections:
                 connection.shut_down(
                     close_connection_reason=CloseConnectionReason.APP_SHUT_DOWN,
-                    shutdown_complete_handler=lambda conn=connection: on_connection_shutdown(
+                    shut_down_complete_handler=lambda conn=connection: on_connection_shutdown(
                         conn
                     ),
                 )

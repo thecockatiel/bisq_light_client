@@ -12,7 +12,7 @@ if TYPE_CHECKING:
         CorruptedStorageFileHandler,
     )
     from bisq.core.app.bisq_setup import BisqSetup
-    from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
+    from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
     from global_container import GlobalContainer
 
 logger = get_logger(__name__)
@@ -23,7 +23,7 @@ class BisqHeadlessApp(HeadlessApp):
 
     def __init__(self):
         self.__shutdown_requested = False
-        self.__graceful_shutdown_handler: Optional["GracefulShutDownHandler"] = None
+        self.__graceful_shut_down_handler: Optional["GracefulShutDownHandler"] = None
         self._injector: Optional["GlobalContainer"] = None
         self._bisq_setup: Optional["BisqSetup"] = None
         self._corrupted_storage_file_handler: Optional[
@@ -34,12 +34,12 @@ class BisqHeadlessApp(HeadlessApp):
         BisqHeadlessApp.shut_down_handler = self.stop
 
     @property
-    def graceful_shutdown_handler(self) -> "GracefulShutDownHandler":
-        return self.__graceful_shutdown_handler
+    def graceful_shut_down_handler(self) -> "GracefulShutDownHandler":
+        return self.__graceful_shut_down_handler
 
-    @graceful_shutdown_handler.setter
-    def graceful_shutdown_handler(self, value: "GracefulShutDownHandler"):
-        self.__graceful_shutdown_handler = value
+    @graceful_shut_down_handler.setter
+    def graceful_shut_down_handler(self, value: "GracefulShutDownHandler"):
+        self.__graceful_shut_down_handler = value
 
     @property
     def injector(self) -> "GlobalContainer":
@@ -51,8 +51,8 @@ class BisqHeadlessApp(HeadlessApp):
 
     def start_application(self):
         try:
-            bisq_setup = self.injector.bisq_setup
-            bisq_setup.add_bisq_setup_listener(self)
+            self._bisq_setup = self.injector.bisq_setup
+            self._bisq_setup.add_bisq_setup_listener(self)
 
             self._corrupted_storage_file_handler = (
                 self.injector.corrupted_storage_file_handler
@@ -153,7 +153,7 @@ class BisqHeadlessApp(HeadlessApp):
             logger.info(
                 "There was a problem with synchronizing the DAO state. A restart of the application is required to fix the issue."
             ),
-            self.__graceful_shutdown_handler.graceful_shut_down(lambda: None),
+            self.__graceful_shut_down_handler.graceful_shut_down(lambda: None),
         )
         bisq_setup.tor_address_upgrade_handler = lambda: logger.info(
             "setTorAddressUpgradeHandler"
@@ -170,7 +170,7 @@ class BisqHeadlessApp(HeadlessApp):
     def stop(self):
         if not self.__shutdown_requested:
             UserThread.run_after(
-                lambda: self.__graceful_shutdown_handler.graceful_shut_down(
+                lambda: self.__graceful_shut_down_handler.graceful_shut_down(
                     lambda: logger.debug("App shutdown complete")
                 ),
                 timedelta(milliseconds=200),
