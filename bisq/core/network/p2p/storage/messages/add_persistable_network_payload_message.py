@@ -29,3 +29,6 @@ class AddPersistableNetworkPayloadMessage(BroadcastMessage):
             message_version=message_version,
             persistable_network_payload=resolver.from_proto(proto.payload),
         )
+        
+    def __hash__(self):
+        return hash((self.persistable_network_payload, self.message_version))
