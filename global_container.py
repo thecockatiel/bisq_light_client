@@ -7,6 +7,19 @@ from utils.di import DependencyProvider
 
 
 class GlobalContainer:
+    ###############################################################################
+    _grpc_server = None
+    
+    @property
+    def grpc_server(self):
+        if GlobalContainer._grpc_server is None:
+            from bisq.daemon.grpc.grpc_server import GrpcServer
+
+            GlobalContainer._grpc_server = GrpcServer(
+                # TODO
+            )
+        return GlobalContainer._grpc_server
+    
     ############################################################################### (not listed in ModuleForAppWithP2p)
     _config = None
     _bisq_setup = None
