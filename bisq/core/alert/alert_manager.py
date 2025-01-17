@@ -54,7 +54,7 @@ class AlertManager:
                         )
                         if isinstance(protected_storage_payload, Alert):
                             alert = protected_storage_payload
-                            if self.verify_signature(alert):
+                            if self._verify_signature(alert):
                                 self.alert_message_property.set(alert)
 
                 def on_removed(
@@ -66,7 +66,7 @@ class AlertManager:
                             protected_storage_entry.protected_storage_payload
                         )
                         if isinstance(protected_storage_payload, Alert):
-                            if self.verify_signature(protected_storage_payload):
+                            if self._verify_signature(protected_storage_payload):
                                 self.alert_message_property.set(None)
 
             self.p2p_service.add_hash_set_changed_listener(ChangeListener())
