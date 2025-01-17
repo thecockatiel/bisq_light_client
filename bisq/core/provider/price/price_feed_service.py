@@ -18,9 +18,9 @@ from bisq.core.provider.price.market_price import MarketPrice
 
 
 if TYPE_CHECKING:
+    from bisq.core.provider.price_http_client import PriceHttpClient
     from bisq.core.provider.providers_repository import ProvidersRepository
     from bisq.core.provider.price.market_price import MarketPrice
-    from bisq.core.network.http.http_client import HttpClient
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.common.handlers.fault_handler import FaultHandler
     from bisq.core.provider.price.pricenode_dto import PricenodeDto
@@ -33,18 +33,18 @@ class PriceFeedService:
 
     def __init__(
         self,
-        http_client: "HttpClient",
+        price_http_client: "PriceHttpClient",
         fee_service: "FeeService",
         providers_repository: "ProvidersRepository",
         preferences: "Preferences",
     ):
-        self.http_client = http_client
+        self.http_client = price_http_client
         self.providers_repository = providers_repository
         self.preferences = preferences
         self.fee_service = fee_service
 
         self.cache: dict[str, "MarketPrice"] = {}
-        self.price_provider = PriceProvider(http_client, providers_repository.base_url)
+        self.price_provider = PriceProvider(price_http_client, providers_repository.base_url)
         self.price_consumer: Optional[Callable[[float], None]] = None
         self.fault_handler: Optional["FaultHandler"] = None
         self.currency_code_property: SimpleProperty[Optional[str]] = SimpleProperty(
