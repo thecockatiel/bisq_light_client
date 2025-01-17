@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
 from bisq.core.locale.currency_util import setup as CurrencyUtilSetup
+from bisq.core.locale.res import Res
 from bisq.core.setup.core_network_capabilities import CoreNetworkCapabilities
 
-class CoreSetup():
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
+
+
+class CoreSetup:
     @staticmethod
-    def setup():
-        CoreNetworkCapabilities.set_supported_capabilities()
-        # TODO: Res setup ?
+    def setup(config: "Config"):
+        CoreNetworkCapabilities.set_supported_capabilities(config)
+        Res.setup()
         CurrencyUtilSetup()

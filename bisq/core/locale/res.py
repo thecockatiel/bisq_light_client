@@ -6,15 +6,17 @@ from utils.java_compat import parse_resource_bundle
 
 logger = get_logger(__name__)
 
+
 class Res:
     base_currency_code: str = None
     base_currency_name: str = None
     base_currency_name_lower_case: str = None
     resources = dict[str, str]()
-    
+
     @staticmethod
     def setup():
         from global_container import GLOBAL_CONTAINER
+
         base_currency_network = GLOBAL_CONTAINER.config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
@@ -24,31 +26,33 @@ class Res:
             if parsed:
                 Res.resources.update(parse_resource_bundle(file))
 
-        
     @staticmethod
     def set_base_currency_code(base_currency_code: str):
         Res.base_currency_code = base_currency_code
-    
+
     @staticmethod
     def set_base_currency_name(base_currency_name: str):
         Res.base_currency_name = base_currency_name
         Res.base_currency_name_lower_case = base_currency_name.lower()
-    
+
     @staticmethod
     def get(key: str, *args):
         # only format if args are provided
         try:
-            message = Res.resources[key].replace("BTC", Res.base_currency_code).replace("Bitcoin", Res.base_currency_name).replace("bitcoin", Res.base_currency_name_lower_case)
+            message = (
+                Res.resources[key]
+                .replace("BTC", Res.base_currency_code)
+                .replace("Bitcoin", Res.base_currency_name)
+                .replace("bitcoin", Res.base_currency_name_lower_case)
+            )
         except KeyError:
             message = key
             logger.warning(f"Missing resource for key: {key}")
-            
+
         if args:
             return message.format(*args)
         return message
-    
+
     @staticmethod
     def get_with_col(key: str, *args):
         return Res.resources.get(key, key).format(*args) + ":"
-    
-Res.setup()

@@ -70,8 +70,8 @@ class MainApp(GracefulShutDownHandler, UncaughtExceptionHandler):
     async def execute(self):
         CommonSetup.setup_sig_int_handlers(self)
         CommonSetup.setup_uncaught_exception_handler(self)
+        CoreSetup.setup(GLOBAL_CONTAINER.config)
         CommonSetup.setup(GLOBAL_CONTAINER.config, self)
-        CoreSetup.setup()
         CommonSetup.start_periodic_tasks()
         ###############
         UserThread.run_after(self.step2, timedelta(milliseconds=1))
