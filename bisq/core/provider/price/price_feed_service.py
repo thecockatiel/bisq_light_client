@@ -367,7 +367,7 @@ class PriceFeedService:
                 UserThread.execute(lambda: on_success(result))
             except Exception as e:
                 UserThread.execute(
-                    lambda: fault_handler("Could not load marketPrices", e)
+                    lambda e=e: fault_handler("Could not load marketPrices", e)
                 )
             
 
