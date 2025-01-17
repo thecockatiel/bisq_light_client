@@ -17,7 +17,7 @@ class Res:
     def setup():
         from global_container import GLOBAL_CONTAINER
 
-        base_currency_network = GLOBAL_CONTAINER.config.base_currency_network
+        base_currency_network = GLOBAL_CONTAINER.value.config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
         i18n_dir = get_resources_path().joinpath("i18n")

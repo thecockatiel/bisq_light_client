@@ -26,7 +26,7 @@ class BsqFormatter(CoinFormatter):
     
     def __init__(self):
         super().__init__()
-        self.btc_coin_format = GLOBAL_CONTAINER.config.base_currency_network.parameters.get_monetary_format()
+        self.btc_coin_format = GLOBAL_CONTAINER.value.config.base_currency_network.parameters.get_monetary_format()
         self.monetary_format = MonetaryFormat().with_shift(6).code(6, "BSQ").with_min_decimals(2)
         self.immutable_coin_formatter = ImmutableCoinFormatter(self.monetary_format)
         self.amount_format: DecimalFormat = None

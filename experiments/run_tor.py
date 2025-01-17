@@ -9,7 +9,7 @@ from twisted.internet.defer import Deferred
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging
 
-configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.config.log_level)
+configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 async def main():
     base_dir = Path(__file__).parent.joinpath(".testdata")
@@ -19,7 +19,7 @@ async def main():
     tor = await NewTor(
         base_dir,
         tor_dir,
-        GLOBAL_CONTAINER.config.torrc_file,
+        GLOBAL_CONTAINER.value.config.torrc_file,
         "SocksPort=9050,ControlPort=9052",
         None,
         True,

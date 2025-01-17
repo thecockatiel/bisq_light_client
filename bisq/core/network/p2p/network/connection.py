@@ -69,7 +69,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     def config(self):
         if Connection._config is None:
             from global_container import GLOBAL_CONTAINER
-            Connection._config = GLOBAL_CONTAINER.config
+            Connection._config = GLOBAL_CONTAINER.value.config
         return Connection._config
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,

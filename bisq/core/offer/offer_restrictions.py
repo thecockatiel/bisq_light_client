@@ -18,7 +18,7 @@ class OfferRestrictions:
     @staticmethod
     def requires_node_address_update():
         from global_container import GLOBAL_CONTAINER
-        return datetime.now(timezone.utc) > OfferRestrictions.REQUIRE_TOR_NODE_ADDRESS_V3_DATE and not GLOBAL_CONTAINER.config.base_currency_network.is_regtest()
+        return datetime.now(timezone.utc) > OfferRestrictions.REQUIRE_TOR_NODE_ADDRESS_V3_DATE and not GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest()
     
     TOLERATED_SMALL_TRADE_AMOUNT = Coin.parse_coin("0.01")
     

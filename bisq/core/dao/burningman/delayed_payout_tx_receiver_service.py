@@ -25,7 +25,7 @@ class DelayedPayoutTxReceiverService:
     PROPOSAL_412_ACTIVATION_DATE = datetime(2024, 5, 1, tzinfo=timezone.utc)
 
     # We don't allow to get further back than 767950 (the block height from Dec. 18th 2022).
-    MIN_SNAPSHOT_HEIGHT = 0 if GLOBAL_CONTAINER.config.base_currency_network.is_regtest() else 767950 # TODO: double check for initializtion timing
+    MIN_SNAPSHOT_HEIGHT = 0 if GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() else 767950 # TODO: double check for initializtion timing
 
     # One part of the limit for the min. amount to be included in the DPT outputs.
     # The miner fee rate multiplied by 2 times the output size is the other factor.

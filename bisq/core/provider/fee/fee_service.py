@@ -28,7 +28,7 @@ class FeeService:
 
     def on_all_services_initialized(self, provided_filter_manager: "FilterManager"):
         FeeService.filter_manager = provided_filter_manager
-        self.min_fee_per_v_byte = GLOBAL_CONTAINER.config.base_currency_network.get_default_min_fee_per_v_byte()
+        self.min_fee_per_v_byte = GLOBAL_CONTAINER.value.config.base_currency_network.get_default_min_fee_per_v_byte()
 
     @staticmethod
     def get_fee_from_param_as_coin(param: Param) -> Coin:

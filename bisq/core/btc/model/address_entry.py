@@ -111,7 +111,7 @@ class AddressEntry(PersistablePayload):
     def get_address(self) -> Optional["Address"]:
         if self._address is None and self.key_pair is not None:
             script_type = ScriptType.P2WPKH if self.segwit else ScriptType.P2PKH
-            self._address = Address.from_key(self.key_pair, script_type, GLOBAL_CONTAINER.config.base_currency_network_parameters)
+            self._address = Address.from_key(self.key_pair, script_type, GLOBAL_CONTAINER.value.config.base_currency_network_parameters)
         if self._address is None:
             logger.warning(f"Address is null at getAddress(). keyPair={self.key_pair}")
         return self._address
