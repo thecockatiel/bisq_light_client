@@ -350,15 +350,15 @@ class PriceFeedService:
             for price_data in result["data"]:
                 self.cache[price_data["currencyCode"]] = MarketPrice(
                     price_data["currencyCode"],
-                    price_data.price,
+                    price_data["price"],
                     price_data["timestampSec"],
                     True
                 )
 
-            if result.bitcoin_fees_ts > 0:
+            if result["bitcoinFeesTs"] > 0:
                 self.fee_service.update_fee_info(
-                    result.bitcoin_fee_info.btc_tx_fee,
-                    result.bitcoin_fee_info.btc_min_tx_fee
+                    result["bitcoinFeeInfo"]["btcTxFee"],
+                    result["bitcoinFeeInfo"]["btcMinTxFee"]
                 )
                         
         def on_done(future: Future["PricenodeDto"]):
