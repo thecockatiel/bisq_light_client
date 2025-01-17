@@ -193,7 +193,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
 
         # We use the custom socks5ProxyHttp.
         socks5_proxy = self.socks5_proxy_provider.get_socks5_proxy_http()
-        if not socks5_proxy:
+        if socks5_proxy:
             return socks5_proxy
 
         # If not set we request socks5_proxy_provider.get_socks5_proxy()
