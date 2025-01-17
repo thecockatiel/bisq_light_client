@@ -375,6 +375,7 @@ CURRENCY_CODE_TO_DATA_MAP = {
     'HTG': CurrencyData('HTG', 'Haitian Gourde', 'HTG', 2, 332),
     'HNL': CurrencyData('HNL', 'Honduran Lempira', 'HNL', 2, 340),
     'HKD': CurrencyData('HKD', 'Hong Kong Dollar', 'HK$', 2, 344),
+    'HRK': CurrencyData('HRK', 'Croatian Kuna', 'HRK', 2, 191),
     'HUF': CurrencyData('HUF', 'Hungarian Forint', 'HUF', 2, 348),
     'ISK': CurrencyData('ISK', 'Icelandic Króna', 'ISK', 0, 352),
     'INR': CurrencyData('INR', 'Indian Rupee', '₹', 2, 356),
