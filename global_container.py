@@ -581,7 +581,13 @@ class GlobalContainer:
         if GlobalContainer._wallets_manager is None:
             from bisq.core.btc.wallet.wallets_manager import WalletsManager
 
-            GlobalContainer._wallets_manager = WalletsManager()
+            GlobalContainer._wallets_manager = WalletsManager(
+                # TODO
+                self.btc_wallet_service,
+                self.trade_wallet_service,
+                self.bsq_wallet_service,
+                self.wallets_setup
+            )
         return GlobalContainer._wallets_manager
 
     @property
