@@ -73,14 +73,12 @@ class P2PNetworkSetup:
             
         bootstrap_state.set(Res.get("mainView.bootstrapState.connectionToTorNetwork"))
         
-        outer = self
-        
         class CListener(ConnectionListener):
-            def on_connection(self, connection: "Connection"):
-                return outer.update_network_status_indicator()
+            def on_connection(self_, connection: "Connection"):
+                return self.update_network_status_indicator()
             
-            def on_disconnect(self, close_connection_reason: "CloseConnectionReason", connection: "Connection"):
-                outer.update_network_status_indicator()
+            def on_disconnect(self_, close_connection_reason: "CloseConnectionReason", connection: "Connection"):
+                self.update_network_status_indicator()
                 # We only check at seed nodes as they are running the latest version
                 # Other disconnects might be caused by peers running an older version
                 if connection.connection_state.is_seed_node and close_connection_reason == CloseConnectionReason.RULE_VIOLATION:
@@ -91,63 +89,63 @@ class P2PNetworkSetup:
         p2p_network_initialized = SimpleProperty(False)
         
         class P2pSvcListener(P2PServiceListener):
-            def on_tor_node_ready(self) -> None:
+            def on_tor_node_ready(self_) -> None:
                 logger.debug("on_tor_node_ready")
                 bootstrap_state.set(Res.get("mainView.bootstrapState.torNodeCreated"))
-                outer.p2p_network_icon_id.set("image-connection-tor")
+                self.p2p_network_icon_id.set("image-connection-tor")
                 
-                if outer.preferences.get_use_tor_for_bitcoin_j():
+                if self.preferences.get_use_tor_for_bitcoin_j():
                     init_wallet_service_handler()
                 
                 # We want to get early connected to the price relay so we call it already now
-                outer.price_feed_service.set_currency_code_on_init()
-                outer.price_feed_service.initial_request_price_feed()
+                self.price_feed_service.set_currency_code_on_init()
+                self.price_feed_service.initial_request_price_feed()
                 
-            def on_hidden_service_published(self) -> None:
+            def on_hidden_service_published(self_) -> None:
                 logger.debug("on_hidden_service_published")
                 hidden_service_published.set(True)
                 bootstrap_state.set(Res.get("mainView.bootstrapState.hiddenServicePublished"))
                 
-            def on_data_received(self):
+            def on_data_received(self_):
                 logger.debug("on_data_received")
                 bootstrap_state.set(Res.get("mainView.bootstrapState.initialDataReceived"))
-                outer.data_received.set(True)
-                outer.splash_p2p_network_animation_visible.set(False)
+                self.data_received.set(True)
+                self.splash_p2p_network_animation_visible.set(False)
                 p2p_network_initialized.set(True)
                 
-            def on_no_seed_node_available(self):
+            def on_no_seed_node_available(self_):
                 logger.warning("on_no_seed_node_available")
-                if outer.p2p_service.get_num_connected_peers().get() == 0:
+                if self.p2p_service.get_num_connected_peers().get() == 0:
                     bootstrap_warning.set(Res.get("mainView.bootstrapWarning.noSeedNodesAvailable"))
                 else:
                     bootstrap_warning.set(None)
                     
-                outer.splash_p2p_network_animation_visible.set(False)
+                self.splash_p2p_network_animation_visible.set(False)
                 p2p_network_initialized.set(True)
             
-            def on_no_peers_available(self):
+            def on_no_peers_available(self_):
                 logger.warning("on_no_peers_available")
-                if outer.p2p_service.get_num_connected_peers().get() == 0:
-                    outer.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.noNodesAvailable"))
+                if self.p2p_service.get_num_connected_peers().get() == 0:
+                    self.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.noNodesAvailable"))
                     bootstrap_warning.set(Res.get("mainView.bootstrapWarning.noNodesAvailable"))
-                    outer.p2p_network_label_id.set("splash-error-state-msg")
+                    self.p2p_network_label_id.set("splash-error-state-msg")
                 else:
                     bootstrap_warning.set(None)
-                    outer.p2p_network_label_id.set("footer-pane")
-                outer.splash_p2p_network_animation_visible.set(False)
+                    self.p2p_network_label_id.set("footer-pane")
+                self.splash_p2p_network_animation_visible.set(False)
                 p2p_network_initialized.set(True)
                 
-            def on_updated_data_received(self):
+            def on_updated_data_received(self_):
                 logger.debug("on_updated_data_received")
-                outer.splash_p2p_network_animation_visible.set(False)
+                self.splash_p2p_network_animation_visible.set(False)
                 
-            def on_setup_failed(self, e: Exception | None = None) -> None:
+            def on_setup_failed(self_, e: Exception | None = None) -> None:
                 logger.error("on_setup_failed")
-                outer.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.connectionToP2PFailed", str(e)))
-                outer.splash_p2p_network_animation_visible.set(False)
+                self.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.connectionToP2PFailed", str(e)))
+                self.splash_p2p_network_animation_visible.set(False)
                 bootstrap_warning.set(Res.get("mainView.bootstrapWarning.bootstrappingToP2PFailed"))
-                outer.p2p_network_label_id.set("splash-error-state-msg")
-                outer.p2p_network_failed.set(True)
+                self.p2p_network_label_id.set("splash-error-state-msg")
+                self.p2p_network_failed.set(True)
                 
             def on_request_custom_bridges(self) -> None:
                 if display_tor_network_settings_handler is not None:
