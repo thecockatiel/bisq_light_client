@@ -11,6 +11,7 @@ from bisq.core.trade.txproof.asset_tx_proof_result import AssetTxProofResult
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_requests_per_trade import (
     XmrTxProofRequestsPerTrade,
 )
+from bisq.core.trade.txproof.asset_tx_proof_service import AssetTxProofService
 from bisq.core.xmr.knaccc.monero.crypto.crypto_util import CryptoUtil
 from utils.data import ObservableChangeEvent, SimpleProperty, SimplePropertyChangeEvent, combine_simple_properties
 
@@ -25,7 +26,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.bisq_v1.failed_trades_manager import FailedTradesManager
     from bisq.core.trade.closed_tradable_manager import ClosedTradableManager
     from bisq.core.trade.trade_manager import TradeManager
-    from bisq.core.trade.txproof.asset_tx_proof_service import AssetTxProofService
     from bisq.core.user.preferences import Preferences
     from bisq.core.filter.filter import Filter
     from bisq.core.trade.model.bisq_v1.trade import Trade
