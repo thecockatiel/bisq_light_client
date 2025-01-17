@@ -315,7 +315,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         try:
             reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
-            self.send_message(CloseConnectionMessage(reason))
+            self.send_message(CloseConnectionMessage(reason=reason))
 
             self.stopped = True
 
@@ -341,7 +341,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
             )
             if close_connection_reason.send_close_message:
-                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler), name=f"Connection:SendCloseConnectionMessage-{self.uid}").start()
+                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler), name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
             else:
                 self.stopped = True
                 self.do_shut_down(close_connection_reason, shut_down_complete_handler)
