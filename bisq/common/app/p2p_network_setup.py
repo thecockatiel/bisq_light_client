@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional
+from utils.aio import as_future
 from collections.abc import Callable
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
@@ -151,7 +152,7 @@ class P2PNetworkSetup:
                 if display_tor_network_settings_handler is not None:
                     display_tor_network_settings_handler(True)
         
-        self.p2p_service.start(P2pSvcListener())
+        as_future(self.p2p_service.start(P2pSvcListener()))
         
         return p2p_network_initialized
     
