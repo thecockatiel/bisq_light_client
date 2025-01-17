@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from bisq.asset.asset import Asset
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
@@ -11,6 +11,10 @@ from bisq.core.locale.currency_data import (
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.locale.res import Res
 from bisq.core.locale.trade_currency import TradeCurrency
+from utils.data import SimpleProperty
+
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -78,15 +82,14 @@ def is_fiat_currency(currency_code: str):
         return True
     return False
 
-BASE_CURRENCY_CODE = "BTC"
+BASE_CURRENCY_CODE = SimpleProperty("BTC")
 
 def set_base_currency_code(currency_code: str):
     global BASE_CURRENCY_CODE
-    BASE_CURRENCY_CODE = currency_code
+    BASE_CURRENCY_CODE.set(currency_code)
     
-def setup():
-    from global_container import GLOBAL_CONTAINER
-    set_base_currency_code(GLOBAL_CONTAINER.value.config.base_currency_network.currency_code)
+def setup(config: "Config"):
+    set_base_currency_code(config.base_currency_network.currency_code)
     
 MATURE_MARKET_CURRENCIES = tuple(sorted([
     FiatCurrency("EUR"),

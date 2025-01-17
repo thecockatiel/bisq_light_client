@@ -4,6 +4,7 @@ from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 import inspect
 import platform
+import sys
 import threading
 from typing import Any, Awaitable, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
@@ -101,3 +102,12 @@ def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
 
 from twisted.internet import asyncioreactor
 asyncioreactor.install(create_event_loop())
+
+from twisted.internet import reactor
+def stop_reactor_and_exit(status_code: int = 0):
+    try:
+        if reactor.running:
+            reactor.stop()
+    except:
+        pass
+    sys.exit(status_code)

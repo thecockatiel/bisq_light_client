@@ -11,5 +11,5 @@ class CoreSetup:
     @staticmethod
     def setup(config: "Config"):
         CoreNetworkCapabilities.set_supported_capabilities(config)
-        Res.setup()
-        CurrencyUtilSetup()
+        Res.setup(config)
+        CurrencyUtilSetup(config)

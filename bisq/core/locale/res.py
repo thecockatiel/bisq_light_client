@@ -1,8 +1,12 @@
 # TODO: Implemented partially since it was used widely, to complete later as needed.
+from typing import TYPE_CHECKING
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
 from resources import get_resources_path
 from utils.java_compat import parse_resource_bundle
+
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -14,10 +18,8 @@ class Res:
     resources = dict[str, str]()
 
     @staticmethod
-    def setup():
-        from global_container import GLOBAL_CONTAINER
-
-        base_currency_network = GLOBAL_CONTAINER.value.config.base_currency_network
+    def setup(config: "Config"):
+        base_currency_network = config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
         i18n_dir = get_resources_path().joinpath("i18n")

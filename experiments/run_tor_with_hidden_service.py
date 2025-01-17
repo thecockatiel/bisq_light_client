@@ -4,17 +4,18 @@ from txtorcon import FilesystemOnionService
 import asyncio
 from pathlib import Path
 from bisq.common.setup.common_setup import CommonSetup
-from bisq.common.setup.graceful_shutdown_handler import GracefulShutDownHandler
+from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from bisq.core.network.p2p.network.hidden_service_socket import HiddenServiceSocket
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.utils.utils import Utils
 from twisted.internet import reactor
-from global_container import GLOBAL_CONTAINER
+from global_container import GLOBAL_CONTAINER, GlobalContainer, set_global_container
 from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging, get_logger
 
+set_global_container(GlobalContainer())
 configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 logger = get_logger(__name__)

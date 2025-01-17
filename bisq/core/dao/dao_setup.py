@@ -19,5 +19,5 @@ class DaoSetup:
     ):
         pass
 
-    def shutdown(self):
+    def shut_down(self):
         pass
