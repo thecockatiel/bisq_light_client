@@ -119,31 +119,10 @@ class CustomArgumentParser(argparse.ArgumentParser):
         namespace, args = super().parse_known_args(*args, **kw_args)
         for action in self._actions:
             if isinstance(action, ConditionalArgumentAction):
-                if action.unavailable_if and getattr(namespace, action.dest) is not None:
-                    for arg in action.unavailable_if:
-                        if getattr(namespace, arg):
-                            self.error(
-                                f"Option '{action.dest}' is not allowed when '{arg}' is present."
-                            )
-                if action.available_if and getattr(namespace, action.dest) is not None:
-                    for arg in action.available_if:
-                        if not getattr(namespace, arg):
-                            self.error(
-                                f"Option '{action.dest}' is not allowed when '{arg}' is not present."
-                            )
-                if action.needs and getattr(namespace, action.dest) is not None:
-                        for arg in action.needs:
-                            if not getattr(namespace, arg):
-                                self.error(
-                                    f"Option '{action.dest}' requires '{arg}' to be present." + (f" all needed options: {action.needs}" if len(action.needs) > 1 else "")
-                                )
-        return namespace, args
-
-    def parse_known_intermixed_args(self, *args, **kw_args):
-        namespace, extras = super().parse_known_intermixed_args(*args, **kw_args)
-        for action in self._actions:
-            if isinstance(action, ConditionalArgumentAction):
-                if action.unavailable_if and getattr(namespace, action.dest) is not None:
+                if (
+                    action.unavailable_if
+                    and getattr(namespace, action.dest) is not None
+                ):
                     for arg in action.unavailable_if:
                         if getattr(namespace, arg):
                             self.error(
@@ -159,7 +138,44 @@ class CustomArgumentParser(argparse.ArgumentParser):
                     for arg in action.needs:
                         if not getattr(namespace, arg):
                             self.error(
-                                f"Option '{action.dest}' requires '{arg}' to be present." + (f" all needed options: {action.needs}" if len(action.needs) > 1 else "")
+                                f"Option '{action.dest}' requires '{arg}' to be present."
+                                + (
+                                    f" all needed options: {action.needs}"
+                                    if len(action.needs) > 1
+                                    else ""
+                                )
+                            )
+        return namespace, args
+
+    def parse_known_intermixed_args(self, *args, **kw_args):
+        namespace, extras = super().parse_known_intermixed_args(*args, **kw_args)
+        for action in self._actions:
+            if isinstance(action, ConditionalArgumentAction):
+                if (
+                    action.unavailable_if
+                    and getattr(namespace, action.dest) is not None
+                ):
+                    for arg in action.unavailable_if:
+                        if getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is present."
+                            )
+                if action.available_if and getattr(namespace, action.dest) is not None:
+                    for arg in action.available_if:
+                        if not getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' is not allowed when '{arg}' is not present."
+                            )
+                if action.needs and getattr(namespace, action.dest) is not None:
+                    for arg in action.needs:
+                        if not getattr(namespace, arg):
+                            self.error(
+                                f"Option '{action.dest}' requires '{arg}' to be present."
+                                + (
+                                    f" all needed options: {action.needs}"
+                                    if len(action.needs) > 1
+                                    else ""
+                                )
                             )
         return namespace, extras
 
@@ -251,6 +267,7 @@ class Config:
 
         # Assign all remaining properties, with command line options taking
         # precedence over those provided in the config file (if any)
+        self.help_requested = options["helpRequested"] or False
         self.config_file = config_file
         self.node_port: int = options["nodePort"] or 9999
         self.max_memory: int = options["maxMemory"] or 1200
@@ -294,9 +311,19 @@ class Config:
         self.tor_proxy_port: int = options["torProxyPort"] or Config.UNSPECIFIED_PORT
         self.tor_proxy_username: str = options["torProxyUsername"] or ""
         self.tor_proxy_password: str = options["torProxyPassword"] or ""
-        self.tor_proxy_hidden_service_name: str = options["torProxyHiddenServiceName"] or ""
-        self.tor_proxy_hidden_service_port: int = options["torProxyHiddenServicePort"][0] if options["torProxyHiddenServicePort"] else Config.UNSPECIFIED_PORT
-        self.tor_proxy_hidden_service_target_port: int = options["torProxyHiddenServicePort"][1] if options["torProxyHiddenServicePort"] else Config.UNSPECIFIED_PORT
+        self.tor_proxy_hidden_service_name: str = (
+            options["torProxyHiddenServiceName"] or ""
+        )
+        self.tor_proxy_hidden_service_port: int = (
+            options["torProxyHiddenServicePort"][0]
+            if options["torProxyHiddenServicePort"]
+            else Config.UNSPECIFIED_PORT
+        )
+        self.tor_proxy_hidden_service_target_port: int = (
+            options["torProxyHiddenServicePort"][1]
+            if options["torProxyHiddenServicePort"]
+            else Config.UNSPECIFIED_PORT
+        )
         self.referral_id: str = options["referralId"] or ""
         self.use_dev_mode: bool = options["useDevMode"] or False
         self.use_dev_mode_header: bool = options["useDevModeHeader"] or False
@@ -340,7 +367,9 @@ class Config:
         self.full_dao_node: bool = (
             options["fullDaoNode"] or Config.DEFAULT_FULL_DAO_NODE
         )
-        self.full_dao_node_option_set_explicitly: bool = options["fullDaoNode"] is not None
+        self.full_dao_node_option_set_explicitly: bool = (
+            options["fullDaoNode"] is not None
+        )
         self.genesis_tx_id: str = options["genesisTxId"] or ""
         self.genesis_block_height: int = options["genesisBlockHeight"] or -1
         self.genesis_total_supply: int = options["genesisTotalSupply"] or -1
@@ -422,7 +451,19 @@ class Config:
 
     def get_config_parser(self) -> CustomArgumentParser:
         parser = CustomArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter, allow_abbrev=False
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            allow_abbrev=False,
+            add_help=False,
+        )
+        parser.add_argument(
+            "-h",
+            "--help",
+            dest="helpRequested",
+            help=(
+                f"Specify configuration file. "
+                f"Relative paths will be prefixed by appDataDir location."
+            ),
+            action="store_true",
         )
         parser.add_argument(
             "--configFile",
@@ -769,7 +810,7 @@ class Config:
             help="The proxy username of an already running Tor service to be used by Bisq.",
             type=str,
             metavar="<String>",
-            available_if=['torProxyPort', 'torProxyHost'],
+            available_if=["torProxyPort", "torProxyHost"],
             unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
         )
         parser.add_conditional_argument(
@@ -777,7 +818,7 @@ class Config:
             help="The proxy password of an already running Tor service to be used by Bisq.",
             type=str,
             metavar="<String>",
-            available_if=['torProxyPort', 'torProxyHost'],
+            available_if=["torProxyPort", "torProxyHost"],
             unavailable_if=["torControlHost", "torControlPort", "torControlPassword"],
         )
         parser.add_conditional_argument(
