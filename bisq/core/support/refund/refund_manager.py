@@ -253,7 +253,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
     ) -> Future[List["Transaction"]]:
         # in regtest mode, simulate a delay & failure obtaining the blockchain transactions
         # since we cannot request them in regtest anyway.  this is useful for checking failure scenarios
-        if not GLOBAL_CONTAINER.config.base_currency_network.is_mainnet():
+        if not GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet():
             future = Future()
             UserThread.run_after(lambda: future.set_result([]), timedelta(seconds=5))
             return future

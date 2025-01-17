@@ -37,7 +37,7 @@ class DisputeAgentService(ABC, Generic[T]):
                          result_handler: "ResultHandler",
                          error_message_handler: "ErrorMessageHandler") -> None:
         logger.debug(f"addDisputeAgent hash(dispute_agent) {hash(dispute_agent)}")
-        if not GLOBAL_CONTAINER.config.base_currency_network.is_mainnet() or \
+        if not GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() or \
                 dispute_agent.registration_pub_key.hex() != DevEnv.DEV_PRIVILEGE_PUB_KEY:
             result = self.p2p_service.add_protected_storage_entry(dispute_agent)
             if result:

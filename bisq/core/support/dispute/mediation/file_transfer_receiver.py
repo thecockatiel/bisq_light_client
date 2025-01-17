@@ -91,7 +91,7 @@ class FileTransferReceiver(FileTransferSession):
         self.send_message(ack_message, network_node, peer_node_address)
         
     def ensure_receiving_directory_exists(self):
-        receiving_directory = GLOBAL_CONTAINER.config.app_data_dir.joinpath("clientLogs")
+        receiving_directory = GLOBAL_CONTAINER.value.config.app_data_dir.joinpath("clientLogs")
         if not receiving_directory.exists():
             try:
                 receiving_directory.mkdir(parents=True, exist_ok=True)

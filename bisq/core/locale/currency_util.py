@@ -86,7 +86,7 @@ def set_base_currency_code(currency_code: str):
     
 def setup():
     from global_container import GLOBAL_CONTAINER
-    set_base_currency_code(GLOBAL_CONTAINER.config.base_currency_network.currency_code)
+    set_base_currency_code(GLOBAL_CONTAINER.value.config.base_currency_network.currency_code)
     
 MATURE_MARKET_CURRENCIES = tuple(sorted([
     FiatCurrency("EUR"),

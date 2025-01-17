@@ -18,7 +18,7 @@ class BtcAddressValidator(InputValidator):
             return InputValidationResult(True)
         from global_container import GLOBAL_CONTAINER
         try:
-            Address.from_string(input_str, GLOBAL_CONTAINER.config.base_currency_network_parameters)
+            Address.from_string(input_str, GLOBAL_CONTAINER.value.config.base_currency_network_parameters)
             return InputValidationResult(True)
         except AddressFormatException:
             return InputValidationResult(False, Res.get("validation.btc.invalidFormat"))

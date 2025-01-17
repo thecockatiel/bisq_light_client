@@ -1,6 +1,8 @@
 # tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.18/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
 
 # TODO: fix class initializers when implemented for those who are still not done
+from typing import Optional
+from utils.data import SimpleProperty
 from utils.di import DependencyProvider
 
 
@@ -586,7 +588,7 @@ class GlobalContainer:
                 self.btc_wallet_service,
                 self.trade_wallet_service,
                 self.bsq_wallet_service,
-                self.wallets_setup
+                self.wallets_setup,
             )
         return GlobalContainer._wallets_manager
 
@@ -1827,4 +1829,9 @@ class GlobalContainer:
         return GlobalContainer._pub_key_ring
 
 
-GLOBAL_CONTAINER = GlobalContainer()
+GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]](None)
+
+
+def set_global_container(container: GlobalContainer):
+    global GLOBAL_CONTAINER
+    GLOBAL_CONTAINER.set(container)
