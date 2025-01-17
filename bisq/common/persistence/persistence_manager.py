@@ -1,3 +1,4 @@
+from asyncio import Future
 from datetime import timedelta
 import threading
 import os
@@ -64,6 +65,7 @@ class PersistenceManager(Generic[T]):
         self.timer: Optional[Timer] = None
         self.init_called = False
         self.read_called = False
+        self.write_to_disk_future: Optional[Future] = None
 
     @staticmethod
     def on_all_services_initialized():
@@ -198,8 +200,8 @@ class PersistenceManager(Generic[T]):
         if self.timer:
             self.timer.stop()
 
-        if self.write_to_disk_executor:
-            self.write_to_disk_executor.shutdown()
+        if self.write_to_disk_future:
+            self.write_to_disk_future.cancel()
 
     ###########################################################################
 
@@ -320,7 +322,7 @@ class PersistenceManager(Generic[T]):
             # For the write to disk task we use a thread. We do not have any issues anymore if the persistable objects
             # gets mutated while the thread is running as we have serialized it already and do not operate on the
             # reference to the persistable object.
-            run_in_thread(self.write_to_disk, serialized, complete_handler, force)
+            self.write_to_disk_future = run_in_thread(self.write_to_disk, serialized, complete_handler, force)
             
             duration = get_time_ms() - ts
             if duration > 100:
