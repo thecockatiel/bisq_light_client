@@ -16,7 +16,7 @@ class GetInventoryResponse(NetworkEnvelope):
         return envelope
 
     @staticmethod
-    def from_proto(cls, proto: protobuf.GetInventoryResponse, message_version: int):
+    def from_proto(proto: protobuf.GetInventoryResponse, message_version: int):
         inventory = {}
         for key, value in proto.inventory.items():
             try:
