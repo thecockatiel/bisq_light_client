@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import json
-from typing import List, Optional
+from typing import Optional
 
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.pub_key_ring import PubKeyRing
@@ -13,7 +13,7 @@ import proto.pb_pb2 as protobuf
 
 # OfferPayload has about 1.4 kb. We should look into options to make it smaller but will be hard to do it in a
 # backward compatible way. Maybe a candidate when segwit activation is done as hardfork?
-@dataclass(kw_only=True)
+@dataclass
 class OfferPayload(OfferPayloadBase):
     # Keys for extra map
     # Only set for fiat offers
@@ -41,42 +41,42 @@ class OfferPayload(OfferPayloadBase):
     # Positive values is always the usual case where you want a better price as the market.
     # E.g. Buy offer with market price 400.- leads to a 360.- price.
     # Sell offer with market price 400.- leads to a 440.- price.
-    market_price_margin: float
+    market_price_margin: float = field(default=0)
     # We use 2 type of prices: fixed price or price based on distance from market price
-    use_market_based_price: bool
+    use_market_based_price: bool = field(default=False)
 
     # Not used anymore, but we cannot set it Nullable or remove it to not break backward compatibility (diff. hash)
-    arbitrator_node_addresses: List[NodeAddress]
+    arbitrator_node_addresses: list[NodeAddress] = field(default_factory=list)
     # Not used anymore, but we cannot set it Nullable or remove it to not break backward compatibility (diff. hash)
-    mediator_node_addresses: List[NodeAddress]
+    mediator_node_addresses: list[NodeAddress] = field(default_factory=list)
 
     # Mutable property. Has to be set before offer is saved in P2P network as it changes the payload hash!
     offer_fee_payment_tx_id: Optional[str] = field(default=None)
     country_code: Optional[str] = field(default=None)
-    accepted_country_codes: Optional[List[str]] = field(default=None)
+    accepted_country_codes: Optional[list[str]] = field(default=None)
     bank_id: Optional[str] = field(default=None)
-    accepted_bank_ids: Optional[List[str]] = field(default=None)
-    block_height_at_offer_creation: int
-    tx_fee: int
-    maker_fee: int
-    is_currency_for_maker_fee_btc: bool
-    buyer_security_deposit: int
-    seller_security_deposit: int
-    max_trade_limit: int
-    max_trade_period: int
+    accepted_bank_ids: Optional[list[str]] = field(default=None)
+    block_height_at_offer_creation: int = field(default=0)
+    tx_fee: int = field(default=0)
+    maker_fee: int = field(default=0)
+    is_currency_for_maker_fee_btc: bool = field(default=False)
+    buyer_security_deposit: int = field(default=0)
+    seller_security_deposit: int = field(default=0)
+    max_trade_limit: int = field(default=0)
+    max_trade_period: int = field(default=0)
 
     # reserved for future use cases
     # Close offer when certain price is reached
-    use_auto_close: bool
+    use_auto_close: bool = field(default=False)
     # If useReOpenAfterAutoClose=true we re-open a new offer with the remaining funds if the trade amount
     # was less than the offer's max. trade amount.
-    use_re_open_after_auto_close: bool
+    use_re_open_after_auto_close: bool = field(default=False)
     # Used when useAutoClose is set for canceling the offer when lowerClosePrice is triggered
-    lower_close_price: int
+    lower_close_price: int = field(default=0)
     # Used when useAutoClose is set for canceling the offer when upperClosePrice is triggered
-    upper_close_price: int
+    upper_close_price: int = field(default=0)
     # Reserved for possible future use to support private trades where the taker needs to have an accessKey
-    is_private_offer: bool
+    is_private_offer: bool = field(default=False) 
     hash_of_challenge: Optional[str] = field(default=None)
 
     def getHash(self) -> bytes:

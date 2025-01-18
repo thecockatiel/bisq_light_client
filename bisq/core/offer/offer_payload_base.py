@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer_direction import OfferDirection
 
 # TODO: get_json_dict
-@dataclass(kw_only=True)
+@dataclass
 class OfferPayloadBase(
     ProtectedStoragePayload, ExpirablePayload, RequiresOwnerIsOnlinePayload, ABC
 ):
-    TTL: int = field(default=int(timedelta(minutes=9).total_seconds() * 1000), init=False)
+    TTL = int(timedelta(minutes=9).total_seconds() * 1000)
 
     id: str
     date: int
@@ -73,7 +73,7 @@ class OfferPayloadBase(
         return self.get_currency_code()
 
     def get_ttl(self):
-        return self.TTL
+        return OfferPayloadBase.TTL
     
     def get_owner_node_address(self):
         return self.owner_node_address
