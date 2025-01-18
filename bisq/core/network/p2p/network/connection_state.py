@@ -1,7 +1,5 @@
 
 from datetime import timedelta
-import time
-import threading
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope

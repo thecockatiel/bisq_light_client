@@ -43,20 +43,17 @@ class AppStartupState:
             )
         )
 
-        def check_initialized(states: list):
-            return all(states)
-
         self.network_and_wallet_initialized = combine_simple_properties(
             self.data_received,
             self.is_block_download_complete,
             self.has_sufficient_peers_for_broadcast,
             self.all_domain_services_initialized,
-            transform=check_initialized,
+            transform=all,
         )
 
         self.network_and_wallet_initialized.add_listener(
-            lambda value: (
-                self.application_fully_initialized.set(True) if value else None
+            lambda e: (
+                self.application_fully_initialized.set(True) if e.new_value else None
             )
         )
 

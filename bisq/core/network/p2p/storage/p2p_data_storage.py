@@ -137,9 +137,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         self.read_from_resources_complete_property = combine_simple_properties(append_only_data_store_service_ready,
                                   protected_data_store_service_ready,
                                   resource_data_store_service_ready,
-                                  transform=lambda x: all(x))
+                                  transform=all)
         
-        self.read_from_resources_complete_property.add_listener(lambda all_ready: complete_handler() if all_ready else None)
+        self.read_from_resources_complete_property.add_listener(lambda e: complete_handler() if e.new_value else None)
         
         self.append_only_data_store_service.read_from_resources(postfix, lambda: append_only_data_store_service_ready.set(True))
         self.protected_data_store_service.read_from_resources(postfix, lambda: protected_data_store_service_ready.set(True))

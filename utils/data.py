@@ -97,9 +97,7 @@ def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[
         nonlocal result
         results[i] = e.new_value
         
-        # check if all results are no longer UNSET
-        if __unset_value not in results:
-            result.value = transform(results)
+        result.value = transform(results)
     
     def on_add_listener(new_len: int):
         if new_len == 1:
