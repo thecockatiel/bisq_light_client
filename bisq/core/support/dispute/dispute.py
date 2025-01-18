@@ -55,35 +55,35 @@ class DisputeState(IntEnum):
         return ProtoUtil.proto_enum_from_enum(protobuf.Dispute.State, state)
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Dispute(NetworkPayload, PersistablePayload):
-    trade_id: str
-    id: str
-    trader_id: int
-    dispute_opener_is_buyer: bool
-    dispute_opener_is_maker: bool
+    trade_id: str = field(default="")
+    id: str = field(default="")
+    trader_id: int = field(default=0)
+    dispute_opener_is_buyer: bool = field(default=False)
+    dispute_opener_is_maker: bool = field(default=False)
     # PubKeyRing of trader who opened the dispute
-    trader_pub_key_ring: PubKeyRing
-    trade_date: int # ms timestamp
-    trade_period_end: int
-    contract: Contract
+    trader_pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)
+    trade_date: int = field(default=0) # ms timestamp
+    trade_period_end: int = field(default=0)
+    contract: Contract = field(default_factory=Contract)
     contract_hash: Optional[bytes] = field(default=None)
     deposit_tx_serialized: Optional[bytes] = field(default=None)
     payout_tx_serialized: Optional[bytes] = field(default=None)
     deposit_tx_id: Optional[str] = field(default=None)
     payout_tx_id: Optional[str] = field(default=None)
-    contract_as_json: str
+    contract_as_json: str = field(default="")
     maker_contract_signature: Optional[str] = field(default=None)
     taker_contract_signature: Optional[str] = field(default=None)
-    agent_pub_key_ring: PubKeyRing  # dispute agent
-    is_support_ticket: bool
+    agent_pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)  # dispute agent
+    is_support_ticket: bool = field(default=False)
     chat_messages: ObservableList["ChatMessage"] = field(default_factory=ObservableList)
     dispute_result_property: SimpleProperty[Optional["DisputeResult"]] = field(default_factory=lambda: SimpleProperty(None))
     
-    opening_date: int
+    opening_date: int = field(default=0)
     dispute_payout_tx_id: Optional[str] = field(default=None)
     # Added v1.2.0: support type
-    support_type: SupportType
+    support_type: SupportType = field(default=SupportType.ARBITRATION)
     # Only used at refundAgent so that he knows how the mediator resolved the case:
     mediators_dispute_result: Optional[str] = field(default=None)
     delayed_payout_tx_id: Optional[str] = field(default=None)
@@ -95,8 +95,8 @@ class Dispute(NetworkPayload, PersistablePayload):
     dispute_state_property: SimpleProperty["DisputeState"] = field(default_factory=lambda: SimpleProperty(DisputeState.NEW)) # transient, but dispute_state itself is not transient 
 
     # Added in v 1.9.7
-    burning_man_selection_height: int
-    trade_tx_fee: int
+    burning_man_selection_height: int = field(default=0)
+    trade_tx_fee: int = field(default=0)
 
     # Should be only used in emergency case if we need to add data but do not want to break backward compatibility
     # at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
