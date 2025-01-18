@@ -367,13 +367,12 @@ class AccountAgeWitnessService:
         return limit
 
     def _signed_buy_factor(self, account_age_category: "AccountAge") -> float:
-        match account_age_category:
-            case self.AccountAge.TWO_MONTHS_OR_MORE:
-                return 1.0
-            case self.AccountAge.ONE_TO_TWO_MONTHS:
-                return 0.5
-            case _:  # LESS_ONE_MONTH, UNVERIFIED or other
-                return 0.0
+        if account_age_category == self.AccountAge.TWO_MONTHS_OR_MORE:
+            return 1.0
+        elif account_age_category == self.AccountAge.ONE_TO_TWO_MONTHS:
+            return 0.5
+        else:  # LESS_ONE_MONTH, UNVERIFIED or other
+            return 0.0
 
     def _normal_factor(self) -> float:
         return 1.0
@@ -891,16 +890,15 @@ class AccountAgeWitnessService:
         account_sign_age = self.get_witness_sign_age(account_age_witness, datetime.now())
         account_age_category = self._get_account_age_category(account_sign_age)
 
-        match account_age_category:
-            case self.AccountAge.TWO_MONTHS_OR_MORE | self.AccountAge.ONE_TO_TWO_MONTHS:
-                return self.SignState.PEER_SIGNER.add_hash(hash_str)
-            case self.AccountAge.LESS_ONE_MONTH:
-                days_until_limit_lifted = 30 - (account_sign_age // (24 * 60 * 60 * 1000))  # Convert ms to days
-                return (self.SignState.PEER_INITIAL.add_hash(hash_str)
-                    .set_days_until_limit_lifted(days_until_limit_lifted))
-            case _: 
-                # UNVERIFIED or default
-                return self.SignState.UNSIGNED.add_hash(hash_str)
+        if account_age_category in (self.AccountAge.TWO_MONTHS_OR_MORE, self.AccountAge.ONE_TO_TWO_MONTHS):
+            return self.SignState.PEER_SIGNER.add_hash(hash_str)
+        elif account_age_category == self.AccountAge.LESS_ONE_MONTH:
+            days_until_limit_lifted = 30 - (account_sign_age // (24 * 60 * 60 * 1000))  # Convert ms to days
+            return (self.SignState.PEER_INITIAL.add_hash(hash_str)
+                .set_days_until_limit_lifted(days_until_limit_lifted))
+        else:
+            # UNVERIFIED or default
+            return self.SignState.UNSIGNED.add_hash(hash_str)
 
     def get_orphan_signed_witnesses(self) -> set["AccountAgeWitness"]:
         root_signed_witness_set = self.signed_witness_service.get_root_signed_witness_set(False)
