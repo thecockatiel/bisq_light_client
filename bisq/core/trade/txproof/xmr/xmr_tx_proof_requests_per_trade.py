@@ -132,46 +132,45 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                 
                 asset_tx_proof_result = AssetTxProofResult.ERROR
                 
-                match result:
-                    case XmrTxProofRequestResult.PENDING:
-                        # We expect repeated PENDING results with different details
+                if result == XmrTxProofRequestResult.PENDING:
+                    # We expect repeated PENDING results with different details
+                    asset_tx_proof_result = self.get_asset_tx_proof_result_for_pending(result)
+                    
+                elif result == XmrTxProofRequestResult.SUCCESS:
+                    self.num_success_results += 1
+                    if self.num_success_results < self.num_required_success_results:
+                        # Request is success but not all have completed yet.
+                        remaining = self.num_required_success_results - self.num_success_results
+                        logger.info(f"{request} succeeded. We have {remaining} remaining request(s) open.")
                         asset_tx_proof_result = self.get_asset_tx_proof_result_for_pending(result)
-                    
-                    case XmrTxProofRequestResult.SUCCESS:
-                        self.num_success_results += 1
-                        if self.num_success_results < self.num_required_success_results:
-                            # Request is success but not all have completed yet.
-                            remaining = self.num_required_success_results - self.num_success_results
-                            logger.info(f"{request} succeeded. We have {remaining} remaining request(s) open.")
-                            asset_tx_proof_result = self.get_asset_tx_proof_result_for_pending(result)
-                        else:
-                            # All our services have returned a SUCCESS result so we
-                            # have completed on the service level.
-                            logger.info(
-                                f"All {self.num_required_success_results} tx proof requests for trade "
-                                f"{self.trade.get_short_id()} have been successful."
-                            )
-                            detail = result.detail
-                            asset_tx_proof_result = (
-                                AssetTxProofResult.COMPLETED.with_num_success_results(self.num_success_results)
-                                            .with_num_required_success_results(self.num_required_success_results)
-                                            .with_num_confirmations(detail.num_confirmations if detail else 0)
-                                            .with_num_required_confirmations(self.auto_confirm_settings.required_confirmations)
-                            )
-                    
-                    case XmrTxProofRequestResult.FAILED:
-                        logger.warning(
-                            f"{request} failed. This might not mean that the XMR transfer was invalid "
-                            f"but you have to check yourself if the XMR transfer was correct. {result}"
+                    else:
+                        # All our services have returned a SUCCESS result so we
+                        # have completed on the service level.
+                        logger.info(
+                            f"All {self.num_required_success_results} tx proof requests for trade "
+                            f"{self.trade.get_short_id()} have been successful."
                         )
-                        asset_tx_proof_result = AssetTxProofResult.FAILED
-                    
-                    case _:  # ERROR or default
-                        logger.warning(
-                            f"{request} resulted in an error. This might not mean that the XMR transfer "
-                            f"was invalid but can be a network or service problem. {result}"
+                        detail = result.detail
+                        asset_tx_proof_result = (
+                            AssetTxProofResult.COMPLETED.with_num_success_results(self.num_success_results)
+                                        .with_num_required_success_results(self.num_required_success_results)
+                                        .with_num_confirmations(detail.num_confirmations if detail else 0)
+                                        .with_num_required_confirmations(self.auto_confirm_settings.required_confirmations)
                         )
-                        asset_tx_proof_result = AssetTxProofResult.ERROR
+                    
+                elif result == XmrTxProofRequestResult.FAILED:
+                    logger.warning(
+                        f"{request} failed. This might not mean that the XMR transfer was invalid "
+                        f"but you have to check yourself if the XMR transfer was correct. {result}"
+                    )
+                    asset_tx_proof_result = AssetTxProofResult.FAILED
+                    
+                else:  # ERROR or default
+                    logger.warning(
+                        f"{request} resulted in an error. This might not mean that the XMR transfer "
+                        f"was invalid but can be a network or service problem. {result}"
+                    )
+                    asset_tx_proof_result = AssetTxProofResult.ERROR
 
                 self.call_result_handler_and_maybe_terminate(result_handler, asset_tx_proof_result)
 
