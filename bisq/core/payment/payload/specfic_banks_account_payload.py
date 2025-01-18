@@ -85,7 +85,8 @@ class SpecificBanksAccountPayload(BankAccountPayload):
             self.accepted_banks.append(bank_name)
 
     def get_payment_details(self) -> str:
-        return f"{Res.get(self.payment_method_id)} - {self.get_payment_details_for_trade_popup().replace('\n', ', ')}"
+        details = self.get_payment_details_for_trade_popup().replace('\n', ', ')
+        return f"{Res.get(self.payment_method_id)} - {details}"
 
     def get_payment_details_for_trade_popup(self) -> str:
-        return f"{self.get_payment_details_for_trade_popup()}\n{Res.get_with_col('payment.accepted.banks')} {', '.join(self.accepted_banks)}"
+        return f"{super().get_payment_details_for_trade_popup()}\n{Res.get_with_col('payment.accepted.banks')} {', '.join(self.accepted_banks)}"
