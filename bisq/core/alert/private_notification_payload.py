@@ -6,9 +6,9 @@ from bisq.common.util.utilities import bytes_as_hex_string
 import proto.pb_pb2 as protobuf
 
 
-@dataclass(kw_only=True)
+@dataclass
 class PrivateNotificationPayload(NetworkPayload):
-    message: str
+    message: str = field(default="")
     signature_as_base64: Optional[str] = field(default=None)
     sig_public_key_bytes: Optional[bytes] = field(default=None)
     sig_public_key: Optional['dsa.DSAPublicKey'] = field(default=None)
