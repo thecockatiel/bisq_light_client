@@ -108,95 +108,94 @@ class WalletAppSetup:
             # We got a report where a "tx already known" message caused a failed trade but the deposit tx was valid.
             # To avoid such false positives we only handle reject messages which we consider clearly critical.
 
-            match reject_message.get_reason_code():
-                case (
-                    RejectCode.OBSOLETE
-                    | RejectCode.DUPLICATE
-                    | RejectCode.NONSTANDARD
-                    | RejectCode.CHECKPOINT
-                    | RejectCode.OTHER
+            if reject_message.get_reason_code() in (
+                    RejectCode.OBSOLETE,
+                    RejectCode.DUPLICATE,
+                    RejectCode.NONSTANDARD,
+                    RejectCode.CHECKPOINT,
+                    RejectCode.OTHER,
                 ):
                     # We ignore those cases to avoid that not critical reject messages trigger a failed trade.
                     logger.warning(
                         "We ignore that reject message as it is likely not critical."
                     )
 
-                case (
-                    RejectCode.MALFORMED
-                    | RejectCode.INVALID
-                    | RejectCode.DUST
-                    | RejectCode.INSUFFICIENTFEE
-                ):
-                    # We delay as we might get the rejected tx error before we have completed the create offer protocol
-                    logger.warning(
-                        "We handle that reject message as it is likely critical."
-                    )
-                    tx_id = e.new_value.tx_id
+            elif reject_message.get_reason_code() in (
+                RejectCode.MALFORMED,
+                RejectCode.INVALID,
+                RejectCode.DUST,
+                RejectCode.INSUFFICIENTFEE,
+            ):
+                # We delay as we might get the rejected tx error before we have completed the create offer protocol
+                logger.warning(
+                    "We handle that reject message as it is likely critical."
+                )
+                tx_id = e.new_value.tx_id
 
-                    def process_delayed():
+                def process_delayed():
 
-                        for open_offer in open_offer_manager.get_observable_list():
-                            if tx_id == open_offer.get_offer().offer_fee_payment_tx_id:
+                    for open_offer in open_offer_manager.get_observable_list():
+                        if tx_id == open_offer.get_offer().offer_fee_payment_tx_id:
 
-                                def handle_offer():
-                                    open_offer.get_offer().error_message = (
-                                        e.new_value.message
+                            def handle_offer():
+                                open_offer.get_offer().error_message = (
+                                    e.new_value.message
+                                )
+                                if rejected_tx_error_message_handler:
+                                    rejected_tx_error_message_handler(
+                                        Res.get(
+                                            "popup.warning.openOffer.makerFeeTxRejected",
+                                            open_offer.get_id(),
+                                            tx_id,
+                                        )
                                     )
+
+                                def on_success():
+                                    logger.warning(
+                                        f"We removed an open offer because the maker fee was rejected by the Bitcoin "
+                                        f"network. OfferId={open_offer.get_short_id()}, txId={tx_id}"
+                                    )
+
+                                open_offer_manager.remove_open_offer(
+                                    open_offer, on_success, logger.warning
+                                )
+
+                            UserThread.run_after(handle_offer, 1)
+
+                    # Handle trades
+                    for trade in trade_manager.get_observable_list():
+                        if trade.get_offer() is not None:
+                            details = None
+                            if tx_id == trade.deposit_tx_id:
+                                details = Res.get(
+                                    "popup.warning.trade.txRejected.deposit"
+                                )
+                            if (
+                                tx_id == trade.get_offer().offer_fee_payment_tx_id
+                                or tx_id == trade.taker_fee_tx_id
+                            ):
+                                details = Res.get(
+                                    "popup.warning.trade.txRejected.tradeFee"
+                                )
+
+                            if details:
+
+                                def handle_trade(trade_details=details):
+                                    trade.error_message = e.new_value.message
+                                    trade_manager.request_persistence()
                                     if rejected_tx_error_message_handler:
                                         rejected_tx_error_message_handler(
                                             Res.get(
-                                                "popup.warning.openOffer.makerFeeTxRejected",
-                                                open_offer.get_id(),
+                                                "popup.warning.trade.txRejected",
+                                                trade_details,
+                                                trade.get_short_id(),
                                                 tx_id,
                                             )
                                         )
 
-                                    def on_success():
-                                        logger.warning(
-                                            f"We removed an open offer because the maker fee was rejected by the Bitcoin "
-                                            f"network. OfferId={open_offer.get_short_id()}, txId={tx_id}"
-                                        )
-
-                                    open_offer_manager.remove_open_offer(
-                                        open_offer, on_success, logger.warning
-                                    )
-
-                                UserThread.run_after(handle_offer, 1)
-
-                        # Handle trades
-                        for trade in trade_manager.get_observable_list():
-                            if trade.get_offer() is not None:
-                                details = None
-                                if tx_id == trade.deposit_tx_id:
-                                    details = Res.get(
-                                        "popup.warning.trade.txRejected.deposit"
-                                    )
-                                if (
-                                    tx_id == trade.get_offer().offer_fee_payment_tx_id
-                                    or tx_id == trade.taker_fee_tx_id
-                                ):
-                                    details = Res.get(
-                                        "popup.warning.trade.txRejected.tradeFee"
-                                    )
-
-                                if details:
-
-                                    def handle_trade(trade_details=details):
-                                        trade.error_message = e.new_value.message
-                                        trade_manager.request_persistence()
-                                        if rejected_tx_error_message_handler:
-                                            rejected_tx_error_message_handler(
-                                                Res.get(
-                                                    "popup.warning.trade.txRejected",
-                                                    trade_details,
-                                                    trade.get_short_id(),
-                                                    tx_id,
-                                                )
-                                            )
-
-                                    UserThread.run_after(
-                                        handle_trade, timedelta(seconds=1)
-                                    )
+                                UserThread.run_after(
+                                    handle_trade, timedelta(seconds=1)
+                                )
 
                     UserThread.run_after(process_delayed, timedelta(seconds=3))
 
