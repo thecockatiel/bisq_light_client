@@ -8,7 +8,6 @@ from bisq.core.payment.payload.amazon_gift_card_account_payload import (
 )
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.payment.payload.payment_method import PaymentMethod
-from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payment_account import PaymentAccount
 
 

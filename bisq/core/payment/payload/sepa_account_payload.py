@@ -102,9 +102,11 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self.accepted_country_codes.extend(self.persisted_accepted_country_codes)
 
     def get_payment_details(self) -> str:
-        return (f"{Res.get(self.payment_method_id)} - {Res.get_with_col("payment.account.owner")}: {self.holder_name}, "
+        return (
+                f"{Res.get(self.payment_method_id)} - {Res.get_with_col("payment.account.owner")}: {self.holder_name}, "
                 f"IBAN: {self.iban}, BIC: {self.bic}, "
-                f"{Res.get_with_col("payment.bank.country")}: {self.country_code}")
+                f"{Res.get_with_col("payment.bank.country")}: {self.country_code}"
+            )
 
     def get_payment_details_for_trade_popup(self) -> str:
         return (f"{Res.get_with_col("payment.account.owner")}: {self.holder_name}\n"
