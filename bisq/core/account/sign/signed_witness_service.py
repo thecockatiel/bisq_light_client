@@ -134,7 +134,7 @@ class SignedWitnessService:
             for witness in signed_witnesses
         )
 
-    def owner_pub_key(self, account_age_witness: "AccountAgeWitness") -> bytes | None:
+    def owner_pub_key(self, account_age_witness: "AccountAgeWitness") -> Optional[bytes]:
         signed_witnesses = self.get_signed_witness_set(account_age_witness)
         return next((witness.witness_owner_pub_key for witness in signed_witnesses), None)
 

@@ -1,4 +1,4 @@
-from typing import Collection, cast
+from typing import Collection, Optional, cast
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
 import proto.pb_pb2 as protobuf
@@ -9,7 +9,7 @@ import proto.pb_pb2 as protobuf
 # definition and provide a hashMap for the domain access.
 class SignedWitnessStore(PersistableNetworkPayloadStore[SignedWitness]):
     
-    def __init__(self, collection: Collection[SignedWitness] | None = None) -> None:
+    def __init__(self, collection: Optional[Collection[SignedWitness]] = None) -> None:
         super().__init__(collection)
 
     def to_proto_message(self):

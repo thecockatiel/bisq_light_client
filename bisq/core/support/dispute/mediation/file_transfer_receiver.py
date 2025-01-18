@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from typing import Optional
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
@@ -23,7 +24,7 @@ class FileTransferReceiver(FileTransferSession):
         trade_id: str,
         trader_id: int,
         trader_role: str,
-        callback: FileTransferSession.FtpCallback | None = None,
+        callback: Optional[FileTransferSession.FtpCallback] = None,
     ):
         super().__init__(
             network_node, peer_node_address, trade_id, trader_id, trader_role, callback

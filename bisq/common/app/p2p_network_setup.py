@@ -140,7 +140,7 @@ class P2PNetworkSetup:
                 logger.debug("on_updated_data_received")
                 self.splash_p2p_network_animation_visible.set(False)
                 
-            def on_setup_failed(self_, e: Exception | None = None) -> None:
+            def on_setup_failed(self_, e: Optional[Exception] = None) -> None:
                 logger.error("on_setup_failed")
                 self.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.connectionToP2PFailed", str(e)))
                 self.splash_p2p_network_animation_visible.set(False)

@@ -1,3 +1,4 @@
+from typing import Union
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import proto.pb_pb2 as protobuf
@@ -21,7 +22,7 @@ class SwiftAccountPayload(PaymentAccountPayload):
                beneficiary_phone: str = "", special_instructions: str = "", intermediary_swift_code: str = "",
                intermediary_country_code: str = "", intermediary_name: str = "", intermediary_branch: str = "",
                intermediary_address: str = "", max_trade_period: int = -1,
-               exclude_from_json_data_map: dict[str, str] | None = None):
+               exclude_from_json_data_map: Union[dict[str, str]] = None):
         super().__init__(payment_method, id, max_trade_period, exclude_from_json_data_map)
         # Initialize payload data elements
         self.bank_swift_code = bank_swift_code
