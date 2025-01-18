@@ -102,17 +102,22 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self.accepted_country_codes.extend(self.persisted_accepted_country_codes)
 
     def get_payment_details(self) -> str:
+        method = Res.get(self.payment_method_id)
+        owner = Res.get_with_col("payment.account.owner")
+        country = Res.get_with_col("payment.bank.country")
         return (
-                f"{Res.get(self.payment_method_id)} - {Res.get_with_col("payment.account.owner")}: {self.holder_name}, "
+                f"{method} - {owner}: {self.holder_name}, "
                 f"IBAN: {self.iban}, BIC: {self.bic}, "
-                f"{Res.get_with_col("payment.bank.country")}: {self.country_code}"
+                f"{country}: {self.country_code}"
             )
 
     def get_payment_details_for_trade_popup(self) -> str:
-        return (f"{Res.get_with_col("payment.account.owner")}: {self.holder_name}\n"
+        owner = Res.get_with_col("payment.account.owner")
+        country = Res.get_with_col("payment.bank.country")
+        return (f"{owner}: {self.holder_name}\n"
                 f"IBAN: {self.iban}\n"
                 f"BIC: {self.bic}\n"
-                f"{Res.get_with_col("payment.bank.country")}: {get_name_by_code(self.country_code)}")
+                f"{country}: {get_name_by_code(self.country_code)}")
 
     def get_age_witness_input_data(self) -> bytes:
         # We don't add holder_name because we don't want to break age validation if the user recreates an account with
