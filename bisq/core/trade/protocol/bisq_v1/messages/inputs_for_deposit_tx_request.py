@@ -97,7 +97,7 @@ class InputsForDepositTxRequest(TradeMessage):
         return envelope
 
     @staticmethod
-    def from_proto(cls, proto: protobuf.InputsForDepositTxRequest, core_proto_resolver: "CoreProtoResolver", message_version: int):
+    def from_proto(proto: protobuf.InputsForDepositTxRequest, core_proto_resolver: "CoreProtoResolver", message_version: int):
         raw_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs]
         accepted_arbitrators = [NodeAddress.from_proto(addr) for addr in proto.accepted_arbitrator_node_addresses]
         accepted_mediators = [NodeAddress.from_proto(addr) for addr in proto.accepted_mediator_node_addresses]
