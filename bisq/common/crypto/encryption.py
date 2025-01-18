@@ -6,10 +6,9 @@ import secrets
 from typing import Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding, dsa
+from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
 from electrum_min.crypto import sha256d
 from electrum_min.ecc import ECPrivkey, ECPubkey, msg_magic, string_to_number
-from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair

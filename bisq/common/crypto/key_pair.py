@@ -1,13 +1,14 @@
 from dataclasses import dataclass
-from typing import Union
-from cryptography.hazmat.primitives.asymmetric.types import dsa, rsa
+from typing import TYPE_CHECKING, Union
 from cryptography.hazmat.primitives import serialization
 
+if TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 
 @dataclass(frozen=True)
 class KeyPair:
-    private_key: Union[dsa.DSAPrivateKey, rsa.RSAPrivateKey]
-    public_key: Union[dsa.DSAPublicKey, rsa.RSAPublicKey]
+    private_key: Union["dsa.DSAPrivateKey", "rsa.RSAPrivateKey"]
+    public_key: Union["dsa.DSAPublicKey", "rsa.RSAPublicKey"]
 
     def __eq__(self, other):
         return (

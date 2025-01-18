@@ -21,7 +21,6 @@ from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry impor
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.utils.capability_utils import CapabilityUtils
 from utils.concurrency import AtomicInt, ThreadSafeSet
-from cryptography.hazmat.primitives.asymmetric.types import dsa
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 
 from utils.formatting import readable_file_size
@@ -47,6 +46,7 @@ if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
+    from cryptography.hazmat.primitives.asymmetric import dsa
 
 logger = get_logger(__name__)
 
