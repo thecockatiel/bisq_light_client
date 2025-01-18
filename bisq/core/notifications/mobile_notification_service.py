@@ -119,23 +119,17 @@ class MobileNotificationService:
             return False
 
         do_send = False
-        match message.mobile_message_type:
-            case MobileMessageType.SETUP_CONFIRMATION:
-                do_send = True
-            case (
-                MobileMessageType.OFFER
-                | MobileMessageType.TRADE
-                | MobileMessageType.DISPUTE
-            ):
-                do_send = self.use_trade_notifications_property.get()
-            case MobileMessageType.PRICE:
-                do_send = self.use_price_notifications_property.get()
-            case MobileMessageType.MARKET:
-                do_send = self.use_market_notifications_property.get()
-            case MobileMessageType.ERASE:
-                do_send = True
-            case _:
-                do_send = False
+        message_type = message.mobile_message_type
+        if message_type == MobileMessageType.SETUP_CONFIRMATION:
+            do_send = True
+        elif message_type in (MobileMessageType.OFFER, MobileMessageType.TRADE, MobileMessageType.DISPUTE):
+            do_send = self.use_trade_notifications_property.get()
+        elif message_type == MobileMessageType.PRICE:
+            do_send = self.use_price_notifications_property.get()
+        elif message_type == MobileMessageType.MARKET:
+            do_send = self.use_market_notifications_property.get()
+        elif message_type == MobileMessageType.ERASE:
+            do_send = True
 
         if not do_send:
             return False
@@ -191,14 +185,12 @@ class MobileNotificationService:
             return
 
         msg: Optional[str] = None
-
-        match self.mobile_model.os:
-            case MobileModelOS.IOS | MobileModelOS.IOS_DEV:
-                msg = MobileNotificationService.BISQ_MESSAGE_IOS_MAGIC
-            case MobileModelOS.ANDROID:
-                msg = MobileNotificationService.BISQ_MESSAGE_ANDROID_MAGIC
-            case _:
-                raise RuntimeError("No mobileModel OS set")
+        if self.mobile_model.os in (MobileModelOS.IOS, MobileModelOS.IOS_DEV):
+            msg = MobileNotificationService.BISQ_MESSAGE_IOS_MAGIC
+        elif self.mobile_model.os == MobileModelOS.ANDROID:
+            msg = MobileNotificationService.BISQ_MESSAGE_ANDROID_MAGIC
+        else:
+            raise RuntimeError("No mobileModel OS set")
 
         msg += (
             MobileModel.PHONE_SEPARATOR_WRITING
