@@ -1,5 +1,5 @@
 import asyncio
-from typing import Literal
+from typing import Literal, Union
 import uuid
 import aiohttp
 from aiohttp_socks import ProxyType, ProxyConnector
@@ -93,7 +93,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
 
     async def _do_request(
         self,
-        http_method: Literal["GET"] | Literal["POST"],
+        http_method: Union[Literal["GET"], Literal["POST"]],
         url: str,
         data: dict[str, str] = None,
         params: dict[str, str] = {},
