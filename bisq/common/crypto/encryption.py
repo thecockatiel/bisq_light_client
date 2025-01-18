@@ -3,7 +3,7 @@ from io import BytesIO
 import hmac
 import hashlib
 import secrets
-from typing import Union
+from typing import TYPE_CHECKING, Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
@@ -14,6 +14,13 @@ from bisq.common.crypto.key_conversion_exception import KeyConversionException
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
+
+if TYPE_CHECKING:
+    try:
+        from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES
+    except:
+        # not available in old versions
+        pass
 
 logger = get_logger(__name__)
 
@@ -173,7 +180,7 @@ class Encryption:
             raise RuntimeError("Couldn't generate key") from e
 
     @staticmethod
-    def get_public_key_bytes(public_key: Union[PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES, ECPubkey, ECPrivkey, bytes]) -> bytes:
+    def get_public_key_bytes(public_key: Union["PUBLIC_KEY_TYPES", "PRIVATE_KEY_TYPES", ECPubkey, ECPrivkey, bytes]) -> bytes:
         if isinstance(public_key, bytes):
             return public_key
         if isinstance(public_key, ECPubkey) or isinstance(public_key, ECPrivkey):
@@ -246,7 +253,7 @@ class Encryption:
     ##########################################################################################
             
     @staticmethod
-    def is_pubkeys_equal(key1: PUBLIC_KEY_TYPES, key2: PUBLIC_KEY_TYPES):
+    def is_pubkeys_equal(key1: "PUBLIC_KEY_TYPES", key2: "PUBLIC_KEY_TYPES"):
         if isinstance(key1, ECPubkey) and isinstance(key2, ECPubkey):
             return key1 == key2
         return Encryption.get_public_key_bytes(key1) == Encryption.get_public_key_bytes(key2)
