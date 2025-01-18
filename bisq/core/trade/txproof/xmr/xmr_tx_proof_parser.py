@@ -106,10 +106,11 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
             for output in json_outputs:
                 if output.get("match"):
                     any_match_found = True
-                    amount_matches = int(output.get("amount", -1)) == model.amount
+                    amount = int(output.get("amount", -1))
+                    amount_matches = amount == model.amount
                     if amount_matches:
                         break
-                    logger.warning(f"output amount mismatch: got {output.get("amount", None)}, expected {model.amount}")
+                    logger.warning(f"output amount mismatch: got {amount}, expected {model.amount}")
             
             # None of the outputs had a match entry
             if not any_match_found:

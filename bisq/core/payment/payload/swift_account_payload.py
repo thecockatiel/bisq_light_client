@@ -92,7 +92,8 @@ class SwiftAccountPayload(PaymentAccountPayload):
         )
 
     def get_payment_details(self) -> str:
-        return f"{Res.get("self.payment_method_id")} - {self.beneficiary_name}"
+        method = Res.get("self.payment_method_id")
+        return f"{method} - {self.beneficiary_name}"
 
     def get_payment_details_for_trade_popup(self) -> str:
         return self.get_payment_details()
