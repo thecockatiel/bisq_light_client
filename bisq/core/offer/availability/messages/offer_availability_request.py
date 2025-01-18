@@ -11,12 +11,12 @@ import proto.pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
-@dataclass(kw_only=True)
+@dataclass
 class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
-    pub_key_ring: PubKeyRing
-    takers_trade_price: int
-    is_taker_api_user: bool
-    burning_man_selection_height: int
+    pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)
+    takers_trade_price: int = field(default=0)
+    is_taker_api_user: bool = field(default=False)
+    burning_man_selection_height: int = field(default=0)
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def to_proto_network_envelope(self) -> 'NetworkEnvelope':
