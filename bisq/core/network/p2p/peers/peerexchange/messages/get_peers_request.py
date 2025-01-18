@@ -1,7 +1,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Optional, Set
+from typing import Optional
 
 from bisq.common.capabilities import Capabilities
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -11,12 +11,13 @@ from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabi
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class GetPeersRequest(NetworkEnvelope, PeerExchangeMessage, SendersNodeAddressMessage, SupportedCapabilitiesMessage):
-    sender_node_address: NodeAddress
-    nonce: int
-    reported_peers: Set[Peer]
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    nonce: int = field(default_factory=raise_required)
+    reported_peers: set[Peer] = field(default_factory=raise_required)
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def __post_init__(self):

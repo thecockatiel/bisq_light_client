@@ -14,7 +14,7 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-@dataclass(kw_only=True)
+@dataclass
 class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, CapabilityRequiringPayload):
     envelopes: list[NetworkEnvelope] = field(default_factory=list)
 

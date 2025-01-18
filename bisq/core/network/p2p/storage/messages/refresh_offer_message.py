@@ -1,14 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class RefreshOfferMessage(BroadcastMessage):
-    hash_of_data_and_seq_nr: bytes  # 32 bytes
-    signature: bytes  # 46 bytes
-    hash_of_payload: bytes  # 32 bytes
-    sequence_number: int  # 4 bytes
+    hash_of_data_and_seq_nr: bytes = field(default_factory=raise_required)  # 32 bytes
+    signature: bytes = field(default_factory=raise_required)  # 46 bytes
+    hash_of_payload: bytes = field(default_factory=raise_required)  # 32 bytes
+    sequence_number: int = field(default_factory=raise_required)  # 4 bytes
 
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()

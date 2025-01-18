@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from bisq.common.protocol.proto_util import ProtoUtil
@@ -6,6 +6,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -13,9 +14,9 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-@dataclass(kw_only=True)
+@dataclass
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
-    sender_node_address: 'NodeAddress'
+    sender_node_address: 'NodeAddress' = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> "NetworkEnvelope":
         get_updated_data_request = protobuf.GetUpdatedDataRequest(

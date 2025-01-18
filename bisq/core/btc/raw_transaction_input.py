@@ -5,12 +5,13 @@ import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from utils.data import raise_required
 
 # TODO: incomplete
-@dataclass(kw_only=True)
+@dataclass
 class RawTransactionInput(NetworkPayload, PersistablePayload):
-    index: int # Index of spending txo
-    parent_transaction: bytes # Spending tx (fromTx)
+    index: int = field(default_factory=raise_required) # Index of spending txo
+    parent_transaction: bytes = field(default_factory=raise_required) # Spending tx (fromTx)
     value: int = field(default=0)
     
     # Added at Bsq swap release

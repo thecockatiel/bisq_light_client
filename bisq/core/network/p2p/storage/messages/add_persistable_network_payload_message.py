@@ -1,16 +1,18 @@
+from typing import TYPE_CHECKING
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage 
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 import proto.pb_pb2 as protobuf
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from utils.data import raise_required
 
-from typing import TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
-@dataclass(kw_only=True)
+@dataclass
 class AddPersistableNetworkPayloadMessage(BroadcastMessage):
-    persistable_network_payload: 'PersistableNetworkPayload'
+    persistable_network_payload: 'PersistableNetworkPayload' = field(default_factory=raise_required)
 
     def __post_init__(self):
         if not isinstance(self.persistable_network_payload, PersistableNetworkPayload):

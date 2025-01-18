@@ -6,17 +6,18 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage 
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 # It is the last message in the take offer phase. We use MailboxMessage instead of DirectMessage to add more tolerance
 # in case of network issues and as the message does not trigger further protocol execution.
-@dataclass(kw_only=True)
+@dataclass
 class DepositTxAndDelayedPayoutTxMessage(TradeMailboxMessage):
-    sender_node_address: NodeAddress
-    deposit_tx: bytes
-    delayed_payout_tx: bytes
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    deposit_tx: bytes = field(default_factory=raise_required)
+    delayed_payout_tx: bytes = field(default_factory=raise_required)
     # Added at v1.7.0
     seller_payment_account_payload: Optional[PaymentAccountPayload] = field(default=None)
 

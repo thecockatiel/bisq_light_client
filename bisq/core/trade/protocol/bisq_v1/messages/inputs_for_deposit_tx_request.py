@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
@@ -10,48 +10,49 @@ from google.protobuf.message import Message
 import proto.pb_pb2 as protobuf
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.node_address import NodeAddress
+from utils.data import raise_required
 
 if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
-@dataclass(kw_only=True)
+@dataclass
 class InputsForDepositTxRequest(TradeMessage):
-    sender_node_address: 'NodeAddress'
-    trade_amount: int
-    trade_price: int
-    tx_fee: int
-    taker_fee: int
-    is_currency_for_taker_fee_btc: bool
-    raw_transaction_inputs: List['RawTransactionInput']
-    change_output_value: int
+    sender_node_address: 'NodeAddress' = field(default_factory=raise_required)
+    trade_amount: int = field(default_factory=raise_required)
+    trade_price: int = field(default_factory=raise_required)
+    tx_fee: int = field(default_factory=raise_required)
+    taker_fee: int = field(default_factory=raise_required)
+    is_currency_for_taker_fee_btc: bool = field(default_factory=raise_required)
+    raw_transaction_inputs: List['RawTransactionInput'] = field(default_factory=raise_required)
+    change_output_value: int = field(default_factory=raise_required)
     
-    change_output_address: Optional[str]
-    taker_multi_sig_pub_key: bytes
-    taker_payout_address_string: str
-    taker_pub_key_ring: 'PubKeyRing'
+    change_output_address: Optional[str] = field(default_factory=raise_required)
+    taker_multi_sig_pub_key: bytes = field(default_factory=raise_required)
+    taker_payout_address_string: str = field(default_factory=raise_required)
+    taker_pub_key_ring: 'PubKeyRing' = field(default_factory=raise_required)
     
     # Removed with 1.7.0
-    taker_payment_account_payload: Optional['PaymentAccountPayload']
+    taker_payment_account_payload: Optional['PaymentAccountPayload'] = field(default_factory=raise_required)
     
-    taker_account_id: str
-    taker_fee_tx_id: str
-    accepted_arbitrator_node_addresses: List['NodeAddress']
-    accepted_mediator_node_addresses: List['NodeAddress']
-    accepted_refund_agent_node_addresses: List['NodeAddress']
+    taker_account_id: str = field(default_factory=raise_required)
+    taker_fee_tx_id: str = field(default_factory=raise_required)
+    accepted_arbitrator_node_addresses: List['NodeAddress'] = field(default_factory=raise_required)
+    accepted_mediator_node_addresses: List['NodeAddress'] = field(default_factory=raise_required)
+    accepted_refund_agent_node_addresses: List['NodeAddress'] = field(default_factory=raise_required)
     
-    arbitrator_node_address: Optional['NodeAddress']
-    mediator_node_address: 'NodeAddress'
-    refund_agent_node_address: 'NodeAddress'
+    arbitrator_node_address: Optional['NodeAddress'] = field(default_factory=raise_required)
+    mediator_node_address: 'NodeAddress' = field(default_factory=raise_required)
+    refund_agent_node_address: 'NodeAddress' = field(default_factory=raise_required)
     
-    account_age_witness_signature_of_offer_id: bytes
-    current_date: int
+    account_age_witness_signature_of_offer_id: bytes = field(default_factory=raise_required)
+    current_date: int = field(default_factory=raise_required)
     
     # Added at 1.7.0
-    hash_of_takers_payment_account_payload: Optional[bytes]
-    takers_payment_method_id: Optional[str]
+    hash_of_takers_payment_account_payload: Optional[bytes] = field(default_factory=raise_required)
+    takers_payment_method_id: Optional[str] = field(default_factory=raise_required)
     
     # Added in v 1.9.7
-    burning_man_selection_height: int
+    burning_man_selection_height: int = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> Message:
         message = protobuf.InputsForDepositTxRequest(

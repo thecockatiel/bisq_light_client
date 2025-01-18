@@ -11,7 +11,7 @@ import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 
-@dataclass(kw_only=True)
+@dataclass
 class PreliminaryGetDataRequest(GetDataRequest, AnonymousMessage, SupportedCapabilitiesMessage):
     supported_capabilities: Capabilities = field(default_factory=lambda: Capabilities.app)
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Set
+from typing import Optional
 from bisq.common.capabilities import Capabilities
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -7,11 +7,12 @@ from bisq.core.network.p2p.peers.peerexchange.messages.peer_exchange_message imp
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabilitiesMessage):
-    request_nonce: int
-    reported_peers: Set[Peer]
+    request_nonce: int = field(default_factory=raise_required)
+    reported_peers: set[Peer] = field(default_factory=raise_required)
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def to_proto_network_envelope(self):

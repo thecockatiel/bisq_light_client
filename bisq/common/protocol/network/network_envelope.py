@@ -5,7 +5,7 @@ from bisq.common.envelope import Envelope
 import proto.pb_pb2 as protobuf
 import bisq.common.version as Version
 
-@dataclass(kw_only=True)
+@dataclass
 class NetworkEnvelope(Envelope, ABC):
     message_version: int = field(default_factory=Version.get_p2p_message_version)
 

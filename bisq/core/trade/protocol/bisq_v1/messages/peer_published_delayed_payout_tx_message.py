@@ -1,14 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
     TradeMailboxMessage,
 )
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class PeerPublishedDelayedPayoutTxMessage(TradeMailboxMessage):
-    sender_node_address: NodeAddress
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> "protobuf.NetworkEnvelope":
         envelope = self.get_network_envelope_builder()
