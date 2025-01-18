@@ -47,50 +47,49 @@ class TradeEvents:
                 msg = None
                 short_id = trade.get_short_id()
 
-                match e.new_value:
-                    case (
-                        TradePhase.INIT
-                        | TradePhase.TAKER_FEE_PUBLISHED
-                        | TradePhase.DEPOSIT_PUBLISHED
+                if e.new_value in [
+                    TradePhase.INIT,
+                    TradePhase.TAKER_FEE_PUBLISHED,
+                    TradePhase.DEPOSIT_PUBLISHED,
+                ]:
+                    pass
+
+                elif e.new_value == TradePhase.DEPOSIT_CONFIRMED:
+                    if (
+                        trade.contract
+                        and self.pub_key_ring == trade.contract.buyer_pub_key_ring
                     ):
-                        pass
+                        msg = Res.get(
+                            "account.notifications.trade.message.msg.conf", short_id
+                        )
 
-                    case TradePhase.DEPOSIT_CONFIRMED:
-                        if (
-                            trade.contract
-                            and self.pub_key_ring == trade.contract.buyer_pub_key_ring
-                        ):
-                            msg = Res.get(
-                                "account.notifications.trade.message.msg.conf", short_id
-                            )
+                elif e.new_value == TradePhase.FIAT_SENT:
+                    # We only notify the seller
+                    if (
+                        trade.contract
+                        and self.pub_key_ring == trade.contract.seller_pub_key_ring
+                    ):
+                        msg = Res.get(
+                            "account.notifications.trade.message.msg.started",
+                            short_id,
+                        )
 
-                    case TradePhase.FIAT_SENT:
-                        # We only notify the seller
-                        if (
-                            trade.contract
-                            and self.pub_key_ring == trade.contract.seller_pub_key_ring
-                        ):
-                            msg = Res.get(
-                                "account.notifications.trade.message.msg.started",
-                                short_id,
-                            )
+                elif e.new_value == TradePhase.FIAT_RECEIVED:
+                    pass
 
-                    case TradePhase.FIAT_RECEIVED:
-                        pass
+                elif e.new_value == TradePhase.PAYOUT_PUBLISHED:
+                    # We only notify the buyer
+                    if (
+                        trade.contract
+                        and self.pub_key_ring == trade.contract.buyer_pub_key_ring
+                    ):
+                        msg = Res.get(
+                            "account.notifications.trade.message.msg.completed",
+                            short_id,
+                        )
 
-                    case TradePhase.PAYOUT_PUBLISHED:
-                        # We only notify the buyer
-                        if (
-                            trade.contract
-                            and self.pub_key_ring == trade.contract.buyer_pub_key_ring
-                        ):
-                            msg = Res.get(
-                                "account.notifications.trade.message.msg.completed",
-                                short_id,
-                            )
-
-                    case TradePhase.WITHDRAWN:
-                        pass
+                elif e.new_value == TradePhase.WITHDRAWN:
+                    pass
 
                 if msg:
                     message = MobileMessage(
