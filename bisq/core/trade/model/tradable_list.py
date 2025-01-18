@@ -34,27 +34,27 @@ class TradableList(PersistableListAsObservable[T]):
     def from_proto(proto: protobuf.TradableList, core_proto_resolver: "CoreProtoResolver", btc_wallet_service: "BtcWalletService") -> "TradableList":
         tradable_list = []
         for tradable in proto.tradable:
-            match tradable.WhichOneof("message"):
-                case "open_offer":
-                    tradable_list.append(OpenOffer.from_proto(tradable.open_offer))
-                case "buyer_as_maker_trade":
-                    tradable_list.append(BuyerAsMakerTrade.from_proto(tradable.buyer_as_maker_trade, btc_wallet_service, core_proto_resolver))
-                case "buyer_as_taker_trade":
-                    tradable_list.append(BuyerAsTakerTrade.from_proto(tradable.buyer_as_taker_trade, btc_wallet_service, core_proto_resolver))
-                case "seller_as_maker_trade":
-                    tradable_list.append(SellerAsMakerTrade.from_proto(tradable.seller_as_maker_trade, btc_wallet_service, core_proto_resolver))
-                case "seller_as_taker_trade":
-                    tradable_list.append(SellerAsTakerTrade.from_proto(tradable.seller_as_taker_trade, btc_wallet_service, core_proto_resolver))
-                case "bsq_swap_buyer_as_maker_trade":
-                    tradable_list.append(BsqSwapBuyerAsMakerTrade.from_proto(tradable.bsq_swap_buyer_as_maker_trade))
-                case "bsq_swap_buyer_as_taker_trade":
-                    tradable_list.append(BsqSwapBuyerAsTakerTrade.from_proto(tradable.bsq_swap_buyer_as_taker_trade))
-                case "bsq_swap_seller_as_maker_trade":
-                    tradable_list.append(BsqSwapSellerAsMakerTrade.from_proto(tradable.bsq_swap_seller_as_maker_trade))
-                case "bsq_swap_seller_as_taker_trade":
-                    tradable_list.append(BsqSwapSellerAsTakerTrade.from_proto(tradable.bsq_swap_seller_as_taker_trade))
-                case _:
-                    raise RuntimeError(f"Unknown messageCase. tradable.WhichOneof('message') = {tradable.WhichOneof('message')}")
+            message_type = tradable.WhichOneof("message")
+            if message_type == "open_offer":
+                tradable_list.append(OpenOffer.from_proto(tradable.open_offer))
+            elif message_type == "buyer_as_maker_trade":
+                tradable_list.append(BuyerAsMakerTrade.from_proto(tradable.buyer_as_maker_trade, btc_wallet_service, core_proto_resolver))
+            elif message_type == "buyer_as_taker_trade":
+                tradable_list.append(BuyerAsTakerTrade.from_proto(tradable.buyer_as_taker_trade, btc_wallet_service, core_proto_resolver))
+            elif message_type == "seller_as_maker_trade":
+                tradable_list.append(SellerAsMakerTrade.from_proto(tradable.seller_as_maker_trade, btc_wallet_service, core_proto_resolver))
+            elif message_type == "seller_as_taker_trade":
+                tradable_list.append(SellerAsTakerTrade.from_proto(tradable.seller_as_taker_trade, btc_wallet_service, core_proto_resolver))
+            elif message_type == "bsq_swap_buyer_as_maker_trade":
+                tradable_list.append(BsqSwapBuyerAsMakerTrade.from_proto(tradable.bsq_swap_buyer_as_maker_trade))
+            elif message_type == "bsq_swap_buyer_as_taker_trade":
+                tradable_list.append(BsqSwapBuyerAsTakerTrade.from_proto(tradable.bsq_swap_buyer_as_taker_trade))
+            elif message_type == "bsq_swap_seller_as_maker_trade":
+                tradable_list.append(BsqSwapSellerAsMakerTrade.from_proto(tradable.bsq_swap_seller_as_maker_trade))
+            elif message_type == "bsq_swap_seller_as_taker_trade":
+                tradable_list.append(BsqSwapSellerAsTakerTrade.from_proto(tradable.bsq_swap_seller_as_taker_trade))
+            else:
+                raise RuntimeError(f"Unknown messageCase. tradable.WhichOneof('message') = {message_type}")
         
         return TradableList(tradable_list)
 
