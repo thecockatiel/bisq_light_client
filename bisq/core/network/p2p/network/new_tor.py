@@ -205,15 +205,16 @@ class NewTor(TorMode):
 
     def _read_bridges_file(self):
         lines: list[str] = []
+        bridges_path = self.tor_dir.joinpath("bridges")
         try:
-            with open(self.tor_dir.joinpath("bridges"), "r") as f:
+            with open(bridges_path, "r") as f:
                 for line in f.readlines():
                     line = line.strip()
                     if line and not line.startswith("#"):
                         lines.append(line)
         except:
             logger.warning(
-                f"bridges file not found ('{self.tor_dir.joinpath("bridges")}'). this is normal, continuing operation..."
+                f"bridges file not found ('{bridges_path}'). this is normal, continuing operation..."
             )
         return lines
 
