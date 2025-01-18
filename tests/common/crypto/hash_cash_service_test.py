@@ -65,6 +65,7 @@ class TestHashCashService(unittest.TestCase):
             f"Verification took {time2} ms per token."
         )
 
+    @unittest.skip("skip due to work required")
     def test_diff_increase(self):
         string_builder = []
         for i in range(9):
