@@ -280,3 +280,5 @@ class ObservableList(list[T]):
         super().__delitem__(index)
         self._notify(ObservableChangeEvent(None, [element]))
 
+def raise_required():
+    raise ValueError("This value is required and cannot be unset")

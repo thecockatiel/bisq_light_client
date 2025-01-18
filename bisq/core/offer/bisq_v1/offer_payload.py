@@ -9,6 +9,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
 # OfferPayload has about 1.4 kb. We should look into options to make it smaller but will be hard to do it in a
@@ -41,14 +42,14 @@ class OfferPayload(OfferPayloadBase):
     # Positive values is always the usual case where you want a better price as the market.
     # E.g. Buy offer with market price 400.- leads to a 360.- price.
     # Sell offer with market price 400.- leads to a 440.- price.
-    market_price_margin: float = field(default=0)
+    market_price_margin: float = field(default_factory=raise_required)
     # We use 2 type of prices: fixed price or price based on distance from market price
-    use_market_based_price: bool = field(default=False)
+    use_market_based_price: bool = field(default_factory=raise_required)
 
     # Not used anymore, but we cannot set it Nullable or remove it to not break backward compatibility (diff. hash)
-    arbitrator_node_addresses: list[NodeAddress] = field(default_factory=list)
+    arbitrator_node_addresses: list[NodeAddress] = field(default_factory=raise_required)
     # Not used anymore, but we cannot set it Nullable or remove it to not break backward compatibility (diff. hash)
-    mediator_node_addresses: list[NodeAddress] = field(default_factory=list)
+    mediator_node_addresses: list[NodeAddress] = field(default_factory=raise_required)
 
     # Mutable property. Has to be set before offer is saved in P2P network as it changes the payload hash!
     offer_fee_payment_tx_id: Optional[str] = field(default=None)
@@ -56,27 +57,27 @@ class OfferPayload(OfferPayloadBase):
     accepted_country_codes: Optional[list[str]] = field(default=None)
     bank_id: Optional[str] = field(default=None)
     accepted_bank_ids: Optional[list[str]] = field(default=None)
-    block_height_at_offer_creation: int = field(default=0)
-    tx_fee: int = field(default=0)
-    maker_fee: int = field(default=0)
-    is_currency_for_maker_fee_btc: bool = field(default=False)
-    buyer_security_deposit: int = field(default=0)
-    seller_security_deposit: int = field(default=0)
-    max_trade_limit: int = field(default=0)
-    max_trade_period: int = field(default=0)
+    block_height_at_offer_creation: int = field(default_factory=raise_required)
+    tx_fee: int = field(default_factory=raise_required)
+    maker_fee: int = field(default_factory=raise_required)
+    is_currency_for_maker_fee_btc: bool = field(default_factory=raise_required)
+    buyer_security_deposit: int = field(default_factory=raise_required)
+    seller_security_deposit: int = field(default_factory=raise_required)
+    max_trade_limit: int = field(default_factory=raise_required)
+    max_trade_period: int = field(default_factory=raise_required)
 
     # reserved for future use cases
     # Close offer when certain price is reached
-    use_auto_close: bool = field(default=False)
+    use_auto_close: bool = field(default_factory=raise_required)
     # If useReOpenAfterAutoClose=true we re-open a new offer with the remaining funds if the trade amount
     # was less than the offer's max. trade amount.
-    use_re_open_after_auto_close: bool = field(default=False)
+    use_re_open_after_auto_close: bool = field(default_factory=raise_required)
     # Used when useAutoClose is set for canceling the offer when lowerClosePrice is triggered
-    lower_close_price: int = field(default=0)
+    lower_close_price: int = field(default_factory=raise_required)
     # Used when useAutoClose is set for canceling the offer when upperClosePrice is triggered
-    upper_close_price: int = field(default=0)
+    upper_close_price: int = field(default_factory=raise_required)
     # Reserved for possible future use to support private trades where the taker needs to have an accessKey
-    is_private_offer: bool = field(default=False) 
+    is_private_offer: bool = field(default_factory=raise_required)
     hash_of_challenge: Optional[str] = field(default=None)
 
     def getHash(self) -> bytes:
