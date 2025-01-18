@@ -12,6 +12,7 @@ from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request i
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.common.setup.log_setup import get_logger
 
+from utils.data import raise_required
 from utils.formatting import readable_file_size
 import proto.pb_pb2 as protobuf
 
@@ -23,21 +24,21 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-@dataclass(kw_only=True)
+@dataclass
 class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDataSizePermission, InitialDataResponse):
     # Set of ProtectedStorageEntry objects
     data_set: frozenset['ProtectedStorageEntry'] = field(default_factory=frozenset)
     
     # Set of PersistableNetworkPayload objects
     # We added that in v 0.6 and the from_proto code will create an empty set if it doesn't exist
-    persistable_network_payload_set: frozenset['PersistableNetworkPayload']
+    persistable_network_payload_set: frozenset['PersistableNetworkPayload'] = field(default_factory=raise_required)
     
-    request_nonce: int
-    is_get_updated_data_response: bool
+    request_nonce: int = field(default_factory=raise_required)
+    is_get_updated_data_response: bool = field(default_factory=raise_required)
     supported_capabilities: Capabilities = field(default_factory=lambda: Capabilities.app)
     
     # Added at v1.9.6
-    was_truncated: bool
+    was_truncated: bool = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         get_data_response = protobuf.GetDataResponse()

@@ -8,15 +8,17 @@ import proto.pb_pb2 as protobuf
 
 from typing import TYPE_CHECKING
 
+from utils.data import raise_required
+
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import (
         NetworkProtoResolver,
     )
 
 
-@dataclass(kw_only=True)
+@dataclass
 class RemoveMailboxDataMessage(BroadcastMessage):
-    protected_mailbox_storage_entry: ProtectedMailboxStorageEntry
+    protected_mailbox_storage_entry: ProtectedMailboxStorageEntry = field(default_factory=raise_required)
 
     # PROTO BUFFER
     def to_proto_network_envelope(self):

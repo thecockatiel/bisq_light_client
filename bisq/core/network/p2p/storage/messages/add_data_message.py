@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import cast
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
@@ -7,9 +7,11 @@ from bisq.core.network.p2p.storage.payload.protected_storage_entry import Protec
 import proto.pb_pb2 as protobuf
 from google.protobuf.message import Message
 
-@dataclass(kw_only=True)
+from utils.data import raise_required
+
+@dataclass
 class AddDataMessage(BroadcastMessage):
-    protected_storage_entry: ProtectedStorageEntry
+    protected_storage_entry: ProtectedStorageEntry = field(default_factory=raise_required)
 
     @staticmethod
     def from_proto(proto: protobuf.AddDataMessage, resolver: NetworkProtoResolver, message_version: int) -> 'AddDataMessage':

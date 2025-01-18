@@ -5,7 +5,7 @@ import proto.pb_pb2 as protobuf
 from utils.random import next_random_int
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Ping(NetworkEnvelope, KeepAliveMessage):
     nonce: int = field(default_factory=next_random_int)
     last_round_trip_time: int = field(default=0)

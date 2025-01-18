@@ -6,14 +6,15 @@ from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSize
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class FileTransferPart(NetworkEnvelope, ExtendedDataSizePermission, SendersNodeAddressMessage):
-    sender_node_address: NodeAddress
-    trade_id: str
-    trader_id: int
-    uid: str
-    seq_num_or_file_length: int
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    trade_id: str = field(default_factory=raise_required)
+    trader_id: int = field(default_factory=raise_required)
+    uid: str = field(default_factory=raise_required)
+    seq_num_or_file_length: int = field(default_factory=raise_required)
     message_data: bytes = field(default=b'') # if message_data is empty it is the first message, requesting file upload permission
 
     @property

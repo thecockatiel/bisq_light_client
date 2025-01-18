@@ -4,10 +4,10 @@ from datetime import timedelta
 
 from bisq.core.trade.protocol.trade_message import TradeMessage
 
-@dataclass(kw_only=True)
+@dataclass
 class TradeMailboxMessage(TradeMessage, ABC):
     # 15 days in milliseconds
-    TTL: int = field(init=False, hash=False, compare=False, repr=False, default=int(timedelta(days=15).total_seconds() * 1000)) 
+    TTL = int(timedelta(days=15).total_seconds() * 1000)
 
     def __eq__(self, other):
         if not isinstance(other, TradeMailboxMessage):

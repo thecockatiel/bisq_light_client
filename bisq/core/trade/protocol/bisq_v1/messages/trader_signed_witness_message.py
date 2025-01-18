@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -6,13 +6,14 @@ from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
     TradeMailboxMessage,
 )
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
 # "Not used anymore since v1.4.0"
-@dataclass(kw_only=True)
+@dataclass
 class TraderSignedWitnessMessage(TradeMailboxMessage):
-    sender_node_address: NodeAddress
-    signed_witness: SignedWitness
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    signed_witness: SignedWitness = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> "protobuf.NetworkEnvelope":
         message = protobuf.TraderSignedWitnessMessage(

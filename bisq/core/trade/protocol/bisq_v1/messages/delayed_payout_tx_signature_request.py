@@ -1,14 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.trade_message import TradeMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class DelayedPayoutTxSignatureRequest(TradeMessage, DirectMessage):
-    sender_node_address: NodeAddress
-    delayed_payout_tx: bytes
-    delayed_payout_tx_seller_signature: bytes
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    delayed_payout_tx: bytes = field(default_factory=raise_required)
+    delayed_payout_tx_seller_signature: bytes = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()

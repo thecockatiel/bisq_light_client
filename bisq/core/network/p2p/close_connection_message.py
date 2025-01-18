@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class CloseConnectionMessage(NetworkEnvelope):
-    reason: str
+    reason: str= field(default_factory=raise_required)
 
     # PROTO BUFFER
 

@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Pong(NetworkEnvelope, KeepAliveMessage):
-    request_nonce: int
+    request_nonce: int = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()

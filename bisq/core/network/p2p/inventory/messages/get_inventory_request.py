@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 import proto.pb_pb2 as protobuf
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class GetInventoryRequest(NetworkEnvelope):
-    version: str
+    version: str = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> "protobuf.NetworkEnvelope": 
         envelope = self.get_network_envelope_builder()

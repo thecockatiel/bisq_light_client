@@ -8,15 +8,16 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 logger =  get_logger(__name__)
 
-@dataclass(kw_only=True)
+@dataclass
 class PrefixedSealedAndSignedMessage(NetworkEnvelope, MailboxMessage, SendersNodeAddressMessage):
     TTL: ClassVar[int] = 15 * 24 * 60 * 60 * 1000  # 15 days in milliseconds
 
-    sender_node_address: NodeAddress
-    sealed_and_signed: SealedAndSigned
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    sealed_and_signed: SealedAndSigned = field(default_factory=raise_required)
     # From v1.4.0 on addressPrefixHash can be an empty byte array.
     # We cannot make it nullable as not updated nodes would get a nullPointer exception at protobuf serialisation.
     address_prefix_hash: bytes = field(default_factory=lambda: b'')

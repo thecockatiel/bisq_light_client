@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 from datetime import datetime
 from bisq.common.util.utilities import bytes_as_hex_string
@@ -10,30 +10,31 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.trade_message import TradeMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class InputsForDepositTxResponse(TradeMessage, DirectMessage):
     # Removed with 1.7.0
-    maker_payment_account_payload: Optional[PaymentAccountPayload]
+    maker_payment_account_payload: Optional[PaymentAccountPayload] = field(default_factory=raise_required)
 
-    maker_account_id: str
-    maker_multi_sig_pub_key: bytes
-    maker_contract_as_json: str
-    maker_contract_signature: str
-    maker_payout_address_string: str
-    prepared_deposit_tx: bytes
-    maker_inputs: List['RawTransactionInput']
-    sender_node_address: NodeAddress
+    maker_account_id: str = field(default_factory=raise_required)
+    maker_multi_sig_pub_key: bytes = field(default_factory=raise_required)
+    maker_contract_as_json: str = field(default_factory=raise_required)
+    maker_contract_signature: str = field(default_factory=raise_required)
+    maker_payout_address_string: str = field(default_factory=raise_required)
+    prepared_deposit_tx: bytes = field(default_factory=raise_required)
+    maker_inputs: List['RawTransactionInput'] = field(default_factory=raise_required)
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
 
     # added in v 0.6. can be null if we trade with an older peer
-    account_age_witness_signature_of_prepared_deposit_tx: Optional[bytes]
-    current_date: int
-    lock_time: int
+    account_age_witness_signature_of_prepared_deposit_tx: Optional[bytes] = field(default_factory=raise_required)
+    current_date: int = field(default_factory=raise_required)
+    lock_time: int = field(default_factory=raise_required)
 
     # Added at 1.7.0
-    hash_of_makers_payment_account_payload: Optional[bytes]
-    makers_payment_method_id: Optional[str]
+    hash_of_makers_payment_account_payload: Optional[bytes] = field(default_factory=raise_required)
+    makers_payment_method_id: Optional[str] = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         message = protobuf.InputsForDepositTxResponse(

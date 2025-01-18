@@ -1,18 +1,19 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
-@dataclass(kw_only=True)
+@dataclass
 class CounterCurrencyTransferStartedMessage(TradeMailboxMessage):
-    buyer_payout_address: str
-    sender_node_address: NodeAddress
-    buyer_signature: bytes
-    counter_currency_tx_id: Optional[str] = None
-    counter_currency_extra_data: Optional[str] = None
+    buyer_payout_address: str = field(default_factory=raise_required)
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
+    buyer_signature: bytes = field(default_factory=raise_required)
+    counter_currency_tx_id: Optional[str] = field(default=None)
+    counter_currency_extra_data: Optional[str] = field(default=None)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         builder = protobuf.CounterCurrencyTransferStartedMessage(

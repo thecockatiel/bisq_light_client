@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.inventory.model.inventory_item import InventoryItem
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(eq=True, kw_only=True)
+@dataclass(eq=True)
 class GetInventoryResponse(NetworkEnvelope):
-    inventory: Dict[InventoryItem, str]
+    inventory: Dict[InventoryItem, str] = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         map_proto = {item.value: value for item, value in self.inventory.items()}
