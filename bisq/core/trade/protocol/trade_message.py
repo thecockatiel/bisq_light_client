@@ -1,15 +1,15 @@
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.uid_message import UidMessage
 
 
-@dataclass(kw_only=True)
+@dataclass
 class TradeMessage(NetworkEnvelope, UidMessage, ABC):
-    trade_id: str
-    uid: str
+    trade_id: str = field(default="")
+    uid: str = field(default="")
 
     def __eq__(self, other):
         if not isinstance(other, TradeMessage):
