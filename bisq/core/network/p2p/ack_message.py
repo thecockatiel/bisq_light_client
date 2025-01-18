@@ -13,18 +13,18 @@ from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
 
-@dataclass(kw_only=True)
+@dataclass
 class AckMessage(NetworkEnvelope):
     TTL: int = 7 * 24 * 60 * 60 * 1000 # 604800000 ms or 7 days
 
     uid: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
-    sender_node_address: NodeAddress
-    source_type: AckMessageSourceType
-    source_msg_class_name: str
-    source_uid: Optional[str]
-    source_id: str
-    success: bool
-    error_message: Optional[str]
+    sender_node_address: NodeAddress = field(default_factory=NodeAddress)
+    source_type: AckMessageSourceType = field(default=AckMessageSourceType.UNDEFINED)
+    source_msg_class_name: str = field(default="")
+    source_uid: Optional[str] = field(default=None)
+    source_id: str = field(default="")
+    success: bool = field(default=False)
+    error_message: Optional[str] = field(default=None)
 
     # PROTO BUFFER
     def to_proto_message(self) -> protobuf.AckMessage:
