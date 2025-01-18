@@ -51,38 +51,37 @@ class UnconfirmedBsqChangeOutputListService(PersistedDataHost):
         self.remove_connected_outputs_of_inputs_of_tx(tx)
 
         change_output_index = 0
-        match tx_type:
-            case (
-                TxType.UNDEFINED_TX_TYPE
-                | TxType.UNVERIFIED
-                | TxType.INVALID
-                | TxType.GENESIS
-                | TxType.IRREGULAR
-            ):
-                return
-            case TxType.TRANSFER_BSQ:
-                change_output_index = 1  # output 0 is receiver's address
-            case (
-                TxType.PAY_TRADE_FEE
-                | TxType.PROPOSAL
-                | TxType.COMPENSATION_REQUEST
-                | TxType.REIMBURSEMENT_REQUEST
-            ):
-                change_output_index = 0
-            case TxType.BLIND_VOTE:
-                change_output_index = 1  # output 0 is stake
-            case TxType.VOTE_REVEAL:
-                change_output_index = 0
-            case TxType.LOCKUP:
-                change_output_index = 1  # output 0 is lockup amount
-            case TxType.UNLOCK:
-                # We don't allow to spend the unlocking funds as there is the lock time which need to pass,
-                # otherwise the funds get burned!
-                return
-            case TxType.ASSET_LISTING_FEE | TxType.PROOF_OF_BURN:
-                change_output_index = 0
-            case _:
-                return
+        if tx_type in (
+            TxType.UNDEFINED_TX_TYPE,
+            TxType.UNVERIFIED,
+            TxType.INVALID,
+            TxType.GENESIS,
+            TxType.IRREGULAR,
+        ):
+            return
+        elif tx_type == TxType.TRANSFER_BSQ:
+            change_output_index = 1  # output 0 is receiver's address
+        elif tx_type in (
+            TxType.PAY_TRADE_FEE,
+            TxType.PROPOSAL,
+            TxType.COMPENSATION_REQUEST,
+            TxType.REIMBURSEMENT_REQUEST,
+        ):
+            change_output_index = 0
+        elif tx_type == TxType.BLIND_VOTE:
+            change_output_index = 1  # output 0 is stake
+        elif tx_type == TxType.VOTE_REVEAL:
+            change_output_index = 0
+        elif tx_type == TxType.LOCKUP:
+            change_output_index = 1  # output 0 is lockup amount
+        elif tx_type == TxType.UNLOCK:
+            # We don't allow to spend the unlocking funds as there is the lock time which need to pass,
+            # otherwise the funds get burned!
+            return
+        elif tx_type in (TxType.ASSET_LISTING_FEE, TxType.PROOF_OF_BURN):
+            change_output_index = 0
+        else:
+            return
 
         # It can be that we don't have a BSQ and a BTC change output.
         # If no BSQ change but a BTC change the index points to the BTC output and then
