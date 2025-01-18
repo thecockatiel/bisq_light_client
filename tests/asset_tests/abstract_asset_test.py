@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 import unittest
 
-from bisq.asset.asset import Asset 
+from bisq.asset.asset import Asset
+from bisq.common.config.config import Config
+from bisq.core.locale.res import Res 
  
 class AbstractAssetTest(unittest.TestCase, ABC):
     
     def __init__(self, methodName='runTest', asset: Asset = None) -> None:
         super().__init__(methodName)
+        Res.setup(Config())
         self.asset = asset
     
     def setUp(self) -> None:
