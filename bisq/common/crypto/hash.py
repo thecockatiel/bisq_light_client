@@ -1,10 +1,16 @@
 from typing import TYPE_CHECKING
-from Crypto.Hash import keccak
 import zlib
 import hashlib
 import struct
 from electrum_min.crypto import ripemd
 
+try:
+    from Crypto.Hash import keccak
+except:
+    # old versions of pycryptodome:
+    from Cryptodome.Hash import keccak
+    
+    
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload
 
