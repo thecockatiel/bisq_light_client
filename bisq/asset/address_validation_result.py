@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Union
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class AddressValidationResult:
     """
     Value object representing the result of validating an Asset address.
@@ -12,9 +12,6 @@ class AddressValidationResult:
     is_valid: bool
     message: str
     i18n_key: str
-
-    def is_valid(self) -> bool:
-        return self.is_valid
 
     def get_i18n_key(self) -> str:
         return self.i18n_key
@@ -31,7 +28,7 @@ class AddressValidationResult:
         return cls._VALID_ADDRESS
 
     @classmethod
-    def invalid_address(cls, cause: Optional[Exception | str], 
+    def invalid_address(cls, cause: Optional[Union[Exception, str]], 
                        i18n_key: str = "validation.altcoin.invalidAddress") -> 'AddressValidationResult':
         message = str(cause) if cause else ""
             
