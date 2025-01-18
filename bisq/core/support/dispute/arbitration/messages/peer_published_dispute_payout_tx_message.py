@@ -1,14 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.arbitration.messages.arbitration_message import ArbitrationMessage
 from bisq.core.support.support_type import SupportType
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
-@dataclass(kw_only=True)
+@dataclass
 class PeerPublishedDisputePayoutTxMessage(ArbitrationMessage):
-    transaction: bytes
-    trade_id: str
-    sender_node_address: NodeAddress
+    transaction: bytes = field(default_factory=raise_required)
+    trade_id: str = field(default_factory=raise_required)
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         envelope = self.get_network_envelope_builder()

@@ -1,19 +1,20 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 from bisq.core.support.dispute.messages.dispute_message import DisputeMessage
 from bisq.core.support.support_type import SupportType
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 if TYPE_CHECKING:
     from bisq.core.support.dispute.dispute import Dispute
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 
 
-@dataclass(kw_only=True)
+@dataclass
 class OpenNewDisputeMessage(DisputeMessage):
-    dispute: "Dispute"
-    sender_node_address: "NodeAddress"
+    dispute: "Dispute" = field(default_factory=raise_required)
+    sender_node_address: "NodeAddress" = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self):
         envelope = self.get_network_envelope_builder()
