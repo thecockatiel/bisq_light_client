@@ -294,260 +294,256 @@ class Script:
                     stack.append(data)
             
             elif should_execute or (opcodes.OP_IF <= opcode <= opcodes.OP_ENDIF):
-                match opcode:
-                    case opcodes.OP_IF:
-                        if not should_execute:
-                            if_stack.append(False)
-                            continue
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_IF on an empty stack")
-                        if_stack.append(ScriptUtils.cast_to_bool(stack.pop()))
+                if opcode == opcodes.OP_IF:
+                    if not should_execute:
+                        if_stack.append(False)
                         continue
-                    case opcodes.OP_NOTIF:
-                        if not should_execute:
-                            if_stack.append(False)
-                            continue
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_NOTIF on an empty stack")
-                        if_stack.append(not ScriptUtils.cast_to_bool(stack.pop()))
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_IF on an empty stack")
+                    if_stack.append(ScriptUtils.cast_to_bool(stack.pop()))
+                    continue
+                elif opcode == opcodes.OP_NOTIF:
+                    if not should_execute:
+                        if_stack.append(False)
                         continue
-                    case opcodes.OP_ELSE:
-                        if not if_stack:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ELSE without OP_IF/NOTIF")
-                        if_stack[-1] = not if_stack[-1]
-                        continue
-                    case opcodes.OP_ENDIF:
-                        if not if_stack:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ENDIF without OP_IF/NOTIF")
-                        if_stack.pop()
-                        continue
-                    
-                    # OP_0 is no opcode
-                    case opcodes.OP_1NEGATE:
-                        stack.append(bytes(reversed(encode_mpi(-1, False))))
-                    case opcodes.OP_1 | opcodes.OP_2 | opcodes.OP_3 | opcodes.OP_4 | opcodes.OP_5 | opcodes.OP_6 | opcodes.OP_7 | opcodes.OP_8 | opcodes.OP_9 | opcodes.OP_10 | opcodes.OP_11 | opcodes.OP_12 | opcodes.OP_13 | opcodes.OP_14 | opcodes.OP_15 | opcodes.OP_16:
-                        stack.append(bytes(reversed(encode_mpi(ScriptUtils.decode_from_op_n(opcode), False))))
-                    case opcodes.OP_NOP:
-                        pass
-                    case opcodes.OP_VERIFY:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_VERIFY on an empty stack")
-                        if not ScriptUtils.cast_to_bool(stack.pop()):
-                            raise ScriptException(ScriptError.SCRIPT_ERR_VERIFY, "OP_VERIFY failed")
-                    case opcodes.OP_RETURN:
-                        raise ScriptException(ScriptError.SCRIPT_ERR_OP_RETURN, "Script called OP_RETURN")
-                    case opcodes.OP_TOALTSTACK:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_TOALTSTACK on an empty stack")
-                        altstack.append(stack.pop())
-                    case opcodes.OP_FROMALTSTACK:
-                        if len(altstack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_ALTSTACK_OPERATION, "Attempted OP_FROMALTSTACK on an empty altstack")
-                        stack.append(altstack.pop())
-                    case opcodes.OP_2DROP:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DROP on a stack with size < 2")
-                        stack.pop()
-                        stack.pop()
-                    case opcodes.OP_2DUP:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DUP on a stack with size < 2")
-                        stack.extend(stack[-2:])
-                    case opcodes.OP_3DUP:
-                        if len(stack) < 3:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_3DUP on a stack with size < 3")
-                        stack.extend(stack[-3:])
-                    case opcodes.OP_2OVER:
-                        if len(stack) < 4:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2OVER on a stack with size < 4")
-                        stack.extend(stack[-4:-2])
-                    case opcodes.OP_2ROT:
-                        if len(stack) < 6:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2ROT on a stack with size < 6")
-                        stack[-6], stack[-5], stack[-4], stack[-3], stack[-2], stack[-1] = stack[-4], stack[-3], stack[-2], stack[-1], stack[-6], stack[-5]
-                    case opcodes.OP_2SWAP:
-                        if len(stack) < 4:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2SWAP on a stack with size < 4")
-                        stack[-4], stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-4], stack[-3]
-                    case opcodes.OP_IFDUP:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_IFDUP on an empty stack")
-                        if ScriptUtils.cast_to_bool(stack[-1]):
-                            stack.append(stack[-1])
-                    case opcodes.OP_DEPTH:
-                        stack.append(bytes(reversed(encode_mpi(len(stack), False))))
-                    case opcodes.OP_DROP:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DROP on an empty stack")
-                        stack.pop()
-                    case opcodes.OP_DUP:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DUP on an empty stack")
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_NOTIF on an empty stack")
+                    if_stack.append(not ScriptUtils.cast_to_bool(stack.pop()))
+                    continue
+                elif opcode == opcodes.OP_ELSE:
+                    if not if_stack:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ELSE without OP_IF/NOTIF")
+                    if_stack[-1] = not if_stack[-1]
+                    continue
+                elif opcode == opcodes.OP_ENDIF:
+                    if not if_stack:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ENDIF without OP_IF/NOTIF")
+                    if_stack.pop()
+                    continue
+                
+                # OP_0 is no opcode
+                elif opcode == opcodes.OP_1NEGATE:
+                    stack.append(bytes(reversed(encode_mpi(-1, False))))
+                elif opcodes.OP_1 <= opcode <= opcodes.OP_16:
+                    stack.append(bytes(reversed(encode_mpi(ScriptUtils.decode_from_op_n(opcode), False))))
+                elif opcode == opcodes.OP_NOP:
+                    pass
+                elif opcode == opcodes.OP_VERIFY:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_VERIFY on an empty stack")
+                    if not ScriptUtils.cast_to_bool(stack.pop()):
+                        raise ScriptException(ScriptError.SCRIPT_ERR_VERIFY, "OP_VERIFY failed")
+                elif opcode == opcodes.OP_RETURN:
+                    raise ScriptException(ScriptError.SCRIPT_ERR_OP_RETURN, "Script called OP_RETURN")
+                elif opcode == opcodes.OP_TOALTSTACK:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_TOALTSTACK on an empty stack")
+                    altstack.append(stack.pop())
+                elif opcode == opcodes.OP_FROMALTSTACK:
+                    if len(altstack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_ALTSTACK_OPERATION, "Attempted OP_FROMALTSTACK on an empty altstack")
+                    stack.append(altstack.pop())
+                elif opcode == opcodes.OP_2DROP:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DROP on a stack with size < 2")
+                    stack.pop()
+                    stack.pop()
+                elif opcode == opcodes.OP_2DUP:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DUP on a stack with size < 2")
+                    stack.extend(stack[-2:])
+                elif opcode == opcodes.OP_3DUP:
+                    if len(stack) < 3:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_3DUP on a stack with size < 3")
+                    stack.extend(stack[-3:])
+                elif opcode == opcodes.OP_2OVER:
+                    if len(stack) < 4:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2OVER on a stack with size < 4")
+                    stack.extend(stack[-4:-2])
+                elif opcode == opcodes.OP_2ROT:
+                    if len(stack) < 6:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2ROT on a stack with size < 6")
+                    stack[-6], stack[-5], stack[-4], stack[-3], stack[-2], stack[-1] = stack[-4], stack[-3], stack[-2], stack[-1], stack[-6], stack[-5]
+                elif opcode == opcodes.OP_2SWAP:
+                    if len(stack) < 4:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2SWAP on a stack with size < 4")
+                    stack[-4], stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-4], stack[-3]
+                elif opcode == opcodes.OP_IFDUP:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_IFDUP on an empty stack")
+                    if ScriptUtils.cast_to_bool(stack[-1]):
                         stack.append(stack[-1])
-                    case opcodes.OP_NIP:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NIP on a stack with size < 2")
-                        OPNIPtmpChunk = stack.pop()
-                        stack.pop()
-                        stack.append(OPNIPtmpChunk)
-                    case opcodes.OP_OVER:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_OVER on a stack with size < 2")
+                elif opcode == opcodes.OP_DEPTH:
+                    stack.append(bytes(reversed(encode_mpi(len(stack), False))))
+                elif opcode == opcodes.OP_DROP:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DROP on an empty stack")
+                    stack.pop()
+                elif opcode == opcodes.OP_DUP:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DUP on an empty stack")
+                    stack.append(stack[-1])
+                elif opcode == opcodes.OP_NIP:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NIP on a stack with size < 2")
+                    OPNIPtmpChunk = stack.pop()
+                    stack.pop()
+                    stack.append(OPNIPtmpChunk)
+                elif opcode == opcodes.OP_OVER:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_OVER on a stack with size < 2")
+                    stack.append(stack[-2])
+                elif opcode == opcodes.OP_PICK or opcode == opcodes.OP_ROLL:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_PICK/OP_ROLL on an empty stack")
+                    val = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    if val < 0 or val >= len(stack):
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "OP_PICK/OP_ROLL attempted to get data deeper than stack size")
+                    if opcode == opcodes.OP_ROLL:
+                        stack.append(stack.pop(-val-1))
+                    else:
+                        stack.append(stack[-val-1])
+                elif opcode == opcodes.OP_ROT:
+                    if len(stack) < 3:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_ROT on a stack with size < 3")
+                    stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-3]
+                elif opcode == opcodes.OP_SWAP or opcode == opcodes.OP_TUCK:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SWAP on a stack with size < 2")
+                    stack[-2], stack[-1] = stack[-1], stack[-2]
+                    if opcode == opcodes.OP_TUCK:
                         stack.append(stack[-2])
-                    case opcodes.OP_PICK | opcodes.OP_ROLL:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_PICK/OP_ROLL on an empty stack")
-                        val = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        if val < 0 or val >= len(stack):
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "OP_PICK/OP_ROLL attempted to get data deeper than stack size")
-                        if opcode == opcodes.OP_ROLL:
-                            stack.append(stack.pop(-val-1))
-                        else:
-                            stack.append(stack[-val-1])
-                    case opcodes.OP_ROT:
-                        if len(stack) < 3:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_ROT on a stack with size < 3")
-                        stack[-3], stack[-2], stack[-1] = stack[-2], stack[-1], stack[-3]
-                    case opcodes.OP_SWAP | opcodes.OP_TUCK:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SWAP on a stack with size < 2")
-                        stack[-2], stack[-1] = stack[-1], stack[-2]
-                        if opcode == opcodes.OP_TUCK:
-                            stack.append(stack[-2])
-                    case opcodes.OP_SIZE:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack")
-                        stack.append(bytes(reversed(encode_mpi(len(stack[-1]), False))))
-                    case opcodes.OP_EQUAL:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUAL on a stack with size < 2")
-                        stack.append(b'\x01' if stack.pop() == stack.pop() else b'')
-                    case opcodes.OP_EQUALVERIFY:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUALVERIFY on a stack with size < 2")
-                        if stack.pop() != stack.pop():
-                            raise ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "OP_EQUALVERIFY: non-equal data")
-                    case opcodes.OP_1ADD | opcodes.OP_1SUB | opcodes.OP_NEGATE | opcodes.OP_ABS | opcodes.OP_NOT | opcodes.OP_0NOTEQUAL:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on an empty stack")
-                        num = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        match opcode:
-                            case opcodes.OP_1ADD:
-                                num += 1
-                            case opcodes.OP_1SUB:
-                                num -= 1
-                            case opcodes.OP_NEGATE:
-                                num = -num
-                            case opcodes.OP_ABS:
-                                num = abs(num)
-                            case opcodes.OP_NOT:
-                                num = 0 if num != 0 else 1
-                            case opcodes.OP_0NOTEQUAL:
-                                num = 1 if num != 0 else 0
-                            case _:
-                                raise RuntimeError("Unreachable. opcode should have been matched a case.")
+                elif opcode == opcodes.OP_SIZE:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack")
+                    stack.append(bytes(reversed(encode_mpi(len(stack[-1]), False))))
+                elif opcode == opcodes.OP_EQUAL:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUAL on a stack with size < 2")
+                    stack.append(b'\x01' if stack.pop() == stack.pop() else b'')
+                elif opcode == opcodes.OP_EQUALVERIFY:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUALVERIFY on a stack with size < 2")
+                    if stack.pop() != stack.pop():
+                        raise ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "OP_EQUALVERIFY: non-equal data")
+                elif opcode in {opcodes.OP_1ADD, opcodes.OP_1SUB, opcodes.OP_NEGATE, opcodes.OP_ABS, opcodes.OP_NOT, opcodes.OP_0NOTEQUAL}:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on an empty stack")
+                    num = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    if opcode == opcodes.OP_1ADD:
+                        num += 1
+                    elif opcode == opcodes.OP_1SUB:
+                        num -= 1
+                    elif opcode == opcodes.OP_NEGATE:
+                        num = -num
+                    elif opcode == opcodes.OP_ABS:
+                        num = abs(num)
+                    elif opcode == opcodes.OP_NOT:
+                        num = 0 if num != 0 else 1
+                    elif opcode == opcodes.OP_0NOTEQUAL:
+                        num = 1 if num != 0 else 0
+                    else:
+                        raise RuntimeError("Unreachable. opcode should have been matched a case.")
                             
-                        stack.append(bytes(reversed(encode_mpi(num, False))))
-                    case opcodes.OP_ADD | opcodes.OP_SUB | opcodes.OP_BOOLAND | opcodes.OP_BOOLOR | opcodes.OP_NUMEQUAL | opcodes.OP_NUMNOTEQUAL | opcodes.OP_LESSTHAN | opcodes.OP_GREATERTHAN | opcodes.OP_LESSTHANOREQUAL | opcodes.OP_GREATERTHANOREQUAL | opcodes.OP_MIN | opcodes.OP_MAX:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on a stack with size < 2")
-                        num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        match opcode:
-                            case opcodes.OP_ADD:
-                                result = num1 + num2
-                            case opcodes.OP_SUB:
-                                result = num1 - num2
-                            case opcodes.OP_BOOLAND:
-                                result = 1 if num1 != 0 and num2 != 0 else 0
-                            case opcodes.OP_BOOLOR:
-                                result = 1 if num1 != 0 or num2 != 0 else 0
-                            case opcodes.OP_NUMEQUAL:
-                                result = 1 if num1 == num2 else 0
-                            case opcodes.OP_NUMNOTEQUAL:
-                                result = 1 if num1 != num2 else 0
-                            case opcodes.OP_LESSTHAN:
-                                result = 1 if num1 < num2 else 0
-                            case opcodes.OP_GREATERTHAN:
-                                result = 1 if num1 > num2 else 0
-                            case opcodes.OP_LESSTHANOREQUAL:
-                                result = 1 if num1 <= num2 else 0
-                            case opcodes.OP_GREATERTHANOREQUAL:
-                                result = 1 if num1 >= num2 else 0
-                            case opcodes.OP_MIN:
-                                result = min(num1, num2)
-                            case opcodes.OP_MAX:
-                                result = max(num1, num2)
-                            case _:
-                                raise RuntimeError("Opcode switched at runtime?")
-                        stack.append(bytes(reversed(encode_mpi(result, False))))
-                        
-                    case opcodes.OP_NUMEQUALVERIFY:
-                        if len(stack) < 2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NUMEQUALVERIFY on a stack with size < 2")
-                        num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        if num1 != num2:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_NUMEQUALVERIFY, "OP_NUMEQUALVERIFY failed")
-                    case opcodes.OP_WITHIN:
-                        if len(stack) < 3:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_WITHIN on a stack with size < 3")
-                        num3 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
-                        if num2 <= num1 < num3:
-                            stack.append(bytes(reversed(encode_mpi(1, False))))
-                        else:
-                            stack.append(bytes(reversed(encode_mpi(0, False))))
-                    case opcodes.OP_RIPEMD160:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_RIPEMD160 on an empty stack")
-                        stack.append(ripemd(stack.pop()))
-                    case opcodes.OP_SHA1:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA1 on an empty stack")
-                        stack.append(sha1(stack.pop()))
-                    case opcodes.OP_SHA256:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack")
-                        stack.append(sha256(stack.pop()))
-                    case opcodes.OP_HASH160:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH160 on an empty stack")
-                        stack.append(hash_160(stack.pop()))
-                    case opcodes.OP_HASH256:
-                        if len(stack) < 1:
-                            raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH256 on an empty stack")
-                        stack.append(sha256d(stack.pop()))
-                    case opcodes.OP_CODESEPARATOR:
-                        last_code_sep_location = start_location
-                    case opcodes.OP_CHECKSIG | opcodes.OP_CHECKSIGVERIFY:
-                        if tx_containing_this is None:
-                            raise ValueError("Script attempted signature check but no tx was provided")
-                        Script.execute_check_sig(tx_containing_this, index, script, stack, last_code_sep_location, opcode, verify_flags)
-                    case opcodes.OP_CHECKMULTISIG | opcodes.OP_CHECKMULTISIGVERIFY:
-                        if tx_containing_this is None:
-                            raise ValueError("Script attempted signature check but no tx was provided")
-                        op_count = Script.execute_multi_sig(tx_containing_this, index, script, stack, op_count, last_code_sep_location, opcode, verify_flags)
-                    case opcodes.OP_CHECKLOCKTIMEVERIFY:
-                        if ScriptVerifyFlag.CHECKLOCKTIMEVERIFY not in verify_flags:
-                            # not enabled; treat as a NOP2
-                            if ScriptVerifyFlag.DISCOURAGE_UPGRADABLE_NOPS in verify_flags:
-                                raise ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, f"Script used a reserved opcode {opcode}")
-                        else:
-                            Script.execute_check_lock_time_verify(tx_containing_this, index, stack, verify_flags)
-                    case opcodes.OP_CHECKSEQUENCEVERIFY:
-                        if ScriptVerifyFlag.CHECKSEQUENCEVERIFY not in verify_flags:
-                            # not enabled; treat as a NOP3
-                            if ScriptVerifyFlag.DISCOURAGE_UPGRADABLE_NOPS in verify_flags:
-                                raise ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, f"Script used a reserved opcode {opcode}")
-                        else:   
-                            Script.execute_check_sequence_verify(tx_containing_this, index, stack, verify_flags)
-                    case opcodes.OP_NOP1 | opcodes.OP_NOP4 | opcodes.OP_NOP5 | opcodes.OP_NOP6 | opcodes.OP_NOP7 | opcodes.OP_NOP8 | opcodes.OP_NOP9 | opcodes.OP_NOP10:
+                    stack.append(bytes(reversed(encode_mpi(num, False))))
+                elif opcode in {opcodes.OP_ADD, opcodes.OP_SUB, opcodes.OP_BOOLAND, opcodes.OP_BOOLOR, opcodes.OP_NUMEQUAL, opcodes.OP_NUMNOTEQUAL, opcodes.OP_LESSTHAN, opcodes.OP_GREATERTHAN, opcodes.OP_LESSTHANOREQUAL, opcodes.OP_GREATERTHANOREQUAL, opcodes.OP_MIN, opcodes.OP_MAX}:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on a stack with size < 2")
+                    num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    if opcode == opcodes.OP_ADD:
+                        result = num1 + num2
+                    elif opcode == opcodes.OP_SUB:
+                        result = num1 - num2
+                    elif opcode == opcodes.OP_BOOLAND:
+                        result = 1 if num1 != 0 and num2 != 0 else 0
+                    elif opcode == opcodes.OP_BOOLOR:
+                        result = 1 if num1 != 0 or num2 != 0 else 0
+                    elif opcode == opcodes.OP_NUMEQUAL:
+                        result = 1 if num1 == num2 else 0
+                    elif opcode == opcodes.OP_NUMNOTEQUAL:
+                        result = 1 if num1 != num2 else 0
+                    elif opcode == opcodes.OP_LESSTHAN:
+                        result = 1 if num1 < num2 else 0
+                    elif opcode == opcodes.OP_GREATERTHAN:
+                        result = 1 if num1 > num2 else 0
+                    elif opcode == opcodes.OP_LESSTHANOREQUAL:
+                        result = 1 if num1 <= num2 else 0
+                    elif opcode == opcodes.OP_GREATERTHANOREQUAL:
+                        result = 1 if num1 >= num2 else 0
+                    elif opcode == opcodes.OP_MIN:
+                        result = min(num1, num2)
+                    elif opcode == opcodes.OP_MAX:
+                        result = max(num1, num2)
+                    else:
+                        raise RuntimeError("Opcode switched at runtime?")
+                    stack.append(bytes(reversed(encode_mpi(result, False))))
+                elif opcode == opcodes.OP_NUMEQUALVERIFY:
+                    if len(stack) < 2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NUMEQUALVERIFY on a stack with size < 2")
+                    num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    if num1 != num2:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_NUMEQUALVERIFY, "OP_NUMEQUALVERIFY failed")
+                elif opcode == opcodes.OP_WITHIN:
+                    if len(stack) < 3:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_WITHIN on a stack with size < 3")
+                    num3 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    num2 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    num1 = ScriptUtils.cast_to_int(stack.pop(), ScriptVerifyFlag.MINIMALDATA in verify_flags)
+                    if num2 <= num1 < num3:
+                        stack.append(bytes(reversed(encode_mpi(1, False))))
+                    else:
+                        stack.append(bytes(reversed(encode_mpi(0, False))))
+                elif opcode == opcodes.OP_RIPEMD160:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_RIPEMD160 on an empty stack")
+                    stack.append(ripemd(stack.pop()))
+                elif opcode == opcodes.OP_SHA1:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA1 on an empty stack")
+                    stack.append(sha1(stack.pop()))
+                elif opcode == opcodes.OP_SHA256:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack")
+                    stack.append(sha256(stack.pop()))
+                elif opcode == opcodes.OP_HASH160:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH160 on an empty stack")
+                    stack.append(hash_160(stack.pop()))
+                elif opcode == opcodes.OP_HASH256:
+                    if len(stack) < 1:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH256 on an empty stack")
+                    stack.append(sha256d(stack.pop()))
+                elif opcode == opcodes.OP_CODESEPARATOR:
+                    last_code_sep_location = start_location
+                elif opcode == opcodes.OP_CHECKSIG or opcode == opcodes.OP_CHECKSIGVERIFY:
+                    if tx_containing_this is None:
+                        raise ValueError("Script attempted signature check but no tx was provided")
+                    Script.execute_check_sig(tx_containing_this, index, script, stack, last_code_sep_location, opcode, verify_flags)
+                elif opcode == opcodes.OP_CHECKMULTISIG or opcode == opcodes.OP_CHECKMULTISIGVERIFY:
+                    if tx_containing_this is None:
+                        raise ValueError("Script attempted signature check but no tx was provided")
+                    op_count = Script.execute_multi_sig(tx_containing_this, index, script, stack, op_count, last_code_sep_location, opcode, verify_flags)
+                elif opcode == opcodes.OP_CHECKLOCKTIMEVERIFY:
+                    if ScriptVerifyFlag.CHECKLOCKTIMEVERIFY not in verify_flags:
+                        # not enabled; treat as a NOP2
                         if ScriptVerifyFlag.DISCOURAGE_UPGRADABLE_NOPS in verify_flags:
                             raise ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, f"Script used a reserved opcode {opcode}")
-                    case _:
-                        raise ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, f"Script used a reserved or disabled opcode: {opcode}")
+                    else:
+                        Script.execute_check_lock_time_verify(tx_containing_this, index, stack, verify_flags)
+                elif opcode == opcodes.OP_CHECKSEQUENCEVERIFY:
+                    if ScriptVerifyFlag.CHECKSEQUENCEVERIFY not in verify_flags:
+                        # not enabled; treat as a NOP3
+                        if ScriptVerifyFlag.DISCOURAGE_UPGRADABLE_NOPS in verify_flags:
+                            raise ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, f"Script used a reserved opcode {opcode}")
+                    else:   
+                        Script.execute_check_sequence_verify(tx_containing_this, index, stack, verify_flags)
+                elif opcode in {opcodes.OP_NOP1, opcodes.OP_NOP4, opcodes.OP_NOP5, opcodes.OP_NOP6, opcodes.OP_NOP7, opcodes.OP_NOP8, opcodes.OP_NOP9, opcodes.OP_NOP10}:
+                    if ScriptVerifyFlag.DISCOURAGE_UPGRADABLE_NOPS in verify_flags:
+                        raise ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, f"Script used a reserved opcode {opcode}")
+                else:
+                    raise ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, f"Script used a reserved or disabled opcode: {opcode}")
 
             if ((len(stack) + len(altstack)) > Script.MAX_STACK_SIZE) or ((len(stack) + len(altstack)) < 0):
                 raise ScriptException(ScriptError.SCRIPT_ERR_STACK_SIZE, "Stack size exceeded range")
