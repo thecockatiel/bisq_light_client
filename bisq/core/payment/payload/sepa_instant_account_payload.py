@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from bisq.core.locale.country_util import get_name_by_code
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
@@ -23,7 +23,7 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
         accepted_country_codes: list[str] = None,
         accepted_countries: list["Country"] = None,
         max_trade_period: int = -1,
-        exclude_from_json_data_map: dict[str, str] | None = None,
+        exclude_from_json_data_map: Union[dict[str, str]] = None,
     ):
         if accepted_country_codes is None and accepted_countries is None:
             raise ValueError("Either accepted_country_codes or accepted_countries must be set")

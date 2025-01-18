@@ -44,7 +44,7 @@ class Script:
 
     def __init__(self, program: Optional[bytes] = None):
         self._program = program or bytes()
-        self._decoded: tuple[int, bytes | None, int | Any] = None
+        self._decoded: tuple[int, Optional[bytes], Union[int, Any]] = None
         self.address = None
     
     @property

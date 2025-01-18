@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
@@ -43,7 +43,7 @@ class KeyStorage:
         self.save_private_key(key_ring.signature_key_pair.private_key, KeyEntry.MSG_SIGNATURE.file_name)
         self.save_private_key(key_ring.encryption_key_pair.private_key, KeyEntry.MSG_ENCRYPTION.file_name)
 
-    def save_private_key(self, private_key: dsa.DSAPrivateKey | rsa.RSAPrivateKey, name: str):
+    def save_private_key(self, private_key: Union[dsa.DSAPrivateKey, rsa.RSAPrivateKey], name: str):
         if not self.storage_dir.exists():
             self.storage_dir.mkdir(parents=True, exist_ok=True)
         

@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from typing import Optional
 import zipfile
 import uuid
 from bisq.common.file.file_util import does_file_contain_keyword
@@ -24,7 +25,7 @@ class FileTransferSender(FileTransferSession):
         trade_id: str,
         trader_id: int,
         trader_role: str,
-        callback: FileTransferSession.FtpCallback | None = None,
+        callback: Optional[FileTransferSession.FtpCallback] = None,
         is_test: bool = False,
     ):
         super().__init__(
