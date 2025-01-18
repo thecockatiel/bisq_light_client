@@ -10,4 +10,6 @@ make sure to update these when necessary
 python -m pip install -r ../requirements.txt
 # generate the python files
 python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. grpc.proto pb.proto
+# Or this if you are using debian packages and command above does not work:
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. grpc.proto pb.proto
 ```
