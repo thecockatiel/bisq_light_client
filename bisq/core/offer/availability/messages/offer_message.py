@@ -5,10 +5,9 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.uid_message import UidMessage
 
-@dataclass(kw_only=True)
+@dataclass
 class OfferMessage(NetworkEnvelope, DirectMessage, UidMessage):
-    message_version: int
-    offer_id: str
+    offer_id: str = field(default="")
     uid: Optional[str] = field(default=None)
 
     def __post_init__(self):
