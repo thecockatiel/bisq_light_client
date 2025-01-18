@@ -389,7 +389,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
         # networkNode.getConfirmedConnections includes connections where peers_node_address is present
         for connection in self.network_node.get_confirmed_connections():
-            supported_capabilities = connection.capabilities or Capabilities()
+            supported_capabilities = Capabilities(connection.capabilities)
             # If we have a new connection the supported_capabilities is empty.
             # We lookup if we have already stored the supported_capabilities at the persisted or reported peers
             # and if so we use that.
