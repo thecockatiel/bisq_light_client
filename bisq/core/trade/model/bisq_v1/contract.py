@@ -19,6 +19,8 @@ from bitcoinj.base.coin import Coin
 import proto.pb_pb2 as protobuf
 import re
 
+from utils.data import raise_required
+
 if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.monetary.volume import Volume
@@ -27,16 +29,16 @@ logger = get_logger(__name__)
 
 @dataclass
 class Contract(NetworkPayload):
-    offer_payload: "OfferPayload" = field(default_factory=OfferPayload)
-    trade_amount: int = field(default=0)
-    trade_price: int = field(default=0)
-    taker_fee_tx_id: str = field(default="")
-    buyer_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
-    seller_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
-    mediator_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
-    is_buyer_maker_and_seller_taker: bool = field(default=False)
-    maker_account_id: str = field(default="")
-    taker_account_id: str = field(default="")
+    offer_payload: "OfferPayload" = field(default_factory=raise_required)
+    trade_amount: int = field(default_factory=raise_required)
+    trade_price: int = field(default_factory=raise_required)
+    taker_fee_tx_id: str = field(default_factory=raise_required)
+    buyer_node_address: "NodeAddress" = field(default_factory=raise_required)
+    seller_node_address: "NodeAddress" = field(default_factory=raise_required)
+    mediator_node_address: "NodeAddress" = field(default_factory=raise_required)
+    is_buyer_maker_and_seller_taker: bool = field(default_factory=raise_required)
+    maker_account_id: str = field(default_factory=raise_required)
+    taker_account_id: str = field(default_factory=raise_required)
 
     # Changed in v1.7.0: Not a final field anymore but initially set to null and later once the data is transmitted
     # set via a setter. This breaks the immutability of the contract but as there are several areas where we access
@@ -44,16 +46,16 @@ class Contract(NetworkPayload):
     maker_payment_account_payload: Optional["PaymentAccountPayload"] = field(default=None)
     taker_payment_account_payload: Optional["PaymentAccountPayload"] = field(default=None)
 
-    maker_pub_key_ring: "PubKeyRing" = field(default_factory=PubKeyRing)  # JsonExclude
-    taker_pub_key_ring: "PubKeyRing" = field(default_factory=PubKeyRing)  # JsonExclude
-    maker_payout_address_string: str = field(default="")
-    taker_payout_address_string: str = field(default="")
-    maker_multi_sig_pub_key: bytes = field(default_factory=bytes)  # JsonExclude
-    taker_multi_sig_pub_key: bytes = field(default_factory=bytes)  # JsonExclude
+    maker_pub_key_ring: "PubKeyRing" = field(default_factory=raise_required)  # JsonExclude
+    taker_pub_key_ring: "PubKeyRing" = field(default_factory=raise_required)  # JsonExclude
+    maker_payout_address_string: str = field(default_factory=raise_required)
+    taker_payout_address_string: str = field(default_factory=raise_required)
+    maker_multi_sig_pub_key: bytes = field(default_factory=raise_required)  # JsonExclude
+    taker_multi_sig_pub_key: bytes = field(default_factory=raise_required)  # JsonExclude
 
     # Added in v1.2.0
-    lock_time: int = field(default=0)
-    refund_agent_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
+    lock_time: int = field(default_factory=raise_required)
+    refund_agent_node_address: "NodeAddress" = field(default_factory=raise_required)
 
     # Added in v1.7.0
     hash_of_makers_payment_account_payload: Optional[bytes] = field(default=None)

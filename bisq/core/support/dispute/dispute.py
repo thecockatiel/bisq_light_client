@@ -14,7 +14,7 @@ from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.common.setup.log_setup import get_logger
 import proto.pb_pb2 as protobuf
-from utils.data import ObservableList, SimpleProperty
+from utils.data import ObservableList, SimpleProperty, raise_required
 from utils.formatting import get_short_id
 
 logger = get_logger(__name__)
@@ -57,33 +57,33 @@ class DisputeState(IntEnum):
 
 @dataclass
 class Dispute(NetworkPayload, PersistablePayload):
-    trade_id: str = field(default="")
-    id: str = field(default="")
-    trader_id: int = field(default=0)
-    dispute_opener_is_buyer: bool = field(default=False)
-    dispute_opener_is_maker: bool = field(default=False)
+    trade_id: str = field(default_factory=raise_required)
+    id: str = field(default_factory=raise_required)
+    trader_id: int = field(default_factory=raise_required)
+    dispute_opener_is_buyer: bool = field(default_factory=raise_required)
+    dispute_opener_is_maker: bool = field(default_factory=raise_required)
     # PubKeyRing of trader who opened the dispute
-    trader_pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)
-    trade_date: int = field(default=0) # ms timestamp
-    trade_period_end: int = field(default=0)
-    contract: Contract = field(default_factory=Contract)
+    trader_pub_key_ring: PubKeyRing = field(default_factory=raise_required)
+    trade_date: int = field(default_factory=raise_required) # ms timestamp
+    trade_period_end: int = field(default_factory=raise_required)
+    contract: Contract = field(default_factory=raise_required)
     contract_hash: Optional[bytes] = field(default=None)
     deposit_tx_serialized: Optional[bytes] = field(default=None)
     payout_tx_serialized: Optional[bytes] = field(default=None)
     deposit_tx_id: Optional[str] = field(default=None)
     payout_tx_id: Optional[str] = field(default=None)
-    contract_as_json: str = field(default="")
+    contract_as_json: str = field(default_factory=raise_required)
     maker_contract_signature: Optional[str] = field(default=None)
     taker_contract_signature: Optional[str] = field(default=None)
-    agent_pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)  # dispute agent
-    is_support_ticket: bool = field(default=False)
+    agent_pub_key_ring: PubKeyRing = field(default_factory=raise_required)  # dispute agent
+    is_support_ticket: bool = field(default_factory=raise_required)
     chat_messages: ObservableList["ChatMessage"] = field(default_factory=ObservableList)
     dispute_result_property: SimpleProperty[Optional["DisputeResult"]] = field(default_factory=lambda: SimpleProperty(None))
     
-    opening_date: int = field(default=0)
+    opening_date: int = field(default_factory=raise_required)
     dispute_payout_tx_id: Optional[str] = field(default=None)
     # Added v1.2.0: support type
-    support_type: SupportType = field(default=SupportType.ARBITRATION)
+    support_type: SupportType = field(default_factory=raise_required)
     # Only used at refundAgent so that he knows how the mediator resolved the case:
     mediators_dispute_result: Optional[str] = field(default=None)
     delayed_payout_tx_id: Optional[str] = field(default=None)
@@ -95,8 +95,8 @@ class Dispute(NetworkPayload, PersistablePayload):
     dispute_state_property: SimpleProperty["DisputeState"] = field(default_factory=lambda: SimpleProperty(DisputeState.NEW)) # transient, but dispute_state itself is not transient 
 
     # Added in v 1.9.7
-    burning_man_selection_height: int = field(default=0)
-    trade_tx_fee: int = field(default=0)
+    burning_man_selection_height: int = field(default_factory=raise_required)
+    trade_tx_fee: int = field(default_factory=raise_required)
 
     # Should be only used in emergency case if we need to add data but do not want to break backward compatibility
     # at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new

@@ -7,16 +7,17 @@ from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 @dataclass
 class OfferAvailabilityRequest(OfferMessage, SupportedCapabilitiesMessage):
-    pub_key_ring: PubKeyRing = field(default_factory=PubKeyRing)
-    takers_trade_price: int = field(default=0)
-    is_taker_api_user: bool = field(default=False)
-    burning_man_selection_height: int = field(default=0)
+    pub_key_ring: PubKeyRing = field(default_factory=raise_required)
+    takers_trade_price: int = field(default_factory=raise_required)
+    is_taker_api_user: bool = field(default_factory=raise_required)
+    burning_man_selection_height: int = field(default_factory=raise_required)
     supported_capabilities: Optional[Capabilities] = field(default=None)
 
     def to_proto_network_envelope(self) -> 'NetworkEnvelope':

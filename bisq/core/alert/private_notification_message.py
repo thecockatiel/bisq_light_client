@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import ClassVar
 import uuid
 
 from bisq.core.alert.private_notification_payload import PrivateNotificationPayload
@@ -8,13 +7,14 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage 
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 @dataclass
 class PrivateNotificationMessage(NetworkEnvelope, MailboxMessage):
     TTL = int(timedelta(days=30).total_seconds() * 1000)
 
-    private_notification_payload: PrivateNotificationPayload = field(default_factory=PrivateNotificationPayload)
-    sender_node_address: NodeAddress = field(default_factory=NodeAddress)
+    private_notification_payload: PrivateNotificationPayload = field(default_factory=raise_required)
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
     uid: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
