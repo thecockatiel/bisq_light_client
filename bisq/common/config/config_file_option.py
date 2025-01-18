@@ -1,5 +1,7 @@
+from typing import Union
+
 class ConfigFileOption:
-    def __init__(self, name: str, arg: str | None):
+    def __init__(self, name: str, arg: Union[str, None]):
         self.name = name
         self.arg = arg
 
