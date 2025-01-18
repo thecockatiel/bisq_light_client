@@ -9,13 +9,12 @@ from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.node_address import NodeAddress
 import proto.pb_pb2 as protobuf
 
-
-@dataclass(kw_only=True)
+@dataclass
 class PrivateNotificationMessage(NetworkEnvelope, MailboxMessage):
-    TTL: ClassVar[int] = int(timedelta(days=30).total_seconds() * 1000)
+    TTL = int(timedelta(days=30).total_seconds() * 1000)
 
-    private_notification_payload: PrivateNotificationPayload
-    sender_node_address: NodeAddress
+    private_notification_payload: PrivateNotificationPayload = field(default_factory=PrivateNotificationPayload)
+    sender_node_address: NodeAddress = field(default_factory=NodeAddress)
     uid: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
@@ -41,4 +40,4 @@ class PrivateNotificationMessage(NetworkEnvelope, MailboxMessage):
         )
 
     def get_ttl(self) -> int:
-        return self.TTL
+        return PrivateNotificationMessage.TTL
