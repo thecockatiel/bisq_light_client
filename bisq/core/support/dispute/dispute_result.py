@@ -124,37 +124,35 @@ class DisputeResult(NetworkPayload):
     def get_payout_suggestion_customized_to_buyer_or_seller(self, is_buyer: bool) -> str:
         # see github.com/bisq-network/proposals/issues/407
         if is_buyer:
-            match self.payout_suggestion:
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmount")
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmountMinusPenalty")
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmountPlusCompensation")
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsHisDeposit")
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsHisDepositPlusPenaltyFromSeller")
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
-                    return Res.get("disputeSummaryWindow.result.buyerGetsHisDepositMinusPenalty")
-                case DisputeResultPayoutSuggestion.CUSTOM_PAYOUT:
-                    return Res.get("disputeSummaryWindow.result.customPayout")
+            if self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT:
+                return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmount")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
+                return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmountMinusPenalty")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
+                return Res.get("disputeSummaryWindow.result.buyerGetsTradeAmountPlusCompensation") 
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT:
+                return Res.get("disputeSummaryWindow.result.buyerGetsHisDeposit")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
+                return Res.get("disputeSummaryWindow.result.buyerGetsHisDepositPlusPenaltyFromSeller")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
+                return Res.get("disputeSummaryWindow.result.buyerGetsHisDepositMinusPenalty")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.CUSTOM_PAYOUT:
+                return Res.get("disputeSummaryWindow.result.customPayout")
         else:
-            match self.payout_suggestion:
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmount")
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmountMinusPenalty")
-                case DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmountPlusCompensation")
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsHisDeposit")
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsHisDepositPlusPenaltyFromBuyer")
-                case DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
-                    return Res.get("disputeSummaryWindow.result.sellerGetsHisDepositMinusPenalty")
-                case DisputeResultPayoutSuggestion.CUSTOM_PAYOUT:
-                    return Res.get("disputeSummaryWindow.result.customPayout")
+            if self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT:
+                return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmount")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
+                return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmountMinusPenalty")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.SELLER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
+                return Res.get("disputeSummaryWindow.result.sellerGetsTradeAmountPlusCompensation")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT:
+                return Res.get("disputeSummaryWindow.result.sellerGetsHisDeposit")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_MINUS_PENALTY:
+                return Res.get("disputeSummaryWindow.result.sellerGetsHisDepositPlusPenaltyFromBuyer")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.BUYER_GETS_TRADE_AMOUNT_PLUS_COMPENSATION:
+                return Res.get("disputeSummaryWindow.result.sellerGetsHisDepositMinusPenalty")
+            elif self.payout_suggestion == DisputeResultPayoutSuggestion.CUSTOM_PAYOUT:
+                return Res.get("disputeSummaryWindow.result.customPayout")
         return Res.get("popup.headline.error")
 
     def get_buyer_payout_amount(self):
