@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.navigation_path import NavigationPath
 from bisq.common.protocol.persistable.persistence_proto_resolver import PersistenceProtoResolver
@@ -30,6 +31,40 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistenceProtoResolver"], "PersistableEnvelope"]] = {
+    "sequence_number_map": lambda p, resolver: SequenceNumberMap.from_proto(p.sequence_number_map),
+    "peer_list": lambda p, resolver: PeerList.from_proto(p.peer_list),
+    "address_entry_list": lambda p, resolver: AddressEntryList.from_proto(p.address_entry_list),
+    "tradable_list": lambda p, resolver: TradableList.from_proto(p.tradable_list, resolver, resolver.btc_wallet_service_provider.get()),
+    "arbitration_dispute_list": lambda p, resolver: ArbitrationDisputeList.from_proto(p.arbitration_dispute_list, resolver),
+    "mediation_dispute_list": lambda p, resolver: MediationDisputeList.from_proto(p.mediation_dispute_list, resolver),
+    "refund_dispute_list": lambda p, resolver: RefundDisputeList.from_proto(p.refund_dispute_list, resolver),
+    "preferences_payload": lambda p, resolver: PreferencesPayload.from_proto(p.preferences_payload, resolver),
+    "user_payload": lambda p, resolver: UserPayload.from_proto(p.user_payload, resolver),
+    "navigation_path": lambda p, resolver: NavigationPath.from_proto(p.navigation_path),
+    "payment_account_list": lambda p, resolver: PaymentAccountList.from_proto(p.payment_account_list, resolver),
+    "account_age_witness_store": lambda p, resolver: AccountAgeWitnessStore.from_proto(p.account_age_witness_store),
+    # "trade_statistics2_store": lambda p, resolver: TradeStatistics2Store.from_proto(p),
+    # "blind_vote_store": lambda p, resolver: BlindVoteStore.from_proto(p),
+    # "proposal_store": lambda p, resolver: ProposalStore.from_proto(p),
+    # "temp_proposal_store": lambda p, resolver: TempProposalStore.from_proto(p, resolver.network_proto_resolver),
+    # "my_proposal_list": lambda p, resolver: MyProposalList.from_proto(p),
+    # "ballot_list": lambda p, resolver: BallotList.from_proto(p),
+    # "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p),
+    # "my_blind_vote_list": lambda p, resolver: MyBlindVoteList.from_proto(p),
+    # "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p),
+    # "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p),
+    # "my_proof_of_burn_list": lambda p, resolver: MyProofOfBurnList.from_proto(p),
+    # "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p),
+    "signed_witness_store": lambda p, resolver: SignedWitnessStore.from_proto(p.signed_witness_store),
+    # "trade_statistics3_store": lambda p, resolver: TradeStatistics3Store.from_proto(p),
+    "mailbox_message_list": lambda p, resolver: MailboxMessageList.from_proto(p.mailbox_message_list, resolver.network_proto_resolver),
+    "ignored_mailbox_map": lambda p, resolver: IgnoredMailboxMap.from_proto(p.ignored_mailbox_map),
+    "removed_payloads_map": lambda p, resolver: RemovedPayloadsMap.from_proto(p.removed_payloads_map),
+    # "bsq_block_store": lambda p, resolver: BsqBlockStore.from_proto(p),
+    # "burning_man_accounting_store": lambda p, resolver: BurningManAccountingStore.from_proto(p),
+}
+
 class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
     def __init__(self, clock: "Clock", btc_wallet_service_provider: DependencyProvider["BtcWalletService"], network_proto_resolver: "NetworkProtoResolver"):
         super().__init__(clock)
@@ -41,69 +76,9 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             logger.error("PersistableEnvelope.from_proto: PB.PersistableEnvelope is null")
             raise ProtobufferException("PB.PersistableEnvelope is null")
         
-        match proto.WhichOneof("message"):
-            case "sequence_number_map":
-                return SequenceNumberMap.from_proto(proto.sequence_number_map)
-            case "peer_list":
-                return PeerList.from_proto(proto.peer_list)
-            case "address_entry_list":
-                return AddressEntryList.from_proto(proto.address_entry_list)
-            case "tradable_list":
-                return TradableList.from_proto(proto.tradable_list, self, self.btc_wallet_service_provider.get())
-            case "arbitration_dispute_list":
-                return ArbitrationDisputeList.from_proto(proto.arbitration_dispute_list, self)
-            case "mediation_dispute_list":
-                return MediationDisputeList.from_proto(proto.mediation_dispute_list, self)
-            case "refund_dispute_list":
-                return RefundDisputeList.from_proto(proto.refund_dispute_list, self)
-            case "preferences_payload":
-                return PreferencesPayload.from_proto(proto.preferences_payload, self)
-            case "user_payload":
-                return UserPayload.from_proto(proto.user_payload, self)
-            case "navigation_path":
-                return NavigationPath.from_proto(proto.navigation_path)
-            case "payment_account_list":
-                return PaymentAccountList.from_proto(proto.payment_account_list, self)
-            case "account_age_witness_store":
-                return AccountAgeWitnessStore.from_proto(proto.account_age_witness_store)
-            # case "trade_statistics2_store":
-            #     return TradeStatistics2Store.from_proto(proto.trade_statistics2_store)
-            # case "blind_vote_store":
-            #     return BlindVoteStore.from_proto(proto.blind_vote_store)
-            # case "proposal_store":
-            #     return ProposalStore.from_proto(proto.proposal_store)
-            # case "temp_proposal_store":
-            #     return TempProposalStore.from_proto(proto.temp_proposal_store, self.network_proto_resolver)
-            # case "my_proposal_list":
-            #     return MyProposalList.from_proto(proto.my_proposal_list)
-            # case "ballot_list":
-            #     return BallotList.from_proto(proto.ballot_list)
-            # case "my_vote_list":
-            #     return MyVoteList.from_proto(proto.my_vote_list)
-            # case "my_blind_vote_list":
-            #     return MyBlindVoteList.from_proto(proto.my_blind_vote_list)
-            # case "dao_state_store":
-            #     return DaoStateStore.from_proto(proto.dao_state_store)
-            # case "my_reputation_list":
-            #     return MyReputationList.from_proto(proto.my_reputation_list)
-            # case "my_proof_of_burn_list":
-            #     return MyProofOfBurnList.from_proto(proto.my_proof_of_burn_list)
-            # case "unconfirmed_bsq_change_output_list":
-            #     return UnconfirmedBsqChangeOutputList.from_proto(proto.unconfirmed_bsq_change_output_list)
-            case "signed_witness_store":
-                return SignedWitnessStore.from_proto(proto.signed_witness_store)
-            # case "trade_statistics3_store":
-            #     return TradeStatistics3Store.from_proto(proto.trade_statistics3_store)
-            case "mailbox_message_list":
-                return MailboxMessageList.from_proto(proto.mailbox_message_list, self.network_proto_resolver)
-            case "ignored_mailbox_map":
-                return IgnoredMailboxMap.from_proto(proto.ignored_mailbox_map)
-            case "removed_payloads_map":
-                return RemovedPayloadsMap.from_proto(proto.removed_payloads_map)
-            # case "bsq_block_store":
-            #     return BsqBlockStore.from_proto(proto.bsq_block_store)
-            # case "burning_man_accounting_store":
-            #     return BurningManAccountingStore.from_proto(proto.burning_man_accounting_store)
-            case _:
-                raise ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). "
-                                           f"messageCase={proto.WhichOneof('message')}; proto raw data={str(proto)}")
+        message_type = proto.WhichOneof("message")
+        if message_type in proto_map:
+            return proto_map[message_type](proto, self)
+        else:
+            raise ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). "
+                                       f"messageCase={message_type}; proto raw data={str(proto)}")

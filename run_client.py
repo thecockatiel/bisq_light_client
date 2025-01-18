@@ -5,7 +5,7 @@ import sys
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python' # Prevents using cpp implementation of protobuf, and thus prevents the random dictionary order issue
 
-MIN_PYTHON_VERSION = "3.10.0"
+MIN_PYTHON_VERSION = "3.9.0"
 _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
 
 
