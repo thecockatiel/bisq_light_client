@@ -657,35 +657,33 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         
     def get_block_chain_explorer(self):
         base_currency_network = self.config.base_currency_network
-        match base_currency_network:
-            case BaseCurrencyNetwork.BTC_MAINNET:
-                return self.pref_payload.block_chain_explorer_main_net
-            case BaseCurrencyNetwork.BTC_TESTNET | BaseCurrencyNetwork.BTC_REGTEST:
-                return self.pref_payload.block_chain_explorer_test_net
-            case BaseCurrencyNetwork.BTC_DAO_TESTNET:
-                return BTC_DAO_TEST_NET_EXPLORERS[0]
-            case BaseCurrencyNetwork.BTC_DAO_BETANET:
-                return self.pref_payload.block_chain_explorer_main_net
-            case BaseCurrencyNetwork.BTC_DAO_REGTEST:
-                return BTC_DAO_TEST_NET_EXPLORERS[0]
-            case _:
-                raise RuntimeError(f"BaseCurrencyNetwork not defined. BaseCurrencyNetwork={base_currency_network}")
+        if base_currency_network == BaseCurrencyNetwork.BTC_MAINNET:
+            return self.pref_payload.block_chain_explorer_main_net
+        elif base_currency_network in [BaseCurrencyNetwork.BTC_TESTNET, BaseCurrencyNetwork.BTC_REGTEST]:
+            return self.pref_payload.block_chain_explorer_test_net
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_TESTNET:
+            return BTC_DAO_TEST_NET_EXPLORERS[0]
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_BETANET:
+            return self.pref_payload.block_chain_explorer_main_net
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_REGTEST:
+            return BTC_DAO_TEST_NET_EXPLORERS[0]
+        else:
+            raise RuntimeError(f"BaseCurrencyNetwork not defined. BaseCurrencyNetwork={base_currency_network}")
 
     def get_block_chain_explorers(self):
         base_currency_network = self.config.base_currency_network
-        match base_currency_network:
-            case BaseCurrencyNetwork.BTC_MAINNET:
-                return BTC_MAIN_NET_EXPLORERS
-            case BaseCurrencyNetwork.BTC_TESTNET | BaseCurrencyNetwork.BTC_REGTEST:
-                return BTC_TEST_NET_EXPLORERS
-            case BaseCurrencyNetwork.BTC_DAO_TESTNET:
-                return BTC_DAO_TEST_NET_EXPLORERS
-            case BaseCurrencyNetwork.BTC_DAO_BETANET:
-                return BTC_MAIN_NET_EXPLORERS
-            case BaseCurrencyNetwork.BTC_DAO_REGTEST:
-                return BTC_DAO_TEST_NET_EXPLORERS
-            case _:
-                raise RuntimeError(f"BaseCurrencyNetwork not defined. BaseCurrencyNetwork={base_currency_network}")
+        if base_currency_network == BaseCurrencyNetwork.BTC_MAINNET:
+            return BTC_MAIN_NET_EXPLORERS
+        elif base_currency_network in [BaseCurrencyNetwork.BTC_TESTNET, BaseCurrencyNetwork.BTC_REGTEST]:
+            return BTC_TEST_NET_EXPLORERS
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_TESTNET:
+            return BTC_DAO_TEST_NET_EXPLORERS
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_BETANET:
+            return BTC_MAIN_NET_EXPLORERS
+        elif base_currency_network == BaseCurrencyNetwork.BTC_DAO_REGTEST:
+            return BTC_DAO_TEST_NET_EXPLORERS
+        else:
+            raise RuntimeError(f"BaseCurrencyNetwork not defined. BaseCurrencyNetwork={base_currency_network}")
 
     def get_bsq_block_chain_explorers(self):
         return BSQ_MAIN_NET_EXPLORERS
@@ -836,4 +834,3 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
                 self.trade_currencies_as_observable.remove(e.removed_elements[0])
                 
         self.request_persistence()
-            
