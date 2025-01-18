@@ -68,61 +68,57 @@ class BsqFormatter(CoinFormatter):
         return ParsingUtils.parse_to_coin(input_str, self.btc_coin_format)
     
     def format_param_value(self, param: "Param", value: str) -> str:
-        match param.param_type:
-            case ParamType.UNDEFINED:
-                # In case we add a new param old clients will not know that enum and fall back to UNDEFINED.
-                return Res.get("shared.na")
-            case ParamType.BSQ:
-                return self.format_coin_with_code(ParsingUtils.parse_to_coin(value, self))
-            case ParamType.BTC:
-                return self.format_btc_with_code(self.parse_to_btc(value))
-            case ParamType.PERCENT:
-                return FormattingUtils.format_to_percent_with_symbol(ParsingUtils.parse_percent_string_to_double(value))
-            case ParamType.BLOCK:
-                return Res.get("dao.param.blocks", int(value))
-            case ParamType.ADDRESS:
-                return value
-            case _:
-                logger.warning(f"Param type {param.param_type} not handled at format_param_value")
-                return Res.get("shared.na")
+        if param.param_type == ParamType.UNDEFINED:
+            # In case we add a new param old clients will not know that enum and fall back to UNDEFINED.
+            return Res.get("shared.na")
+        elif param.param_type == ParamType.BSQ:
+            return self.format_coin_with_code(ParsingUtils.parse_to_coin(value, self))
+        elif param.param_type == ParamType.BTC:
+            return self.format_btc_with_code(self.parse_to_btc(value))
+        elif param.param_type == ParamType.PERCENT:
+            return FormattingUtils.format_to_percent_with_symbol(ParsingUtils.parse_percent_string_to_double(value))
+        elif param.param_type == ParamType.BLOCK:
+            return Res.get("dao.param.blocks", int(value))
+        elif param.param_type == ParamType.ADDRESS:
+            return value
+        else:
+            logger.warning(f"Param type {param.param_type} not handled at format_param_value")
+            return Res.get("shared.na")
 
     def parse_param_value_to_coin(self, param: "Param", input_value: str) -> "Coin":
-        match param.param_type:
-            case ParamType.BSQ:
-                return ParsingUtils.parse_to_coin(input_value, self)
-            case ParamType.BTC:
-                return self.parse_to_btc(input_value)
-            case _:
-                raise ValueError(f"Unsupported paramType. param: {param}")
+        if param.param_type == ParamType.BSQ:
+            return ParsingUtils.parse_to_coin(input_value, self)
+        elif param.param_type == ParamType.BTC:
+            return self.parse_to_btc(input_value)
+        else:
+            raise ValueError(f"Unsupported paramType. param: {param}")
 
     def parse_param_value_to_blocks(self, param: "Param", input_value: str) -> int:
-        match param.param_type:
-            case ParamType.BLOCK:
-                return int(input_value)
-            case _:
-                raise ValueError(f"Unsupported paramType. param: {param}")
+        if param.param_type == ParamType.BLOCK:
+            return int(input_value)
+        else:
+            raise ValueError(f"Unsupported paramType. param: {param}")
 
     def parse_param_value_to_string(self, param: "Param", input_value: str) -> str:
-        match param.param_type:
-            case ParamType.UNDEFINED:
-                return Res.get("shared.na")
-            case ParamType.BSQ:
-                return self.format_coin(self.parse_param_value_to_coin(param, input_value))
-            case ParamType.BTC:
-                return self.format_btc(self.parse_param_value_to_coin(param, input_value))
-            case ParamType.PERCENT:
-                return FormattingUtils.format_to_percent(ParsingUtils.parse_percent_string_to_double(input_value))
-            case ParamType.BLOCK:
-                return str(self.parse_param_value_to_blocks(param, input_value))
-            case ParamType.ADDRESS:
-                validation_result = BtcAddressValidator().validate(input_value)
-                if validation_result.is_valid:
-                    return input_value
-                else:
-                    raise ProposalValidationException(validation_result.error_message)
-            case _:
-                logger.warning(f"Param type {param.param_type} not handled at parse_param_value_to_string")
-                return Res.get("shared.na")
+        if param.param_type == ParamType.UNDEFINED:
+            return Res.get("shared.na")
+        elif param.param_type == ParamType.BSQ:
+            return self.format_coin(self.parse_param_value_to_coin(param, input_value))
+        elif param.param_type == ParamType.BTC:
+            return self.format_btc(self.parse_param_value_to_coin(param, input_value))
+        elif param.param_type == ParamType.PERCENT:
+            return FormattingUtils.format_to_percent(ParsingUtils.parse_percent_string_to_double(input_value))
+        elif param.param_type == ParamType.BLOCK:
+            return str(self.parse_param_value_to_blocks(param, input_value))
+        elif param.param_type == ParamType.ADDRESS:
+            validation_result = BtcAddressValidator().validate(input_value)
+            if validation_result.is_valid:
+                return input_value
+            else:
+                raise ProposalValidationException(validation_result.error_message)
+        else:
+            logger.warning(f"Param type {param.param_type} not handled at parse_param_value_to_string")
+            return Res.get("shared.na")
             
     def format_coin(self, coin_or_value, *, append_code=False, decimal_places=-1, decimal_aligned=False, max_number_of_digits=0):
         if append_code:
