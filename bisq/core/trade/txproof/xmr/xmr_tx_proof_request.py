@@ -86,26 +86,25 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
                     logger.warning(f"We received {result} but {self} was terminated already. We do not process result.")
                     return
                 
-                match result:
-                    case XmrTxProofRequestResult.PENDING:
-                        if self._is_timeout_reached():
-                            logger.warning(f"{self} took too long without a success or failure/error result We give up. "
-                                           "Might be that the transaction was never published.")
-                            # If we reached out timeout we return with an error.
-                            UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.NO_RESULTS_TIMEOUT)))
-                        else:
-                            UserThread.run_after(lambda: self.request_from_service(result_handler, fault_handler), XmrTxProofRequest.REPEAT_REQUEST_PERIOD)
-                            # We update our listeners
-                            UserThread.execute(lambda: result_handler(result))
-                    case XmrTxProofRequestResult.SUCCESS:
-                        logger.info(f"{result} succeeded")
+                if result == XmrTxProofRequestResult.PENDING:
+                    if self._is_timeout_reached():
+                        logger.warning(f"{self} took too long without a success or failure/error result We give up. "
+                                       "Might be that the transaction was never published.")
+                        # If we reached our timeout we return with an error.
+                        UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.NO_RESULTS_TIMEOUT)))
+                    else:
+                        UserThread.run_after(lambda: self.request_from_service(result_handler, fault_handler), XmrTxProofRequest.REPEAT_REQUEST_PERIOD)
+                        # We update our listeners
                         UserThread.execute(lambda: result_handler(result))
-                        self.terminate()
-                    case XmrTxProofRequestResult.FAILED | XmrTxProofRequestResult.ERROR:
-                        UserThread.execute(lambda: result_handler(result))
-                        self.terminate()
-                    case _:
-                        logger.warning(f"Unexpected result {result}")
+                elif result == XmrTxProofRequestResult.SUCCESS:
+                    logger.info(f"{result} succeeded")
+                    UserThread.execute(lambda: result_handler(result))
+                    self.terminate()
+                elif result in [XmrTxProofRequestResult.FAILED, XmrTxProofRequestResult.ERROR]:
+                    UserThread.execute(lambda: result_handler(result))
+                    self.terminate()
+                else:
+                    logger.warning(f"Unexpected result {result}")
                 
             except Exception as e:
                 error_message = f"{self} failed with error {e}"
