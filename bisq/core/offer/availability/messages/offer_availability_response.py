@@ -7,13 +7,14 @@ from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabi
 from bisq.core.offer.availability.availability_result import AvailabilityResult
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 @dataclass
 class OfferAvailabilityResponse(OfferMessage, SupportedCapabilitiesMessage):
-    offer_id: str = field(default="")
-    availability_result: AvailabilityResult = field(default=AvailabilityResult.UNKNOWN_FAILURE)
+    offer_id: str = field(default_factory=raise_required)
+    availability_result: AvailabilityResult = field(default_factory=raise_required)
     supported_capabilities: Optional[Capabilities] = field(default=None)
-    arbitrator: NodeAddress = field(default_factory=NodeAddress)
+    arbitrator: NodeAddress = field(default_factory=raise_required)
     mediator: Optional[NodeAddress] = field(default=None)
     refund_agent: Optional[NodeAddress] = field(default=None)
 

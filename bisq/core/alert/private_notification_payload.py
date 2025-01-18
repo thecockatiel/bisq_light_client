@@ -4,11 +4,12 @@ from bisq.common.crypto.sig import Sig,dsa
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.util.utilities import bytes_as_hex_string
 import proto.pb_pb2 as protobuf
+from utils.data import raise_required
 
 
 @dataclass
 class PrivateNotificationPayload(NetworkPayload):
-    message: str = field(default="")
+    message: str = field(default_factory=raise_required)
     signature_as_base64: Optional[str] = field(default=None)
     sig_public_key_bytes: Optional[bytes] = field(default=None)
     sig_public_key: Optional['dsa.DSAPublicKey'] = field(default=None)
