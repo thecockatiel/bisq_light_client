@@ -179,4 +179,4 @@ class CoreProtoResolver(ProtoResolver):
                 case _:
                     raise ProtobufferException(f"Unknown proto message case (PB.PersistableNetworkPayload). messageCase={proto.WhichOneof('message')}")
         else:
-            raise ProtobufferException("Unknown proto message type. proto=" + proto)
+            raise ProtobufferException("Unknown proto message case. proto=" + proto)
