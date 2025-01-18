@@ -12,6 +12,7 @@ logger = get_logger(__name__)
 
 
 class Res:
+    _already_set_up = False
     base_currency_code: str = None
     base_currency_name: str = None
     base_currency_name_lower_case: str = None
@@ -19,6 +20,9 @@ class Res:
 
     @staticmethod
     def setup(config: "Config"):
+        if Res._already_set_up:
+            return
+        Res._already_set_up = True
         base_currency_network = config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
