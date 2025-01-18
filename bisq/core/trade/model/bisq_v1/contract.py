@@ -25,18 +25,18 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-@dataclass(kw_only=True)
+@dataclass
 class Contract(NetworkPayload):
-    offer_payload: "OfferPayload"
-    trade_amount: int
-    trade_price: int
-    taker_fee_tx_id: str
-    buyer_node_address: "NodeAddress"
-    seller_node_address: "NodeAddress"
-    mediator_node_address: "NodeAddress"
-    is_buyer_maker_and_seller_taker: bool
-    maker_account_id: str
-    taker_account_id: str
+    offer_payload: "OfferPayload" = field(default_factory=OfferPayload)
+    trade_amount: int = field(default=0)
+    trade_price: int = field(default=0)
+    taker_fee_tx_id: str = field(default="")
+    buyer_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
+    seller_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
+    mediator_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
+    is_buyer_maker_and_seller_taker: bool = field(default=False)
+    maker_account_id: str = field(default="")
+    taker_account_id: str = field(default="")
 
     # Changed in v1.7.0: Not a final field anymore but initially set to null and later once the data is transmitted
     # set via a setter. This breaks the immutability of the contract but as there are several areas where we access
@@ -44,16 +44,16 @@ class Contract(NetworkPayload):
     maker_payment_account_payload: Optional["PaymentAccountPayload"] = field(default=None)
     taker_payment_account_payload: Optional["PaymentAccountPayload"] = field(default=None)
 
-    maker_pub_key_ring: "PubKeyRing"  # JsonExclude
-    taker_pub_key_ring: "PubKeyRing"  # JsonExclude
-    maker_payout_address_string: str
-    taker_payout_address_string: str
-    maker_multi_sig_pub_key: bytes  # JsonExclude
-    taker_multi_sig_pub_key: bytes  # JsonExclude
+    maker_pub_key_ring: "PubKeyRing" = field(default_factory=PubKeyRing)  # JsonExclude
+    taker_pub_key_ring: "PubKeyRing" = field(default_factory=PubKeyRing)  # JsonExclude
+    maker_payout_address_string: str = field(default="")
+    taker_payout_address_string: str = field(default="")
+    maker_multi_sig_pub_key: bytes = field(default_factory=bytes)  # JsonExclude
+    taker_multi_sig_pub_key: bytes = field(default_factory=bytes)  # JsonExclude
 
     # Added in v1.2.0
-    lock_time: int
-    refund_agent_node_address: "NodeAddress"
+    lock_time: int = field(default=0)
+    refund_agent_node_address: "NodeAddress" = field(default_factory=NodeAddress) 
 
     # Added in v1.7.0
     hash_of_makers_payment_account_payload: Optional[bytes] = field(default=None)
