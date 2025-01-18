@@ -82,8 +82,8 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
         self.request_data_manager.set_listener(self)
         
         #  We need to have both the initial data delivered and the hidden service published
-        self.network_ready_property = combine_simple_properties(self.hidden_service_published, self.preliminary_data_received, transform=lambda values: all(values))
-        self.network_ready_unsubscribe = self.network_ready_property.add_listener(lambda ready: self.on_network_ready() if ready else None)
+        self.network_ready_property = combine_simple_properties(self.hidden_service_published, self.preliminary_data_received, transform=all)
+        self.network_ready_unsubscribe = self.network_ready_property.add_listener(lambda e: self.on_network_ready() if e.new_value else None)
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API

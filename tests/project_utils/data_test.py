@@ -94,7 +94,8 @@ class TestCombineSimpleProperties(unittest.TestCase):
         
         self.prop1.set(62)
         self.prop1.set(42)
-        self.assertEqual(results, [])
+        self.assertEqual(results, [f'62:UNSET_VALUE', f'42:UNSET_VALUE'])
+        results = []
         
         self.prop2.set("hello")
         

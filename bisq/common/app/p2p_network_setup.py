@@ -55,10 +55,10 @@ class P2PNetworkSetup:
             data_received: bool = results[4]
             result = ""
             
-            if warning is not None and num_p2p_peers == 0:
+            if warning and num_p2p_peers == 0:
                 result = warning
             else:
-                p2pinfo = Res.get("mainView.footer.p2pInfo", num_p2p_peers) # NOTE: no btc node handling in python implementation
+                p2pinfo = Res.get("mainView.footer.p2pInfo", 0, num_p2p_peers) # NOTE: no btc node handling in python implementation
                 if data_received and hidden_service:
                     result = p2pinfo
                 elif num_p2p_peers == 0:
@@ -70,7 +70,7 @@ class P2PNetworkSetup:
             
             
         self.p2p_network_info_binding = combine_simple_properties(bootstrap_state, bootstrap_warning, self.p2p_service.get_num_connected_peers(), hidden_service_published, self.data_received, transform=handle_network_binding)
-        self.p2p_network_info_binding.add_listener(lambda e: self.p2p_network_info.set(e.new_value))\
+        self.p2p_network_info_binding.add_listener(lambda e: self.p2p_network_info.set(e.new_value))
             
         bootstrap_state.set(Res.get("mainView.bootstrapState.connectionToTorNetwork"))
         
