@@ -13,5 +13,6 @@ sortedcontainers~=2.4
 async-timeout~=4.0
 aiorpcx~=0.22
 certifi>=2022.9.24
+dnspython~=2.3
 
 pypiwin32; platform_system == "Windows"
