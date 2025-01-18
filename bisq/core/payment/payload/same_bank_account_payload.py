@@ -67,4 +67,5 @@ class SameBankAccountPayload(BankAccountPayload):
         )
 
     def get_payment_details(self) -> str:
-        return f"{Res.get(self.payment_method_id)} - {self.get_payment_details_for_trade_popup().replace('\n', ', ')}"
+        details = self.get_payment_details_for_trade_popup().replace('\n', ', ')
+        return f"{Res.get(self.payment_method_id)} - {details}"
