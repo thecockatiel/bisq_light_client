@@ -1,7 +1,10 @@
-import concurrent.futures
-from io import BufferedReader
+import asyncio
+from datetime import timedelta
+from bisq.common.timer import Timer
+from utils.aio import as_future
+from utils.twisted import twisted_wait
+from asyncio import Future, IncompleteReadError, StreamReader, StreamWriter
 import socket as Socket
-import threading
 import time
 import uuid
 from typing import TYPE_CHECKING, Optional
@@ -12,11 +15,9 @@ from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSize
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
-from proto.delimited_protobuf import read_delimited
+from proto.delimited_protobuf import read_delimited_async
 import bisq.common.version as Version
-from google.protobuf.message import Error as InvalidProtocolBufferException  
-
-import concurrent
+from google.protobuf.message import Error as InvalidProtocolBufferException
 
 from bisq.common.capabilities import Capabilities
 from bisq.common.config.config import Config
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-class Connection(HasCapabilities, Callable[[], None], MessageListener):
+class Connection(HasCapabilities, MessageListener):
     """
     Connection is created by the server thread or by send_message from NetworkNode.
     """
@@ -72,7 +73,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             Connection._config = GLOBAL_CONTAINER.value.config
         return Connection._config
 
-    def __init__(self, socket: Socket.socket, message_listener: MessageListener,
+    def __init__(self, socket: tuple[StreamReader, StreamWriter], message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
                 network_proto_resolver: 'NetworkProtoResolver',
                 peers_node_address: Optional['NodeAddress'] = None,
@@ -81,7 +82,6 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.last_read_timestamp = 0
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
         self.stopped = False
-        self.thread_name_set = False
         # We use a weak reference here to ensure that no connection causes a memory leak in case it get closed without
         # the shutDown being called.
         self.capabilities_listeners: ThreadSafeWeakSet[SupportedCapabilitiesListener] = ThreadSafeWeakSet()
@@ -95,7 +95,8 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.ban_filter = ban_filter
 
         self.uid = str(uuid.uuid4())
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="Executor service for connection with uid " + self.uid)
+        
+        self.run_timer:  Optional[Timer] = None
 
         self.statistic = Statistic()
         
@@ -106,18 +107,15 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.connection_statistics = ConnectionStatistics(self, self.connection_state)
         self.peers_node_address: Optional["NodeAddress"] = None
         self.proto_output_stream: Optional["ProtoOutputStream"] = None
-        self.proto_input_stream: Optional["BufferedReader"] = None
+        self.proto_input_stream: Optional["StreamReader"] = None
         self.init(peers_node_address)
 
     def init(self, peers_node_address: Optional['NodeAddress']):
         try:
-            self.socket.settimeout(Connection.SOCKET_TIMEOUT_SEC)
+            self.proto_input_stream = self.socket[0]
+            self.proto_output_stream = ProtoOutputStream(self.socket[1], self.statistic)
             
-            self.proto_output_stream = ProtoOutputStream(self.socket.makefile('wb'), self.statistic)
-            self.proto_input_stream = self.socket.makefile('rb')
-
-            # We create a thread for handling inputStream data
-            self.executor.submit(self.run)
+            self.run_timer = UserThread.execute(self.run)
 
             if peers_node_address is not None:
                 self.set_peers_node_address(peers_node_address)
@@ -127,8 +125,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             UserThread.execute(lambda: self.connection_listener.on_connection(self))
         except Exception as e:
             self.handle_exception(e)
+            
 
-    def send_message(self, network_envelope: NetworkEnvelope):
+    async def send_message(self, network_envelope: NetworkEnvelope):
         ts = get_time_ms()
         logger.debug(f">> Send networkEnvelope of type: {network_envelope.__class__.__name__}")
 
@@ -151,10 +150,10 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             elapsed = now - self.last_send_timestamp
             if elapsed < self.get_send_msg_throttle_trigger():
                 logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
-                time.sleep(self.get_send_msg_throttle_sleep())
+                await twisted_wait(self.get_send_msg_throttle_sleep())
             self.last_send_timestamp = now
             if not self.stopped:
-                self.proto_output_stream.write_envelope(network_envelope)
+                await self.proto_output_stream.write_envelope_async(network_envelope)
                 UserThread.execute(lambda: list(map(lambda e: e.on_message_sent(network_envelope, self), self.message_listeners)))
                 UserThread.execute(lambda: self.connection_statistics.add_send_msg_metrics(get_time_ms() - ts, network_envelope_size))
         except Exception as t:
@@ -312,14 +311,14 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
     
-    def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
+    async def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         try:
             reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
-            self.send_message(CloseConnectionMessage(reason=reason))
+            as_future(self.send_message(CloseConnectionMessage(reason=reason)))
 
             self.stopped = True
 
-            time.sleep(0.2)
+            await twisted_wait(0.2)
         except Exception as e:
             logger.error(e, exc_info=e)
         finally:
@@ -341,7 +340,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
             )
             if close_connection_reason.send_close_message:
-                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler), name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
+                UserThread.execute(lambda: as_future(self.handle_shut_down(close_connection_reason, shut_down_complete_handler)))
             else:
                 self.stopped = True
                 self.do_shut_down(close_connection_reason, shut_down_complete_handler)
@@ -353,27 +352,21 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         # Use UserThread.execute as it's not clear if that is called from a non-UserThread
         UserThread.execute(lambda: self.connection_listener.on_disconnect(close_connection_reason, self))
         try:
-            self.proto_output_stream.on_connection_shutdown()
-            self.socket.close()
+            if self.proto_output_stream:
+                self.proto_output_stream.on_connection_shutdown()
         except Socket.error as e:
             logger.trace(f"SocketException at shutdown might be expected. {e}")
         except Exception as e:
             logger.error(f"Exception at shutdown. {e}")
         finally:
             self.capabilities_listeners.clear()
-            try:
-                self.proto_input_stream.close()
-            except Exception as e:
-                logger.error(str(e))
-            self.executor.shutdown(wait=True, cancel_futures=True)
+            if self.run_timer:
+                self.run_timer.stop()
             logger.debug(f"Connection shutdown complete {self}")
 
             #  Use UserThread.execute as it's not clear if that is called from a non-UserThread
             if shut_down_complete_handler is not None:
                 UserThread.execute(shut_down_complete_handler)
-
-    def __call__(self, *args, **kwargs):
-        self.run()
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -399,8 +392,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         Returns a string with detailed information about the connection.
         """
         try:
-            local_port = self.socket.getsockname()[1]
-            remote_port = self.socket.getpeername()[1]
+            sock: Socket.socket = self.socket[1].get_extra_info('socket')
+            local_port = sock.getsockname()[1]
+            remote_port = sock.getpeername()[1]
             port_info = f"localPort={local_port}/port={remote_port}"
         except Exception as e:
             port_info = f"port=Unknown due to error: {e}"
@@ -445,14 +439,14 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             return
         
         close_connection_reason = CloseConnectionReason.UNKNOWN_EXCEPTION
-        if isinstance(exception, Socket.timeout):
+        if isinstance(exception, Socket.timeout) or isinstance(exception, asyncio.TimeoutError):
             close_connection_reason = CloseConnectionReason.SOCKET_TIMEOUT
             logger.info(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, EOFError):
             close_connection_reason = CloseConnectionReason.TERMINATED
             logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error)):
-            if self.socket._closed:
+            if self.socket[1].is_closing():
                 close_connection_reason = CloseConnectionReason.SOCKET_CLOSED
             else:
                 close_connection_reason = CloseConnectionReason.RESET
@@ -483,24 +477,20 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
         return True
 
-    def run(self):
+    async def run(self):
         try:
-            threading.current_thread().name = f"InputHandler-{to_truncated_string(self.uid, 15)}"
-            while not self.stopped and threading.current_thread().is_alive():
-                if  not self.thread_name_set and self.peers_node_address:
-                    threading.current_thread().name = f"InputHandler-{to_truncated_string(self.peers_node_address.get_full_address(), 15)}"
-                    self.thread_name_set = True
-
-                if self.socket is not None and self.socket._closed:
-                    logger.warning(f'Socket is None or closed socket={self.socket}')
-                    self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
-                    return
+            if not self.stopped:
                 try:
+                    if self.socket is not None and self.socket[1].is_closing():
+                        logger.warning(f'Socket is None or closed socket={self.socket}')
+                        self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
+                        return
+                    
                     # Blocking read from the inputStream
-                    proto = read_delimited(self.proto_input_stream, protobuf.NetworkEnvelope)
+                    proto = await read_delimited_async(self.proto_input_stream, protobuf.NetworkEnvelope)
                     ts = get_time_ms()
                     
-                    if self.socket is not None and self.socket._closed:
+                    if self.socket is not None and self.socket[1].is_closing():
                         logger.warning(f'Socket is None or closed socket={self.socket}')
                         self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                         return
@@ -508,8 +498,8 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     if proto is None:
                         if self.stopped:
                             return
-                        data = self.proto_input_stream.read()
-                        if  data == bytes():
+                        data = await self.proto_input_stream.read()
+                        if data == bytes():
                             logger.warning("proto is None because EOF was read. That is expected if client got stopped without proper shutdown.")
                         else:
                             logger.warning("proto is None. protoInputStream.read()=" + data.hex())
@@ -521,104 +511,95 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         self.report_invalid_request(RuleViolation.PEER_BANNED)
                         return
 
-                except Socket.error as e:
-                    logger.warning(f"Socket error: {e}")
-                    break
-                except EOFError:
-                    logger.warning("EOF Error")
-                    break
+                    now = get_time_ms()
+                    elapsed = now - self.last_read_timestamp
+                    if elapsed < 10:
+                        logger.debug(f"We got 2 network messages received in less than 10 ms. We set the thread to sleep "
+                                        f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
+                        time.sleep(20)
 
-                if not proto:
-                    continue
+                    try:
+                        # NOTE: this is needed to not report violations for things we do not support like DAO stuff
+                        network_envelope = self.network_proto_resolver.from_proto(proto)
+                    except ProtobufferException as e:
+                        if "Unknown proto message case" in str(e):
+                            logger.debug(f"Unsupported proto message. This is probably expected. original error={e}")
+                            return
+                        else:
+                            raise
+                    
+                    self.last_read_timestamp = now
+                    logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
+                    size = proto.ByteSize()
 
+                    # We want to track the size of each object even if it is invalid data
+                    self.statistic.add_received_bytes(size)
 
-
-                now = get_time_ms()
-                elapsed = now - self.last_read_timestamp
-                if elapsed < 10:
-                    logger.debug(f"We got 2 network messages received in less than 10 ms. We set the thread to sleep "
-                                 f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
-                    time.sleep(20)
-
-                try:
-                    # NOTE: this is needed to not report violations for things we do not support like DAO stuff
-                    network_envelope = self.network_proto_resolver.from_proto(proto)
-                except ProtobufferException as e:
-                    if "Unknown proto message case" in str(e):
-                        logger.debug(f"Unsupported proto message. This is probably expected. original error={e}")
-                        return
+                    # We want to track the network_messages also before the checks, so do it early...
+                    self.statistic.add_received_message(network_envelope)
+                    
+                    # First we check the size
+                    exceeds = False
+                    if isinstance(network_envelope, ExtendedDataSizePermission):
+                        exceeds = size >  Connection.MAX_PERMITTED_MESSAGE_SIZE
                     else:
-                        raise
-                
-                self.last_read_timestamp = now
-                logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
-                size = proto.ByteSize()
+                        exceeds = size > Connection.PERMITTED_MESSAGE_SIZE
 
-                # We want to track the size of each object even if it is invalid data
-                self.statistic.add_received_bytes(size)
-
-                # We want to track the network_messages also before the checks, so do it early...
-                self.statistic.add_received_message(network_envelope)
-                
-                # First we check the size
-                exceeds = False
-                if isinstance(network_envelope, ExtendedDataSizePermission):
-                    exceeds = size >  Connection.MAX_PERMITTED_MESSAGE_SIZE
-                else:
-                    exceeds = size > Connection.PERMITTED_MESSAGE_SIZE
-
-                if isinstance(network_envelope, AddPersistableNetworkPayloadMessage) and not network_envelope.persistable_network_payload.verify_hash_size():
-                    logger.warning(f"PersistableNetworkPayload.verifyHashSize failed. hashSize={str(len(network_envelope.persistable_network_payload.get_hash()))}; object={to_truncated_string(proto)}")
-                    if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
-                        return
-
-                if exceeds:
-                    logger.warning(f"size > MAX_MSG_SIZE. size={str(size)}; object={to_truncated_string(proto)}")
-                    if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
-                        return
-                    
-                if self.violates_throttle_limit() and self.report_invalid_request(RuleViolation.THROTTLE_LIMIT_EXCEEDED):
-                    return
-                
-                # Check P2P network ID
-                if proto.message_version != Version.get_p2p_message_version() and self.report_invalid_request(RuleViolation.WRONG_NETWORK_ID):
-                    logger.warning(f"RuleViolation.WRONG_NETWORK_ID. version of message={proto.message_version}, app version={Version.get_p2p_message_version()}, proto.toTruncatedString={to_truncated_string(proto)}")
-                    return
-
-                caused_shut_down = self.maybe_handle_supported_capabilities_message(network_envelope)
-                if caused_shut_down:
-                    return
-
-                if isinstance(network_envelope, CloseConnectionMessage):
-                    # If we get a CloseConnectionMessage we shut down
-                    logger.debug(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}\n\tconnection={self}")
-
-                    if CloseConnectionReason.PEER_BANNED.name == proto.close_connection_message.reason:
-                        logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
-                        self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
-                        return
-                elif not self.stopped:
-                    # We don't want to get the activity ts updated by ping/pong msg
-                    if not isinstance(network_envelope, KeepAliveMessage):
-                        self.statistic.update_last_activity_timestamp()
-                    
-                    # If SendersNodeAddressMessage we do some verifications and apply if successful,
-                    # otherwise we return false.
-                    if isinstance(network_envelope, SendersNodeAddressMessage):
-                        is_valid = self.process_senders_node_address_message(network_envelope)
-                        if not is_valid:
+                    if isinstance(network_envelope, AddPersistableNetworkPayloadMessage) and not network_envelope.persistable_network_payload.verify_hash_size():
+                        logger.warning(f"PersistableNetworkPayload.verifyHashSize failed. hashSize={str(len(network_envelope.persistable_network_payload.get_hash()))}; object={to_truncated_string(proto)}")
+                        if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
                             return
 
-                    if not isinstance(network_envelope, SendersNodeAddressMessage) and not self.peers_node_address:
-                        logger.info(f"We got a {network_envelope.__class__.__name__} from a peer with yet unknown address on connection with uid={self.uid}")
+                    if exceeds:
+                        logger.warning(f"size > MAX_MSG_SIZE. size={str(size)}; object={to_truncated_string(proto)}")
+                        if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
+                            return
+                        
+                    if self.violates_throttle_limit() and self.report_invalid_request(RuleViolation.THROTTLE_LIMIT_EXCEEDED):
+                        return
+                    
+                    # Check P2P network ID
+                    if proto.message_version != Version.get_p2p_message_version() and self.report_invalid_request(RuleViolation.WRONG_NETWORK_ID):
+                        logger.warning(f"RuleViolation.WRONG_NETWORK_ID. version of message={proto.message_version}, app version={Version.get_p2p_message_version()}, proto.toTruncatedString={to_truncated_string(proto)}")
+                        return
 
-                    self.on_message(network_envelope, self)
-                    UserThread.execute(lambda: self.connection_statistics.add_received_msg_metrics(get_time_ms() - ts, size))
-        except (ProtobufferException, InvalidProtocolBufferException) as e:
-            logger.error(e)
-            self.report_invalid_request(RuleViolation.INVALID_DATA_TYPE)
+                    caused_shut_down = self.maybe_handle_supported_capabilities_message(network_envelope)
+                    if caused_shut_down:
+                        return
+
+                    if isinstance(network_envelope, CloseConnectionMessage):
+                        # If we get a CloseConnectionMessage we shut down
+                        logger.debug(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}\n\tconnection={self}")
+
+                        if CloseConnectionReason.PEER_BANNED.name == proto.close_connection_message.reason:
+                            logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
+                            self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
+                            return
+                    elif not self.stopped:
+                        # We don't want to get the activity ts updated by ping/pong msg
+                        if not isinstance(network_envelope, KeepAliveMessage):
+                            self.statistic.update_last_activity_timestamp()
+                        
+                        # If SendersNodeAddressMessage we do some verifications and apply if successful,
+                        # otherwise we return false.
+                        if isinstance(network_envelope, SendersNodeAddressMessage):
+                            is_valid = self.process_senders_node_address_message(network_envelope)
+                            if not is_valid:
+                                return
+
+                        if not isinstance(network_envelope, SendersNodeAddressMessage) and not self.peers_node_address:
+                            logger.info(f"We got a {network_envelope.__class__.__name__} from a peer with yet unknown address on connection with uid={self.uid}")
+
+                        self.on_message(network_envelope, self)
+                        UserThread.execute(lambda: self.connection_statistics.add_received_msg_metrics(get_time_ms() - ts, size))
+                except (ProtobufferException, InvalidProtocolBufferException, IncompleteReadError) as e:
+                    logger.error(e)
+                    self.report_invalid_request(RuleViolation.INVALID_DATA_TYPE)
+                finally:
+                    UserThread.execute(self.run)
         except Exception as e:
             self.handle_exception(e)
+
 
     def maybe_handle_supported_capabilities_message(self, network_envelope: 'NetworkEnvelope') -> bool:
         if not isinstance(network_envelope, SupportedCapabilitiesMessage):

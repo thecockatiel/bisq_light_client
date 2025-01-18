@@ -55,6 +55,7 @@ class HiddenServiceSocket:
                     break
         
         self._server_socket = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.setblocking(False)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # allow reuse of port
         sock.bind(('127.0.0.1', self._local_port))
         sock.listen(5)

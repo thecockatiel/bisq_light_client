@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future, ThreadPoolExecutor
+from asyncio import Future, Semaphore, StreamReader, StreamWriter
 from datetime import datetime, timedelta
 import logging
 from socket import socket as Socket
-import threading
 from typing import TYPE_CHECKING, Optional, Union
 from collections.abc import Callable
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -22,9 +21,9 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.common.setup.log_setup import get_logger
+from utils.aio import as_future
 from utils.concurrency import AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
-from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 
@@ -55,9 +54,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.message_listeners: ThreadSafeSet["MessageListener"] = ThreadSafeSet()
         self.connection_listeners: ThreadSafeSet["ConnectionListener"] = ThreadSafeSet()
         self.setup_listeners: ThreadSafeSet["SetupListener"] = ThreadSafeSet()
-
-        self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2, thread_name_prefix="NetworkNode.connection_executor")
-        self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3, thread_name_prefix="NetworkNode.send_message_executor")
+        
+        self.connection_semaphore = Semaphore(max_connections * 2)
+        self.send_message_semaphore =  Semaphore(max_connections * 3)
+        self.connection_futures: list[Future] = []
+        self.send_message_futures: list[Future] = []
 
         self.__shut_down_in_progress = False
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
@@ -70,84 +71,79 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         # when the events happen.
         pass
 
-    def _send_message_using_connection(self, connection: "Connection", network_envelope: NetworkEnvelope):
-        assert connection, "Connection is null. We can not send the message."
-        assert network_envelope, "NetworkEnvelope is null. We can not send the message."
-        id = (
-            connection.peers_node_address.get_full_address()
-            if connection.peers_node_address
-            else connection.uid
-        )
-        threading.current_thread().name = f"NetworkNode:SendMessage-to-{to_truncated_string(id, 15)}"
-        connection.send_message(network_envelope)
+    async def _send_message_using_connection(self, connection: "Connection", network_envelope: NetworkEnvelope):
+        async with self.send_message_semaphore:
+            assert connection, "Connection is null. We can not send the message."
+            assert network_envelope, "NetworkEnvelope is null. We can not send the message."
+            await connection.send_message(network_envelope)
 
         return connection
 
-    def _make_connection(
+    async def _make_connection(
         self, peers_node_address: "NodeAddress", network_envelope: NetworkEnvelope
     ):
-        assert peers_node_address, "peers_node_address must not be null"
-        threading.current_thread().name = f"NetworkNode.connectionExecutor:SendMessage-to-{to_truncated_string(peers_node_address.get_full_address(), 15)}"
-        if peers_node_address == self.node_address_property.value:
-            logger.warning("We are sending a message to ourselves")
+        async with self.connection_semaphore:
+            assert peers_node_address, "peers_node_address must not be null"
+            if peers_node_address == self.node_address_property.value:
+                logger.warning("We are sending a message to ourselves")
 
-        startTs = get_time_ms()
+            startTs = get_time_ms()
 
-        logger.debug(f"Start create socket to {peers_node_address.get_full_address()}")
+            logger.debug(f"Start create socket to {peers_node_address.get_full_address()}")
 
-        socket: Socket = self.create_socket(peers_node_address)
+            reader, writer = await self.create_socket(peers_node_address)
 
-        duration = get_time_ms() - startTs
-        logger.info(
-            f"Socket creation to peersNodeAddress {peers_node_address.get_full_address()} took {duration} ms"
-        )
-
-        if duration > NetworkNode.CREATE_SOCKET_TIMEOUT:
-            raise TimeoutError("A timeout occurred when creating a socket.")
-
-        # Tor needs sometimes quite long to create a connection. To avoid that we get too many
-        # connections with the same peer we check again if we still don't have any connection for that node address.
-        existing_connection = self.get_inbound_connection(peers_node_address)
-        if existing_connection is None:
-            existing_connection = self.get_outbound_connection(peers_node_address)
-
-        if existing_connection is not None:
-            logger.debug(
-                f"We found in the meantime a connection for peers_node_address {peers_node_address.get_full_address()}, "
-                "so we use that for sending the message.\n"
-                "That can happen if Tor needs long for creating a new outbound connection.\n"
-                "We might have got a new inbound or outbound connection."
+            duration = get_time_ms() - startTs
+            logger.info(
+                f"Socket creation to peersNodeAddress {peers_node_address.get_full_address()} took {duration} ms"
             )
-            try:
-                socket.close()
-            except Exception as e:
-                if not self.__shut_down_in_progress:
-                    logger.error("Error at closing socket", exc_info=e)
 
-            existing_connection.send_message(network_envelope)
-            return existing_connection
-        else:
-            outbound_connection = OutboundConnection(
-                socket=socket,
-                message_listener=self,
-                connection_listener=NetworkNodeOutboundConnectionListener(self),
-                peers_node_address=peers_node_address,
-                network_proto_resolver=self.network_proto_resolver,
-                ban_filter=self.ban_filter,
-            )
-            if logger.isEnabledFor(logging.DEBUG):
+            if duration > NetworkNode.CREATE_SOCKET_TIMEOUT:
+                raise TimeoutError("A timeout occurred when creating a socket.")
+
+            # Tor needs sometimes quite long to create a connection. To avoid that we get too many
+            # connections with the same peer we check again if we still don't have any connection for that node address.
+            existing_connection = self.get_inbound_connection(peers_node_address)
+            if existing_connection is None:
+                existing_connection = self.get_outbound_connection(peers_node_address)
+
+            if existing_connection is not None:
                 logger.debug(
-                    f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                    "NetworkNode created new outbound connection:"
-                    f"\nmy_node_address={self.node_address_property.value}"
-                    f"\npeers_node_address={peers_node_address}"
-                    f"\nuid={outbound_connection.uid}"
-                    f"\nmessage={network_envelope}"
-                    f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                    f"We found in the meantime a connection for peers_node_address {peers_node_address.get_full_address()}, "
+                    "so we use that for sending the message.\n"
+                    "That can happen if Tor needs long for creating a new outbound connection.\n"
+                    "We might have got a new inbound or outbound connection."
                 )
-            # can take a while when using tor
-            outbound_connection.send_message(network_envelope)
-            return outbound_connection
+                try:
+                    writer.close()
+                except Exception as e:
+                    if not self.__shut_down_in_progress:
+                        logger.error("Error at closing socket", exc_info=e)
+
+                await existing_connection.send_message(network_envelope)
+                return existing_connection
+            else:
+                outbound_connection = OutboundConnection(
+                    socket=(reader, writer),
+                    message_listener=self,
+                    connection_listener=NetworkNodeOutboundConnectionListener(self),
+                    peers_node_address=peers_node_address,
+                    network_proto_resolver=self.network_proto_resolver,
+                    ban_filter=self.ban_filter,
+                )
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                        "NetworkNode created new outbound connection:"
+                        f"\nmy_node_address={self.node_address_property.value}"
+                        f"\npeers_node_address={peers_node_address}"
+                        f"\nuid={outbound_connection.uid}"
+                        f"\nmessage={network_envelope}"
+                        f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                    )
+                # can take a while when using tor
+                await outbound_connection.send_message(network_envelope)
+                return outbound_connection
 
     def send_message(
         self, peers_node_address_or_connection: Union["NodeAddress", "Connection"], network_envelope: NetworkEnvelope
@@ -170,23 +166,20 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 connection = self.get_inbound_connection(peers_node_address)
 
             if connection:
-                future = self.send_message_executor.submit(
-                    self._send_message_using_connection, connection, network_envelope
-                )
+                future = as_future(self._send_message_using_connection(connection, network_envelope))
+                self.connection_futures.append(future)
+                future.add_done_callback(lambda f: self.connection_futures.remove(f) if f in self.connection_futures else None)
             else:
                 logger.debug(
                     f"We have not found any connection for peerAddress {peers_node_address}.\n\t"
                     "We will create a new outbound connection."
                 )
-
-                future = self.connection_executor.submit(
-                    self._make_connection, peers_node_address, network_envelope
-                )
+                future = as_future(self._make_connection(peers_node_address, network_envelope))
+                self.send_message_futures.append(future)
+                future.add_done_callback(lambda f: self.send_message_futures.remove(f) if f in self.send_message_futures else None)
         else:
             peers_node_address = peers_node_address_or_connection.peers_node_address
-            future = self.send_message_executor.submit(
-                        self._send_message_using_connection, peers_node_address_or_connection, network_envelope
-                    )
+            future = as_future(self._send_message_using_connection(peers_node_address_or_connection, network_envelope))
         
         def on_done(f: "Future"):
             try:
@@ -343,8 +336,10 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 if shutdown_completed.get() == num_connections:
                     logger.info("Shutdown completed with all connections closed")
                     timer.stop()
-                    self.connection_executor.shutdown(wait=False)
-                    self.send_message_executor.shutdown(wait=False)
+                    for f in self.connection_futures:
+                        f.cancel()
+                    for f in self.send_message_futures:
+                        f.cancel()
                     if shut_down_complete_handler:
                         shut_down_complete_handler()
 
@@ -404,7 +399,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.server.start()
 
     @abstractmethod
-    def create_socket(self, peer_node_address: "NodeAddress") -> Socket:
+    async def create_socket(self, peer_node_address: "NodeAddress") -> tuple[StreamReader, StreamWriter]:
         pass
     
     def find_peers_capabilities(self, node_address: "NodeAddress") -> Optional["Capabilities"]:

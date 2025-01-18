@@ -1,7 +1,7 @@
+from asyncio import Future
 from datetime import timedelta
 import uuid
 from threading import Lock
-from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, List, Optional
 from abc import ABC, abstractmethod
 import random
@@ -67,7 +67,6 @@ class BroadcastHandler:
         self,
         broadcast_requests: List["BroadcastRequest"],
         shutdown_requested: bool,
-        executor: ThreadPoolExecutor,
     ):
         if not broadcast_requests:
             return
@@ -129,7 +128,7 @@ class BroadcastHandler:
 
                 try:
                     self._send_to_peer(
-                        connection, broadcast_requests_for_connection, executor
+                        connection, broadcast_requests_for_connection
                     )
                 except Exception as e:
                     logger.error(f"Exception at broadcast: {e}")
@@ -191,7 +190,7 @@ class BroadcastHandler:
             and connection.test_capability(broadcast_request.message)
         ]
     
-    def _send_to_peer(self, connection: "Connection", broadcast_requests_for_connection: List["BroadcastRequest"], executor: ThreadPoolExecutor):
+    def _send_to_peer(self, connection: "Connection", broadcast_requests_for_connection: List["BroadcastRequest"]):
         # Can be BundleOfEnvelopes or a single BroadcastMessage
         broadcast_message = self._get_message(broadcast_requests_for_connection)
         future = self.network_node.send_message(connection, broadcast_message)

@@ -1,7 +1,5 @@
 from concurrent.futures import Future
 from datetime import timedelta
-import random
-import threading
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.timer import Timer

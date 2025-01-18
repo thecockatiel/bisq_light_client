@@ -1,10 +1,11 @@
-from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
+from aiohttp_socks import open_connection, ProxyType
 from utils.aio import as_future, run_in_thread
+from asyncio import Future, StreamReader, StreamWriter
+from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
+from electrum_min.util import wait_for2
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
-import socks
-import socket
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.hidden_service_socket import HiddenServiceSocket
@@ -67,21 +68,23 @@ class TorNetworkNode(NetworkNode):
             local_port = Utils.find_free_system_port()
         await self.create_tor_and_hidden_service(local_port, self.service_port)
         
-    def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
+    async def create_socket(self, peer_node_address: "NodeAddress") -> tuple[StreamReader, StreamWriter]:
         assert peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address"
         assert self.socks_proxy, "Tor proxy not ready"
-        sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(240) # Connection.SOCKET_TIMEOUT_SEC
-        sock.set_proxy(
-            proxy_type=socks.SOCKS5,
-            addr="127.0.0.1",
-            port=self.socks_proxy.port,
-            rdns=True,
-            username=self.socks_proxy.username,
-            password=self.socks_proxy.password,
+        stream_tuple = await wait_for2(
+            open_connection(
+                host=peer_node_address.host_name,
+                port=peer_node_address.port,
+                proxy_type=ProxyType.SOCKS5,
+                proxy_host="127.0.0.1",
+                proxy_port=self.socks_proxy.port,
+                rdns=True,
+                username=self.socks_proxy.username,
+                password=self.socks_proxy.password,
+            ),
+            240,  # Connection.SOCKET_TIMEOUT_SEC
         )
-        sock.connect((peer_node_address.host_name, peer_node_address.port))
-        return sock
+        return stream_tuple
     
     @property
     def socks_proxy(self) -> Socks5Proxy:

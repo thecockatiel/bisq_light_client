@@ -1,7 +1,8 @@
+from utils.aio import get_asyncio_loop
 import socket
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
-from utils.aio import get_asyncio_loop
+from electrum_min.util import wait_for2
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
@@ -66,10 +67,9 @@ class LocalBitcoinNode:
         to the node's port.
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(LocalBitcoinNode.CONNECTION_TIMEOUT_SEC)
         sock.setblocking(False)
         try:
-            await get_asyncio_loop().sock_connect(sock, ("127.0.0.1", port))
+            await wait_for2(get_asyncio_loop().sock_connect(sock, ("127.0.0.1", port)), LocalBitcoinNode.CONNECTION_TIMEOUT_SEC)
             logger.info(f"Local Bitcoin node detected on port {port}")
             return True
         except socket.error:

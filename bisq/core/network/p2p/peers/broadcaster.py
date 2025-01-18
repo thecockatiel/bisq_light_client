@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
@@ -36,12 +35,6 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         self.timer: Optional[Timer] = None
         self.shut_down_requested = False
         self.shut_down_result_handler: Optional[Callable[[], None]] = None
-        
-        # Create thread pool executor
-        self.executor = ThreadPoolExecutor(
-            max_workers=max_connections * 4,
-            thread_name_prefix="Broadcaster"
-        )
 
     def shut_down(self, result_handler: Callable[[], None]) -> None:
         logger.info("Broadcaster shutdown started")
@@ -55,7 +48,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
             # so we can expect that we get on_completed called very fast and trigger the do_shut_down from there.
             self.maybe_broadcast_bundle()
         
-        self.executor.shutdown()
+        # TODO ? maybe add shutdown of pending broadcasts later by making futures and cancelling them
 
     def flush(self) -> None:
         self.maybe_broadcast_bundle()
@@ -84,7 +77,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         if self.broadcast_requests:
             broadcast_handler = BroadcastHandler(self.network_node, self.peer_manager, self)
             self.broadcast_handlers.add(broadcast_handler)
-            broadcast_handler.broadcast(copy(self.broadcast_requests), self.shut_down_requested, self.executor)
+            broadcast_handler.broadcast(copy(self.broadcast_requests), self.shut_down_requested)
             self.broadcast_requests.clear()
 
             if self.timer:

@@ -1,6 +1,10 @@
+import asyncio
+import socket
+from bisq.common.timer import Timer
+from bisq.common.user_thread import UserThread
+from utils.aio import get_asyncio_loop
 from socket import socket as Socket, error as SocketError
-import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
@@ -19,8 +23,22 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+async def sock_to_stream(sock: socket.socket) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+    loop = get_asyncio_loop()
+    
+    reader = asyncio.StreamReader(loop=loop)
+    protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
+    
+    transport, _ = await loop.connect_accepted_socket(
+        protocol,
+        sock
+    )
+    
+    writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+    
+    return reader, writer
 
-class Server(Callable[[], None]):
+class Server:
     def __init__(
         self,
         server_socket: Socket,
@@ -36,44 +54,44 @@ class Server(Callable[[], None]):
         self.ban_filter = ban_filter
         self.local_port = server_socket.getsockname()[1]
         self.connections: ThreadSafeSet["Connection"] = ThreadSafeSet()
-        self.server_thread = threading.Thread(target=self)
+        self.server_timer: Optional[Timer] = None
 
     def start(self):
-        self.server_thread.name = f"Server-{self.local_port}"
-        self.server_thread.start()
-
-    def __call__(self):
+        self.server_timer = UserThread.execute(self.run)
+    
+    async def run(self):
         try:
-            while self.is_server_active():
+            if self.is_server_active():
                 logger.debug(f"Ready to accept new clients on port {self.local_port}")
-                client_socket, peer = self.server_socket.accept()
+                client_socket, peer = await get_asyncio_loop().sock_accept(self.server_socket)
+                reader, writer = await sock_to_stream(client_socket)
+
+                logger.debug(
+                    f"Accepted new client on localPort/port {client_socket.getsockname()[1]}/{peer[1]}"
+                )
+
+                connection = InboundConnection(
+                    socket=(reader, writer),
+                    message_listener=self.message_listener,
+                    connection_listener=self.connection_listener,
+                    network_proto_resolver=self.network_proto_resolver,
+                    ban_filter=self.ban_filter,
+                )
+
+                logger.debug(
+                    f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                    f"Server created new inbound connection:\n"
+                    f"localPort/port={self.server_socket.getsockname()[1]}/{client_socket.getpeername()[1]}\n"
+                    f"connection.uid={connection.uid}\n"
+                    f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+                )
 
                 if self.is_server_active():
-                    logger.debug(
-                        f"Accepted new client on localPort/port {client_socket.getsockname()[1]}/{peer[1]}"
-                    )
-
-                    connection = InboundConnection(
-                        socket=client_socket,
-                        message_listener=self.message_listener,
-                        connection_listener=self.connection_listener,
-                        network_proto_resolver=self.network_proto_resolver,
-                        ban_filter=self.ban_filter,
-                    )
-
-                    logger.debug(
-                        f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                        f"Server created new inbound connection:\n"
-                        f"localPort/port={self.server_socket.getsockname()[1]}/{client_socket.getpeername()[1]}\n"
-                        f"connection.uid={connection.uid}\n"
-                        f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-                    )
-
-                    if self.is_server_active():
-                        self.connections.add(connection)
-                    else:
-                        connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
-
+                    self.connections.add(connection)
+                else:
+                    connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
+                
+                UserThread.execute(self.run)
         except SocketError as e:
             if self.is_server_active():
                 logger.exception(e)
@@ -84,7 +102,9 @@ class Server(Callable[[], None]):
     def shut_down(self):
         logger.info("Server shutdown started")
         if self.is_server_active():
-            self.server_thread.join(timeout=1.0)
+            if self.server_timer:
+                self.server_timer.stop()
+
             for connection in self.connections:
                 connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
 
@@ -101,4 +121,4 @@ class Server(Callable[[], None]):
             logger.warning("stopped already called at shutdown")
 
     def is_server_active(self) -> bool:
-        return self.server_thread.is_alive() and self.server_socket and not self.server_socket._closed
+        return self.server_socket and not self.server_socket._closed

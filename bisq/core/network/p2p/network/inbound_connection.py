@@ -1,3 +1,4 @@
+from asyncio import StreamReader, StreamWriter
 from typing import Optional, TYPE_CHECKING
 from bisq.core.network.p2p.network.connection import Connection
 
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 class InboundConnection(Connection):
     def __init__(
         self,
-        socket: "Socket",
+        socket: tuple[StreamReader, StreamWriter],
         message_listener: "MessageListener",
         connection_listener: "ConnectionListener",
         network_proto_resolver: "NetworkProtoResolver",

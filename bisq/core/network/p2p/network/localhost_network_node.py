@@ -1,5 +1,7 @@
+from utils.aio import get_asyncio_loop
+from asyncio import StreamReader, StreamWriter, open_connection
+from electrum_min.util import wait_for2
 from datetime import timedelta
-from socket import socket as Socket
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
@@ -7,6 +9,7 @@ from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from proto.pb_pb2 import NodeAddress
 import socket
+
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.ban_filter import BanFilter
@@ -60,5 +63,5 @@ class LocalhostNetworkNode(NetworkNode):
         UserThread.run_after(first, timedelta(milliseconds=LocalhostNetworkNode.simulate_tor_delay_hidden_service))
         
     # Called from NetworkNode thread
-    def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
-        return socket.create_connection((peer_node_address.host_name, peer_node_address.port))
+    async def create_socket(self, peer_node_address: "NodeAddress") -> tuple[StreamReader, StreamWriter]:
+        return await wait_for2(open_connection(peer_node_address.host_name, peer_node_address.port), 240)
