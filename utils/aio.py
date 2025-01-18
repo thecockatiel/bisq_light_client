@@ -8,6 +8,7 @@ import sys
 import threading
 from typing import Any, Awaitable, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
+
 _T = TypeVar("T")
 _R = TypeVar("R")
 _K = TypeVar("K")
@@ -64,18 +65,33 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
     return loop
 
 
-def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
-    if isinstance(d, Deferred):
-        return d.asFuture(get_asyncio_loop())
-    if isinstance(d, ConcurrentFuture):
-        return asyncio.wrap_future(d, loop=get_asyncio_loop())
-    if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
-        return asyncio.ensure_future(d, loop=get_asyncio_loop())
-    raise TypeError(f"unexpected type {type(d)}")
+try:
+    def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
+        if isinstance(d, Deferred):
+            return d.asFuture(get_asyncio_loop())
+        if isinstance(d, ConcurrentFuture):
+            return asyncio.wrap_future(d, loop=get_asyncio_loop())
+        if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
+            return asyncio.ensure_future(d, loop=get_asyncio_loop())
+        raise TypeError(f"unexpected type {type(d)}")
+except:
+    # for where twisted deferred is not typed yet.
+    def as_future(d: Union[Deferred, ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
+        if isinstance(d, Deferred):
+            return d.asFuture(get_asyncio_loop())
+        if isinstance(d, ConcurrentFuture):
+            return asyncio.wrap_future(d, loop=get_asyncio_loop())
+        if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
+            return asyncio.ensure_future(d, loop=get_asyncio_loop())
+        raise TypeError(f"unexpected type {type(d)}")
 
-
-def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
-    return Deferred.fromFuture(asyncio.ensure_future(f))
+try:  
+    def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
+        return Deferred.fromFuture(asyncio.ensure_future(f))
+except:
+    # for where twisted deferred is not typed yet.
+    def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred:
+        return Deferred.fromFuture(asyncio.ensure_future(f))
 
 def is_async_callable(obj):
     """Check if an object is an async callable"""

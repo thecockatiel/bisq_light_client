@@ -6,7 +6,7 @@ from bisq.common.setup.log_setup import (
 )
 
 from utils.tor import is_tor_socks_port_async, parse_tor_hidden_service_port
-from utils.twisted import cancel_delayed_calls, wrap_with_ensure_deferred
+from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 
 configure_logging(None)
 set_custom_log_level("TRACE")

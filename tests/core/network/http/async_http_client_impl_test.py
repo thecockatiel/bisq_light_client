@@ -8,7 +8,7 @@ from bisq.common.setup.log_setup import (
 )
 from pathlib import Path
 
-from utils.twisted import cancel_delayed_calls, wrap_with_ensure_deferred
+from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 
 
 # setup logging for this test

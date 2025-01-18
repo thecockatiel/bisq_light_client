@@ -4,7 +4,7 @@ from bisq.common.setup.log_setup import configure_logging, get_logger, set_custo
 from utils.random import next_random_int
 from pathlib import Path
 
-from utils.twisted import cancel_delayed_calls, wrap_with_ensure_deferred
+from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath("testdata")

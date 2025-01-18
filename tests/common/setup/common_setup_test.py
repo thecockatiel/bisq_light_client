@@ -6,7 +6,7 @@ import threading
 import unittest as _unittest
 from bisq.common.setup.common_setup import CommonSetup
 from bisq.common.user_thread import UserThread
-from utils.twisted import wrap_with_ensure_deferred, twisted_wait, cancel_delayed_calls
+from utils.twisted_utils import wrap_with_ensure_deferred, twisted_wait, cancel_delayed_calls
 from twisted.trial import unittest
 class MockExceptionHandler:
     def __init__(self):
