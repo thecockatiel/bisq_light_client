@@ -1,13 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
-from bisq.common.crypto.encryption import PUBLIC_KEY_TYPES
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from google.protobuf import message as Message
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
-
+    try:
+        from bisq.common.crypto.encryption import PUBLIC_KEY_TYPES
+    except:
+        # not available in old versions
+        pass
 class ProtectedStoragePayload(NetworkPayload, ABC):
     """
     Messages which support ownership protection (using signatures) and a time to live.
@@ -19,7 +22,7 @@ class ProtectedStoragePayload(NetworkPayload, ABC):
     """
 
     @abstractmethod
-    def get_owner_pub_key(self) -> PUBLIC_KEY_TYPES:
+    def get_owner_pub_key(self) -> "PUBLIC_KEY_TYPES":
         """
         Used to check if the add or remove operation is permitted.
         Only the data owner can add or remove the data.
