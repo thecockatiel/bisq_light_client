@@ -1,20 +1,17 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.uid_message import UidMessage
+from bisq.core.support.support_type import SupportType
+from utils.data import raise_required
 
-if TYPE_CHECKING:
-    from bisq.core.support.support_type import SupportType
-
- 
-@dataclass(kw_only=True)
+@dataclass
 class SupportMessage(NetworkEnvelope, MailboxMessage, UidMessage, ABC):
-    uid: str
+    uid: str = field(default_factory=raise_required)
     # Added with v1.1.6. Old clients will not have set that field and we fall back to entry 0 which is ARBITRATION.
-    support_type: 'SupportType' 
+    support_type: 'SupportType' = field(default_factory=raise_required)
 
     @abstractmethod
     def get_trade_id(self) -> str:

@@ -12,7 +12,7 @@ from bisq.core.support.dispute.attachment import Attachment
 from bisq.core.support.dispute.dispute import Dispute
 from bisq.core.support.messages.support_message import SupportMessage
 from bisq.core.support.support_type import SupportType
-from utils.data import SimpleProperty
+from utils.data import SimpleProperty, raise_required
 from utils.formatting import get_short_id
 from utils.time import get_time_ms
 import proto.pb_pb2 as protobuf
@@ -26,7 +26,7 @@ class ChatMessageListener(ABC):
 
 # TODO: refactor setters
 
-@dataclass(kw_only=True, eq=True)
+@dataclass(eq=True)
 class ChatMessage(SupportMessage):
     """
     Message for direct communication between two nodes. Originally built for trader to
@@ -37,20 +37,20 @@ class ChatMessage(SupportMessage):
     and the taker is considered as the client.
     """
 
-    TTL: ClassVar[int] = int(
+    TTL = int(
         timedelta(days=7).total_seconds() * 1000
     )  # 7 days in milliseconds
 
     uid: str = field(default_factory=lambda: str(uuid4()))
 
-    trade_id: str
-    trader_id: int
+    trade_id: str = field(default_factory=raise_required)
+    trader_id: int = field(default_factory=raise_required)
     # This is only used for the server client relationship
     # If senderIsTrader == true then the sender is the client
-    sender_is_trader: bool
-    message: str
+    sender_is_trader: bool = field(default_factory=raise_required)
+    message: str = field(default_factory=raise_required)
     attachments: List[Attachment] = field(default_factory=list)
-    sender_node_address: NodeAddress
+    sender_node_address: NodeAddress = field(default_factory=raise_required)
     date: float = field(default_factory=get_time_ms)
 
     is_system_message: bool = field(default=False)
