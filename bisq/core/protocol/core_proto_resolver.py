@@ -13,11 +13,117 @@ from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountP
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
+from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from utils.clock import Clock
 
 import proto.pb_pb2 as protobuf
 
 logger = get_logger(__name__)
+
+def _handle_country_based_payment_account_payload(proto: "protobuf.PaymentAccountPayload"):
+    handler = country_based_payment_account_payload_cases.get(proto.country_based_payment_account_payload.WhichOneof("message"), None)
+    if handler:
+        return handler(proto)
+    else:
+        raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload). messageCase=" + proto.country_based_payment_account_payload.WhichOneof("message"))
+
+def _handle_bank_account_payload(proto: "protobuf.PaymentAccountPayload"):
+    handler = bank_account_payload_cases.get(proto.country_based_payment_account_payload.bank_account_payload.WhichOneof("message"), None)
+    if handler:
+        return handler(proto)
+    else:
+        raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.BankAccountPayload). messageCase=" + proto.country_based_payment_account_payload.bank_account_payload.WhichOneof("message"))
+
+def _handle_ifsc_based_account_payload(proto: "protobuf.PaymentAccountPayload"):
+    handler = ifsc_based_account_payload_cases.get(proto.country_based_payment_account_payload.ifsc_based_account_payload.WhichOneof("message"), None)
+    if handler:
+        return handler(proto)
+    else:
+        raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.IfscBasedPaymentAccount). messageCase=" + proto.country_based_payment_account_payload.ifsc_based_account_payload.WhichOneof("message"))
+
+payment_account_payload_cases = {
+    # "ali_pay_account_payload": AliPayAccountPayload.from_proto,
+    # "we_chat_pay_account_payload": WeChatPayAccountPayload.from_proto,
+    # "chase_quick_pay_account_payload": ChaseQuickPayAccountPayload.from_proto,
+    # "clear_xchange_account_payload": ClearXchangeAccountPayload.from_proto,
+    "country_based_payment_account_payload": _handle_country_based_payment_account_payload,
+    # "crypto_currency_account_payload": CryptoCurrencyAccountPayload.from_proto,
+    # "faster_payments_account_payload": FasterPaymentsAccountPayload.from_proto,
+    # "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
+    # "japan_bank_account_payload": JapanBankAccountPayload.from_proto,
+    # "australia_payid_payload": AustraliaPayidAccountPayload.from_proto,
+    # "uphold_account_payload": UpholdAccountPayload.from_proto,
+    # "money_beam_account_payload": MoneyBeamAccountPayload.from_proto,
+    # "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
+    # "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
+    # "revolut_account_payload": RevolutAccountPayload.from_proto,
+    # "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
+    # "swish_account_payload": SwishAccountPayload.from_proto,
+    # "hal_cash_account_payload": HalCashAccountPayload.from_proto,
+    # "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
+    "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
+    # "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
+    # "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
+    # "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
+    # "paysera_account_payload": PayseraAccountPayload.from_proto,
+    # "paxum_account_payload": PaxumAccountPayload.from_proto,
+    "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
+    # "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
+    # "capitual_account_payload": CapitualAccountPayload.from_proto,
+    # "cel_pay_account_payload": CelPayAccountPayload.from_proto,
+    # "monese_account_payload": MoneseAccountPayload.from_proto,
+    # "verse_account_payload": VerseAccountPayload.from_proto,
+    # "swift_account_payload": SwiftAccountPayload.from_proto,
+    # "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
+    
+    # Cannot be deleted as it would break old trade history entries
+    # "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
+    # "cash_app_account_payload": CashAppAccountPayload.from_proto,
+    # "venmo_account_payload": VenmoAccountPayload.from_proto,
+}
+
+persistable_network_payload_cases = {
+    "account_age_witness": AccountAgeWitness.from_proto,
+    # "trade_statistics2": TradeStatistics2.from_proto,
+    # "proposal_payload": ProposalPayload.from_proto,
+    # "blind_vote_payload": BlindVotePayload.from_proto,
+    "signed_witness": SignedWitness.from_proto,
+    "trade_statistics3": TradeStatistics3.from_proto,
+}
+
+country_based_payment_account_payload_cases = {
+    "bank_account_payload": _handle_bank_account_payload,
+    # "western_union_account_payload": WesternUnionAccountPayload.from_proto,
+    # "cash_deposit_account_payload": CashDepositAccountPayload.from_proto,
+    "sepa_account_payload": SepaAccountPayload.from_proto,
+    "sepa_instant_account_payload": SepaInstantAccountPayload.from_proto,
+    "f2f_account_payload": F2FAccountPayload.from_proto,
+    # "upi_account_payload": UpiAccountPayload.from_proto,
+    # "paytm_account_payload": PaytmAccountPayload.from_proto,
+    # "nequi_account_payload": NequiAccountPayload.from_proto,
+    # "bizum_account_payload": BizumAccountPayload.from_proto,
+    # "pix_account_payload": PixAccountPayload.from_proto,
+    # "satispay_account_payload": SatispayAccountPayload.from_proto,
+    # "tikkie_account_payload": TikkieAccountPayload.from_proto,
+    # "strike_account_payload": StrikeAccountPayload.from_proto,
+    # "transferwise_usd_account_payload": TransferwiseUsdAccountPayload.from_proto,
+    # "mercado_pago_account_payload": MercadoPagoAccountPayload.from_proto,
+    "ifsc_based_account_payload": _handle_ifsc_based_account_payload,
+}
+
+bank_account_payload_cases = {
+    # "national_bank_account_payload": NationalBankAccountPayload.from_proto,
+    "same_bank_accunt_payload": SameBankAccountPayload.from_proto,
+    "specific_banks_account_payload": SpecificBanksAccountPayload.from_proto,
+    # "ach_transfer_account_payload": AchTransferAccountPayload.from_proto,
+    # "domestic_wire_transfer_account_payload": DomesticWireTransferAccountPayload.from_proto,
+}
+
+ifsc_based_account_payload_cases = {
+    # "neft_account_payload": NeftAccountPayload.from_proto,
+    # "rtgs_account_payload": RtgsAccountPayload.from_proto,
+    # "imps_account_payload": ImpsAccountPayload.from_proto,
+}
 
 @dataclass
 class CoreProtoResolver(ProtoResolver):
@@ -29,154 +135,16 @@ class CoreProtoResolver(ProtoResolver):
             raise ProtobufferException("proto is null")
         
         if isinstance(proto, protobuf.PaymentAccountPayload):
-            match proto.WhichOneof("message"):
-                # case "ali_pay_account_payload":
-                    # return AliPayAccountPayload.from_proto(proto)
-                # case "we_chat_pay_account_payload":
-                    # return WeChatPayAccountPayload.from_proto(proto)
-                # case "chase_quick_pay_account_payload":
-                    # return ChaseQuickPayAccountPayload.from_proto(proto)
-                # case "clear_xchange_account_payload":
-                    # return ClearXchangeAccountPayload.from_proto(proto)
-                case "country_based_payment_account_payload":
-                    match proto.country_based_payment_account_payload.WhichOneof("message"):
-                        case "bank_account_payload":
-                            match proto.country_based_payment_account_payload.bank_account_payload.WhichOneof("message"):
-                                # case "national_bank_account_payload":
-                                    # return NationalBankAccountPayload.from_proto(proto)
-                                case "same_bank_accunt_payload":
-                                    return SameBankAccountPayload.from_proto(proto)
-                                case "specific_banks_account_payload":
-                                    return SpecificBanksAccountPayload.from_proto(proto)
-                                # case "ach_transfer_account_payload":
-                                    # return AchTransferAccountPayload.from_proto(proto)
-                                # case "domestic_wire_transfer_account_payload":
-                                    # return DomesticWireTransferAccountPayload.from_proto(proto)
-                                case _:
-                                    raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.BankAccountPayload). messageCase=" + proto.country_based_payment_account_payload.bank_account_payload.WhichOneof("message"))
-                        # case "western_union_account_payload":
-                            # return WesternUnionAccountPayload.from_proto(proto)
-                        # case "cash_deposit_account_payload":
-                            # return CashDepositAccountPayload.from_proto(proto)
-                        case "sepa_account_payload":
-                            return SepaAccountPayload.from_proto(proto)
-                        case "sepa_instant_account_payload":
-                            return SepaInstantAccountPayload.from_proto(proto)
-                        case "f2f_account_payload":
-                            return F2FAccountPayload.from_proto(proto)
-                        # case "upi_account_payload":
-                            # return UpiAccountPayload.from_proto(proto)
-                        # case "paytm_account_payload":
-                            # return PaytmAccountPayload.from_proto(proto)
-                        # case "nequi_account_payload":
-                            # return NequiAccountPayload.from_proto(proto)
-                        # case "bizum_account_payload":
-                            # return BizumAccountPayload.from_proto(proto)
-                        # case "pix_account_payload":
-                            # return PixAccountPayload.from_proto(proto)
-                        # case "satispay_account_payload":
-                            # return SatispayAccountPayload.from_proto(proto)
-                        # case "tikkie_account_payload":
-                            # return TikkieAccountPayload.from_proto(proto)
-                        # case "strike_account_payload":
-                            # return StrikeAccountPayload.from_proto(proto)
-                        # case "transferwise_usd_account_payload":
-                            # return TransferwiseUsdAccountPayload.from_proto(proto)
-                        # case "mercado_pago_account_payload":
-                            # return MercadoPagoAccountPayload.from_proto(proto)
-                        case "ifsc_based_account_payload":
-                            match proto.country_based_payment_account_payload.ifsc_based_account_payload.WhichOneof("message"):
-                                # case "neft_account_payload":
-                                    # return NeftAccountPayload.from_proto(proto)
-                                # case "rtgs_account_payload":
-                                    # return RtgsAccountPayload.from_proto(proto)
-                                # case "imps_account_payload":
-                                    # return ImpsAccountPayload.from_proto(proto)
-                                case _:
-                                    raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.IfscBasedPaymentAccount). messageCase=" + proto.country_based_payment_account_payload.ifsc_based_account_payload.WhichOneof("message"))
-                        case _:
-                            raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload). messageCase=" + proto.country_based_payment_account_payload.WhichOneof("message"))
-                # case "crypto_currency_account_payload":
-                    # return CryptoCurrencyAccountPayload.from_proto(proto)
-                # case "faster_payments_account_payload":
-                    # return FasterPaymentsAccountPayload.from_proto(proto)
-                # case "interac_e_transfer_account_payload":
-                    # return InteracETransferAccountPayload.from_proto(proto)
-                # case "japan_bank_account_payload":
-                    # return JapanBankAccountPayload.from_proto(proto)
-                # case "australia_payid_payload":
-                    # return AustraliaPayidAccountPayload.from_proto(proto)
-                # case "uphold_account_payload":
-                    # return UpholdAccountPayload.from_proto(proto)
-                # case "money_beam_account_payload":
-                    # return MoneyBeamAccountPayload.from_proto(proto)
-                # case "money_gram_account_payload":
-                    # return MoneyGramAccountPayload.from_proto(proto)
-                # case "popmoney_account_payload":
-                    # return PopmoneyAccountPayload.from_proto(proto)
-                # case "revolut_account_payload":
-                    # return RevolutAccountPayload.from_proto(proto)
-                # case "perfect_money_account_payload":
-                    # return PerfectMoneyAccountPayload.from_proto(proto)
-                # case "swish_account_payload":
-                    # return SwishAccountPayload.from_proto(proto)
-                # case "hal_cash_account_payload":
-                    # return HalCashAccountPayload.from_proto(proto)
-                # case "u_s_postal_money_order_account_payload":
-                    # return USPostalMoneyOrderAccountPayload.from_proto(proto)
-                case "cash_by_mail_account_payload":
-                    return CashByMailAccountPayload.from_proto(proto)
-                # case "prompt_pay_account_payload":
-                    # return PromptPayAccountPayload.from_proto(proto)
-                # case "advanced_cash_account_payload":
-                    # return AdvancedCashAccountPayload.from_proto(proto)
-                # case "transferwise_account_payload":
-                    # return TransferwiseAccountPayload.from_proto(proto)
-                # case "paysera_account_payload":
-                    # return PayseraAccountPayload.from_proto(proto)
-                # case "paxum_account_payload":
-                    # return PaxumAccountPayload.from_proto(proto)
-                case "amazon_gift_card_account_payload":
-                    return AmazonGiftCardAccountPayload.from_proto(proto)
-                # case "instant_crypto_currency_account_payload":
-                    # return InstantCryptoCurrencyPayload.from_proto(proto)
-                # case "capitual_account_payload":
-                    # return CapitualAccountPayload.from_proto(proto)
-                # case "cel_pay_account_payload":
-                    # return CelPayAccountPayload.from_proto(proto)
-                # case "monese_account_payload":
-                    # return MoneseAccountPayload.from_proto(proto)
-                # case "verse_account_payload":
-                    # return VerseAccountPayload.from_proto(proto)
-                # case "swift_account_payload":
-                    # return SwiftAccountPayload.from_proto(proto)
-                # case "bsq_swap_account_payload":
-                    # return BsqSwapAccountPayload.from_proto(proto)
-                # case "sbp_account_payload":
-                    # return SbpAccountPayload.from_proto(proto)
-                # case "o_k_pay_account_payload":
-                    # return OKPayAccountPayload.from_proto(proto)
-                # case "cash_app_account_payload":
-                    # return CashAppAccountPayload.from_proto(proto)
-                # case "venmo_account_payload":
-                    # return VenmoAccountPayload.from_proto(proto)
-                case _:
-                    raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload). messageCase=" + proto.WhichOneof("message"))
+            handler = payment_account_payload_cases.get(proto.WhichOneof("message"), None)
+            if handler:
+                return handler(proto)
+            else:
+                raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload). messageCase=" + proto.WhichOneof("message"))
         elif isinstance(proto, protobuf.PersistableNetworkPayload):
-            match proto.WhichOneof("message"):
-                case "account_age_witness":
-                    return AccountAgeWitness.from_proto(proto.account_age_witness)
-                # case "trade_statistics2":
-                    # return TradeStatistics2.from_proto(proto.trade_statistics2)
-                # case "proposal_payload":
-                    # return ProposalPayload.from_proto(proto.proposal_payload)
-                # case "blind_vote_payload":
-                    # return BlindVotePayload.from_proto(proto.blind_vote_payload)
-                case "signed_witness":
-                    return SignedWitness.from_proto(proto.signed_witness)
-                # case "trade_statistics3":
-                    # return TradeStatistics3.from_proto(proto.trade_statistics3)
-                case _:
-                    raise ProtobufferException(f"Unknown proto message case (PB.PersistableNetworkPayload). messageCase={proto.WhichOneof('message')}")
+            handler = persistable_network_payload_cases.get(proto.WhichOneof("message"), None)
+            if handler:
+                return handler(proto)
+            else:
+                raise ProtobufferException(f"Unknown proto message case (PB.PersistableNetworkPayload). messageCase={proto.WhichOneof('message')}")
         else:
             raise ProtobufferException("Unknown proto message case. proto=" + proto)
