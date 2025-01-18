@@ -10,22 +10,23 @@ class SellerTrade(Trade, ABC):
         return self._offer.seller_security_deposit
     
     def confirm_permitted(self):
-        match self.dispute_state_property.value:
-            case TradeDisputeState.NO_DISPUTE:
-                return True
-            
-            case TradeDisputeState.DISPUTE_REQUESTED | \
-                 TradeDisputeState.DISPUTE_STARTED_BY_PEER | \
-                 TradeDisputeState.DISPUTE_CLOSED | \
-                 TradeDisputeState.MEDIATION_REQUESTED | \
-                 TradeDisputeState.MEDIATION_STARTED_BY_PEER:
-                return False
-                
-            case TradeDisputeState.MEDIATION_CLOSED:
-                return not self.mediation_result_applied_penalty_to_seller
-                
-            case TradeDisputeState.REFUND_REQUESTED | \
-                 TradeDisputeState.REFUND_REQUEST_STARTED_BY_PEER | \
-                 TradeDisputeState.REFUND_REQUEST_CLOSED | \
-                 _:
-                return False
+        if self.dispute_state_property.value == TradeDisputeState.NO_DISPUTE:
+            return True
+        elif self.dispute_state_property.value in [
+            TradeDisputeState.DISPUTE_REQUESTED,
+            TradeDisputeState.DISPUTE_STARTED_BY_PEER,
+            TradeDisputeState.DISPUTE_CLOSED,
+            TradeDisputeState.MEDIATION_REQUESTED,
+            TradeDisputeState.MEDIATION_STARTED_BY_PEER
+        ]:
+            return False
+        elif self.dispute_state_property.value == TradeDisputeState.MEDIATION_CLOSED:
+            return not self.mediation_result_applied_penalty_to_seller
+        elif self.dispute_state_property.value in [
+            TradeDisputeState.REFUND_REQUESTED,
+            TradeDisputeState.REFUND_REQUEST_STARTED_BY_PEER,
+            TradeDisputeState.REFUND_REQUEST_CLOSED
+        ]:
+            return False
+        else:
+            return False
