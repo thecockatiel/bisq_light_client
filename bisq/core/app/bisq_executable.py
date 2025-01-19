@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import timedelta
-import sys
 from typing import TYPE_CHECKING, Optional
 
 from utils.aio import stop_reactor_and_exit
@@ -16,7 +15,7 @@ from bisq.core.app.bisq_setup_listener import BisqSetupListener
 from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
 from bisq.core.setup.core_setup import CoreSetup
 from global_container import GlobalContainer, set_global_container
-from utils.concurrency import AtomicInt
+from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import user_data_dir
 from threading import Timer
 from bisq.common.setup.log_setup import configure_logging, get_logger
@@ -46,7 +45,7 @@ class BisqExecutable(
         self.app_name = app_name
         self.version = version
         
-        self.__is_shutdown_in_progress = False
+        self.__is_shutdown_in_progress = AtomicBoolean(False)
         self._has_downgraded = False
         self._injector: Optional["GlobalContainer"] = None
         self._config: Optional["Config"] = None
@@ -170,11 +169,9 @@ class BisqExecutable(
 
     # This might need to be overwritten in case the application is not using all modules
     def graceful_shut_down(self, result_handler: Callable[[], None]):
-        logger.info("Start graceful shutDown")
-        if self.__is_shutdown_in_progress:
+        if self.__is_shutdown_in_progress.get_and_set(True):
             return
-
-        self.__is_shutdown_in_progress = True
+        logger.info("Start graceful shutDown")
 
         if self._injector is None:
             logger.info("Shut down called before injector was created")
@@ -187,9 +184,9 @@ class BisqExecutable(
 
         # We do not use the UserThread to avoid that the timeout would not get triggered in case the UserThread
         # would get blocked by a shutdown routine.
-        exit_timer = Timer(10.0, timeout_handler)
-        exit_timer.daemon = True
-        exit_timer.start()
+        timer = Timer(10.0, timeout_handler)
+        timer.daemon = True
+        timer.start()
 
         try:
             self._injector.clock_watcher.shut_down()
