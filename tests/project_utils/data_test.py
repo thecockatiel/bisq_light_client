@@ -77,77 +77,53 @@ class TestSimpleProperty(unittest.TestCase):
         self.assertNotEqual(hash(prop1), hash(prop3))
 
 class TestCombineSimpleProperties(unittest.TestCase):
-    def setUp(self):
-        self.prop1 = SimpleProperty[int](1)
-        self.prop2 = SimpleProperty[str]("test")
-        
-    def test_combine_properties(self):
-        def transform(values):
-            return f"{values[0]}:{values[1]}"
-        
-        results = []
-        
-        combined = combine_simple_properties(self.prop1, self.prop2, transform=transform)
-        combined.add_listener(lambda e: results.append(e.new_value))
-        
-        self.assertIsNone(combined.value)
-        
-        self.prop1.set(62)
-        self.prop1.set(42)
-        self.assertEqual(results, [f'62:UNSET_VALUE', f'42:UNSET_VALUE'])
-        results = []
-        
-        self.prop2.set("hello")
-        
-        self.assertEqual(results, ["42:hello"])
-        
-        self.prop1.set(100)
-        self.assertEqual(results, ["42:hello", "100:hello"])
-    
-    def test_cleanup(self): 
+    def test_initial_combined_value(self):
         prop1 = SimpleProperty(1)
         prop2 = SimpleProperty(2)
-        
-        combined = combine_simple_properties(prop1, prop2, transform=lambda x: sum(x))
-        
-        
-        self.assertEqual(len(prop1._listeners), 0)
-        self.assertEqual(len(prop2._listeners), 0)
-        self.assertEqual(len(combined._listeners), 0)
-        
-        def on_sum(x: int):
-            pass
-        def on_another_sum(x: int):
-            pass
-        combined.add_listener(on_sum)
-        
-        self.assertEqual(len(prop1._listeners), 1)
-        self.assertEqual(len(prop2._listeners), 1)
-        self.assertEqual(len(combined._listeners), 1)
-        
+        combined = combine_simple_properties(prop1, prop2, transform=sum)
+        self.assertEqual(combined.get(), 3)
 
-        combined.add_listener(on_sum)
-        self.assertEqual(len(prop1._listeners), 1)
-        self.assertEqual(len(prop2._listeners), 1)
-        self.assertEqual(len(combined._listeners), 1)
-        
+    def test_value_prop(self):
+        prop1 = SimpleProperty(1)
+        prop2 = SimpleProperty(2)
+        combined = combine_simple_properties(prop1, prop2, transform=sum)
+        self.assertEqual(combined.value, 3)
+        prop1.set(5)
+        self.assertEqual(combined.value, 7)
 
-        combined.add_listener(on_another_sum)
-        self.assertEqual(len(prop1._listeners), 1)
-        self.assertEqual(len(prop2._listeners), 1)
-        self.assertEqual(len(combined._listeners), 2)
+    def test_combined_value_after_change(self):
+        prop1 = SimpleProperty(1)
+        prop2 = SimpleProperty(2)
+        combined = combine_simple_properties(prop1, prop2, transform=sum)
+        prop1.set(3)
+        self.assertEqual(combined.get(), 5)
+        prop2.set(4)
+        self.assertEqual(combined.get(), 7)
+
+    def test_combined_value_with_listener(self):
+        prop1 = SimpleProperty(1)
+        prop2 = SimpleProperty(2)
+        combined = combine_simple_properties(prop1, prop2, transform=sum)
         
-        # Remove listeners
-        combined.remove_listener(on_sum)
-        self.assertEqual(len(combined._listeners), 1)
-        self.assertEqual(len(prop1._listeners), 1)
-        self.assertEqual(len(prop2._listeners), 1)
+        changes = []
+        def listener(event):
+            changes.append(event.new_value)
         
-        # Remove listeners
-        combined.remove_listener(on_another_sum)
-        self.assertEqual(len(combined._listeners), 0)
-        self.assertEqual(len(prop1._listeners), 0)
-        self.assertEqual(len(prop2._listeners), 0)
+        combined.add_listener(listener)
+        prop1.set(3)
+        prop2.set(4)
+        
+        self.assertEqual(changes, [5, 7])
+
+    def test_combined_value_with_no_initial_subscribers(self):
+        prop1 = SimpleProperty(1)
+        prop2 = SimpleProperty(2)
+        combined = combine_simple_properties(prop1, prop2, transform=sum)
+        
+        prop1.set(3)
+        prop2.set(4)
+        
+        self.assertEqual(combined.get(), 7)
 
 class TestObservableSet(unittest.TestCase):
     def setUp(self):

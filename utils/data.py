@@ -3,6 +3,7 @@ from typing import Any, Iterable, Literal, Optional, Set, TypeVar, Generic, Unio
 from dataclasses import dataclass, field
 
 T = TypeVar("T")
+R = TypeVar("R")
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -19,13 +20,20 @@ class ObservableChangeEvent(Generic[T]):
 
 
 class SimpleProperty(Generic[T]):
-    def __init__(self, initial_value: T = None, on_add_listener: Optional[Callable[[int], None]] = None, on_remove_listener: Optional[Callable[[int], None]] = None):
+    def __init__(self, 
+                 initial_value: T = None,
+                 on_add_listener: Optional[Callable[[int], None]] = None,
+                 on_remove_listener: Optional[Callable[[int], None]] = None,
+                 on_accessed: Optional[Callable[[], None]] = None):
         self._value = initial_value
         self._listeners = set()
+        self.on_accessed = on_accessed
         self.on_add_listener = on_add_listener
         self.on_remove_listener = on_remove_listener 
 
     def get(self) -> T:
+        if self.on_accessed:
+            self.on_accessed()
         return self._value
 
     def set(self, value: T) -> None:
@@ -80,46 +88,30 @@ class SimpleProperty(Generic[T]):
     def __str__(self):
         return str(self._value)
 
-
-class UnsetValue:
-    """Behaves like a None"""
+def combine_simple_properties(*properties: SimpleProperty[R], transform: Callable[[list[R]], T]) -> SimpleProperty[T]:
+    eval_cache = None
     
-    def __eq__(self, other):
-        return other is None
+    def evaluate():
+        return transform([p.get() for p in properties])
 
-    def __bool__(self):
-        return False
-
-    def __repr__(self):
-        return 'UNSET_VALUE'
-    
-__unset_value = UnsetValue()
-
-def combine_simple_properties(*properties: SimpleProperty, transform: Callable[[list[Union[Any, UnsetValue]]], T]) -> SimpleProperty[T]:
-    results = [__unset_value] * len(properties)
-    listeners = {}
-
-    def on_change(i: int, e: SimplePropertyChangeEvent):
-        nonlocal result
-        results[i] = e.new_value
-        
-        result.value = transform(results)
+    def on_change(*_):
+        nonlocal result, eval_cache
+        eval_cache = evaluate()
+        result.value = eval_cache
     
     def on_add_listener(new_len: int):
         if new_len == 1:
             # we started to get subscribers
-            for i, prop in enumerate(properties):
-                listener = lambda e, i=i: on_change(i, e)
-                listeners[i] = listener
-                prop.add_listener(listener)
+            for prop in properties:
+                prop.add_listener(on_change)
         
     def on_remove_listener(new_len: int):
         if new_len == 0:
             # we lost all subscribers
-            for i, prop in enumerate(properties):
-                prop.remove_listener(listeners[i])
-            
-    result: SimpleProperty[T] = SimpleProperty(None, on_add_listener, on_remove_listener)
+            for prop in properties:
+                prop.remove_listener(on_change)
+    
+    result = SimpleProperty(None, on_add_listener, on_remove_listener, on_accessed=on_change)
     
     return result
     
