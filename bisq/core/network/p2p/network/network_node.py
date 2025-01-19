@@ -22,7 +22,7 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.common.setup.log_setup import get_logger
-from utils.concurrency import AtomicInt, ThreadSafeSet
+from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
@@ -59,7 +59,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2, thread_name_prefix="NetworkNode.connection_executor")
         self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3, thread_name_prefix="NetworkNode.send_message_executor")
 
-        self.__shut_down_in_progress = False
+        self.__shut_down_in_progress = AtomicBoolean(False)
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
         self.node_address_property: SimpleProperty[Optional["NodeAddress"]] = SimpleProperty()
         self.server: Server = None
@@ -121,7 +121,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             try:
                 socket.close()
             except Exception as e:
-                if not self.__shut_down_in_progress:
+                if not self.__shut_down_in_progress.get():
                     logger.error("Error at closing socket", exc_info=e)
 
             existing_connection.send_message(network_envelope)
@@ -305,8 +305,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None) -> None:
         logger.info("NetworkNode shutdown started")
 
-        if not self.__shut_down_in_progress:
-            self.__shut_down_in_progress = True
+        if not self.__shut_down_in_progress.get_and_set(True):
 
             if self.server:
                 self.server.shut_down()
