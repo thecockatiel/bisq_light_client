@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional 
-from bisq.common.crypto.sig import Sig,dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.util.utilities import bytes_as_hex_string
 import proto.pb_pb2 as protobuf
@@ -12,7 +12,7 @@ class PrivateNotificationPayload(NetworkPayload):
     message: str = field(default_factory=raise_required)
     signature_as_base64: Optional[str] = field(default=None)
     sig_public_key_bytes: Optional[bytes] = field(default=None)
-    sig_public_key: Optional['dsa.DSAPublicKey'] = field(default=None)
+    sig_public_key: Optional['DSA.DsaKey'] = field(default=None)
     
     def __post_init__(self):
         if self.sig_public_key_bytes is not None:
@@ -36,7 +36,7 @@ class PrivateNotificationPayload(NetworkPayload):
             sig_public_key_bytes=self.sig_public_key_bytes
         )
 
-    def set_sig_and_pub_key(self, signature_as_base64: str, sig_public_key: dsa.DSAPublicKey):
+    def set_sig_and_pub_key(self, signature_as_base64: str, sig_public_key: "DSA.DsaKey"):
         self.signature_as_base64 = signature_as_base64
         self.sig_public_key = sig_public_key
         self.sig_public_key_bytes = Sig.get_public_key_bytes(sig_public_key)

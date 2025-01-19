@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Union
-from cryptography.hazmat.primitives import serialization
+
+from bisq.common.crypto.encryption import Encryption
 
 if TYPE_CHECKING:
-    from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from bisq.common.crypto.sig import DSA
 
 @dataclass(frozen=True)
 class KeyPair:
-    private_key: Union["dsa.DSAPrivateKey", "rsa.RSAPrivateKey"]
-    public_key: Union["dsa.DSAPublicKey", "rsa.RSAPublicKey"]
+    private_key: Union["DSA.DsaKey", "rsa.RSAPrivateKey"]
+    public_key: Union["DSA.DsaKey", "rsa.RSAPublicKey"]
 
     def __eq__(self, other):
         return (
@@ -19,14 +21,7 @@ class KeyPair:
     def __hash__(self):
         return hash(
             (
-                self.private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption(),
-                ),
-                self.public_key.public_bytes(
-                    encoding=serialization.Encoding.DER,
-                    format=serialization.PublicFormat.SubjectPublicKeyInfo
-                ),
+                Encryption.get_private_key_bytes(self.private_key),
+                Encryption.get_public_key_bytes(self.public_key)
             )
         )

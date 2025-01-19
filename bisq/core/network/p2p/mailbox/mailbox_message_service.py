@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
-    from cryptography.hazmat.primitives.asymmetric import dsa
+    from bisq.common.crypto.sig import DSA
 
 logger = get_logger(__name__)
 
@@ -480,7 +480,7 @@ class MailboxMessageService:
     def add_mailbox_data(
         self,
         expirable_mailbox_storage_payload: "MailboxStoragePayload",
-        receivers_public_key: "dsa.DSAPublicKey",
+        receivers_public_key: "DSA.DsaKey",
         send_mailbox_message_listener: "SendMailboxMessageListener",
     ):
         if not self.is_bootstrapped:

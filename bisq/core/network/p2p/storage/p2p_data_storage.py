@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar, cast
 from collections.abc import Callable
 from bisq.common.crypto.hash import get_32_byte_hash
 from bisq.common.crypto.key_pair import KeyPair
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -910,7 +910,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def get_mailbox_data_with_signed_seq_nr(self, expirable_mailbox_storage_payload: "MailboxStoragePayload",
                                            storage_signature_pub_key: "KeyPair",
-                                           receivers_public_key: "dsa.DSAPublicKey") -> "ProtectedMailboxStorageEntry":
+                                           receivers_public_key: "DSA.DsaKey") -> "ProtectedMailboxStorageEntry":
         hash_of_data = StorageByteArray(get_32_byte_hash(expirable_mailbox_storage_payload))
         
         sequence_number = (self.sequence_number_map[hash_of_data].sequence_nr + 1

@@ -7,10 +7,10 @@ from electrum_min.crypto import ripemd
 try:
     from Crypto.Hash import keccak
 except:
-    # old versions of pycryptodome:
+    # different name of pycryptodome on debian?
     from Cryptodome.Hash import keccak
     
-    
+
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload
 

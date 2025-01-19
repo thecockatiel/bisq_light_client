@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Dict, Any
 from datetime import timedelta
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
     ProtectedStoragePayload,
@@ -97,7 +97,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         return self.TTL
 
     def set_sig_and_pub_key(
-        self, signature_as_base64: str, owner_pub_key: dsa.DSAPublicKey
+        self, signature_as_base64: str, owner_pub_key: "DSA.DsaKey"
     ) -> None:
         self.signature_as_base64 = signature_as_base64
         self.owner_pub_key = owner_pub_key

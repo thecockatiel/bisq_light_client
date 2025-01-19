@@ -4,7 +4,7 @@ from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.encryption import Encryption, rsa
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sealed_and_signed import SealedAndSigned
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.crypto.decrypted_data_tuple import DecryptedDataTuple

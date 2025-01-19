@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar, Generic, List
 from abc import ABC, abstractmethod
 
 from bisq.common.crypto.encryption import Encryption, ECPrivkey
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
@@ -264,7 +264,7 @@ class DisputeAgentManager(Generic[T], ABC):
                 on_error
             )
 
-    def verify_signature(self, storage_signature_pub_key: dsa.DSAPublicKey, registration_pub_key_ec: bytes, signature_base64: str) -> bool:
+    def verify_signature(self, storage_signature_pub_key: "DSA.DsaKey", registration_pub_key_ec: bytes, signature_base64: str) -> bool:
         try:
             key_to_sign_as_hex = Sig.get_public_key_as_hex_string(storage_signature_pub_key)
             key = Encryption.get_ec_public_key_from_bytes(registration_pub_key_ec)
