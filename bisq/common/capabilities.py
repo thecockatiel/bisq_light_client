@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from bisq.common.capability import Capability
 from bisq.common.setup.log_setup import get_logger
@@ -20,10 +20,13 @@ class Capabilities:
     # This helps to clean network from very old inactive but still running nodes.
     MANDATORY_CAPABILITY = Capability.DAO_STATE
 
-    def __init__(self, capabilities: Optional[list[Capability]] = None):
-        self.capabilities: frozenset[Capability] = (
-            frozenset(capabilities) if capabilities else frozenset()
-        )
+    def __init__(self, capabilities: Optional[Union[Iterable[Capability], "Capabilities"]] = None):
+        if isinstance(capabilities, Capabilities):
+            self.capabilities = frozenset(capabilities.capabilities)
+        elif hasattr(capabilities, "__iter__"):
+            self.capabilities = frozenset(capabilities)
+        else:
+            self.capabilities = frozenset()
 
     def set(self, capabilities: Optional[frozenset[Capability]] = None):
         self.capabilities = capabilities
