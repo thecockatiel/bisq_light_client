@@ -21,12 +21,12 @@ class Capabilities:
     MANDATORY_CAPABILITY = Capability.DAO_STATE
 
     def __init__(self, capabilities: Optional[Union[Iterable[Capability], "Capabilities"]] = None):
-        if isinstance(capabilities, Capabilities):
-            self.capabilities = frozenset(capabilities.capabilities)
-        elif hasattr(capabilities, "__iter__"):
-            self.capabilities = frozenset(capabilities)
-        else:
+        if capabilities is None:
             self.capabilities = frozenset()
+        elif isinstance(capabilities, Capabilities):
+            self.capabilities = capabilities.capabilities
+        else:
+            self.capabilities = frozenset(capabilities)
 
     def set(self, capabilities: Optional[frozenset[Capability]] = None):
         self.capabilities = capabilities
