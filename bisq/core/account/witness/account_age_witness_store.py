@@ -15,7 +15,7 @@ class AccountAgeWitnessStore(PersistableNetworkPayloadStore[AccountAgeWitness]):
         return protobuf.PersistableEnvelope(account_age_witness_store=self.get_builder())
 
     def get_builder(self):
-        proto_list = [cast(AccountAgeWitness, payload).to_proto_account_age_witness() for payload in self.map.values()]
+        proto_list = [payload.to_proto_account_age_witness() for payload in self.map.values() if isinstance(payload, AccountAgeWitness)]
         return protobuf.AccountAgeWitnessStore(items=proto_list)
 
     @staticmethod
