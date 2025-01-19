@@ -461,7 +461,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             close_connection_reason =  CloseConnectionReason.CORRUPTED_DATA
             logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         else:
-            logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}")
+            logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}", exc_info=exception)
         
         self.shut_down(close_connection_reason)        
     
