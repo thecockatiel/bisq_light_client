@@ -73,6 +73,12 @@ class SimpleProperty(Generic[T]):
     
     def __hash__(self) -> int:
         return hash(self._value)
+    
+    def __repr__(self):
+        return f"SimpleProperty({self._value})"
+
+    def __str__(self):
+        return str(self._value)
 
 
 class UnsetValue:
