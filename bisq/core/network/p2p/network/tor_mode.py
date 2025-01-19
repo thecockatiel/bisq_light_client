@@ -24,8 +24,14 @@ class TorMode(ABC):
         # tor_dir can be None if the user is providing the proxy and hidden service info
         self.tor_dir = tor_dir
         if self.tor_dir is not None:
-            self.tor_dir.mkdir(parents=True, exist_ok=True)
-            self.tor_dir.joinpath(".tor").mkdir(parents=True, exist_ok=True)
+            self.tor_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            self.tor_dir.joinpath(".tor").mkdir(mode=0o700, parents=True, exist_ok=True)
+            # if tor dir is not 0o700, tor will refuse to start, so we set it here explicitly and throw error if necessary
+            if self.tor_dir.stat().st_mode & 0o777 != 0o700:
+                try:
+                    self.tor_dir.chmod(0o700)
+                except:
+                    raise ValueError(f"Tor directory {self.tor_dir} must have permissions 0o700")
             """points to the place, where we will persist private key and address data"""
         
     @abstractmethod
