@@ -18,11 +18,9 @@ class GetPeersResponse(NetworkEnvelope, PeerExchangeMessage, SupportedCapabiliti
     def to_proto_network_envelope(self):
         clone = set(self.reported_peers)
         builder = protobuf.GetPeersResponse(
-            request_nonce=self.request_nonce
+            request_nonce=self.request_nonce,
+            reported_peers=[peer.to_proto_message() for peer in clone]
         )
-
-        for peer in clone:
-            builder.reported_peers.add(peer.to_proto_message())
 
         if self.supported_capabilities:
             builder.supported_capabilities.extend(Capabilities.to_int_list(self.supported_capabilities))
