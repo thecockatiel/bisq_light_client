@@ -124,13 +124,13 @@ class KeepAliveManager(MessageListener, ConnectionListener, PeerManager.Listener
                 self.stopped = False
                 self.keep_alive()
             
-            self.keep_alive_timer = UserThread.run_periodically(keep_alive_task, timedelta(self.INTERVAL_SEC))
+            self.keep_alive_timer = UserThread.run_periodically(keep_alive_task, timedelta(seconds=KeepAliveManager.INTERVAL_SEC))
 
     def keep_alive(self) -> None:
         if not self.stopped:
             for connection in self.network_node.get_confirmed_connections():
                 if (isinstance(connection, OutboundConnection) and 
-                        connection.statistic.get_last_activity_age() > self.LAST_ACTIVITY_AGE_MS):
+                        connection.statistic.get_last_activity_age() > KeepAliveManager.LAST_ACTIVITY_AGE_MS):
                     uid = connection.uid
                     if uid not in self.handler_map:
                         class KeepAliveListener(KeepAliveHandler.Listener):
@@ -152,7 +152,7 @@ class KeepAliveManager(MessageListener, ConnectionListener, PeerManager.Listener
                         self.handler_map[uid] = keep_alive_handler
                         keep_alive_handler.send_ping_after_random_delay(connection)
                     else:
-                        # TODO check if this situation causes any issues
+                        # JAVA TODO check if this situation causes any issues
                         logger.debug(f"Connection with id {uid} has not completed and is still in our map. "
                                    f"We will try to ping that peer at the next schedule.")
 
