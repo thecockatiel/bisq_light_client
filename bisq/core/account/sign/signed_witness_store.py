@@ -16,7 +16,7 @@ class SignedWitnessStore(PersistableNetworkPayloadStore[SignedWitness]):
         return protobuf.PersistableEnvelope(signed_witness_store=self.get_builder())
 
     def get_builder(self):
-        proto_list = [cast(SignedWitness, payload).to_proto_signed_witness() for payload in self.map.values()]
+        proto_list = [payload.to_proto_signed_witness() for payload in self.map.values() if isinstance(payload, SignedWitness)]
         return protobuf.SignedWitnessStore(items=proto_list)
 
     @staticmethod
