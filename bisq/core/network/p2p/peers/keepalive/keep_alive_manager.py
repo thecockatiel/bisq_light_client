@@ -66,7 +66,7 @@ class KeepAliveManager(MessageListener, ConnectionListener, PeerManager.Listener
                 # We get from peer last measured rrt
                 connection.statistic.set_round_trip_time(ping.last_round_trip_time)
 
-                pong = Pong(ping.nonce)
+                pong = Pong(request_nonce=ping.nonce)
                 future = self.network_node.send_message(connection, pong)
                 future.add_done_callback(lambda f: self._handle_pong_failure(f, connection))
             else:

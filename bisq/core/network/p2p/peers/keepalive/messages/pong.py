@@ -16,4 +16,4 @@ class Pong(NetworkEnvelope, KeepAliveMessage):
 
     @staticmethod
     def from_proto(proto: protobuf.Pong, message_version: int) -> "Pong":
-        return Pong(message_version=message_version, nonce=proto.request_nonce)
+        return Pong(message_version=message_version, request_nonce=proto.request_nonce)
