@@ -42,6 +42,8 @@ class ProtoOutputStream:
             return
         try:
             self.output_stream.close()
+        except ConnectionError:
+            pass
         except Exception as t:
             logger.error("Failed to close connection", exc_info=t)
         finally:
