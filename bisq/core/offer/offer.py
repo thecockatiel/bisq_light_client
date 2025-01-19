@@ -72,8 +72,9 @@ class Offer(NetworkPayload, PersistablePayload):
                 bsq_swap_offer_payload=self.offer_payload_base.to_proto_message().bsq_swap_offer_payload
             )
         else:
+            assert isinstance(self.offer_payload_base, OfferPayload)
             return protobuf.Offer(
-                offer_payload=cast(OfferPayload, self.offer_payload_base).to_proto_message().offer_payload
+                offer_payload=self.offer_payload_base.to_proto_message().offer_payload
             )
 
     @staticmethod
