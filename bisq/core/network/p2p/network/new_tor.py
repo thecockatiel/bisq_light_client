@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-CURRENT_TOR_VERSION = "14.0.3"
+CURRENT_TOR_VERSION = "14.0.4"
 
 class NewTor(TorMode):
     """
