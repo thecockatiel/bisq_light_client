@@ -1,5 +1,4 @@
 from utils.aio import as_future, run_in_thread
-from asyncio import Future
 import os
 from pathlib import Path
 import platform
@@ -8,7 +7,6 @@ import tarfile
 from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
-from bisq.core.network.utils.utils import Utils
 from utils.network import download_file
 from utils.time import get_time_ms
 from txtorcon import Tor, TorConfig, launch
@@ -125,7 +123,7 @@ class NewTor(TorMode):
             socks_port = int(config_data.get("SocksPort"))
             del config_data["SocksPort"]
         else:    
-            socks_port = Utils.find_free_system_port()
+            socks_port = None
         
         control_port = None
         if config_data.get("ControlPort", None):
