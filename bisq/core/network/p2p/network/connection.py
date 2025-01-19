@@ -312,21 +312,6 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
     
-    def handle_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
-        try:
-            reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
-            self.send_message(CloseConnectionMessage(reason=reason))
-
-            self.stopped = True
-
-            time.sleep(0.2)
-        except Exception as e:
-            logger.error(e, exc_info=e)
-        finally:
-            self.stopped = True
-            UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
- 
-    
     def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
@@ -341,7 +326,20 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 f"\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
             )
             if close_connection_reason.send_close_message:
-                threading.Thread(target=lambda: self.handle_shut_down(close_connection_reason, shut_down_complete_handler), name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
+                def handle_shut_down():
+                    try:
+                        reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
+                        self.send_message(CloseConnectionMessage(reason=reason))
+
+                        self.stopped = True
+
+                        time.sleep(0.2)
+                    except Exception as e:
+                        logger.error(e, exc_info=e)
+                    finally:
+                        self.stopped = True
+                        UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
+                threading.Thread(target=handle_shut_down, name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
             else:
                 self.stopped = True
                 self.do_shut_down(close_connection_reason, shut_down_complete_handler)
@@ -355,16 +353,17 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         try:
             self.proto_output_stream.on_connection_shutdown()
             self.socket.close()
-        except Socket.error as e:
+        except (Socket.error, ConnectionError) as e:
             logger.trace(f"SocketException at shutdown might be expected. {e}")
         except Exception as e:
-            logger.error(f"Exception at shutdown. {e}")
+            logger.error(f"Exception at shutdown. {e}", exc_info=e)
         finally:
             self.capabilities_listeners.clear()
             try:
                 self.proto_input_stream.close()
             except Exception as e:
-                logger.error(str(e))
+                logger.error(str(e), exc_info=e)
+            
             self.executor.shutdown(wait=True, cancel_futures=True)
             logger.debug(f"Connection shutdown complete {self}")
 
