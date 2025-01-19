@@ -1,4 +1,4 @@
-from asyncio import Future
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 import threading
 import os
@@ -16,7 +16,6 @@ from bisq.common.user_thread import UserThread
 from proto.delimited_protobuf import read_delimited, write_delimited
 import proto.pb_pb2 as protobuf
 from bisq.common.setup.log_setup import get_logger
-from utils.aio import run_in_thread
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import check_dir
 from utils.time import get_time_ms
@@ -63,9 +62,9 @@ class PersistenceManager(Generic[T]):
         self.used_temp_file_path: Optional[Path] = None
         self.persistence_requested: bool = False
         self.timer: Optional[Timer] = None
+        self.write_to_disk_executor: Optional[ThreadPoolExecutor] = None
         self.init_called = False
         self.read_called = False
-        self.write_to_disk_future: Optional[Future] = None
 
     @staticmethod
     def on_all_services_initialized():
@@ -200,8 +199,8 @@ class PersistenceManager(Generic[T]):
         if self.timer:
             self.timer.stop()
 
-        if self.write_to_disk_future:
-            self.write_to_disk_future.cancel()
+        if self.write_to_disk_executor:
+            self.write_to_disk_executor.shutdown()
 
     ###########################################################################
 
@@ -322,7 +321,7 @@ class PersistenceManager(Generic[T]):
             # For the write to disk task we use a thread. We do not have any issues anymore if the persistable objects
             # gets mutated while the thread is running as we have serialized it already and do not operate on the
             # reference to the persistable object.
-            self.write_to_disk_future = run_in_thread(self.write_to_disk, serialized, complete_handler, force)
+            self.get_write_to_disk_executor().submit(self.write_to_disk, serialized, complete_handler, force)
             
             duration = get_time_ms() - ts
             if duration > 100:
@@ -394,6 +393,14 @@ class PersistenceManager(Generic[T]):
             self.persistence_requested = False
             if complete_handler:
                 UserThread.execute(complete_handler)
+                
+    def get_write_to_disk_executor(self):
+        if self.write_to_disk_executor is None:
+            self.write_to_disk_executor = ThreadPoolExecutor(
+                max_workers=1,
+                thread_name_prefix=f"Write-{self.file_name}_to-disk"
+            )
+        return self.write_to_disk_executor
 
     def to_string(self):
         return (
