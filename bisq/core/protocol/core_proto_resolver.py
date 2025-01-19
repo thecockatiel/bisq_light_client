@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Union
 
@@ -6,6 +7,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
+from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
@@ -82,13 +84,13 @@ payment_account_payload_cases = {
     # "venmo_account_payload": VenmoAccountPayload.from_proto,
 }
 
-persistable_network_payload_cases = {
-    "account_age_witness": AccountAgeWitness.from_proto,
-    # "trade_statistics2": TradeStatistics2.from_proto,
-    # "proposal_payload": ProposalPayload.from_proto,
-    # "blind_vote_payload": BlindVotePayload.from_proto,
-    "signed_witness": SignedWitness.from_proto,
-    "trade_statistics3": TradeStatistics3.from_proto,
+persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetworkPayload], PersistableNetworkPayload]] = {
+    "account_age_witness": lambda proto: AccountAgeWitness.from_proto(proto.account_age_witness),
+    # "trade_statistics2": lambda proto: TradeStatistics2.from_proto,
+    # "proposal_payload": lambda proto: ProposalPayload.from_proto,
+    # "blind_vote_payload": lambda proto: BlindVotePayload.from_proto,
+    "signed_witness": lambda proto: SignedWitness.from_proto(proto.signed_witness),
+    "trade_statistics3": lambda proto: TradeStatistics3.from_proto(proto.trade_statistics3),
 }
 
 country_based_payment_account_payload_cases = {
