@@ -408,7 +408,7 @@ class Config:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         self.tor_dir = btc_network_dir.joinpath("tor")
-        self.tor_dir.mkdir(parents=True, exist_ok=True)
+        self.tor_dir.mkdir(mode=700, parents=True, exist_ok=True)
 
         self.wallet_dir = btc_network_dir.joinpath("electrum_wallet")
         self.wallet_dir.mkdir(parents=True, exist_ok=True)

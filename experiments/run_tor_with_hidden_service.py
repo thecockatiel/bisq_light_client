@@ -26,7 +26,7 @@ class MainApp(GracefulShutDownHandler):
         base_dir = Path(__file__).parent.joinpath(".testdata")
         base_dir.mkdir(exist_ok=True, parents=True)
         tor_dir = base_dir.joinpath("tor")
-        tor_dir.mkdir(exist_ok=True, parents=True)
+        tor_dir.mkdir(mode=700, exist_ok=True, parents=True)
         try:
             self.tor = await NewTor(
                 base_dir,
