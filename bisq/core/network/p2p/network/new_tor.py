@@ -110,13 +110,13 @@ class NewTor(TorMode):
         config.ClientTransportPlugin = [
             "meek_lite,obfs2,obfs3,obfs4,scramblesuit,webtunnel exec " + 
                         str(tor_bin_dir.joinpath("pluggable_transports", "lyrebird")) +
-                        (".exe\n" if platform.system().lower() == "windows" else "\n"),
+                        (".exe" if platform.system().lower() == "windows" else ""),
             "snowflake exec " + 
                         str(tor_bin_dir.joinpath("pluggable_transports", "snowflake-client")) +
-                        (".exe\n" if platform.system().lower() == "windows" else "\n"),
+                        (".exe" if platform.system().lower() == "windows" else ""),
             "conjure exec " + 
                         str(tor_bin_dir.joinpath("pluggable_transports", "conjure-client")) +
-                        (".exe\n" if platform.system().lower() == "windows" else "\n")
+                        (".exe" if platform.system().lower() == "windows" else "")
         ]
         config.GeoIPFile = str(tor_bin_dir.parent.joinpath("data", "geoip"))
         config.GeoIPv6File = str(tor_bin_dir.parent.joinpath("data", "geoip6"))
