@@ -1,3 +1,4 @@
+from utils.aio import as_future
 from txtorcon import Tor, connect
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
@@ -6,7 +7,6 @@ from typing import Optional, cast
 from utils.time import get_time_ms
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
-from utils.aio import get_asyncio_loop
 
 logger = get_logger(__name__)
 
@@ -45,11 +45,12 @@ class RunningTor(TorMode):
                 get_password = lambda: self._password
 
                 # txtorcon uses cookie automatically if it's available, then falls back to password if available
-                result = cast(Tor, await connect(
+                result = await as_future(connect(
                     reactor,
                     TCP4ClientEndpoint(reactor, self._control_host, self._control_port),
                     get_password if self._password else None,
-                ).asFuture(get_asyncio_loop()))
+                ))
+                result = cast(Tor, result)
 
                 elapsed = get_time_ms() - ts1
                 logger.info(
