@@ -66,4 +66,5 @@ class AmazonGiftCardAccount(PaymentAccount):
     
     @property
     def _amazon_gift_card_account_payload(self):
-        return cast(AmazonGiftCardAccountPayload, self.payment_account_payload)
+        assert isinstance(self.payment_account_payload, AmazonGiftCardAccountPayload)
+        return self.payment_account_payload
