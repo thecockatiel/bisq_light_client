@@ -36,11 +36,11 @@ class Statistic:
     def __init__(self):
         self.creation_date = datetime.now()
         self.last_activity_timestamp = get_time_ms()
-        self.sent_bytes = SimpleProperty(0)
-        self.received_bytes = SimpleProperty(0)
+        self.sent_bytes_property = SimpleProperty(0)
+        self.received_bytes_property = SimpleProperty(0)
         self.sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
         self.received_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
-        self.round_trip_time = SimpleProperty(0)
+        self.round_trip_time_property = SimpleProperty(0)
         # Start periodic updates
         UserThread.run_periodically(self._update_statistics_periodically, timedelta(seconds=1))
         UserThread.run_periodically(self._log_statistics_periodically, timedelta(minutes=60))
@@ -74,13 +74,13 @@ class Statistic:
 
     def add_sent_bytes(self, value):
         def update():
-            self.sent_bytes.value += value
+            self.sent_bytes_property.value += value
             Statistic.total_sent_bytes.value += value
         UserThread.execute(update)
 
     def add_received_bytes(self, value):
         def update():
-            self.received_bytes.value += value
+            self.received_bytes_property.value += value
             Statistic.total_received_bytes.value += value
         UserThread.execute(update)
 
@@ -101,7 +101,7 @@ class Statistic:
 
     def set_round_trip_time(self, round_trip_time: int):
         def update():
-            self.round_trip_time.value = round_trip_time
+            self.round_trip_time_property.value = round_trip_time
         UserThread.execute(update)
 
     def get_last_activity_age(self):
@@ -112,10 +112,10 @@ class Statistic:
             f"Statistic{{\n"
             f" creationDate={self.creation_date},\n"
             f" lastActivityTimestamp={self.last_activity_timestamp},\n"
-            f" sentBytes={self.sent_bytes},\n"
-            f" receivedBytes={self.received_bytes},\n"
+            f" sentBytes={self.sent_bytes_property},\n"
+            f" receivedBytes={self.received_bytes_property},\n"
             f" receivedMessages={dict(self.received_messages)},\n"
             f" sentMessages={dict(self.sent_messages)},\n"
-            f" roundTripTime={self.round_trip_time}\n"
+            f" roundTripTime={self.round_trip_time_property}\n"
             f"}}"
         )
