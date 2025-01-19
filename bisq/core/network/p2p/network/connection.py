@@ -445,7 +445,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             return
         
         close_connection_reason = CloseConnectionReason.UNKNOWN_EXCEPTION
-        if isinstance(exception, Socket.timeout):
+        if isinstance(exception, (Socket.timeout, TimeoutError)):
             close_connection_reason = CloseConnectionReason.SOCKET_TIMEOUT
             logger.info(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, EOFError):
@@ -457,7 +457,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             else:
                 close_connection_reason = CloseConnectionReason.RESET
             logger.info(f"SocketException (expected if connection lost). closeConnectionReason={close_connection_reason}; connection={self}")
-        elif isinstance(exception, (ValueError,)):
+        elif isinstance(exception, (ValueError, AssertionError)):
             close_connection_reason =  CloseConnectionReason.CORRUPTED_DATA
             logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         else:

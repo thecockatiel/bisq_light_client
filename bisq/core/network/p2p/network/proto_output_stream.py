@@ -5,7 +5,6 @@ import time
 from typing import TYPE_CHECKING
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
-from bisq.core.network.p2p.network.bisq_runtime_exception import BisqRuntimeException
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
@@ -34,7 +33,7 @@ class ProtoOutputStream:
                     return
                 # we don't want log to be flooded with failed to write envelope messages with stack traces if its simply any ConnectionError
                 logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, ConnectionError) else None)
-                raise BisqRuntimeException("Failed to write envelope", e)
+                raise
 
     def on_connection_shutdown(self):
         self.is_connection_active.set(False)
