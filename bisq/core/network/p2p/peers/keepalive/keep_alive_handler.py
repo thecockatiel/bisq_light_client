@@ -55,7 +55,7 @@ class KeepAliveHandler(MessageListener):
 
     def send_ping(self, connection: "Connection") -> None:
         if not self.stopped:
-            ping = Ping(nonce=self.nonce, last_round_trip_time=connection.statistic.round_trip_time)
+            ping = Ping(nonce=self.nonce, last_round_trip_time=connection.statistic.round_trip_time_property.value)
             self.send_ts = get_time_ms()
             
                     
