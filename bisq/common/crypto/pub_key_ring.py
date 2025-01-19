@@ -3,8 +3,8 @@ import base64
 from dataclasses import dataclass, field
 
 from bisq.common.crypto.encryption import Encryption
-from bisq.common.crypto.sig import Sig
-from cryptography.hazmat.primitives.asymmetric import rsa, dsa
+from bisq.common.crypto.sig import Sig, DSA
+from cryptography.hazmat.primitives.asymmetric import rsa
 import proto.pb_pb2 as protobuf
 from utils.java_compat import java_arrays_byte_hashcode
 
@@ -16,10 +16,10 @@ class PubKeyRing:
     signature_pub_key_bytes: bytes
     encryption_pub_key_bytes: bytes
 
-    _signature_pub_key: dsa.DSAPublicKey
+    _signature_pub_key: DSA.DsaKey
     _encryption_pub_key: rsa.RSAPublicKey
 
-    def __init__(self, signature_pub_key: dsa.DSAPublicKey = None, encryption_pub_key: rsa.RSAPublicKey = None, signature_pub_key_bytes: bytes = None, encryption_pub_key_bytes: bytes = None):
+    def __init__(self, signature_pub_key: DSA.DsaKey = None, encryption_pub_key: rsa.RSAPublicKey = None, signature_pub_key_bytes: bytes = None, encryption_pub_key_bytes: bytes = None):
         if signature_pub_key is not None and encryption_pub_key is not None:
             self._signature_pub_key = signature_pub_key
             self._encryption_pub_key = encryption_pub_key
@@ -34,7 +34,7 @@ class PubKeyRing:
             raise ValueError("Either signature_pub_key and encryption_pub_key or signature_pub_key_bytes and encryption_pub_key_bytes must be provided")
 
     @property
-    def signature_pub_key(self) -> dsa.DSAPublicKey:
+    def signature_pub_key(self) -> DSA.DsaKey:
         return self._signature_pub_key
 
     @property

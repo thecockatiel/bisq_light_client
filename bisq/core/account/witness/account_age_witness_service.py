@@ -5,7 +5,7 @@ import random
 from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.crypto.encryption import ECPrivkey, Encryption
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
@@ -641,7 +641,7 @@ class AccountAgeWitnessService:
 
     def verify_signature(
         self,
-        peers_public_key: "dsa.DSAPublicKey",
+        peers_public_key: "DSA.DsaKey",
         nonce: bytes,
         signature: bytes,
         error_message_handler: "ErrorMessageHandler"
@@ -673,7 +673,7 @@ class AccountAgeWitnessService:
         trade_amount: "Coin",
         account_age_witness: "AccountAgeWitness",
         key: "ECPrivkey",
-        peers_pub_key: "dsa.DSAPublicKey"
+        peers_pub_key: "DSA.DsaKey"
     ) -> None:
         self.signed_witness_service.sign_and_publish_account_age_witness(
             account_age_witness=account_age_witness, 

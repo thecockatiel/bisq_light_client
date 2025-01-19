@@ -1,7 +1,7 @@
 
 from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
 class DecryptedMessageWithPubKey(PersistablePayload):
-    def __init__(self, network_envelope: 'NetworkEnvelope', signature_pub_key: dsa.DSAPublicKey = None, signature_pub_key_bytes: bytes = None):
+    def __init__(self, network_envelope: 'NetworkEnvelope', signature_pub_key: "DSA.DsaKey" = None, signature_pub_key_bytes: bytes = None):
         self.network_envelope = network_envelope
         if signature_pub_key is not None:
             self.signature_pub_key = signature_pub_key

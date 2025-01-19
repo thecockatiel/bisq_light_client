@@ -11,13 +11,20 @@ class TestEncryption(unittest.TestCase):
         self.text_message = "TestIsGood"
         self.text_message_signature_hex = "302c02142fd9d8d8894453ff3d279798e1f9340e5e05331c021451734d432c7c2b1bef21f5c52dbedec97c4c67e7"
 
-    def test_encrypt_decrypt_payload(self):
+    def test_key_roundtrip(self):
+        privkey = Sig.get_private_key_from_bytes(bytes.fromhex(self.private_hex))
+        pubkey = Sig.get_public_key_from_bytes(bytes.fromhex(self.public_hex))
+        
+        self.assertEqual(self.private_hex, bytes.hex(Sig.get_private_key_bytes(privkey)))
+        self.assertEqual(self.public_hex, bytes.hex(Sig.get_public_key_bytes(pubkey)))
+    
+    def test_sign_verify_payload(self):
         privkey = Sig.get_private_key_from_bytes(bytes.fromhex(self.private_hex))
         pubkey = Sig.get_public_key_from_bytes(bytes.fromhex(self.public_hex))
         signature = Sig.sign(privkey, self.text_message.encode())
         self.assertTrue(Sig.verify(pubkey, self.text_message.encode(), signature))
     
-    def test_encrypt_decrypt_payload_with_provided_key(self):
+    def test_esign_verify_payload_with_provided_key(self):
         privkey = Sig.get_private_key_from_bytes(bytes.fromhex(self.private_hex))
         pubkey = Sig.get_public_key_from_bytes(bytes.fromhex(self.public_hex))
         signature = Sig.sign_message(privkey, self.text_message)

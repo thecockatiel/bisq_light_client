@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.encryption import Encryption
 from bisq.common.crypto.hash import get_32_byte_hash
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.network.p2p.storage.data_and_seq_nr_pair import DataAndSeqNrPair
@@ -31,7 +31,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
     def __init__(
         self,
         protected_storage_payload: ProtectedStoragePayload,
-        owner_pub_key: dsa.DSAPublicKey,
+        owner_pub_key: "DSA.DsaKey",
         sequence_number: int,
         signature: bytes,
         clock: Clock,

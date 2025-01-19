@@ -6,7 +6,7 @@ from bisq.core.network.p2p.storage.messages.add_once_payload import AddOncePaylo
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
 import proto.pb_pb2 as protobuf
@@ -29,8 +29,8 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
 
     def __init__(self,
                  prefixed_sealed_and_signed_message: 'PrefixedSealedAndSignedMessage',
-                 sender_pub_key_for_add_operation: 'dsa.DSAPublicKey',
-                 owner_pub_key: 'dsa.DSAPublicKey',
+                 sender_pub_key_for_add_operation: 'DSA.DsaKey',
+                 owner_pub_key: 'DSA.DsaKey',
                  ttl: int = None,
                  extra_data_map: Optional[dict[str, str]] = None):
         self.prefixed_sealed_and_signed_message = prefixed_sealed_and_signed_message
@@ -92,7 +92,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
         # If not set in extra_data_map or value is invalid or too large we return default TTL
         return self.TTL
     
-    def get_owner_pub_key(self) -> 'dsa.DSAPublicKey':
+    def get_owner_pub_key(self) -> 'DSA.DsaKey':
         return self.owner_pub_key
 
     def get_extra_data_map(self) -> Optional[dict[str, str]]:

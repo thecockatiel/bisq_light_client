@@ -1,6 +1,6 @@
 import base64
 from datetime import timedelta
-from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption, dsa
+from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption
 from bisq.common.crypto.hash import get_ripemd160_hash
 from bisq.common.crypto.sig import Sig
 from utils.time import get_time_ms
@@ -11,6 +11,7 @@ from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bitcoinj.base.coin import Coin
 from bisq.common.user_thread import UserThread
 from bisq.core.account.sign.signed_witness import SignedWitness
+from bisq.common.crypto.sig import DSA
 
 if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
@@ -174,7 +175,7 @@ class SignedWitnessService:
                                            account_age_witness: 'AccountAgeWitness',
                                            ec_key: 'ECPrivkey',
                                            trade_amount: 'Coin' = None,
-                                           peers_pub_key: Union[bytes, 'dsa.DSAPublicKey'] = None,
+                                           peers_pub_key: Union[bytes, 'DSA.DsaKey'] = None,
                                            time: int = None) -> Union[str, Optional['SignedWitness']]:
         
         if time is None:
@@ -183,7 +184,7 @@ class SignedWitnessService:
         if trade_amount is None:
             trade_amount = SignedWitnessService.MINIMUM_TRADE_AMOUNT_FOR_SIGNING
             
-        if isinstance(peers_pub_key, dsa.DSAPublicKey):
+        if isinstance(peers_pub_key, DSA.DsaKey):
             peers_pub_key = Encryption.get_public_key_bytes(peers_pub_key)
             
         #####

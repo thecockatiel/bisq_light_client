@@ -3,16 +3,16 @@ from typing import Optional
   
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from proto import pb_pb2 as protobuf
-from .sig import Sig, dsa  # Replace with actual module imports
+from bisq.common.crypto.sig import Sig, DSA
 
 class SealedAndSigned(NetworkPayload):
     encrypted_secret_key: bytes
     encrypted_payload_with_hmac: bytes
     signature: bytes
-    sig_public_key: Optional['dsa.DSAPublicKey'] = None
+    sig_public_key: Optional['DSA.DsaKey'] = None
     sig_public_key_bytes: Optional[bytes] = None
 
-    def __init__(self, encrypted_secret_key: bytes, encrypted_payload_with_hmac: bytes, signature: bytes, sig_public_key: Optional['dsa.DSAPublicKey'] = None, sig_public_key_bytes: Optional[bytes] = None):
+    def __init__(self, encrypted_secret_key: bytes, encrypted_payload_with_hmac: bytes, signature: bytes, sig_public_key: Optional['DSA.DsaKey'] = None, sig_public_key_bytes: Optional[bytes] = None):
         super().__init__()
         if sig_public_key is not None:
             self.sig_public_key_bytes = Sig.get_public_key_bytes(sig_public_key)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 from bisq.common.setup.log_setup import get_logger
@@ -14,15 +14,15 @@ logger = get_logger(__name__)
 
 @dataclass
 class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
-    receivers_pub_key: dsa.DSAPublicKey
+    receivers_pub_key: "DSA.DsaKey"
     receivers_pub_key_bytes: bytes
 
     def __init__(self,
                  mailbox_storage_payload: MailboxStoragePayload,
-                 owner_pub_key: dsa.DSAPublicKey,
+                 owner_pub_key: "DSA.DsaKey",
                  sequence_number: int,
                  signature: bytes,
-                 receivers_pub_key: dsa.DSAPublicKey,
+                 receivers_pub_key: "DSA.DsaKey",
                  clock: Clock,
                  creation_time_stamp: int = None):
         super().__init__(mailbox_storage_payload,

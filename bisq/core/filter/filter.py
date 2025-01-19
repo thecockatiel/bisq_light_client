@@ -1,7 +1,7 @@
 import base64
 from datetime import timedelta
 from typing import Optional
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.common.protocol.network.get_data_response_priority import GetDataResponsePriority
 from bisq.common.protocol.proto_util import ProtoUtil
@@ -36,7 +36,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
                  refund_agents: list[str],
                  banned_account_witness_signer_pub_keys: list[str],
                  btc_fee_receiver_addresses: list[str],
-                 owner_pub_key: dsa.DSAPublicKey = None,
+                 owner_pub_key: "DSA.DsaKey" = None,
                  owner_pub_key_bytes: bytes = None,
                  creation_date: int = None,
                  extra_data_map: dict[str, str] = None,
@@ -95,7 +95,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         # the ExcludeForHash annotated fields.
         self.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(extra_data_map)
 
-        self.owner_pub_key: dsa.DSAPublicKey = owner_pub_key
+        self.owner_pub_key: "DSA.DsaKey" = owner_pub_key
         
         # added at v1.3.8
         self.disable_auto_conf = disable_auto_conf or False

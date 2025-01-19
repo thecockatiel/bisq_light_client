@@ -7,14 +7,20 @@ from typing import TYPE_CHECKING, Union
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
+from bisq.common.crypto.sig import Sig
 from electrum_min.crypto import sha256d
 from electrum_min.ecc import ECPrivkey, ECPubkey, msg_magic, string_to_number
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
-from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 
+try:
+    from Crypto.PublicKey import DSA
+except:
+    # different name of pycryptodome on debian?
+    from Cryptodome.PublicKey import DSA
+    
 if TYPE_CHECKING:
     try:
         from cryptography.hazmat.primitives.asymmetric.types import PUBLIC_KEY_TYPES, PRIVATE_KEY_TYPES
@@ -35,6 +41,7 @@ class Encryption:
 
     @staticmethod
     def generate_key_pair():
+        from bisq.common.crypto.key_pair import KeyPair
         try:
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -180,9 +187,11 @@ class Encryption:
             raise RuntimeError("Couldn't generate key") from e
 
     @staticmethod
-    def get_public_key_bytes(public_key: Union["PUBLIC_KEY_TYPES", "PRIVATE_KEY_TYPES", ECPubkey, ECPrivkey, bytes]) -> bytes:
+    def get_public_key_bytes(public_key: Union["PUBLIC_KEY_TYPES", "PRIVATE_KEY_TYPES", ECPubkey, ECPrivkey, DSA.DsaKey, bytes]) -> bytes:
         if isinstance(public_key, bytes):
             return public_key
+        if isinstance(public_key, DSA.DsaKey):
+            return public_key.publickey().export_key("DER")
         if isinstance(public_key, ECPubkey) or isinstance(public_key, ECPrivkey):
             return public_key.get_public_key_bytes()
         if hasattr(public_key, "public_key"):
@@ -191,6 +200,23 @@ class Encryption:
             encoding=serialization.Encoding.DER,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
+
+    @staticmethod
+    def get_private_key_bytes(private_key: Union["PRIVATE_KEY_TYPES", ECPubkey, ECPrivkey, DSA.DsaKey, bytes]) -> bytes:
+        if isinstance(private_key, bytes):
+            return private_key
+        elif isinstance(private_key, DSA.DsaKey):
+            return Sig.get_private_key_bytes(private_key)
+        elif isinstance(private_key, ECPrivkey):
+            return private_key.get_secret_bytes()
+        elif hasattr(private_key, "private_bytes"):
+            return private_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+        else:
+            raise KeyConversionException("Unknown key type")
 
     @staticmethod
     def get_public_key_from_bytes(public_key_bytes: bytes) -> rsa.RSAPublicKey:

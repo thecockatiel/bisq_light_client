@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption, rsa
 from bisq.common.crypto.key_storage import KeyEntry
 from bisq.common.crypto.pub_key_ring import PubKeyRing
-from bisq.common.crypto.sig import Sig, dsa
+from bisq.common.crypto.sig import Sig
 
 
 if TYPE_CHECKING:
