@@ -60,7 +60,7 @@ class PersistenceManager(Generic[T]):
             PersistenceManagerSource.PRIVATE_LOW_PRIO
         )
         self.used_temp_file_path: Optional[Path] = None
-        self.persistence_requested: bool = False
+        self.persistence_requested = AtomicBoolean(False)
         self.timer: Optional[Timer] = None
         self.write_to_disk_executor: Optional[ThreadPoolExecutor] = None
         self.init_called = False
@@ -72,7 +72,7 @@ class PersistenceManager(Generic[T]):
         for manager in PersistenceManager.ALL_PERSISTENCE_MANAGERS.values():
             # In case we got a requestPersistence call before we got initialized we trigger the timer for the
             # persist call
-            if manager.persistence_requested:
+            if manager.persistence_requested.get():
                 manager.maybe_start_timer_for_persistence()
 
     @staticmethod
@@ -123,7 +123,7 @@ class PersistenceManager(Generic[T]):
                 # (fixes https://github.com/bisq-network/bisq/issues/4844).
                 if persistence_manager.read_called and (
                     persistence_manager.source.flush_at_shutdown
-                    or persistence_manager.persistence_requested
+                    or persistence_manager.persistence_requested.get()
                 ):
                     # We always get our completeHandler called even if exceptions happen. In case a file write fails
                     # we still call our shutdown and count down routine as the completeHandler is triggered in any case.
@@ -284,7 +284,7 @@ class PersistenceManager(Generic[T]):
             )
             return
 
-        self.persistence_requested = True
+        self.persistence_requested.set(True)
 
         # If we have not initialized yet we postpone the start of the timer and call maybeStartTimerForPersistence at
         # onAllServicesInitialized
@@ -390,7 +390,7 @@ class PersistenceManager(Generic[T]):
             if duration > 100:
                 logger.info(f"Writing the serialized {self.file_name} completed in {duration} msec")
                 
-            self.persistence_requested = False
+            self.persistence_requested.set(False)
             if complete_handler:
                 UserThread.execute(complete_handler)
                 
