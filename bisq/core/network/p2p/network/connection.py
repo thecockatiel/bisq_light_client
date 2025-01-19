@@ -451,7 +451,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         elif isinstance(exception, EOFError):
             close_connection_reason = CloseConnectionReason.TERMINATED
             logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
-        elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error)):
+        elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error, ConnectionError)):
             if self.socket._closed:
                 close_connection_reason = CloseConnectionReason.SOCKET_CLOSED
             else:
@@ -615,7 +615,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     self.on_message(network_envelope, self)
                     UserThread.execute(lambda: self.connection_statistics.add_received_msg_metrics(get_time_ms() - ts, size))
         except (ProtobufferException, InvalidProtocolBufferException) as e:
-            logger.error(e)
+            logger.error(e, exc_info=e)
             self.report_invalid_request(RuleViolation.INVALID_DATA_TYPE)
         except Exception as e:
             self.handle_exception(e)

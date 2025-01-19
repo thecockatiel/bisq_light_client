@@ -32,7 +32,8 @@ class ProtoOutputStream:
                 if not self.is_connection_active.get():
                     # Connection was closed by us.
                     return
-                logger.error("Failed to write envelope", exc_info=e)
+                # we don't want log to be flooded with failed to write envelope messages with stack traces if its simply any ConnectionError
+                logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, ConnectionError) else None)
                 raise BisqRuntimeException("Failed to write envelope", e)
 
     def on_connection_shutdown(self):
