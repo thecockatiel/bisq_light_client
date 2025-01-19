@@ -13,10 +13,10 @@ from bisq.core.network.p2p.network.outbound_connection import OutboundConnection
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
 from bisq.core.network.p2p.peers.peer_manager import PeerManager
+from bisq.core.network.p2p.peers.keepalive.keep_alive_handler import KeepAliveHandler
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
-    from bisq.core.network.p2p.peers.keepalive.keep_alive_handler import KeepAliveHandler
     from bisq.common.timer import Timer
     from bisq.core.network.p2p.network.connection import Connection
 
