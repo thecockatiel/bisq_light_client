@@ -56,7 +56,7 @@ class ConnectionStatistics(MessageListener):
         rrt_str = ", ".join(rrt)
         rrt_str = f"Time for response: [{rrt_str}]{ls}" if rrt else ""
 
-        seed_node = self.connection_state.is_seed_node()
+        seed_node = self.connection_state.is_seed_node
         info = (
             f"Age: {age}{ls}"
             f"Peer: {'[Seed node] ' if seed_node else ''}{peer}{ls}"
