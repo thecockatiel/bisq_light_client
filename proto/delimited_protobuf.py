@@ -8,11 +8,7 @@ from __future__ import absolute_import
 
 from typing import BinaryIO, Optional, Type, TypeVar
 
-try:
-    from google.protobuf.internal.decoder import _DecodeVarint32 as _DecodeVarint
-except:
-    from google.protobuf.internal.decoder import _DecodeVarint
-    
+from google.protobuf.internal.decoder import _DecodeVarint
 from google.protobuf.internal.encoder import _EncodeVarint
 from google.protobuf.message import Message
 
