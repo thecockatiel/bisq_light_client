@@ -250,7 +250,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             logger.trace(
                 f"We have found a connection in inBoundConnections. Connection.uid={connection.uid}"
             )
-            if connection.stopped:
+            if connection.stopped.get():
                 logger.trace(
                     f"We have a connection which is already stopped in inBoundConnections. Connection.uid={connection.uid}"
                 )
@@ -272,7 +272,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             logger.info(
                 f"We have found a connection in outBoundConnections. Connection.uid={connection.uid}"
             )
-            if connection.stopped:
+            if connection.stopped.get():
                 logger.info(
                     f"We have a connection which is already stopped in outBoundConnections. Connection.uid={connection.uid}"
                 )
@@ -434,7 +434,7 @@ class NetworkNodeOutboundConnectionListener(ConnectionListener):
         self.network_node = network_node
 
     def on_connection(self, connection):
-        if not connection.stopped:
+        if not connection.stopped.get():
             self.network_node.outbound_connections.add(connection)
             self.network_node.print_outbound_connections()
             for listener in self.network_node.connection_listeners:
@@ -454,7 +454,7 @@ class NetworkNodeServerConnectionListener(ConnectionListener):
         self.network_node = network_node
 
     def on_connection(self, connection: "Connection"):
-        if not connection.stopped:
+        if not connection.stopped.get():
             self.network_node.inbound_connections.add(connection)
             self.network_node.print_inbound_connections()
             for listener in self.network_node.connection_listeners:

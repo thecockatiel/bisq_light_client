@@ -642,7 +642,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 )
 
     def _close_anonymous_connection(self, connection: "Connection"):
-        if not connection.stopped and not connection.peers_node_address:
+        if not connection.stopped.get() and not connection.peers_node_address:
             logger.info(
                 "removeAnonymousPeers: We close the connection as the peer address is still unknown. "
                 f"Peer: {connection.peers_node_address}"
