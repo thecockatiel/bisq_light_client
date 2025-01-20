@@ -40,7 +40,7 @@ from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddres
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
 from bisq.common.setup.log_setup import get_logger
-from utils.concurrency import ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
+from utils.concurrency import AtomicBoolean, ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.time import get_time_ms
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
@@ -80,7 +80,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.last_send_timestamp = 0
         self.last_read_timestamp = 0
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
-        self.stopped = False
+        self.stopped = AtomicBoolean(False)
         self.thread_name_set = False
         # We use a weak reference here to ensure that no connection causes a memory leak in case it get closed without
         # the shutDown being called.
@@ -132,7 +132,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         ts = get_time_ms()
         logger.debug(f">> Send networkEnvelope of type: {network_envelope.__class__.__name__}")
 
-        if self.stopped:
+        if self.stopped.get():
             logger.debug("called sendMessage but was already stopped")
             return
         
@@ -153,7 +153,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
                 time.sleep(self.get_send_msg_throttle_sleep())
             self.last_send_timestamp = now
-            if not self.stopped:
+            if not self.stopped.get():
                 self.proto_output_stream.write_envelope(network_envelope)
                 UserThread.execute(lambda: list(map(lambda e: e.on_message_sent(network_envelope, self), self.message_listeners)))
                 UserThread.execute(lambda: self.connection_statistics.add_send_msg_metrics(get_time_ms() - ts, network_envelope_size))
@@ -315,7 +315,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
-        if not self.stopped:
+        if not self.stopped.get():
             peers_node_address = str(self.peers_node_address) if self.peers_node_address else "None"
             logger.debug(
                 f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
@@ -331,17 +331,17 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
                         self.send_message(CloseConnectionMessage(reason=reason))
 
-                        self.stopped = True
+                        self.stopped.set(True)
 
                         time.sleep(0.2)
                     except Exception as e:
                         logger.error(e, exc_info=e)
                     finally:
-                        self.stopped = True
+                        self.stopped.set(True)
                         UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
                 threading.Thread(target=handle_shut_down, name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
             else:
-                self.stopped = True
+                self.stopped.set(True)
                 self.do_shut_down(close_connection_reason, shut_down_complete_handler)
         else:
             logger.debug("stopped was already at shutDown call")
@@ -440,7 +440,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
 
     def handle_exception(self, exception: Exception):
-        if self.stopped:
+        if self.stopped.get():
             return
         
         close_connection_reason = CloseConnectionReason.UNKNOWN_EXCEPTION
@@ -485,7 +485,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     def run(self):
         try:
             threading.current_thread().name = f"InputHandler-{to_truncated_string(self.uid, 15)}"
-            while not self.stopped and threading.current_thread().is_alive():
+            while not self.stopped.get() and threading.current_thread().is_alive():
                 if  not self.thread_name_set and self.peers_node_address:
                     threading.current_thread().name = f"InputHandler-{to_truncated_string(self.peers_node_address.get_full_address(), 15)}"
                     self.thread_name_set = True
@@ -505,7 +505,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         return
                     
                     if proto is None:
-                        if self.stopped:
+                        if self.stopped.get():
                             return
                         data = self.proto_input_stream.read()
                         if  data == bytes():
@@ -596,7 +596,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
                         self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
                         return
-                elif not self.stopped:
+                elif not self.stopped.get():
                     # We don't want to get the activity ts updated by ping/pong msg
                     if not isinstance(network_envelope, KeepAliveMessage):
                         self.statistic.update_last_activity_timestamp()
