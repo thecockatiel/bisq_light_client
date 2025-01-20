@@ -107,6 +107,8 @@ class AsyncHttpClientImpl(AsyncHttpClient):
                 "We got called on the same HttpClient again while a request is still open."
             )
         self.has_pending_request = True
+        if not url.startswith("/"):
+            url = "/" + url
 
         socks5_proxy: Socks5Proxy = None
         proxy_connector = None
@@ -154,13 +156,12 @@ class AsyncHttpClientImpl(AsyncHttpClient):
 
         try:
             async with aiohttp.ClientSession(
-                base_url=self.base_url,
                 connector=proxy_connector,
                 timeout=client_timeout,
             ) as session:
                 async with session.request(
                     http_method,
-                    url,
+                    self.base_url + url,
                     params=params,
                     data=data,
                     headers=headers,
