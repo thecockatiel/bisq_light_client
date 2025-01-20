@@ -2,6 +2,7 @@ import asyncio
 import socket
 from ssl import SSLContext
 from typing import Any, Iterable, NamedTuple, Optional, List, Tuple
+from inspect import signature
 
 from aiohttp import ClientConnectorError, TCPConnector
 from aiohttp.abc import AbstractResolver
@@ -12,8 +13,9 @@ from python_socks.async_.asyncio.v2 import Proxy
 try:
     from aiohttp.abc import ResolveResult
 except:
-    # not available in old debian packages
+    # not available in old packages
     pass
+
 
 class NoResolver(AbstractResolver):
     async def resolve(
@@ -73,6 +75,22 @@ class _BaseProxyConnector(TCPConnector):
             port=port,
             ssl=ssl,
             timeout=timeout.sock_connect,
+        )
+
+    async def _old_wrap_create_connection(
+        self, protocol_factory, host, port, *, ssl, **kwargs
+    ):
+        connect_timeout = None
+
+        timeout = kwargs.get("timeout")
+        if timeout is not None:
+            connect_timeout = getattr(timeout, "sock_connect", None)
+
+        return await self._connect_via_proxy(
+            host=host,
+            port=port,
+            ssl=ssl,
+            timeout=connect_timeout,
         )
 
     async def _connect_via_proxy(
@@ -228,3 +246,10 @@ class ChainProxyConnector(_BaseProxyConnector):
             infos.append(proxy_info)
 
         return cls(infos, **kwargs)
+
+
+# check if backward compatibility patch is needed
+if "addr_infos" not in list(signature(TCPConnector._wrap_create_connection).parameters):
+    _BaseProxyConnector._wrap_create_connection = (
+        _BaseProxyConnector._old_wrap_create_connection
+    )
