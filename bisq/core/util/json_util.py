@@ -11,7 +11,12 @@ class JsonUtil:
     @staticmethod
     def recursively_resolve_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
         resolved_dict = {}
-        obj_dict = obj if isinstance(obj, dict) else obj.__dict__
+        if isinstance(obj, dict):
+            obj_dict = obj 
+        elif hasattr(obj, "get_json_dict"):
+            obj_dict = obj.get_json_dict()
+        else:
+            obj_dict = obj.__dict__
         for key, value in obj_dict.items():
             if isinstance(value, dict):
                 resolved_dict[key] = JsonUtil.recursively_resolve_dict(value)
