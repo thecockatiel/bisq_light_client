@@ -1,8 +1,7 @@
 import asyncio
 import socket
-import ssl
-from asyncio import BaseTransport, StreamWriter
-from typing import Any, Iterable, NamedTuple, Optional, List
+from ssl import SSLContext
+from typing import Any, Iterable, NamedTuple, Optional, List, Tuple
 
 from aiohttp import ClientConnectorError, TCPConnector
 from aiohttp.abc import AbstractResolver
@@ -46,21 +45,56 @@ class _ResponseHandler(ResponseHandler):
     See StreamWriter.__del__ method (was added in Python 3.11.5)
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop, writer: StreamWriter) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop, writer: asyncio.StreamWriter) -> None:
         super().__init__(loop)
         self._writer = writer
 
 
-class ProxyConnector(TCPConnector):
+class _BaseProxyConnector(TCPConnector):
+    async def _wrap_create_connection(
+        self,
+        *args,
+        addr_infos,
+        req,
+        timeout,
+        client_error=ClientConnectorError,
+        **kwargs,
+    ) -> Tuple[asyncio.Transport, ResponseHandler]:
+        try:
+            host: str = addr_infos[0][4][0]
+            port: int = addr_infos[0][4][1]
+        except IndexError as e:  # pragma: no cover
+            raise ValueError('Invalid arg: `addr_infos`') from e
+
+        ssl: Optional[SSLContext] = kwargs.get('ssl')  # type: ignore
+
+        return await self._connect_via_proxy(
+            host=host,
+            port=port,
+            ssl=ssl,
+            timeout=timeout.sock_connect,
+        )
+
+    async def _connect_via_proxy(
+        self,
+        host: str,
+        port: int,
+        ssl: Optional[SSLContext] = None,
+        timeout: Optional[float] = None,
+    ) -> Tuple[asyncio.Transport, ResponseHandler]:
+        raise NotImplementedError
+
+
+class ProxyConnector(_BaseProxyConnector):
     def __init__(
         self,
+        host: str,
+        port: int,
         proxy_type: ProxyType = ProxyType.SOCKS5,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
         rdns: Optional[bool] = None,
-        proxy_ssl: Optional[ssl.SSLContext] = None,
+        proxy_ssl: Optional[SSLContext] = None,
         **kwargs: Any,
     ) -> None:
         kwargs['resolver'] = NoResolver()
@@ -74,7 +108,13 @@ class ProxyConnector(TCPConnector):
         self._rdns = rdns
         self._proxy_ssl = proxy_ssl
 
-    async def _connect_via_proxy(self, host, port, ssl=None, timeout=None):
+    async def _connect_via_proxy(
+        self,
+        host: str,
+        port: int,
+        ssl: Optional[SSLContext] = None,
+        timeout: Optional[float] = None,
+    ) -> Tuple[asyncio.Transport, ResponseHandler]:
         proxy = Proxy(
             proxy_type=self._proxy_type,
             host=self._proxy_host,
@@ -92,7 +132,7 @@ class ProxyConnector(TCPConnector):
             timeout=timeout,
         )
 
-        transport: BaseTransport = stream.writer.transport
+        transport: asyncio.Transport = stream.writer.transport
         protocol: ResponseHandler = _ResponseHandler(
             loop=self._loop,
             writer=stream.writer,
@@ -102,30 +142,6 @@ class ProxyConnector(TCPConnector):
         protocol.connection_made(transport)
 
         return transport, protocol
-
-    async def _wrap_create_connection(
-        self,
-        *args,
-        addr_infos,
-        req,
-        timeout,
-        client_error=ClientConnectorError,
-        **kwargs,
-    ):
-        try:
-            host = addr_infos[0][4][0]
-            port = addr_infos[0][4][1]
-        except IndexError:  # pragma: no cover
-            raise ValueError('Invalid arg: `addr_infos`')
-
-        ssl = kwargs.get('ssl')
-
-        return await self._connect_via_proxy(
-            host=host,
-            port=port,
-            ssl=ssl,
-            timeout=timeout.sock_connect,
-        )
 
     @classmethod
     def from_url(cls, url: str, **kwargs: Any) -> 'ProxyConnector':
@@ -149,14 +165,20 @@ class ProxyInfo(NamedTuple):
     rdns: Optional[bool] = None
 
 
-class ChainProxyConnector(TCPConnector):
+class ChainProxyConnector(_BaseProxyConnector):
     def __init__(self, proxy_infos: Iterable[ProxyInfo], **kwargs):
         kwargs['resolver'] = NoResolver()
         super().__init__(**kwargs)
 
         self._proxy_infos = proxy_infos
 
-    async def _connect_via_proxy(self, host, port, ssl=None, timeout=None):
+    async def _connect_via_proxy(
+        self,
+        host: str,
+        port: int,
+        ssl: Optional[SSLContext] = None,
+        timeout: Optional[float] = None,
+    ) -> Tuple[asyncio.Transport, ResponseHandler]:
         forward = None
         proxy = None
         for info in self._proxy_infos:
@@ -171,6 +193,8 @@ class ChainProxyConnector(TCPConnector):
             )
             forward = proxy
 
+        assert proxy is not None
+
         stream = await proxy.connect(
             dest_host=host,
             dest_port=port,
@@ -178,7 +202,7 @@ class ChainProxyConnector(TCPConnector):
             timeout=timeout,
         )
 
-        transport: BaseTransport = stream.writer.transport
+        transport: asyncio.Transport = stream.writer.transport
         protocol: ResponseHandler = _ResponseHandler(
             loop=self._loop,
             writer=stream.writer,
@@ -188,30 +212,6 @@ class ChainProxyConnector(TCPConnector):
         protocol.connection_made(transport)
 
         return transport, protocol
-
-    async def _wrap_create_connection(
-        self,
-        *args,
-        addr_infos,
-        req,
-        timeout,
-        client_error=ClientConnectorError,
-        **kwargs,
-    ):
-        try:
-            host = addr_infos[0][4][0]
-            port = addr_infos[0][4][1]
-        except IndexError:  # pragma: no cover
-            raise ValueError('Invalid arg: `addr_infos`')
-
-        ssl = kwargs.get('ssl')
-
-        return await self._connect_via_proxy(
-            host=host,
-            port=port,
-            ssl=ssl,
-            timeout=timeout.sock_connect,
-        )
 
     @classmethod
     def from_urls(cls, urls: Iterable[str], **kwargs: Any) -> 'ChainProxyConnector':
