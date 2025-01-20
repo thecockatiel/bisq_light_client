@@ -8,7 +8,11 @@ from __future__ import absolute_import
 
 from typing import BinaryIO, Optional, Type, TypeVar
 
-from google.protobuf.internal.decoder import _DecodeVarint
+try:
+    from google.protobuf.internal.decoder import _DecodeVarint32 as _DecodeVarint
+except:
+    from google.protobuf.internal.decoder import _DecodeVarint
+    
 from google.protobuf.internal.encoder import _EncodeVarint
 from google.protobuf.message import Message
 
@@ -57,5 +61,6 @@ def write_delimited(stream: BinaryIO, msg: T):
       * [`MessageLite#writeDelimitedTo`](https://github.com/protocolbuffers/protobuf/blob/master/java/core/src/main/java/com/google/protobuf/MessageLite.java#L126)
     """
     assert stream is not None
-    _EncodeVarint(stream.write, msg.ByteSize())
-    stream.write(msg.SerializeToString())
+    msg = msg.SerializeToString()
+    _EncodeVarint(stream.write, len(msg))
+    stream.write(msg)
