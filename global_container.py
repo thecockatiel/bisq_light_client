@@ -1889,7 +1889,9 @@ class GlobalContainer:
         return GlobalContainer._pub_key_ring
 
 
-GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]](None)
+# TODO: init with None for catching bugs later.
+# this is done for convenience during dev
+GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]](GlobalContainer()) 
 
 
 def set_global_container(container: GlobalContainer):

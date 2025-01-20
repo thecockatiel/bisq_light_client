@@ -15,6 +15,7 @@ from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountP
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
+from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from utils.clock import Clock
 
@@ -86,7 +87,7 @@ payment_account_payload_cases = {
 
 persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetworkPayload], PersistableNetworkPayload]] = {
     "account_age_witness": lambda proto: AccountAgeWitness.from_proto(proto.account_age_witness),
-    # "trade_statistics2": lambda proto: TradeStatistics2.from_proto,
+    "trade_statistics2": lambda proto: TradeStatistics2.from_proto(proto.trade_statistics2),
     # "proposal_payload": lambda proto: ProposalPayload.from_proto,
     # "blind_vote_payload": lambda proto: BlindVotePayload.from_proto,
     "signed_witness": lambda proto: SignedWitness.from_proto(proto.signed_witness),
