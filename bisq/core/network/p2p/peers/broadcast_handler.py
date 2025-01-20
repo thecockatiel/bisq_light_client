@@ -208,7 +208,7 @@ class BroadcastHandler:
             self._maybe_notify_listeners(broadcast_requests_for_connection)
             self._check_for_completion()
         except Exception as e:
-            logger.warning(f"Broadcast to {connection.peers_node_address} failed. ", exc_info=e)
+            logger.warning(f"Broadcast to {connection.peers_node_address} failed. ", exc_info=e if not isinstance(e, ConnectionError) else None)
             self.num_failed_broadcasts.increment_and_get()
             
             if self.stopped:
