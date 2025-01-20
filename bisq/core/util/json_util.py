@@ -10,6 +10,8 @@ class JsonUtil:
     
     @staticmethod
     def recursively_resolve_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
+        if obj is None:
+            return obj
         resolved_dict = {}
         if isinstance(obj, dict):
             obj_dict = obj 
