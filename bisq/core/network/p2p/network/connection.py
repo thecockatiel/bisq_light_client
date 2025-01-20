@@ -353,7 +353,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         try:
             self.proto_output_stream.on_connection_shutdown()
             self.socket.close()
-        except (Socket.error, ConnectionError) as e:
+        except (Socket.error, ConnectionError, BrokenPipeError) as e:
             logger.trace(f"SocketException at shutdown might be expected. {e}")
         except Exception as e:
             logger.error(f"Exception at shutdown. {e}", exc_info=e)
@@ -450,7 +450,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         elif isinstance(exception, EOFError):
             close_connection_reason = CloseConnectionReason.TERMINATED
             logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
-        elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error, ConnectionError)):
+        elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error, ConnectionError, BrokenPipeError)):
             if self.socket._closed:
                 close_connection_reason = CloseConnectionReason.SOCKET_CLOSED
             else:

@@ -1,7 +1,7 @@
  
 
 from threading import RLock
-import time
+import socket
 from typing import TYPE_CHECKING
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
@@ -27,12 +27,12 @@ class ProtoOutputStream:
         with self.lock:
             try:
                 self.write_envelope_or_throw(envelope)
-            except IOError as e:
+            except (IOError, BrokenPipeError, ConnectionError) as e:
                 if not self.is_connection_active.get():
                     # Connection was closed by us.
                     return
                 # we don't want log to be flooded with failed to write envelope messages with stack traces if its simply any ConnectionError
-                logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, ConnectionError) else None)
+                logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
                 raise
 
     def on_connection_shutdown(self):
@@ -42,7 +42,7 @@ class ProtoOutputStream:
             return
         try:
             self.output_stream.close()
-        except ConnectionError:
+        except (ConnectionError, BrokenPipeError):
             pass
         except Exception as t:
             logger.error("Failed to close connection", exc_info=t)
