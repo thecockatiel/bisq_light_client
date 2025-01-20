@@ -57,6 +57,5 @@ def write_delimited(stream: BinaryIO, msg: T):
       * [`MessageLite#writeDelimitedTo`](https://github.com/protocolbuffers/protobuf/blob/master/java/core/src/main/java/com/google/protobuf/MessageLite.java#L126)
     """
     assert stream is not None
-    msg = msg.SerializeToString()
-    _EncodeVarint(stream.write, len(msg))
-    stream.write(msg)
+    _EncodeVarint(stream.write, msg.ByteSize())
+    stream.write(msg.SerializeToString())
