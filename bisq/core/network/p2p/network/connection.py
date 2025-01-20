@@ -113,8 +113,8 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         try:
             self.socket.settimeout(Connection.SOCKET_TIMEOUT_SEC)
             
-            self.proto_output_stream = ProtoOutputStream(self.socket.makefile('wb'), self.statistic)
-            self.proto_input_stream = self.socket.makefile('rb')
+            self.proto_output_stream = ProtoOutputStream(self.socket.makefile('wb', buffering=0), self.statistic)
+            self.proto_input_stream = self.socket.makefile('rb', buffering=4096)
 
             # We create a thread for handling inputStream data
             self.executor.submit(self.run)
