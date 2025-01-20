@@ -49,11 +49,10 @@ class Statistic:
         Statistic.num_total_sent_messages.value = sum(Statistic.total_sent_messages.values())
         Statistic.num_total_received_messages.value = sum(Statistic.total_received_messages.values())
         passed = get_time_ms() - Statistic.start_time
-        if passed > 0:
-            Statistic.num_total_sent_messages_per_sec.value = Statistic.num_total_sent_messages.value / passed
-            Statistic.num_total_received_messages_per_sec.value = Statistic.num_total_received_messages.value / passed
-            Statistic.total_sent_bytes_per_sec.value = Statistic.total_sent_bytes.value / passed
-            Statistic.total_received_bytes_per_sec.value = Statistic.total_received_bytes.value / passed
+        Statistic.num_total_sent_messages_per_sec.value = Statistic.num_total_sent_messages.value / passed
+        Statistic.num_total_received_messages_per_sec.value = Statistic.num_total_received_messages.value / passed
+        Statistic.total_sent_bytes_per_sec.value = Statistic.total_sent_bytes.value / passed
+        Statistic.total_received_bytes_per_sec.value = Statistic.total_received_bytes.value / passed
 
     def _log_statistics_periodically(self):
         logger.info(
@@ -72,19 +71,19 @@ class Statistic:
             self.last_activity_timestamp = get_time_ms()
         UserThread.execute(update)
 
-    def add_sent_bytes(self, value):
+    def add_sent_bytes(self, value: int):
         def update():
             self.sent_bytes_property.value += value
             Statistic.total_sent_bytes.value += value
         UserThread.execute(update)
 
-    def add_received_bytes(self, value):
+    def add_received_bytes(self, value: int):
         def update():
             self.received_bytes_property.value += value
             Statistic.total_received_bytes.value += value
         UserThread.execute(update)
 
-    # TODO would need msg inspection to get useful information...
+    # JAVA TODO would need msg inspection to get useful information...
     def add_received_message(self, networkEnvelope: 'NetworkEnvelope'):
         message_class_name = networkEnvelope.__class__.__name__
         def update():
