@@ -1,3 +1,0 @@
-[submodule "aiohttp"]
-	path = aiohttp
-	url = https://github.com/thecockatiel/aiohttp
