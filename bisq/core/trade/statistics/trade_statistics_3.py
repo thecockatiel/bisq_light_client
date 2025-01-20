@@ -108,10 +108,6 @@ class TradeStatistics3(
             "amount": self.amount,
             "paymentMethod": self.payment_method,
             "date": self.date,
-            "mediator": self.mediator,
-            "refundAgent": self.refund_agent,
-            "hash": self.hash.hex(),
-            "extraDataMap": self.extra_data_map,
         }
 
     def to_proto_trade_statistics_3(self):
