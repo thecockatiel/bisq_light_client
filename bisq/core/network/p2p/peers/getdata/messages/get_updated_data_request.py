@@ -26,7 +26,7 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
         )
         if self.version:
             get_updated_data_request.version = self.version
-        envelope = protobuf.NetworkEnvelope(
+        envelope = self.get_network_envelope_builder(
             get_updated_data_request=get_updated_data_request
         )
         logger.info(f"Sending a GetUpdatedDataRequest with {envelope.ByteSize() / 1000} kB and "

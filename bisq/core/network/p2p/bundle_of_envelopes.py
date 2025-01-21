@@ -24,7 +24,7 @@ class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, Capability
     # PROTO BUFFER
 
     def to_proto_network_envelope(self) -> 'protobuf.NetworkEnvelope':
-        return protobuf.NetworkEnvelope(bundle_of_envelopes=protobuf.BundleOfEnvelopes(envelopes=[env.to_proto_network_envelope() for env in self.envelopes]))
+        return self.get_network_envelope_builder(bundle_of_envelopes=protobuf.BundleOfEnvelopes(envelopes=[env.to_proto_network_envelope() for env in self.envelopes]))
 
     @staticmethod
     def from_proto(proto: 'protobuf.BundleOfEnvelopes', resolver: NetworkProtoResolver, message_version: int) -> 'BundleOfEnvelopes':
