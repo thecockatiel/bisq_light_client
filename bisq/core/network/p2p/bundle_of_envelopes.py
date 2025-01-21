@@ -4,7 +4,7 @@ from bisq.common.capability import Capability
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-import bisq.common.version as Version 
+from bisq.common.version import Version 
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload

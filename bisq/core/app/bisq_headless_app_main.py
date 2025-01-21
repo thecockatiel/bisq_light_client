@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.app.bisq_executable import BisqExecutable
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.app.bisq_headless_app import BisqHeadlessApp
 
 if TYPE_CHECKING:

@@ -14,7 +14,7 @@ from bisq.core.locale.res import Res
 from bisq.core.filter.filter import Filter
 from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
 from utils.data import SimpleProperty
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.network.p2p.p2p_service_listener import P2PServiceListener
 
 if TYPE_CHECKING:

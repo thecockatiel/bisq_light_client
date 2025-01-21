@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from tqdm import tqdm
 import aiohttp
-import bisq.common.version as Version
+from bisq.common.version import Version
 
 async def download_file(app_data_dir: Path, url: str, skip_if_exists=True):
     download_dir = app_data_dir.joinpath('downloads')

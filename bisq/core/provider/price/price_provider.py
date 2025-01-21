@@ -1,7 +1,7 @@
 from bisq.core.network.http.async_http_client import AsyncHttpClient
 from bisq.core.network.p2p.p2p_service import P2PService
 from bisq.core.provider.http_client_provider import HttpClientProvider
-import bisq.common.version as Version
+from bisq.common.version import Version
 import json
 
 from bisq.core.provider.price.pricenode_dto import PricenodeDto

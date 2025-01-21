@@ -13,7 +13,7 @@ from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import Ke
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import proto.pb_pb2 as protobuf
 from proto.delimited_protobuf import read_delimited
-import bisq.common.version as Version
+from bisq.common.version import Version
 from google.protobuf.message import Error as InvalidProtocolBufferException  
 
 import concurrent
@@ -558,6 +558,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
                 # We want to track the network_messages also before the checks, so do it early...
                 self.statistic.add_received_message(network_envelope)
+                
+                if isinstance(network_envelope, CloseConnectionMessage):
+                    logger.warning(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}")
                 
                 # First we check the size
                 exceeds = False

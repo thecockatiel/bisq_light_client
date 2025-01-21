@@ -4,7 +4,7 @@ from typing import Optional
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.initial_data_request import InitialDataRequest
-import bisq.common.version as Version
+from bisq.common.version import Version
 from utils.data import raise_required
 
 @dataclass

@@ -8,7 +8,7 @@ from bisq.core.notifications.mobile_model_os import MobileModelOS
 from bisq.core.util.json_util import JsonUtil
 from utils.data import SimpleProperty
 import uuid
-import bisq.common.version as Version
+from bisq.common.version import Version
 
 if TYPE_CHECKING:
     from bisq.core.notifications.mobile_message import MobileMessage
