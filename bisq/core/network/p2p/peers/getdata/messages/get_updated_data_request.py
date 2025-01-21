@@ -26,9 +26,8 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
         )
         if self.version:
             get_updated_data_request.version = self.version
-        envelope = self.get_network_envelope_builder(
-            get_updated_data_request=get_updated_data_request
-        )
+        envelope = self.get_network_envelope_builder()
+        envelope.get_updated_data_request.CopyFrom(get_updated_data_request)
         logger.info(f"Sending a GetUpdatedDataRequest with {envelope.ByteSize() / 1000} kB and "
                      f"{len(self.excluded_keys)} excluded key entries. Requester's version={self.version}")
         return envelope
