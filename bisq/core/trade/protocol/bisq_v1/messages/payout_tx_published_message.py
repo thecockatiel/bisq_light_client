@@ -22,9 +22,13 @@ class PayoutTxPublishedMessage(TradeMailboxMessage):
         payout_tx: bytes,
         sender_node_address: NodeAddress,
         signed_witness: Optional[SignedWitness] = None,
-        uid: str = str(uuid.uuid4()),
-        message_version: int = Version.get_p2p_message_version(),
+        uid: str = None,
+        message_version: int = None,
     ):
+        if uid is None:
+            uid = str(uuid.uuid4())
+        if message_version is None:
+            message_version = Version.get_p2p_message_version()
         super().__init__(message_version=message_version, uid=uid, trade_id=trade_id)
         self.payout_tx = payout_tx
         self.sender_node_address = sender_node_address
