@@ -559,9 +559,6 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 # We want to track the network_messages also before the checks, so do it early...
                 self.statistic.add_received_message(network_envelope)
                 
-                if isinstance(network_envelope, CloseConnectionMessage):
-                    logger.warning(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}")
-                
                 # First we check the size
                 exceeds = False
                 if isinstance(network_envelope, ExtendedDataSizePermission):
