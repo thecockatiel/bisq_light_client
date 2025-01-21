@@ -4,13 +4,10 @@ from bisq.common.capability import Capability
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.common.version import Version 
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
 import proto.pb_pb2 as protobuf
-
-from typing import List, Optional
 
 from dataclasses import dataclass, field
 
@@ -20,8 +17,10 @@ class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, Capability
 
     def add(self, network_envelope: NetworkEnvelope) -> None:
         self.envelopes.append(network_envelope)
-
-    # PROTO BUFFER
+        
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // PROTO BUFFER
+    # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def to_proto_network_envelope(self) -> 'protobuf.NetworkEnvelope':
         builder = self.get_network_envelope_builder()
