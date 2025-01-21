@@ -41,30 +41,6 @@ class Statistic:
         self.sent_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
         self.received_messages: ThreadSafeDict[str, int] = ThreadSafeDict()
         self.round_trip_time_property = SimpleProperty(0)
-        # Start periodic updates
-        UserThread.run_periodically(self._update_statistics_periodically, timedelta(seconds=1))
-        UserThread.run_periodically(self._log_statistics_periodically, timedelta(minutes=60))
-
-    def _update_statistics_periodically(self):
-        Statistic.num_total_sent_messages.value = sum(Statistic.total_sent_messages.values())
-        Statistic.num_total_received_messages.value = sum(Statistic.total_received_messages.values())
-        passed = get_time_ms() - Statistic.start_time
-        Statistic.num_total_sent_messages_per_sec.value = Statistic.num_total_sent_messages.value / passed
-        Statistic.num_total_received_messages_per_sec.value = Statistic.num_total_received_messages.value / passed
-        Statistic.total_sent_bytes_per_sec.value = Statistic.total_sent_bytes.value / passed
-        Statistic.total_received_bytes_per_sec.value = Statistic.total_received_bytes.value / passed
-
-    def _log_statistics_periodically(self):
-        logger.info(
-            f"Accumulated network statistics:\n"
-            f"Bytes sent: {readable_file_size(Statistic.total_sent_bytes.value)};\n"
-            f"Number of sent messages/Sent messages: {Statistic.num_total_sent_messages.value} / {dict(Statistic.total_sent_messages)};\n"
-            f"Number of sent messages per sec: {Statistic.num_total_sent_messages_per_sec.value};\n"
-            f"Bytes received: {readable_file_size(Statistic.total_received_bytes.value)};\n"
-            f"Number of received messages/Received messages: {Statistic.num_total_received_messages.value} / {dict(Statistic.total_received_messages)};\n"
-            f"Number of received messages per sec: {Statistic.num_total_received_messages_per_sec.value}"
-        )
-
 
     def update_last_activity_timestamp(self):
         def update():
@@ -118,3 +94,27 @@ class Statistic:
             f" roundTripTime={self.round_trip_time_property}\n"
             f"}}"
         )
+
+def _update_statistics_periodically():
+    Statistic.num_total_sent_messages.value = sum(Statistic.total_sent_messages.values())
+    Statistic.num_total_received_messages.value = sum(Statistic.total_received_messages.values())
+    passed = get_time_ms() - Statistic.start_time
+    Statistic.num_total_sent_messages_per_sec.value = Statistic.num_total_sent_messages.value / passed
+    Statistic.num_total_received_messages_per_sec.value = Statistic.num_total_received_messages.value / passed
+    Statistic.total_sent_bytes_per_sec.value = Statistic.total_sent_bytes.value / passed
+    Statistic.total_received_bytes_per_sec.value = Statistic.total_received_bytes.value / passed
+
+def _log_statistics_periodically():
+    logger.info(
+        f"Accumulated network statistics:\n"
+        f"Bytes sent: {readable_file_size(Statistic.total_sent_bytes.value)};\n"
+        f"Number of sent messages/Sent messages: {Statistic.num_total_sent_messages.value} / {dict(Statistic.total_sent_messages)};\n"
+        f"Number of sent messages per sec: {Statistic.num_total_sent_messages_per_sec.value};\n"
+        f"Bytes received: {readable_file_size(Statistic.total_received_bytes.value)};\n"
+        f"Number of received messages/Received messages: {Statistic.num_total_received_messages.value} / {dict(Statistic.total_received_messages)};\n"
+        f"Number of received messages per sec: {Statistic.num_total_received_messages_per_sec.value}"
+    )
+
+# Start periodic updates
+UserThread.run_periodically(_update_statistics_periodically, timedelta(seconds=1))
+UserThread.run_periodically(_log_statistics_periodically, timedelta(minutes=60))
