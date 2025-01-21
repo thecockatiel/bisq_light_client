@@ -29,3 +29,8 @@ class NetworkEnvelope(Envelope, ABC):
 
     def __str__(self):
         return f"NetworkEnvelope{{\n     messageVersion={self.message_version}\n}}"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, NetworkEnvelope):
+            return False
+        return self.message_version == other.message_version and self.serialize() == other.serialize()
