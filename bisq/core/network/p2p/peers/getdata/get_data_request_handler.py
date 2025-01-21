@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 
 class GetDataRequestHandler:
-    TIMEOUT = 240
+    TIMEOUT_SEC = 240
     MAX_ENTRIES = 20_000  # Tradestatistics are about 20 000 in 2 months.
 
     class Listener(ABC):
@@ -53,19 +53,19 @@ class GetDataRequestHandler:
 
     def handle(self, get_data_request: "GetDataRequest", connection: "Connection"):
         ts = get_time_ms()
-        connection_info = (
-            "connectionInfo"
-            + "node address "
-            + connection.peers_node_address.get_full_address()
-            if connection.peers_node_address
-            else f" connection UID {connection.uid}"
-        )
+        connection_info = "connectionInfo"
+        if connection.peers_node_address:
+            connection_info += (
+                " node address " + connection.peers_node_address.get_full_address()
+            )
+        else:
+            connection_info += f" connection UID {connection.uid}"
 
         was_persistable_network_payloads_truncated = AtomicBoolean()
         was_protected_storage_entries_truncated = AtomicBoolean()
         data_response = self.data_storage.build_get_data_response(
             get_data_request,
-            self.MAX_ENTRIES,
+            GetDataRequestHandler.MAX_ENTRIES,
             was_persistable_network_payloads_truncated,
             was_protected_storage_entries_truncated,
             connection.capabilities,
@@ -88,12 +88,15 @@ class GetDataRequestHandler:
 
             def on_timeout():
                 error_message = f"A timeout occurred for getDataResponse on connection: {connection}"
-                self.handle_fault(
-                    error_message, CloseConnectionReason.SEND_MSG_TIMEOUT, connection
+                self._handle_fault(
+                    error_message,
+                    CloseConnectionReason.SEND_MSG_TIMEOUT,
+                    connection,
                 )
 
             self.timeout_timer = UserThread.run_after(
-                on_timeout, timedelta(seconds=self.TIMEOUT)
+                on_timeout,
+                timedelta(seconds=GetDataRequestHandler.TIMEOUT_SEC),
             )
 
         future = self.network_node.send_message(connection, data_response)
@@ -101,7 +104,7 @@ class GetDataRequestHandler:
         logger.info(f"handle GetDataRequest took {get_time_ms() - ts} ms")
 
     def stop(self):
-        self.cleanup()
+        self._cleanup()
 
     def on_future_complete(
         self, future: "Future[Connection]", data_response: "GetDataResponse"
@@ -117,15 +120,17 @@ class GetDataRequestHandler:
                 self.listener.on_complete(
                     data_response.to_proto_network_envelope().ByteSize()
                 )
-                self.cleanup()
+                self._cleanup()
         except Exception as e:
             if not self.stopped:
                 error_message = f"Sending getDataResponse to {connection} failed. That is expected if the peer is offline. getDataResponse={data_response}. Exception: {str(e)}"
-                self.handle_fault(
+                self._handle_fault(
                     error_message, CloseConnectionReason.SEND_MSG_FAILURE, connection
                 )
+            else:
+                logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
 
-    def handle_fault(
+    def _handle_fault(
         self,
         error_message: str,
         close_connection_reason: "CloseConnectionReason",
@@ -135,12 +140,12 @@ class GetDataRequestHandler:
             logger.info(
                 f"{error_message}\ncloseConnectionReason={close_connection_reason}"
             )
-            self.cleanup()
+            self._cleanup()
             self.listener.on_fault(error_message, connection)
         else:
             logger.warning("We have already stopped (handleFault)")
 
-    def cleanup(self):
+    def _cleanup(self):
         self.stopped = True
         if self.timeout_timer is not None:
             self.timeout_timer.stop()
