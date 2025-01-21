@@ -151,7 +151,7 @@ class RequestDataHandler(MessageListener):
                             f"Nonce not matching. That can happen rarely if we get a response after a canceled " +
                                         "handshake (timeout causes connection close but peer might have sent a msg before " +
                                         "connection was closed).\n\t" +
-                                        "We drop that message. nonce={self.nonce} / requestNonce={get_data_response.request_nonce}"
+                                        f"We drop that message. nonce={self.nonce} / requestNonce={get_data_response.request_nonce}"
                         )
                     logger.info(
                         f"Processing GetDataResponse took {get_time_ms() - ts} ms"
