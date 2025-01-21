@@ -36,7 +36,7 @@ class BundleOfEnvelopes(BroadcastMessage, ExtendedDataSizePermission, Capability
                     envelopes.append(envelope)
             except ProtobufferException:
                 continue
-        return BundleOfEnvelopes(envelopes=envelopes)
+        return BundleOfEnvelopes(envelopes=envelopes, message_version=message_version)
 
     def get_required_capabilities(self) -> Capabilities:
         return Capabilities([Capability.BUNDLE_OF_ENVELOPES])
