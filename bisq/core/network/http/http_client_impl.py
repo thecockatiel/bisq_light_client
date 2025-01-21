@@ -2,7 +2,7 @@ from typing import Literal, Union
 import uuid
 from requests import Session, Response
 
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.network.http.http_client import HttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy

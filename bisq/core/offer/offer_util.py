@@ -4,7 +4,7 @@ from bisq.common.capabilities import Capabilities
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.common.util.utilities import get_random_prefix
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.locale.currency_util import get_currency_by_country_code, is_crypto_currency, is_fiat_currency
 from bisq.core.locale.res import Res

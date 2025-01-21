@@ -16,7 +16,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
-import bisq.common.version as Version
+from bisq.common.version import Version
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
 from bisq.core.network.p2p.peers.peer_manager import PeerManager

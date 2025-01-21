@@ -17,7 +17,7 @@ from signal import signal, SIGINT, SIGTERM
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
 from bisq.common.user_thread import UserThread
 from bisq.common.util.profiler import Profiler
-import bisq.common.version as Version
+from bisq.common.version import Version
 from twisted.python import log
 
 if TYPE_CHECKING:

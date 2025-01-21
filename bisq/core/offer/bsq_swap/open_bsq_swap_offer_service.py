@@ -26,7 +26,7 @@ from bitcoinj.base.coin import Coin
 from utils.data import ObservableChangeEvent, SimplePropertyChangeEvent
 from bisq.core.offer.bsq_swap.open_bsq_swap_offer import OpenBsqSwapOffer
 from utils.time import get_time_ms
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.offer.offer import Offer
 
 if TYPE_CHECKING:

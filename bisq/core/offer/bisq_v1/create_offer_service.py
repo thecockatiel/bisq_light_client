@@ -13,7 +13,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.offer.offer import Offer
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
-import bisq.common.version as Version
+from bisq.common.version import Version
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:

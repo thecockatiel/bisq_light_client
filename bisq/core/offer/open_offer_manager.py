@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import TYPE_CHECKING, List, Callable, Optional
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler

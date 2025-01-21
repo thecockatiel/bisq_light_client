@@ -33,7 +33,7 @@ from bisq.core.support.messages.chat_messsage import ChatMessage
 from bisq.core.trade.model.bisq_v1.trade import Trade
 from bisq.core.trade.model.trade_dispute_state import TradeDisputeState
 from bisq.core.support.support_type import SupportType
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.signature_decode_exception import SignatureDecodeException
 

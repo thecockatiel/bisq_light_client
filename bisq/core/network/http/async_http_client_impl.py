@@ -4,7 +4,7 @@ import uuid
 import aiohttp
 from aiohttp_socks import ProxyType, ProxyConnector
 
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.network.http.async_http_client import AsyncHttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.http.http_response_error import HttpResponseError

@@ -9,7 +9,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
 from bisq.common.protocol.network.get_data_response_priority import (
     GetDataResponsePriority,
 )
-import bisq.common.version as Version
+from bisq.common.version import Version
 import proto.pb_pb2 as protobuf
 
 if TYPE_CHECKING:

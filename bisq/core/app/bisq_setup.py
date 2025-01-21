@@ -28,7 +28,7 @@ from utils.data import (
 from bisq.core.btc.wallet.http.mem_pool_space_tx_broadcaster import (
     MemPoolSpaceTxBroadcaster,
 )
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.account.witness.account_age_witness_service import (
     AccountAgeWitnessService,
 )

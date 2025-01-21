@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import logging
 from bisq.common.app.dev_env import DevEnv
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload

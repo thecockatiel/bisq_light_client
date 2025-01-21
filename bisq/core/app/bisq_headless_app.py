@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.app.headless_app import HeadlessApp
-import bisq.common.version as Version
+from bisq.common.version import Version
 
 if TYPE_CHECKING:
     from bisq.core.trade.trade_manager import TradeManager

@@ -28,7 +28,7 @@ from bitcoinj.base.utils.fiat import Fiat
 from utils.data import ObservableList, SimpleProperty, SimplePropertyChangeEvent
 from bisq.core.support.support_manager import SupportManager
 from bisq.core.support.dispute.disput_validation_exceptions import DisputeValidationException
-import bisq.common.version as Version
+from bisq.common.version import Version
 from utils.time import get_time_ms
 from bisq.core.support.messages.chat_messsage import ChatMessage
 

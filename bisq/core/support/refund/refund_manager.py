@@ -20,7 +20,7 @@ from bisq.core.support.dispute.agent.dispute_agent_lookup_map import (
     DisputeAgentLookupMap,
 )
 from bisq.core.locale.res import Res
-import bisq.common.version as Version
+from bisq.common.version import Version
 from global_container import GLOBAL_CONTAINER
 
 if TYPE_CHECKING:

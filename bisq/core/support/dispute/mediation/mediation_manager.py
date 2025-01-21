@@ -25,7 +25,7 @@ from bisq.core.support.messages.chat_messsage import ChatMessage
 from bisq.core.trade.model.bisq_v1.trade import Trade
 from bisq.core.trade.model.trade_dispute_state import TradeDisputeState
 from bisq.core.support.support_type import SupportType
-import bisq.common.version as Version
+from bisq.common.version import Version
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.core.trade.protocol.bisq_v1.dispute_protocol import DisputeProtocol
 

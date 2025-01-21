@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from google.protobuf.message import Message
 from bisq.common.envelope import Envelope
 import proto.pb_pb2 as protobuf
-import bisq.common.version as Version
+from bisq.common.version import Version
 
 @dataclass
 class NetworkEnvelope(Envelope, ABC):
