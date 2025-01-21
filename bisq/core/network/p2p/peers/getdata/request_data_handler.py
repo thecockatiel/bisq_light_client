@@ -218,7 +218,9 @@ class RequestDataHandler(MessageListener):
         items = len(data_set) + len(persistable_set)
         sb += f"Received {items} instances from a {self.get_data_request_type}\n"
         for key, value in num_payloads.items():
-            sb += f"{key}: {value[0]} / {readable_file_size(value[1])}\n"
+            val1 = value[0].get()
+            val2 = value[1].get()
+            sb += f"{key}: {val1} / {readable_file_size(val2)}\n"
         sb += "#################################################################\n"
         logger.info(sb)
 
