@@ -437,7 +437,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self, node_address: "NodeAddress", capability: "Capability"
     ) -> bool:
         capabilities = self.find_peers_capabilities(node_address)
-        return capability in capabilities if capabilities else False
+        return capability in capabilities if capabilities is not None else False
 
     def find_peers_capabilities(
         self, node_address: "NodeAddress"
@@ -464,7 +464,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def apply_capabilities(
         self, connection: "Connection", new_capabilities: "Capabilities"
     ):
-        if not new_capabilities or new_capabilities.is_empty():
+        if new_capabilities is None or new_capabilities.is_empty():
             return
 
         node_address = connection.peers_node_address

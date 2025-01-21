@@ -36,7 +36,7 @@ class Capabilities:
             self.capabilities = self.capabilities.union(capabilities)
 
     def is_empty(self) -> bool:
-        return not self.capabilities
+        return len(self.capabilities) == 0
 
     def contains_all(self, required_items: Iterable[Capability]) -> bool:
         return self.capabilities.issuperset(required_items)
@@ -68,13 +68,10 @@ class Capabilities:
 
     @staticmethod
     def from_int_list(capabilities_list: list[int]) -> "Capabilities":
-        valid_capabilities = {
-            cap for cap in Capability if 0 <= cap.value < len(Capability)
-        }
         caps = {
-            Capability(cap) for cap in capabilities_list if cap in valid_capabilities
+            Capability(cap) for cap in capabilities_list if 0 <= cap < len(Capability)
         }
-        return Capabilities(list(caps))
+        return Capabilities(caps)
 
     @staticmethod
     def from_string_list(list_str: str) -> "Capabilities":
