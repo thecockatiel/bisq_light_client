@@ -1,5 +1,6 @@
 from concurrent.futures import Future
 from typing import TYPE_CHECKING
+from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from utils.concurrency import ThreadSafeSet
 
@@ -33,6 +34,7 @@ class TransactionConfidence:
         self.confidence_type: "TransactionConfidenceType" = (
             TransactionConfidenceType.UNKNOWN
         )
+        self.confidence_source: "TransactionConfidenceSource" = TransactionConfidenceSource.UNKNOWN
         """a general statement of the level of confidence you can have in this transaction."""
 
         self._listeners = ThreadSafeSet["TransactionConfidenceChangedListener"]()
