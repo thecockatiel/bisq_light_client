@@ -9,6 +9,10 @@ from bitcoinj.base.utils.monetary_format import MonetaryFormat
 # I decided to implement it incomplete because it is a very large class and I am not sure if it is necessary to implement it completely.
 # TODO: complete?
 class NetworkParameters(ABC):
+    PAYMENT_PROTOCOL_ID_MAINNET = "main"
+    PAYMENT_PROTOCOL_ID_TESTNET = "test"
+    PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest"
+    PAYMENT_PROTOCOL_ID_REGTEST = "regtest"
     MAX_MONEY = Coin.COIN().multiply(21000000)
     
     class ProtocolVersion(Enum):
@@ -106,4 +110,8 @@ class NetworkParameters(ABC):
     @abstractmethod
     def get_protocol_version_num(self, version: ProtocolVersion) -> int:
         """Get protocol version number for the given protocol version."""
+        pass
+
+    @abstractmethod
+    def get_payment_protocol_id(self) -> str:
         pass

@@ -39,3 +39,6 @@ class MainNetParams(NetworkParameters):
 
     def get_protocol_version_num(self, version: NetworkParameters.ProtocolVersion) -> int:
         return version.get_bitcoin_protocol_version()
+    
+    def get_payment_protocol_id(self):
+        return NetworkParameters.PAYMENT_PROTOCOL_ID_MAINNET
