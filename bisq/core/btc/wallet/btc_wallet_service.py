@@ -176,6 +176,11 @@ class BtcWalletService(WalletService, DaoStateListener):
             if entry.context == AddressEntryContext.MULTI_SIG
             or entry.context == AddressEntryContext.TRADE_PAYOUT
         ]
+        
+    def complete_prepared_send_bsq_tx(self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_send_bsq_tx Not implemented yet"
+        )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Find inputs and change
