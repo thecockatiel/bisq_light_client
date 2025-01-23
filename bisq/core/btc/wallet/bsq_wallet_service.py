@@ -1,11 +1,12 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.btc.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
@@ -62,3 +63,13 @@ class BsqWalletService(WalletService, DaoStateListener):
 
     def remove_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self.bsq_balance_listeners.discard(listener)
+
+    def get_prepared_send_bsq_tx(
+        self,
+        receiver_address: str,
+        receiver_amount: Coin,
+        utxo_candidates: Optional[set["TransactionOutput"]] = None,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_send_bsq_tx Not implemented yet"
+        )
