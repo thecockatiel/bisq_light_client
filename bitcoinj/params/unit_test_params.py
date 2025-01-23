@@ -1,3 +1,4 @@
+from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.params.main_net_params import MainNetParams
 
 
@@ -12,3 +13,6 @@ class UnitTestParams(MainNetParams):
         self.bip32_header_P2PKH_priv = 0x04358394 # The 4 byte header that serializes in base58 to "tprv"
         self.bip32_header_P2WPKH_pub = 0x045f1cf6 # The 4 byte header that serializes in base58 to "vpub".
         self.bip32_header_P2WPKH_priv = 0x045f18bc # The 4 byte header that serializes in base58 to "vprv"
+            
+    def get_payment_protocol_id(self):
+        return NetworkParameters.PAYMENT_PROTOCOL_ID_UNIT_TESTS
