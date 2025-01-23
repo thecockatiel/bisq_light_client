@@ -1,5 +1,8 @@
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
+from bisq.core.dao.state.model.blockchain.tx_type import TxType
+from bitcoinj.core.transaction import Transaction
 
 if TYPE_CHECKING:
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
@@ -42,8 +45,20 @@ class WalletsManager:
         self.btc_wallet_service.aes_key = aes_key
         self.bsq_wallet_service.aes_key = aes_key
         self.trade_wallet_service.aes_key = aes_key
-        
+
     def maybe_add_segwit_keychains(self, aes_key: bytes):
         wallet_config = self.wallets_setup.get_wallet_config()
-        wallet_config.maybe_add_segwit_keychain(wallet_config.btc_wallet(), aes_key, False)
-        wallet_config.maybe_add_segwit_keychain(wallet_config.bsq_wallet(), aes_key, True)
+        wallet_config.maybe_add_segwit_keychain(
+            wallet_config.btc_wallet(), aes_key, False
+        )
+        wallet_config.maybe_add_segwit_keychain(
+            wallet_config.bsq_wallet(), aes_key, True
+        )
+
+    # A bsq tx has miner fees in btc included. Thus we need to handle it on both wallets.
+    def publish_and_commit_bsq_tx(
+        self, tx: "Transaction", tx_type: "TxType", callback: "TxBroadcasterCallback"
+    ):
+        raise NotImplementedError(
+            "WalletsManager.publish_and_commit_bsq_tx is not implemented yet"
+        )
