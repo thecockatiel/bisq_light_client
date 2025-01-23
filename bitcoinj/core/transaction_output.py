@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.script.script import Script
 
 if TYPE_CHECKING:
@@ -41,6 +42,13 @@ class TransactionOutput:
 
     def get_parent_transaction_hash(self) -> Optional[str]:
         return self.parent.get_tx_id()
+    
+    def get_parent_transaction_depth_in_blocks(self) -> int:
+        if self.parent is not None:
+            confidence = self.parent.get_confidence()
+            if confidence.confidence_type == TransactionConfidenceType.BUILDING:
+                return confidence.get_depth_in_blocks()
+        return -1
 
     def is_mine(self, transaction_bad) -> bool:
         """Returns true if this output is to a key, or an address we have the keys for, in the wallet."""
