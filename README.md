@@ -17,6 +17,8 @@ python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. -
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
 ```
 
+Note: files are expected to be generated at the root of project, beside `run_client.py`
+
 ### 2. Install dependencies
 
 ```bash
