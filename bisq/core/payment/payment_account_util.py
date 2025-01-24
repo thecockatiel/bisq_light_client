@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional
 from bisq.core.payment.payload.payment_method import PaymentMethod
+from bisq.core.payment.payment_accounts import PaymentAccounts
+from bisq.core.payment.receipt_validator import ReceiptValidator
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.sepa_account import SepaAccount
@@ -9,6 +11,8 @@ from bisq.core.payment.bank_account import BankAccount
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 
 if TYPE_CHECKING:
+    from bisq.core.account.witness.account_age_witness_service import AccountAgeWitnessService
+    from bisq.core.offer.offer import Offer
     from bisq.core.user.user import User
     from bisq.core.payment.payment_account import PaymentAccount
     from bisq.core.locale.country import Country
@@ -16,6 +20,25 @@ if TYPE_CHECKING:
 
 # TODO: implement rest of the class
 class PaymentAccountUtil:
+    
+    # JAVA TODO might be used to show more details if we get payment methods updates with diff. limits
+    @staticmethod
+    def get_info_for_mismatching_payment_method_limits(offer: "Offer", payment_account: "PaymentAccount") -> str:
+        # don't translate atm as it is not used so far in the UI just for logs
+        return (
+            "Payment methods have different trade limits or trade periods.\n"
+            f"Our local Payment method: {payment_account.payment_method}\n"
+            f"Payment method from offer: {offer.payment_method}"
+        )
+        
+    @staticmethod
+    def is_payment_account_valid_for_offer(offer: "Offer", payment_account: "PaymentAccount"):
+        return ReceiptValidator(offer, payment_account).is_valid()
+    
+    @staticmethod
+    def get_most_mature_payment_account_for_offer(offer: "Offer", payment_accounts: set["PaymentAccount"], service: "AccountAgeWitnessService"):
+        accounts = PaymentAccounts(payment_accounts, service)
+        return accounts.get_oldest_payment_account_for_offer(offer)
 
     @staticmethod
     def get_accepted_country_codes(payment_account: "PaymentAccount") -> Optional[List[str]]:
