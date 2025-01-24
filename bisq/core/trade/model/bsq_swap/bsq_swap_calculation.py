@@ -43,7 +43,7 @@ class BsqSwapCalculation:
 
     # Estimated size in case we do not have enough funds to calculate it from wallet inputs.
     # We use 3 non segwit inputs. 5 + 3*149 + 62 = 514
-    ESTIMATED_V_BYTES = 514
+    ESTIMATED_VBYTES = 514
 
     @staticmethod
     def get_buyers_bsq_input_value(

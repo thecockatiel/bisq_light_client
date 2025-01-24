@@ -729,7 +729,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
 
     def get_withdrawal_tx_fee_in_vbytes(self) -> int:
         return max(self.pref_payload.withdrawal_tx_fee_in_vbytes,
-                  self.fee_service.min_fee_per_v_byte)
+                  self.fee_service.min_fee_per_vbyte)
 
     def is_dao_full_node(self) -> bool:
         if self.config.full_dao_node_option_set_explicitly:
