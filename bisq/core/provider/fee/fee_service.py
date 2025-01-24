@@ -22,13 +22,13 @@ class FeeService:
     def __init__(self, dao_state_service: "DaoStateService"):
         FeeService.dao_state_service = dao_state_service
         self.fee_update_counter_property = SimpleProperty(0)
-        self.tx_fee_per_v_byte = FeeService.BTC_DEFAULT_TX_FEE
+        self.tx_fee_per_vbyte = FeeService.BTC_DEFAULT_TX_FEE
         self.last_request = 0
-        self.min_fee_per_v_byte = 0
+        self.min_fee_per_vbyte = 0
 
     def on_all_services_initialized(self, provided_filter_manager: "FilterManager"):
         FeeService.filter_manager = provided_filter_manager
-        self.min_fee_per_v_byte = GLOBAL_CONTAINER.value.config.base_currency_network.get_default_min_fee_per_v_byte()
+        self.min_fee_per_vbyte = GLOBAL_CONTAINER.value.config.base_currency_network.get_default_min_fee_per_vbyte()
 
     @staticmethod
     def get_fee_from_param_as_coin(param: Param) -> Coin:
@@ -83,15 +83,15 @@ class FeeService:
         return self.get_tx_fee_per_vbyte().multiply(vsize_in_vbytes)
 
     def get_tx_fee_per_vbyte(self) -> Coin:
-        return Coin.value_of(self.tx_fee_per_v_byte)
+        return Coin.value_of(self.tx_fee_per_vbyte)
 
     def is_fee_available(self) -> bool:
         return self.fee_update_counter_property.get() > 0
 
-    def update_fee_info(self, tx_fee_per_v_byte: int, min_fee_per_v_byte: int) -> None:
-        self.tx_fee_per_v_byte = tx_fee_per_v_byte
-        self.min_fee_per_v_byte = min_fee_per_v_byte
+    def update_fee_info(self, tx_fee_per_vbyte: int, min_fee_per_vbyte: int) -> None:
+        self.tx_fee_per_vbyte = tx_fee_per_vbyte
+        self.min_fee_per_vbyte = min_fee_per_vbyte
         self.fee_update_counter_property.set(self.fee_update_counter_property.get() + 1)
         self.last_request = get_time_ms()
-        logger.info(f"BTC tx fee: txFeePerVbyte={tx_fee_per_v_byte} minFeePerVbyte={min_fee_per_v_byte}")
+        logger.info(f"BTC tx fee: txFeePerVbyte={tx_fee_per_vbyte} minFeePerVbyte={min_fee_per_vbyte}")
 

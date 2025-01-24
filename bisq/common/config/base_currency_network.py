@@ -48,6 +48,6 @@ class BaseCurrencyNetwork(Enum):
     def is_dao_betanet(self):
         return self.name == "BTC_DAO_BETANET"
     
-    def get_default_min_fee_per_v_byte(self):
+    def get_default_min_fee_per_vbyte(self):
         # 2021-02-22 due to mempool congestion, increased from 2
         return 15
