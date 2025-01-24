@@ -1,7 +1,7 @@
 from bisq.common.payload import Payload
 from bisq.core.api.model.bsq_balance_info import BsqBalanceInfo
 from bisq.core.api.model.btc_balance_info import BtcBalanceInfo
-import proto.grpc_pb2 as grpc_pb2
+import grpc_pb2
 
 
 class BalancesInfo(Payload):

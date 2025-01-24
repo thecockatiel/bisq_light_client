@@ -3,7 +3,7 @@ from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
     CountryBasedPaymentAccountPayload,
 )
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class F2FAccountPayload(CountryBasedPaymentAccountPayload):
 

@@ -10,7 +10,7 @@ from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.filter.payment_account_filter import PaymentAccountFilter
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.ordered_containers import OrderedSet
 from utils.time import get_time_ms
 

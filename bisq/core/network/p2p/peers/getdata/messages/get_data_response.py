@@ -14,7 +14,7 @@ from bisq.common.setup.log_setup import get_logger
 
 from utils.data import raise_required
 from utils.formatting import readable_file_size
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload

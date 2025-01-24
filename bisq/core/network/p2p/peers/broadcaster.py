@@ -7,9 +7,9 @@ from copy import copy
 
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
+from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.common.setup.log_setup import get_logger
-from proto.pb_pb2 import NodeAddress
 from utils.concurrency import ThreadSafeSet
 from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler
 

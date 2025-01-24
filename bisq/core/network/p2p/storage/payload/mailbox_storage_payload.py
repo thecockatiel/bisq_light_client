@@ -9,7 +9,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 

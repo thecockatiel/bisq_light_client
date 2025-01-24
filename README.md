@@ -4,11 +4,20 @@ a bisq client written in python intended to be fast.
 
 ## Getting Started
 
-First, you need to generate the proto files in `proto` directory. refer to README file inside.
-
 Minimum required python version is 3.9
 
-## Installing deps
+### 1. Generate proto files
+
+```bash
+# install the required tools:
+python -m pip install -r ../requirements.txt
+# generate the python files
+python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
+# Or this if you are using debian packages and command above does not work:
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
+```
+
+### 2. Install dependencies
 
 ```bash
 # in project root:
@@ -19,7 +28,7 @@ sudo apt install python3-txtorcon python3-twisted python3-tqdm python3-grpcio py
 
 It is a priority to make the project runnable without installing deps through pip. please let me know if something does not work.
 
-## Note about deps
+### Note about deps
 
 Since we use some parts of electrum and in part [libsecp256k1](https://github.com/bitcoin-core/secp256k1), you can follow the instructions for building or installing libsecp256k1 from [electrum's readme](https://github.com/spesmilo/electrum/blob/4.4.5/README.md)
 

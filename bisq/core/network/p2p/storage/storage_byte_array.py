@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Set
 
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 # moved from P2PDataStorage.ByteArray here
 

@@ -5,7 +5,7 @@ from bisq.core.payment.payload.country_based_payment_account_payload import (
     CountryBasedPaymentAccountPayload,
 )
 from bisq.core.payment.payload.payload_with_holder_name import PayloadWithHolderName
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.locale.country import Country

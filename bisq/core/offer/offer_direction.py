@@ -1,6 +1,6 @@
 from enum import IntEnum
 from bisq.common.protocol.proto_util import ProtoUtil
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class OfferDirection(IntEnum):
     BUY = 0

@@ -4,7 +4,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
 from bisq.core.trade.protocol.trade_peer import TradePeer
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class BsqSwapTradePeer(TradePeer):
     

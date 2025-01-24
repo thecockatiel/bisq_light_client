@@ -3,7 +3,7 @@ from typing import Optional
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.util.utilities import bytes_as_hex_string
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 

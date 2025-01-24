@@ -19,7 +19,7 @@ from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from utils.clock import Clock
 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional 
   
 from bisq.common.protocol.network.network_payload import NetworkPayload
-from proto import pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.crypto.sig import Sig, DSA
 
 class SealedAndSigned(NetworkPayload):

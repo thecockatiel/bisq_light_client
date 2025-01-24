@@ -20,7 +20,7 @@ from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
 from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.user.preferences_payload import PreferencesPayload
 from bisq.core.user.user_payload import UserPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.di import DependencyProvider
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeDict
 
 class IgnoredMailboxMap(PersistableEnvelope):

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.arbitration.messages.arbitration_message import ArbitrationMessage
 from bisq.core.support.support_type import SupportType
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass

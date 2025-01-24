@@ -5,7 +5,7 @@ from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import TradeMailboxMessage 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 if TYPE_CHECKING:

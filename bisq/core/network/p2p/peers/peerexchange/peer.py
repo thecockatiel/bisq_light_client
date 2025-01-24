@@ -10,7 +10,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from bisq.core.network.p2p.network.supported_capabilities_listener import SupportedCapabilitiesListener
 from bisq.core.network.p2p.node_address import NodeAddress
 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 @dataclass

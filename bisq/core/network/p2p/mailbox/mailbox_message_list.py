@@ -3,7 +3,7 @@ from bisq.common.protocol.network.network_proto_resolver import NetworkProtoReso
 from bisq.common.protocol.persistable.persistable_list import PersistableList
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.network.p2p.mailbox.mailbox_item import MailboxItem
 
 logger = get_logger(__name__)

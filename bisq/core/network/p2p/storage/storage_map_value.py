@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass(frozen=True)

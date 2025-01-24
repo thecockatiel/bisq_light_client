@@ -1,5 +1,5 @@
 from bisq.common.protocol.network.network_payload import NetworkPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class ProofOfWork(NetworkPayload):
     def __init__(self, payload: bytes, counter: int, challenge: bytes,

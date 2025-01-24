@@ -7,7 +7,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.trade_message import TradeMessage
 from google.protobuf.message import Message
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.node_address import NodeAddress
 from utils.data import raise_required

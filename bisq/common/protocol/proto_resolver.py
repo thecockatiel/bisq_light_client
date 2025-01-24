@@ -4,7 +4,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
-    import proto.pb_pb2 as protobuf
+    import pb_pb2 as protobuf
 
 class ProtoResolver(ABC):
     @abstractmethod

@@ -1,6 +1,6 @@
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class ParamChange(PersistablePayload, ImmutableDaoStateModel):

@@ -1,5 +1,5 @@
 from bisq.common.payload import Payload
-import proto.grpc_pb2 as grpc_pb2
+import grpc_pb2
 
 
 class BsqBalanceInfo(Payload):

@@ -10,7 +10,7 @@ from bisq.core.trade.model.maker_trade import MakerTrade
 from bisq.core.trade.protocol.bisq_v1.model.trading_peer import TradingPeer
 from bisq.core.trade.protocol.protocol_model import ProtocolModel
 from bitcoinj.base.coin import Coin
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import SimpleProperty
 from bisq.core.payment.payment_account import PaymentAccount
 

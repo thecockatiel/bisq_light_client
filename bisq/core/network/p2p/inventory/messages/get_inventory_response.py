@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.inventory.model.inventory_item import InventoryItem
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass(eq=True)

@@ -14,7 +14,7 @@ from bisq.common.protocol.persistable.persistable_envelope import (
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from proto.delimited_protobuf import read_delimited, write_delimited
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import check_dir

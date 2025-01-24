@@ -7,7 +7,7 @@ from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 logger =  get_logger(__name__)

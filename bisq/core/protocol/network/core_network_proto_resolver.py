@@ -56,7 +56,7 @@ from bisq.core.filter.filter import Filter
 from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
 from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload

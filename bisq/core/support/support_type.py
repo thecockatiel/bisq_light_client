@@ -1,6 +1,6 @@
 from enum import IntEnum
 from bisq.common.protocol.proto_util import ProtoUtil
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class SupportType(IntEnum):
     ARBITRATION = 0 # Need to be at index 0 to be the fallback for old clients

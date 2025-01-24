@@ -1,5 +1,5 @@
 from bisq.common.protocol.persistable.persistable_list import PersistableList
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.payment.payment_account import PaymentAccount
 
 class PaymentAccountList(PersistableList["PaymentAccount"]):

@@ -6,7 +6,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.offer.availability.availability_result import AvailabilityResult
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass

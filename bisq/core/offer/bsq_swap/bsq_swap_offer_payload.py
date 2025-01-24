@@ -6,7 +6,7 @@ from bisq.core.network.p2p.storage.payload.proof_of_work_payload import ProofOfW
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress

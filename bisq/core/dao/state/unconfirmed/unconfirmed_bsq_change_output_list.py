@@ -1,7 +1,7 @@
 from collections.abc import Collection
 from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.persistable.persistable_list import PersistableList
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.dao.state.unconfirmed.unconfirmed_tx_output import UnconfirmedTxOutput
 
 

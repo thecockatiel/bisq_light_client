@@ -9,7 +9,7 @@ from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.trade.protocol.trade_message import TradeMessage
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 

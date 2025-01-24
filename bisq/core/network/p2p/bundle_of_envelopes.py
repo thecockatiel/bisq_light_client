@@ -7,7 +7,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.p2p.extended_data_size_permission import ExtendedDataSizePermission
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from dataclasses import dataclass, field
 

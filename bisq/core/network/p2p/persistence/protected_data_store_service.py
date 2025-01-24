@@ -6,10 +6,10 @@ from utils.concurrency import AtomicInt
 
 
 if TYPE_CHECKING:
+    from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
     from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
     from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
     from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
-    from proto.pb_pb2 import ProtectedStorageEntry
 
 class ProtectedDataStoreService:
     """Used for data which can be added and removed. ProtectedStorageEntry is used for verifying ownership."""

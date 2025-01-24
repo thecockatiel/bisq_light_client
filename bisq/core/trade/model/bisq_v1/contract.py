@@ -16,7 +16,7 @@ from bisq.core.util.string_utils import string_difference
 from bisq.core.util.volume_util import VolumeUtil
 from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 import re
 
 from utils.data import raise_required

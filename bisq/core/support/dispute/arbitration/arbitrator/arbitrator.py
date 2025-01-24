@@ -5,7 +5,7 @@ from bisq.common.crypto.sig import Sig
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class Arbitrator(DisputeAgent):

@@ -8,7 +8,7 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
 from bitcoinj.script.script_type import ScriptType
 from global_container import GLOBAL_CONTAINER
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.formatting import get_short_id
 
 if TYPE_CHECKING:

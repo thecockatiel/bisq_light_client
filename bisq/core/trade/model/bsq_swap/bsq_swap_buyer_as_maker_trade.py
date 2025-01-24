@@ -5,7 +5,7 @@ from bisq.core.trade.model.bsq_swap.bsq_swap_trade_state import BsqSwapTradeStat
 from bisq.core.trade.model.maker_trade import MakerTrade
 from bitcoinj.base.coin import Coin
 import uuid
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.trade.protocol.bsq_swap.model.bsq_swap_protocol_model import BsqSwapProtocolModel
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer import Offer

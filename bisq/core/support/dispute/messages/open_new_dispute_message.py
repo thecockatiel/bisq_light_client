@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from bisq.core.support.dispute.messages.dispute_message import DisputeMessage
 from bisq.core.support.support_type import SupportType
 from bisq.core.network.p2p.node_address import NodeAddress
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 if TYPE_CHECKING:

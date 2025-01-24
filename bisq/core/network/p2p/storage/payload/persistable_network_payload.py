@@ -5,7 +5,7 @@ from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload 
 
 if TYPE_CHECKING:
-    import proto.pb_pb2 as protobuf
+    import pb_pb2 as protobuf
     from bisq.common.protocol.proto_resolver import ProtoResolver
 
 class PersistableNetworkPayload(NetworkPayload, PersistablePayload, ABC):

@@ -4,7 +4,7 @@ from bisq.common.protocol.network.network_proto_resolver import NetworkProtoReso
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from google.protobuf.message import Message
 
 from utils.data import raise_required

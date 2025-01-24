@@ -7,7 +7,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.common.setup.log_setup import get_logger
 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 

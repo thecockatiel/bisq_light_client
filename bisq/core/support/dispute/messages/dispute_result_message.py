@@ -4,7 +4,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.dispute_result import DisputeResult
 from bisq.core.support.dispute.messages.dispute_message import DisputeMessage
 from bisq.core.support.support_type import SupportType 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass

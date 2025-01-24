@@ -2,7 +2,7 @@
 from enum import Enum
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.model.trade_state_protocol import TradeStateProtocol
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
 class BsqSwapTradeState(TradeStateProtocol, Enum):

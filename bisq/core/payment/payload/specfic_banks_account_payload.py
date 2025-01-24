@@ -1,6 +1,6 @@
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.bank_account_payload import BankAccountPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from typing import Dict, List
 
 

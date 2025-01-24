@@ -1,7 +1,7 @@
 from typing import Dict
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class BsqSwapAccountPayload(PaymentAccountPayload):

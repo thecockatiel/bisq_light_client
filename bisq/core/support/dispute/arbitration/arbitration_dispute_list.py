@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, TypeVar
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.support.dispute.dispute_list import DisputeList
 from bisq.core.support.support_type import SupportType
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.support.dispute.dispute import Dispute
 
 if TYPE_CHECKING:

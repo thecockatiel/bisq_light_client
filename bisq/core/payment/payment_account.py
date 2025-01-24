@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload

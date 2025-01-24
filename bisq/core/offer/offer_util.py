@@ -10,6 +10,7 @@ from bisq.core.locale.currency_util import get_currency_by_country_code, is_cryp
 from bisq.core.locale.res import Res
 from bisq.core.monetary.volume import Volume
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
+from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.provider.fee.fee_service import FeeService
@@ -17,7 +18,6 @@ from bisq.core.util.average_price_util import get_average_price_tuple
 from bisq.core.util.coin.coin_util import CoinUtil
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
-from proto.pb_pb2 import OfferDirection
 from bisq.core.monetary.price import Price
 
 if TYPE_CHECKING:

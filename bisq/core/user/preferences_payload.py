@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.country import Country
 from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.user.preferences_const import CLEAR_DATA_AFTER_DAYS_INITIAL, INITIAL_TRADE_LIMIT

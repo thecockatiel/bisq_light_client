@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class CountryBasedPaymentAccountPayload(PaymentAccountPayload, ABC):

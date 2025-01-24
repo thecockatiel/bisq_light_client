@@ -13,7 +13,7 @@ from bisq.core.locale.res import Res
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import ObservableList, SimpleProperty, raise_required
 from utils.formatting import get_short_id
 

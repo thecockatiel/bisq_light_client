@@ -1,7 +1,7 @@
 from abc import ABC
 from functools import total_ordering
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 @total_ordering
 class TradeCurrency(PersistablePayload, ABC):

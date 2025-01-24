@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.trade.protocol.protocol_model import ProtocolModel
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.trade.protocol.bsq_swap.model.bsq_swap_trade_peer import BsqSwapTradePeer

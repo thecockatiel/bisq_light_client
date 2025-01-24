@@ -1,5 +1,5 @@
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class BlockChainExplorer(PersistablePayload):
     def __init__(self, name: str, tx_url: str, address_url: str):

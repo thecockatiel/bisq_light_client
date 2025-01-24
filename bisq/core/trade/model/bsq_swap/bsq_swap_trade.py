@@ -8,7 +8,7 @@ from bisq.core.trade.model.trade_model import TradeModel
 from bitcoinj.base.coin import Coin
 from utils.data import SimpleProperty
 from typing import TYPE_CHECKING, Optional
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction

@@ -3,7 +3,7 @@ import secrets
 from typing import Optional
 import binascii
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
