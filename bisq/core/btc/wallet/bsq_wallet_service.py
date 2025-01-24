@@ -6,6 +6,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.btc.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
@@ -73,3 +74,11 @@ class BsqWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BsqWalletService.get_prepared_send_bsq_tx Not implemented yet"
         )
+
+    def get_unused_address(self) -> "Address":
+        raise RuntimeError(
+            "BsqWalletService.get_unused_address Not implemented yet"
+        )
+
+    def get_unused_bsq_address_as_string(self) -> str:
+        return "B" + self.get_unused_address()
