@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Iterable, List, Optional
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payment_accounts import PaymentAccounts
 from bisq.core.payment.receipt_validator import ReceiptValidator
@@ -20,6 +20,13 @@ if TYPE_CHECKING:
 
 # TODO: implement rest of the class
 class PaymentAccountUtil:
+    
+    @staticmethod
+    def is_any_payment_account_valid_for_offer(offer: "Offer", payment_accounts: Iterable["PaymentAccounts"]):
+        for account in payment_accounts:
+            if PaymentAccountUtil.is_payment_account_valid_for_offer(offer, account):
+                return True
+        return False
     
     # JAVA TODO might be used to show more details if we get payment methods updates with diff. limits
     @staticmethod
