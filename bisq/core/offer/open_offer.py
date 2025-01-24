@@ -7,7 +7,7 @@ from bisq.core.offer.offer import Offer
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.provider.mempool.fee_validation_status import FeeValidationStatus
 from bisq.core.trade.model.tradable import Tradable
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 

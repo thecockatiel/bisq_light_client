@@ -6,7 +6,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.currency_util import get_mature_market_currencies
 from bisq.core.locale.res import Res
 from bisq.core.payment.trade_limits import TradeLimits
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bitcoinj.base.coin import Coin
 

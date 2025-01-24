@@ -9,7 +9,7 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.network.crypto.decrypted_data_tuple import DecryptedDataTuple
 from bisq.core.network.p2p.decrypted_message_with_pub_key import DecryptedMessageWithPubKey
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from google.protobuf import message
 
 if TYPE_CHECKING:

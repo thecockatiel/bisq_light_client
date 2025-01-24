@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload

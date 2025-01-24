@@ -1,4 +1,4 @@
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.locale.trade_currency import TradeCurrency
 
 

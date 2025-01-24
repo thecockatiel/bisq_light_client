@@ -11,7 +11,7 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.node_address import NodeAddress
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 @dataclass

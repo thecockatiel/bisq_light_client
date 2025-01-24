@@ -15,7 +15,7 @@ from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import Mailbo
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload, wrap_in_storage_payload
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.clock import Clock
 
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload, wrap_in_storage_payload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional, cast, Any
 from decimal import Decimal
 
 from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 from bisq.common.crypto.sealed_and_signed import SealedAndSigned
-from proto import pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class TestSealedAndSigned(unittest.TestCase):
     def setUp(self):

@@ -1,5 +1,5 @@
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from typing import List
 
 

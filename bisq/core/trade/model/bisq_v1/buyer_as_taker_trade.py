@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.trade.model.taker_trade import TakerTrade
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.trade.model.bisq_v1.buyer_trade import BuyerTrade
 from bitcoinj.base.coin import Coin
 from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel

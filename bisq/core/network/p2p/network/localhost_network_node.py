@@ -5,7 +5,6 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
-from proto.pb_pb2 import NodeAddress
 import socket
 
 if TYPE_CHECKING:

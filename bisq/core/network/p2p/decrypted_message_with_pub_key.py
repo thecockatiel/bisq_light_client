@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.crypto.sig import Sig, DSA
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver

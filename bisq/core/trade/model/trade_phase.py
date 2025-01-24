@@ -1,6 +1,6 @@
 from enum import IntEnum
 from bisq.core.trade.model.trade_phase_protocol import TradePhaseProtocol
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
 class TradePhase(TradePhaseProtocol, IntEnum):

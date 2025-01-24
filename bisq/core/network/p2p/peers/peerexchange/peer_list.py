@@ -3,7 +3,7 @@ from typing import Set, Iterable
 from google.protobuf.message import Message
 
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-import proto.pb_pb2 as protobuf 
+import pb_pb2 as protobuf 
 
 from .peer import Peer
 

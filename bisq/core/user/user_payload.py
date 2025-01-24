@@ -4,7 +4,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.notifications.alerts.market.market_alert_filter import MarketAlertFilter
 from bisq.core.notifications.alerts.price.price_alert_filter import PriceAlertFilter
 from bisq.core.user.cookie import Cookie
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.alert.alert import Alert
 from bisq.core.filter.filter import Filter

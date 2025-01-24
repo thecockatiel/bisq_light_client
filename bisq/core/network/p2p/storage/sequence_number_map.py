@@ -1,7 +1,7 @@
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeDict
 
 class SequenceNumberMap(PersistableEnvelope):

@@ -8,7 +8,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
     TradeMailboxMessage,
 )
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class PayoutTxPublishedMessage(TradeMailboxMessage):

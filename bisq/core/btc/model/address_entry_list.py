@@ -6,7 +6,7 @@ from bisq.common.protocol.persistable.persistable_envelope import PersistableEnv
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:

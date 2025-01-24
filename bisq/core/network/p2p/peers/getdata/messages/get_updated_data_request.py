@@ -5,7 +5,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.common.setup.log_setup import get_logger
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 if TYPE_CHECKING:

@@ -3,7 +3,7 @@ import hashlib
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 @dataclass(eq=False)

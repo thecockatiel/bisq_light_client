@@ -1,5 +1,5 @@
 from enum import IntEnum
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
 class TradeDisputeState(IntEnum):

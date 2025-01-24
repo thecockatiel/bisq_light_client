@@ -12,7 +12,7 @@ from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator

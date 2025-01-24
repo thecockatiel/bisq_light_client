@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.trade_message import TradeMessage
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 # It is the last message in the take offer phase. We use MailboxMessage instead of DirectMessage to add more tolerance

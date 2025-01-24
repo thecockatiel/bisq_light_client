@@ -8,7 +8,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 

@@ -1,7 +1,7 @@
 from typing import Collection, Optional, cast
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.network.p2p.persistence.persistable_network_payload_store import PersistableNetworkPayloadStore
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 # We store only the payload in the PB file to save disc space. The hash of the payload can be created anyway and

@@ -6,7 +6,7 @@ from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayl
 from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
     TradeMailboxMessage,
 )
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 

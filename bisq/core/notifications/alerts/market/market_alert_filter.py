@@ -1,5 +1,5 @@
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from typing import TYPE_CHECKING, List
 from bisq.core.payment.payment_account import PaymentAccount
 

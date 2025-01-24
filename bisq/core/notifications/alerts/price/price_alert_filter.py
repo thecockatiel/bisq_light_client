@@ -1,5 +1,5 @@
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class PriceAlertFilter(PersistablePayload):
     def __init__(self, currency_code: str, high: int, low: int):

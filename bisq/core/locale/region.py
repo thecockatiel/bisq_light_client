@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from google.protobuf.message import Message
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 
 

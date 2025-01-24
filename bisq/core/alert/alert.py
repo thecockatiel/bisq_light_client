@@ -10,7 +10,7 @@ from bisq.common.protocol.network.get_data_response_priority import (
     GetDataResponsePriority,
 )
 from bisq.common.version import Version
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences

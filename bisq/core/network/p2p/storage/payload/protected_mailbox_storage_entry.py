@@ -5,7 +5,7 @@ from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import Mailbo
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
 from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver

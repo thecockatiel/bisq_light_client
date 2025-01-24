@@ -14,7 +14,7 @@ from bisq.core.network.p2p.storage.payload.process_once_persistable_network_payl
     ProcessOncePersistableNetworkPayload,
 )
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
 

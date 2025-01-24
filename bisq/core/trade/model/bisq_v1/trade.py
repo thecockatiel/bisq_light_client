@@ -21,7 +21,7 @@ from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bisq.common.protocol.proto_util import ProtoUtil
 from utils.data import ObservableList, SimpleProperty, SimplePropertyChangeEvent
 from utils.time import get_time_ms
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer

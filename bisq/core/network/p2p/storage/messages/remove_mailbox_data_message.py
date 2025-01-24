@@ -4,7 +4,7 @@ from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMe
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import (
     ProtectedMailboxStorageEntry,
 )
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from typing import TYPE_CHECKING
 

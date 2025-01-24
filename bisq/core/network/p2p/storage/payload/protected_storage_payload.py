@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from google.protobuf import message as Message
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver

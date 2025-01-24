@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from utils.data import raise_required
 

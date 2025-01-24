@@ -4,7 +4,7 @@ from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class Mediator(DisputeAgent):
     def __init__(

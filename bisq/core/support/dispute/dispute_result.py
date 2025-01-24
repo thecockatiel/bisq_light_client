@@ -6,7 +6,7 @@ from bisq.core.support.dispute.dispute_result_payout_suggestion import DisputeRe
 from bisq.core.support.dispute.dispute_result_reason import DisputeResultReason
 from bisq.core.support.dispute.dispute_result_winner import DisputeResultWinner
 from bitcoinj.base.coin import Coin
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from utils.data import SimpleProperty
 from utils.time import get_time_ms

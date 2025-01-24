@@ -6,7 +6,7 @@ from bisq.common.capabilities import Capabilities
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
 from bisq.core.offer.availability.messages.offer_message import OfferMessage
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.data import raise_required
 
 if TYPE_CHECKING:

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from bisq.common.crypto.encryption import Encryption
 from bisq.common.crypto.sig import Sig, DSA
 from cryptography.hazmat.primitives.asymmetric import rsa
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from utils.java_compat import java_arrays_byte_hashcode
 
 class PubKeyRing:

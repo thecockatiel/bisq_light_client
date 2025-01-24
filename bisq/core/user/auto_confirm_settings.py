@@ -4,7 +4,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 from typing import List, Optional
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 from utils.concurrency import ThreadSafeSet
 

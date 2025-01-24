@@ -2,7 +2,7 @@
 from enum import Enum
 from bisq.core.locale.res import Res
 from bisq.common.protocol.proto_util import ProtoUtil
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 class DisputeResultPayoutSuggestion(Enum):
     UNKNOWN = ("shared.na", None)

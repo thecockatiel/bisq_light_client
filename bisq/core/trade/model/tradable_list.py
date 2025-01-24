@@ -10,11 +10,11 @@ from bisq.core.trade.model.bsq_swap.bsq_swap_buyer_as_maker_trade import BsqSwap
 from bisq.core.trade.model.bsq_swap.bsq_swap_buyer_as_taker_trade import BsqSwapBuyerAsTakerTrade
 from bisq.core.trade.model.bsq_swap.bsq_swap_seller_as_maker_trade import BsqSwapSellerAsMakerTrade
 from bisq.core.trade.model.bsq_swap.bsq_swap_seller_as_taker_trade import BsqSwapSellerAsTakerTrade
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_list_as_observable import PersistableListAsObservable
 
 if TYPE_CHECKING:
-    from proto.pb_pb2 import Tradable
+    from bisq.core.trade.model.tradable import Tradable
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
 
 T = TypeVar(

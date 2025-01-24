@@ -21,7 +21,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from global_container import GLOBAL_CONTAINER
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.dao.governance.param.param_type import ParamType
 
 logger = get_logger(__name__)

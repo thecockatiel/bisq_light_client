@@ -1,6 +1,6 @@
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
-from proto.pb_pb2 import DaoPhase
 
 
 # TODO

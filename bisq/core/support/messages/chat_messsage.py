@@ -15,7 +15,7 @@ from bisq.core.support.support_type import SupportType
 from utils.data import SimpleProperty, raise_required
 from utils.formatting import get_short_id
 from utils.time import get_time_ms
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 
 
 class ChatMessageListener(ABC):

@@ -1,6 +1,6 @@
 from enum import Enum
 from bisq.common.protocol.proto_util import ProtoUtil
-import proto.pb_pb2 as protobuf
+import pb_pb2 as protobuf
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 
 
