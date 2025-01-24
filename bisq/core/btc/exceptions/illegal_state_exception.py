@@ -1,2 +1,2 @@
-class IllegalStateException(RuntimeError):
+class IllegalStateException(ValueError):
     pass
