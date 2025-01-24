@@ -144,6 +144,9 @@ class WalletService(ABC):
 
     def get_balance_for_address(self, address: "Address") -> "Coin":
         raise RuntimeError("WalletService.get_balance_for_address Not implemented yet")
+    
+    def is_address_unused(self, address: "Address") -> bool:
+        raise RuntimeError("BtcWalletService.is_address_unused Not implemented yet")
 
     @staticmethod
     def maybe_add_network_tx_to_wallet(
