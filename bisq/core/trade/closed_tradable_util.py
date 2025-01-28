@@ -51,3 +51,6 @@ def cast_to_trade_model(tradable: 'Tradable') -> 'TradeModel':
 
 def cast_to_bsq_swap_trade(tradable: 'Tradable') -> 'BsqSwapTrade':
     return tradable
+
+def cast_to_open_offer(tradable: 'Tradable') -> 'OpenOffer':
+    return tradable
