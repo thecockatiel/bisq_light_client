@@ -11,8 +11,10 @@
       "program": "run_client.py",
       "console": "integratedTerminal",
       "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
+        "PYTHONPATH": "${workspaceFolder}",
+      },
+      "justMyCode": false,
+      "subProcess": false,
     },
     {
       "name": "Python Debugger: Current File",
@@ -23,8 +25,8 @@
       "args": [
         // "--logLevel=DEBUG",
         // #################################
-        // "--torControlPort=9052",
-        // "--torControlHost=127.0.0.1"
+        "--torControlPort=9052",
+        "--torControlHost=127.0.0.1"
         // #################################
         // "--torProxyHost=127.0.0.1",
         // "--torProxyPort=9050",
@@ -32,9 +34,10 @@
         // "--torProxyHiddenServicePort='9999 127.0.0.1:65018'",
       ],
       "env": {
-        "PYTHONPATH": "${workspaceFolder}"
+        "PYTHONPATH": "${workspaceFolder}",
       },
-      "justMyCode": false
+      "justMyCode": false,
+      "subProcess": false,
     },
   ]
 }
