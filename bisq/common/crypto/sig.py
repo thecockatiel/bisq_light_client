@@ -6,7 +6,7 @@ try:
     from Crypto.Signature import DSS
     from Crypto.Hash import SHA256
 except:
-    # different name of pycryptodome on debian?
+    # pycryptodomex
     from Cryptodome.PublicKey import DSA
     from Cryptodome.Signature import DSS
     from Cryptodome.Hash import SHA256

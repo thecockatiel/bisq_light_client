@@ -18,7 +18,7 @@ from bisq.common.util.utilities import bytes_as_hex_string
 try:
     from Crypto.PublicKey import DSA
 except:
-    # different name of pycryptodome on debian?
+    # pycryptodomex
     from Cryptodome.PublicKey import DSA
     
 if TYPE_CHECKING:
