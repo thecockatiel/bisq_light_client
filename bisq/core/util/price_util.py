@@ -3,11 +3,13 @@ from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.price import Price
+from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.util.formatting_util import FormattingUtils
 from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.utils.fiat import Fiat
 
 if TYPE_CHECKING:
+    from bisq.core.offer.offer import Offer
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.trade.statistics.trade_statistics_manager import (
         TradeStatisticsManager,
@@ -28,6 +30,17 @@ class PriceUtil:
         self.trade_statistics_manager = trade_statistics_manager
         self.preferences = preferences
         self.bsq_30_day_average_price: Optional[Price] = None
+
+    @staticmethod
+    def offer_percentage_to_deviation(offer: "Offer") -> Optional[float]:
+        if offer.is_use_market_based_price:
+            return (
+                offer.market_price_margin
+                if offer.direction == OfferDirection.SELL
+                else -offer.market_price_margin
+            )
+        else:
+            return None
 
     @staticmethod
     def get_market_price_as_long(input_value: str, currency_code: str) -> int:
