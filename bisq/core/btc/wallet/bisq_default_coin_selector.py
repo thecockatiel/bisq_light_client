@@ -6,6 +6,7 @@ from bisq.core.btc.wallet.restrictions import Restrictions
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
+from bitcoinj.wallet.coin_selector import CoinSelector
 
 
 if TYPE_CHECKING:
@@ -13,7 +14,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
     from bitcoinj.wallet.coin_selection import CoinSelection
-    from bitcoinj.wallet.coin_selector import CoinSelector
 
 
 class BisqDefaultCoinSelector(CoinSelector, ABC):
