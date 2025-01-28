@@ -92,8 +92,6 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
        
 @total_ordering 
 class _TransactionOutputCompare:
-    # TODO check if this returns the same result as the Java version
-    
     def __init__(self, output: "TransactionOutput"):
         self.output = output
         
@@ -117,15 +115,15 @@ class _TransactionOutputCompare:
         coin_depth2 = value2 * depth2
         
         if coin_depth1 != coin_depth2:
-            return coin_depth1 < coin_depth2
+            return coin_depth1 > coin_depth2
             
         # If coin depths are equal, compare by value
         if value1 != value2:
-            return value1 < value2
+            return value1 > value2
             
         # If values are equal, compare by hash
         hash1 = int.from_bytes(bytes.fromhex(self.output.get_parent_transaction_hash()), byteorder='big', signed=False) if self.output.get_parent_transaction_hash() else 0
         hash2 = int.from_bytes(bytes.fromhex(other.output.get_parent_transaction_hash()), byteorder='big', signed=False) if other.output.get_parent_transaction_hash() else 0
         
-        return hash1 > hash2  # Note: reversed comparison from Java to match the sorting requirements
+        return hash1 < hash2  # Note: reversed comparison from Java to match the sorting requirements
 
