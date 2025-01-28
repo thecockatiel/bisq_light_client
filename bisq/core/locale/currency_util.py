@@ -28,18 +28,24 @@ def _asset_to_crypto_currency(asset: Asset):
         asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
     )
 
+
 crypto_currency_map = {
     asset.get_ticker_symbol(): _asset_to_crypto_currency(asset)
     for asset in AssetRegistry.registered_assets
 }
 
 CURRENCY_CODE_TO_FIAT_CURRENCY_MAP = {
-    currency_code: FiatCurrency(currency_data) for currency_code, currency_data in CURRENCY_CODE_TO_DATA_MAP.items()
+    currency_code: FiatCurrency(currency_data)
+    for currency_code, currency_data in CURRENCY_CODE_TO_DATA_MAP.items()
 }
 
+
 def get_currency_by_country_code(country_code: str):
-    currency_data = CURRENCY_CODE_TO_FIAT_CURRENCY_MAP[COUNTRY_TO_CURRENCY_CODE_MAP[country_code]]
+    currency_data = CURRENCY_CODE_TO_FIAT_CURRENCY_MAP[
+        COUNTRY_TO_CURRENCY_CODE_MAP[country_code]
+    ]
     return currency_data
+
 
 # along with the comments.
 def is_crypto_currency(currency_code: str):
@@ -73,6 +79,7 @@ def is_crypto_currency(currency_code: str):
     else:
         return False
 
+
 def is_fiat_currency(currency_code: str):
     if (
         currency_code
@@ -82,33 +89,49 @@ def is_fiat_currency(currency_code: str):
         return True
     return False
 
+
 BASE_CURRENCY_CODE = SimpleProperty("BTC")
+
 
 def set_base_currency_code(currency_code: str):
     global BASE_CURRENCY_CODE
     BASE_CURRENCY_CODE.set(currency_code)
-    
+
+
 def setup(config: "Config"):
     set_base_currency_code(config.base_currency_network.currency_code)
-    
-MATURE_MARKET_CURRENCIES = tuple(sorted([
-    FiatCurrency("EUR"),
-    FiatCurrency("USD"), 
-    FiatCurrency("GBP"),
-    FiatCurrency("CAD"),
-    FiatCurrency("AUD"),
-    FiatCurrency("BRL")
-], key=lambda x: x.code))
+
+
+MATURE_MARKET_CURRENCIES = tuple(
+    sorted(
+        [
+            FiatCurrency("EUR"),
+            FiatCurrency("USD"),
+            FiatCurrency("GBP"),
+            FiatCurrency("CAD"),
+            FiatCurrency("AUD"),
+            FiatCurrency("BRL"),
+        ],
+        key=lambda x: x.code,
+    )
+)
+
 
 def get_mature_market_currencies():
     return MATURE_MARKET_CURRENCIES
 
 
-SORTED_BY_NAME_FIAT_CURRENCIES = sorted(list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: x.name)
-SORTED_BY_CODE_FIAT_CURRENCIES = sorted(SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: x.code)
+SORTED_BY_NAME_FIAT_CURRENCIES = sorted(
+    list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: x.name
+)
+SORTED_BY_CODE_FIAT_CURRENCIES = sorted(
+    SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: x.code
+)
+
 
 def get_main_fiat_currencies() -> list["TradeCurrency"]:
     from bisq.core.locale.global_settings import GlobalSettings
+
     default_trade_currency = GlobalSettings.default_trade_currency
     currencies = list["FiatCurrency"]()
     # Top traded currencies
@@ -120,23 +143,28 @@ def get_main_fiat_currencies() -> list["TradeCurrency"]:
     currencies.append(FiatCurrency("RUB"))
     currencies.append(FiatCurrency("INR"))
     currencies.append(FiatCurrency("NGN"))
-    
+
     currencies.sort(key=lambda x: x.name)
-    
-    default_fiat_currency = default_trade_currency if isinstance(default_trade_currency, FiatCurrency) else None
+
+    default_fiat_currency = (
+        default_trade_currency
+        if isinstance(default_trade_currency, FiatCurrency)
+        else None
+    )
     if default_fiat_currency is not None and default_fiat_currency in currencies:
         currencies.remove(default_fiat_currency)
         currencies.insert(0, default_fiat_currency)
 
     return currencies
 
+
 def get_main_crypto_currencies() -> list["CryptoCurrency"]:
     result = list["CryptoCurrency"]()
     result.append(CryptoCurrency("XRC", "XRhodium"))
-    
+
     if DevEnv.is_dao_trading_activated():
         result.append(CryptoCurrency("BSQ", "BSQ"))
-    
+
     result.append(CryptoCurrency("BEAM", "Beam"))
     result.append(CryptoCurrency("DASH", "Dash"))
     result.append(CryptoCurrency("DCR", "Decred"))
@@ -150,8 +178,9 @@ def get_main_crypto_currencies() -> list["CryptoCurrency"]:
     result.append(CryptoCurrency("SF", "Siafund"))
     result.append(CryptoCurrency("ZEC", "Zcash"))
     result.sort(key=lambda x: x.name)
-    
+
     return result
+
 
 REMOVED_CRYPTO_CURRENCIES = {
     "BCH": CryptoCurrency("BCH", "Bitcoin Cash"),
@@ -169,17 +198,22 @@ REMOVED_CRYPTO_CURRENCIES = {
     "RDD": CryptoCurrency("RDD", "ReddCoin"),
 }
 
+
 def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
     return list(REMOVED_CRYPTO_CURRENCIES.values())
+
 
 def get_all_fiat_currencies() -> list["FiatCurrency"]:
     return SORTED_BY_NAME_FIAT_CURRENCIES
 
+
 def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
     return crypto_currency_map.get(currency_code, None)
 
+
 def get_fiat_currency(currency_code: str) -> Optional["FiatCurrency"]:
     return CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(currency_code, None)
+
 
 def get_currency_name_by_code(currency_code: str) -> str:
     if is_crypto_currency(currency_code):
@@ -200,8 +234,20 @@ def get_currency_name_by_code(currency_code: str) -> str:
         logger.debug(f"No currency name available {currency_code}")
         return currency_code
 
+
 def get_currency_pair(currency_code: str) -> str:
     if is_fiat_currency(currency_code):
         return Res.base_currency_code + "/" + currency_code
     else:
         return currency_code + "/" + Res.base_currency_code
+
+
+def api_supports_crypto_currency(currency_code: str):
+    # Although this method is only used by the core.api package, its
+    # presence here avoids creating a new util class just for this method.
+    if is_crypto_currency(currency_code):
+        return currency_code in ["BTC", "BSQ", "XMR"]
+    else:
+        raise ValueError(
+            f"Method requires a crypto currency code, but was given '{currency_code}'."
+        )
