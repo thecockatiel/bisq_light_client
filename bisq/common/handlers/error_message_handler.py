@@ -1,12 +1,8 @@
-
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 
 
-class ErrorMessageHandler(Callable[[str], None], ABC):
+class ErrorMessageHandler(ABC):
+
     @abstractmethod
-    def handle_error_message(error_message: str):
+    def __call__(self, error_message: str) -> None:
         pass
-    
-    def __call__(self, message: str) -> None:
-        self.handle_error_message(message)
