@@ -9,7 +9,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
 from utils.network import download_file
 from utils.time import get_time_ms
-from txtorcon import Tor, TorConfig, launch
+from txtorcon import Tor, TorConfig, launch, util as txtorcon_util
 from twisted.internet import reactor
 
 
@@ -58,7 +58,16 @@ class NewTor(TorMode):
                 msg = "Failed to download and extract tor binary"
                 logger.error(msg)
                 raise RuntimeError(msg)
+        # we just want to make sure the tor we configure supports different transports
+        # thats why we download it anyway
         tor_bin_dir = tor_bin_path.parent
+        if platform.system().lower() != "windows":
+            # on linux we always want to launch the tor provided by package manager
+            builtin_tor = txtorcon_util.find_tor_binary()
+            if builtin_tor is not None:
+                if isinstance(builtin_tor, bytes):
+                    builtin_tor = builtin_tor.decode("utf-8")
+                tor_bin_path = Path(builtin_tor)
         ## END PREPARE tor
 
         config_data = dict[str, Union[bool, int, str, list[str]]]()
