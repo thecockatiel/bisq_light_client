@@ -9,8 +9,9 @@ from twisted.internet.defer import Deferred
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging
 
-set_global_container(GlobalContainer())
-configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
+if __name__ == '__main__':
+    set_global_container(GlobalContainer())
+    configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 async def main():
     base_dir = Path(__file__).parent.joinpath(".testdata")
