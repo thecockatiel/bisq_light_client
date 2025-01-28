@@ -6,6 +6,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.btc.wallets_setup import WalletsSetup
@@ -82,3 +83,8 @@ class BsqWalletService(WalletService, DaoStateListener):
 
     def get_unused_bsq_address_as_string(self) -> str:
         return "B" + self.get_unused_address()
+
+    def get_buyers_bsq_inputs_for_bsq_swap_tx(self, required: Coin) -> tuple[list["RawTransactionInput"], Coin]:
+        raise RuntimeError(
+            "BsqWalletService.get_buyers_bsq_inputs_for_bsq_swap_tx Not implemented yet"
+        )
