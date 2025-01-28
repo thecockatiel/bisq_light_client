@@ -5,7 +5,6 @@ from typing import Optional
 from utils.data import SimpleProperty
 from utils.di import DependencyProvider
 
-
 class GlobalContainer:
     ###############################################################################
     _grpc_server = None
@@ -1889,10 +1888,13 @@ class GlobalContainer:
         return GlobalContainer._pub_key_ring
 
 
+GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]]() 
 # TODO: init with None for catching bugs later.
 # this is done for convenience during dev
-GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]](GlobalContainer()) 
-
+GLOBAL_CONTAINER.value = GlobalContainer()
+from bisq.common.config.config import Config
+from utils.dir import user_data_dir
+GLOBAL_CONTAINER.value._config = Config("bisq_light_client", user_data_dir())
 
 def set_global_container(container: GlobalContainer):
     global GLOBAL_CONTAINER
