@@ -7,7 +7,7 @@ from electrum_min.crypto import ripemd
 try:
     from Crypto.Hash import keccak
 except:
-    # different name of pycryptodome on debian?
+    # pycryptodomex
     from Cryptodome.Hash import keccak
     
 
