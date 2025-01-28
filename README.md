@@ -6,20 +6,7 @@ a bisq client written in python intended to be fast.
 
 Minimum required python version is 3.9
 
-### 1. Generate proto files
-
-```bash
-# install the required tools:
-python -m pip install -r ../requirements.txt
-# generate the python files
-python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
-# Or this if you are using debian packages and command above does not work:
-python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
-```
-
-Note: files are expected to be generated at the root of project, beside `run_client.py`
-
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 # in project root:
@@ -29,6 +16,17 @@ sudo apt install python3-txtorcon python3-twisted python3-tqdm python3-grpcio py
 ```
 
 It is a priority to make the project runnable without installing deps through pip. please let me know if something does not work.
+
+### 2. Generate proto files
+
+```bash
+# generate the python files
+python -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
+# Or this if you are using debian packages and command above does not work:
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto grpc.proto pb.proto
+```
+
+Note: files are expected to be generated at the root of project, beside `run_client.py`
 
 ### Note about deps
 
