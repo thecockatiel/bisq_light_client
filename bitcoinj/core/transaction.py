@@ -13,9 +13,9 @@ from electrum_min.bitcoin import opcodes
 from electrum_min.transaction import Transaction as ElectrumTransaction, TxOutput
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
+from bitcoinj.core.transaction_confidence import TransactionConfidence
 
 if TYPE_CHECKING:
-    from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.network_parameters import NetworkParameters
 
 
@@ -100,7 +100,7 @@ class Transaction:
         return self.included_in_best_chain_at
 
     def get_confidence(self, *, context=None, table=None) -> "TransactionConfidence":
-        raise RuntimeError("Transaction.get_confidence Not implemented yet")
+        return TransactionConfidence()
 
     def serialize(self) -> bytes:
         return self._electrum_transaction.serialize_as_bytes()

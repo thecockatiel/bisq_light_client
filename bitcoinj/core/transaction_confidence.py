@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class TransactionConfidence:
 
     def __init__(self) -> None:
-        self.depth = 0
+        self.depth = -1
         self.hash: bytes = bytes()
         """
         the depth of the transaction in the best chain in blocks. An unconfirmed block has depth 0.
