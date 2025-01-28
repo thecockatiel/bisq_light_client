@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.listeners.balance_listener import BalanceListener
 from bitcoinj.base.coin import Coin
+from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
@@ -43,6 +45,7 @@ class WalletService(ABC):
         self.params = self.wallets_setup.params
         self.wallet: Optional["Wallet"] = None
         self.aes_key: Optional[bytes] = None
+        self.balance_listeners = ThreadSafeSet["BalanceListener"]()
 
     def is_wallet_ready(self):
         return self.wallet is not None
@@ -134,6 +137,12 @@ class WalletService(ABC):
         raise RuntimeError(
             "WalletService.remove_address_confidence_listener Not implemented yet"
         )
+    
+    def add_balance_listener(self, listener: "BalanceListener"):
+        self.balance_listeners.add(listener)
+    
+    def remove_balance_listener(self, listener: "BalanceListener"):
+        self.balance_listeners.discard(listener)
 
     def get_confidence_for_address_from_block_height(
         self, address: "Address", target_height: int
