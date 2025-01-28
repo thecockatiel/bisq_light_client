@@ -1,5 +1,6 @@
 import unittest
 from bisq.core.util.decimal_format import DecimalFormat
+from bisq.core.util.volume_util import VolumeUtil
 
 class TestDecimalFormat(unittest.TestCase):
     def test_default_pattern(self):
@@ -58,6 +59,12 @@ class TestDecimalFormat(unittest.TestCase):
         self.assertEqual("12,3456.78", df.format(123456.78))
         self.assertEqual("1,2345,6789.01", df.format(123456789.01))
         self.assertEqual("-1,2345,6789.01", df.format(-123456789.01))
+
+    def test_sophisticated_format(self):
+        self.assertEqual("12.341M USD", VolumeUtil.format_large_fiat_with_unit_postfix(12341234.1234, "USD"))
+        self.assertEqual("123.123 USD", VolumeUtil.format_large_fiat_with_unit_postfix(123.1234, "USD"))
+        self.assertEqual("12.123 USD", VolumeUtil.format_large_fiat_with_unit_postfix(12.123412341234, "USD"))
+        self.assertEqual("123.412B USD", VolumeUtil.format_large_fiat_with_unit_postfix(123412341234.1234, "USD"))
 
 if __name__ == '__main__':
     unittest.main()
