@@ -1,5 +1,8 @@
+from typing import Union
+
+
 class DecimalFormat:
-    def __init__(self, pattern="#.###"):
+    def __init__(self, pattern="#.###", *, grouping_used = False, grouping_size = 3):
         """
         Initialize DecimalFormat with pattern similar to Java
         Args:
@@ -8,6 +11,8 @@ class DecimalFormat:
         self.decimal_places = len(pattern.split('.')[1]) if '.' in pattern else 1
         self.min_fraction_digits = 0
         self.max_fraction_digits = self.decimal_places
+        self.grouping_used = grouping_used
+        self.grouping_size = grouping_size if grouping_size else 3
 
     def set_minimum_fraction_digits(self, digits):
         """Set the minimum number of digits allowed in the fraction portion"""
@@ -21,7 +26,7 @@ class DecimalFormat:
         if self.max_fraction_digits < self.min_fraction_digits:
             self.min_fraction_digits = self.max_fraction_digits
 
-    def format(self, number):
+    def format(self, number: Union[int, float]) -> str:
         """
         Format number according to the pattern
         Args:
@@ -49,5 +54,22 @@ class DecimalFormat:
             else:
                 decimal_part = parts[1].ljust(self.min_fraction_digits, '0')
                 formatted = f"{parts[0]}.{decimal_part}"
+        
+        # Apply grouping if enabled
+        if self.grouping_used:
+            parts = formatted.split('.')
+            integer_part = parts[0]
+            # Handle negative numbers
+            sign = ''
+            if integer_part.startswith('-'):
+                sign = '-'
+                integer_part = integer_part[1:]
+            # Add group separators
+            groups = []
+            while integer_part:
+                groups.insert(0, integer_part[-self.grouping_size:])
+                integer_part = integer_part[:-self.grouping_size]
+            integer_part = sign + ','.join(groups)
+            formatted = integer_part + ('.' + parts[1] if len(parts) > 1 else '')
         
         return formatted
