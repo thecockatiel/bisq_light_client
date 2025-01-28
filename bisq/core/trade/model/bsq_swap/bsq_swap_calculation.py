@@ -7,6 +7,7 @@ from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
+    from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.trade.model.bsq_swap.bsq_swap_trade import BsqSwapTrade
 
@@ -36,8 +37,6 @@ Tx fee: Buyer tx fee + seller tx fee + buyer trade fee + seller trade fee       
 
 logger = get_logger(__name__)
 
-
-# TODO: implemement as necessary
 class BsqSwapCalculation:
     MIN_SELLERS_TX_SIZE = 104
 
@@ -45,6 +44,7 @@ class BsqSwapCalculation:
     # We use 3 non segwit inputs. 5 + 3*149 + 62 = 514
     ESTIMATED_VBYTES = 514
 
+    # Buyer
     @staticmethod
     def get_buyers_bsq_input_value(
         bsq_trade_amount: Union[int, "BsqSwapTrade"],
@@ -55,11 +55,92 @@ class BsqSwapCalculation:
         return Coin.value_of(bsq_trade_amount + buyers_trade_fee)
 
     @staticmethod
-    def get_sellers_btc_input_value(
-        btc_trade_amount: int,
-        seller_tx_fee: int,
+    def get_buyers_btc_payout_value(
+        trade: "BsqSwapTrade", buyers_vbytes_size: int, buyer_trade_fee: int
     ) -> Coin:
-        return Coin.value_of(btc_trade_amount + seller_tx_fee)
+        return BsqSwapCalculation.get_buyers_btc_payout_value_with_adjustment(
+            trade.get_amount_as_long(),
+            trade.tx_fee_per_vbyte,
+            buyers_vbytes_size,
+            buyer_trade_fee,
+        )
+
+    @staticmethod
+    def get_buyers_btc_payout_value_with_adjustment(
+        btc_trade_amount: int,
+        tx_fee_per_vbyte: int,
+        buyers_vbytes_size: int,
+        buyer_trade_fee: int,
+    ) -> Coin:
+        buyers_tx_fee = BsqSwapCalculation.get_adjusted_tx_fee(
+            tx_fee_per_vbyte, buyers_vbytes_size, buyer_trade_fee
+        )
+        return BsqSwapCalculation._get_buyers_btc_payout_value(
+            btc_trade_amount, buyers_tx_fee
+        )
+
+    @staticmethod
+    def get_buyers_btc_payout_value_from_wallet(
+        bsq_wallet_service: "BsqWalletService",
+        bsq_trade_amount: Coin,
+        btc_trade_amount: Coin,
+        tx_fee_per_vbyte: int,
+        buyer_trade_fee: int,
+    ) -> Coin:
+        inputs_and_change = BsqSwapCalculation.get_buyers_bsq_inputs_and_change(
+            bsq_wallet_service, bsq_trade_amount.value, buyer_trade_fee
+        )
+        buyers_vbytes_size = BsqSwapCalculation.get_vbytes_size(
+            inputs_and_change[0], inputs_and_change[1].value
+        )
+        buyers_tx_fee = BsqSwapCalculation.get_adjusted_tx_fee(
+            tx_fee_per_vbyte, buyers_vbytes_size, buyer_trade_fee
+        )
+        return BsqSwapCalculation._get_buyers_btc_payout_value(
+            btc_trade_amount.value, buyers_tx_fee
+        )
+
+    @staticmethod
+    def get_buyers_bsq_inputs_and_change(
+        bsq_wallet_service: "BsqWalletService",
+        amount: int,
+        buyers_trade_fee: int,
+    ) -> tuple[list["RawTransactionInput"], Coin]:
+        required = BsqSwapCalculation.get_buyers_bsq_input_value(
+            amount, buyers_trade_fee
+        )
+        return bsq_wallet_service.get_buyers_bsq_inputs_for_bsq_swap_tx(required)
+
+    @staticmethod
+    def get_estimated_buyers_btc_payout_value(
+        btc_trade_amount: Coin,
+        tx_fee_per_vbyte: int,
+        buyer_trade_fee: int,
+    ) -> Coin:
+        # Use estimated size. This is used in case the wallet has not enough fund so we cannot calculate the exact
+        # amount but we still want to provide some estimated value.
+        buyers_tx_fee = BsqSwapCalculation.get_adjusted_tx_fee(
+            tx_fee_per_vbyte, BsqSwapCalculation.ESTIMATED_VBYTES, buyer_trade_fee
+        )
+        return BsqSwapCalculation._get_buyers_btc_payout_value(
+            btc_trade_amount.value, buyers_tx_fee
+        )
+
+    @staticmethod
+    def _get_buyers_btc_payout_value(btc_trade_amount: int, buyer_tx_fee: int) -> Coin:
+        return Coin.value_of(btc_trade_amount - buyer_tx_fee)
+
+    # Seller
+    @staticmethod
+    def get_sellers_btc_input_value_from_trade(
+        trade: "BsqSwapTrade", sellers_tx_size: int, sellers_trade_fee: int
+    ) -> Coin:
+        return BsqSwapCalculation.get_sellers_btc_input_value_with_adjustment(
+            trade.get_amount_as_long(),
+            trade.tx_fee_per_vbyte,
+            sellers_tx_size,
+            sellers_trade_fee,
+        )
 
     @staticmethod
     def get_sellers_btc_input_value_with_adjustment(
@@ -97,6 +178,36 @@ class BsqSwapCalculation:
         return BsqSwapCalculation.get_sellers_btc_input_value(
             btc_trade_amount.value, sellers_tx_fee
         )
+
+    @staticmethod
+    def get_estimated_sellers_btc_input_value(
+        btc_trade_amount: Coin,
+        tx_fee_per_vbyte: int,
+        sellers_trade_fee: int,
+    ) -> Coin:
+        # Use estimated size. This is used in case the wallet has not enough fund so we cannot calculate the exact
+        # amount but we still want to provide some estimated value.
+        sellers_tx_fee = BsqSwapCalculation.get_adjusted_tx_fee(
+            tx_fee_per_vbyte, BsqSwapCalculation.ESTIMATED_VBYTES, sellers_trade_fee
+        )
+        return BsqSwapCalculation.get_sellers_btc_input_value(
+            btc_trade_amount.value, sellers_tx_fee
+        )
+
+    @staticmethod
+    def get_sellers_btc_input_value(
+        btc_trade_amount: int,
+        seller_tx_fee: int,
+    ) -> Coin:
+        return Coin.value_of(btc_trade_amount + seller_tx_fee)
+
+    @staticmethod
+    def get_sellers_bsq_payout_value(
+        bsq_trade_amount: Union[int, "BsqSwapTrade"], seller_trade_fee: int
+    ) -> Coin:
+        if hasattr(bsq_trade_amount, "get_bsq_trade_amount"):
+            bsq_trade_amount = bsq_trade_amount.get_bsq_trade_amount()
+        return Coin.value_of(bsq_trade_amount - seller_trade_fee)
 
     # Tx fee estimation
     @staticmethod
@@ -164,9 +275,11 @@ class BsqSwapCalculation:
 
         return inputs_and_change
 
+    ############## Tx fee
+
+    # See https://bitcoin.stackexchange.com/questions/87275/how-to-calculate-segwit-transaction-fee-in-bytes
     @staticmethod
     def get_vbytes_size(inputs: list["RawTransactionInput"], change: int):
-        # See https://bitcoin.stackexchange.com/questions/87275/how-to-calculate-segwit-transaction-fee-in-bytes
         size = 5  # Half of base tx size (10)
         for input in inputs:
             size += 68 if input.is_segwit else 149
