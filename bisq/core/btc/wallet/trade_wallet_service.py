@@ -196,3 +196,18 @@ class TradeWalletService:
         ), "input.connected_output must not be None"
         input.verify(input.connected_output)
         return delayed_payout_tx
+
+    def buyer_signs_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address_string: str,
+        seller_payout_address_string: str,
+        multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> bytes:
+        raise RuntimeError(
+            "TradeWalletService.buyer_signs_payout_tx Not implemented yet"
+        )
