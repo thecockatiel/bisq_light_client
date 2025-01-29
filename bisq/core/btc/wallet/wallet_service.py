@@ -183,6 +183,9 @@ class WalletService(ABC):
     @staticmethod
     def check_wallet_consistency(wallet: "Wallet"):
         raise RuntimeError("WalletService.check_wallet_consistency Not implemented yet")
+    
+    def get_best_chain_height(self) -> int:
+        raise RuntimeError("WalletService.get_best_chain_height Not implemented yet")
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):
         self.wallet.add_change_event_listener(listener)
