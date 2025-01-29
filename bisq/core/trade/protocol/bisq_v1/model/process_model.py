@@ -76,7 +76,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
         self._take_offer_fee_tx_id: Optional[str] = None
         self._payout_tx_signature: Optional[bytes] = None
-        self._prepared_deposit_tx: Optional[bytes] = None
+        self.prepared_deposit_tx: Optional[bytes] = None
         self._raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
         self._change_output_value: int = 0
         self._change_output_address: Optional[str] = None
@@ -138,8 +138,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             builder.take_offer_fee_tx_id = self._take_offer_fee_tx_id
         if self._payout_tx_signature:
             builder.payout_tx_signature = self._payout_tx_signature
-        if self._prepared_deposit_tx:
-            builder.prepared_deposit_tx = self._prepared_deposit_tx
+        if self.prepared_deposit_tx:
+            builder.prepared_deposit_tx = self.prepared_deposit_tx
         if self._raw_transaction_inputs:
             builder.raw_transaction_inputs.extend(ProtoUtil.collection_to_proto(self._raw_transaction_inputs, protobuf.RawTransactionInput))
         if self._change_output_address:
@@ -172,7 +172,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         # nullable
         process_model._take_offer_fee_tx_id = ProtoUtil.string_or_none_from_proto(proto.take_offer_fee_tx_id)
         process_model._payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.payout_tx_signature)
-        process_model._prepared_deposit_tx = ProtoUtil.byte_array_or_none_from_proto(proto.prepared_deposit_tx)
+        process_model.prepared_deposit_tx = ProtoUtil.byte_array_or_none_from_proto(proto.prepared_deposit_tx)
         
         raw_transaction_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs] if proto.raw_transaction_inputs else None
         process_model._raw_transaction_inputs = raw_transaction_inputs
