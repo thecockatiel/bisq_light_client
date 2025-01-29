@@ -175,7 +175,7 @@ class WalletService(ABC):
         )
 
     @staticmethod
-    def maybe_add_self_tx_to_wallet(transaction: "Transaction", wallet: "Wallet"):
+    def maybe_add_self_tx_to_wallet(transaction: "Transaction", wallet: "Wallet") -> "Transaction":
         raise RuntimeError(
             "WalletService.maybe_add_self_tx_to_wallet Not implemented yet"
         )
