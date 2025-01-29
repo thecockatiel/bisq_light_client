@@ -10,8 +10,11 @@ from typing import Any, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.config.config_exception import ConfigException
 from bisq.common.config.config_file_reader import ConfigFileReader
+from utils.dir import user_data_dir
 from utils.tor import parse_tor_hidden_service_port
 
+def is_running_in_vscode():
+    return 'VSCODE_PID' in os.environ or 'VSCODE_CWD' in os.environ
 
 def _random_app_name():
     try:
@@ -198,6 +201,9 @@ class Config:
     ):
         # Default "data dir properties", i.e. properties that can determine the location of
         # Bisq's application data directory (appDataDir)
+        if is_running_in_vscode() and (not default_app_name or not default_user_data_dir):
+            default_app_name = "bisq_light_client"
+            default_user_data_dir =  user_data_dir()
         self.default_app_name = default_app_name or _random_app_name()
         self.default_user_data_dir = default_user_data_dir or _temp_user_data_dir()
         self.default_app_data_dir = self.default_user_data_dir.joinpath(

@@ -1,3 +1,4 @@
+from bisq.common.config.config import Config
 from utils.aio import as_future, get_asyncio_loop
 import os
 from txtorcon import FilesystemOnionService
@@ -17,7 +18,10 @@ from bisq.common.setup.log_setup import configure_logging, get_logger
 from utils.dir import user_data_dir
 
 if __name__ == '__main__':
-    set_global_container(GlobalContainer("bisq_light_client", user_data_dir()))
+    global_container = GlobalContainer()
+    config = Config("bisq_light_client", user_data_dir())
+    global_container._config = config
+    set_global_container(global_container)
     configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 logger = get_logger(__name__)
