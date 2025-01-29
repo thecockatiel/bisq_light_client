@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 # TODO
 class TradeWalletService:
     MIN_DELAYED_PAYOUT_TX_FEE = Coin.value_of(1000)
-    
+
     def __init__(self):
         self.wallet: Optional["Wallet"] = None
         self.aes_key: Optional[bytes] = None
@@ -87,13 +87,13 @@ class TradeWalletService:
         timeout_sec: Optional[int] = None,
     ) -> None:
         raise RuntimeError("TradeWalletService.broadcast_tx Not implemented yet")
-    
+
     def seller_signs_and_finalizes_payout_tx(
         self,
         deposit_tx: "Transaction",
         buyer_signature: bytes,
         buyer_payout_amount: Coin,
-        seller_payout_amount: Coin, 
+        seller_payout_amount: Coin,
         buyer_payout_address_string: str,
         seller_payout_address_string: str,
         multi_sig_key_pair: "DeterministicKey",
@@ -136,7 +136,7 @@ class TradeWalletService:
             "TradeWalletService.finalize_mediated_payout_tx Not implemented yet"
         )
 
-    def seller_adds_buyer_witness_to_deposit_tx(
+    def seller_adds_buyer_witnesses_to_deposit_tx(
         self,
         my_deposit_tx: "Transaction",
         buyers_deposit_tx_with_witness: "Transaction",
@@ -148,6 +148,16 @@ class TradeWalletService:
 
             if not tx_input.witness and witness_from_buyer:
                 tx_input.witness = witness_from_buyer
+
+    def create_delayed_unsigned_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        receivers: list[tuple[int, str]],
+        lock_time: int,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.create_delayed_unsigned_payout_tx Not implemented yet"
+        )
 
     def finalize_unconnected_delayed_payout_tx(
         self,
@@ -161,7 +171,7 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.finalize_unconnected_delayed_payout_tx Not implemented yet"
         )
-    
+
     def finalize_delayed_payout_tx(
         self,
         delayed_payout_tx: "Transaction",
@@ -179,8 +189,10 @@ class TradeWalletService:
             seller_signature,
             input.value,
         )
-        
+
         WalletService.check_wallet_consistency(self.wallet)
-        assert input.connected_output is not None, "input.connected_output must not be None"
+        assert (
+            input.connected_output is not None
+        ), "input.connected_output must not be None"
         input.verify(input.connected_output)
         return delayed_payout_tx
