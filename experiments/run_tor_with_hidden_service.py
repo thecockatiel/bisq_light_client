@@ -14,9 +14,10 @@ from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging, get_logger
+from utils.dir import user_data_dir
 
 if __name__ == '__main__':
-    set_global_container(GlobalContainer())
+    set_global_container(GlobalContainer("bisq_light_client", user_data_dir()))
     configure_logging(log_file=None, log_level=GLOBAL_CONTAINER.value.config.log_level)
 
 logger = get_logger(__name__)
