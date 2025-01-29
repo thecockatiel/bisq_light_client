@@ -122,7 +122,7 @@ class TradeUtil:
                 offer.is_my_offer(self.key_ring),
                 offer.currency_code,
             )
-        else:
+        elif isinstance(trade, BsqSwapTrade):
             offer = trade.get_offer()
             if offer is None:
                 raise IllegalStateException(
@@ -135,6 +135,8 @@ class TradeUtil:
                 offer.is_my_offer(key_ring),
                 offer.currency_code,
             )
+        else:
+            raise ValueError(f"Unknown trade type to get_role: {type(trade)}")
 
     def get_role_res(
         is_buyer_maker_and_seller_taker: bool, is_maker: bool, currency_code: str
