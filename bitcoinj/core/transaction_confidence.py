@@ -70,5 +70,6 @@ class TransactionConfidence:
     def get_appeared_at_chain_height(self) -> int:
         raise RuntimeError("TransactionConfidence.get_appeared_at_chain_height Not implemented yet")
 
-    def get_transaction_hash(self) -> bytes:
+    def get_transaction_hash(self) -> str:
+        # return tx_id str
         raise RuntimeError("TransactionConfidence.get_transaction_hash Not implemented yet")
