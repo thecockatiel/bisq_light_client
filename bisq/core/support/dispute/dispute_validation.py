@@ -68,9 +68,9 @@ class DisputeValidation:
             assert dispute.delayed_payout_tx_id == trade.delayed_payout_tx.get_tx_id(), \
                 "delayed_payout_tx_id must match delayed_payout_tx_id from trade"
 
-            assert trade.deposit_tx is not None, "trade.deposit_tx must not be None"
+            assert trade.get_deposit_tx() is not None, "trade.get_deposit_tx() must not be None"
             assert dispute.deposit_tx_id is not None, "deposit_tx_id must not be None"
-            assert dispute.deposit_tx_id == trade.deposit_tx.get_tx_id(), \
+            assert dispute.deposit_tx_id == trade.get_deposit_tx().get_tx_id(), \
                 "deposit_tx must match deposit_tx from trade"
 
             assert dispute.deposit_tx_serialized is not None, "deposit_tx_serialized must not be None"
