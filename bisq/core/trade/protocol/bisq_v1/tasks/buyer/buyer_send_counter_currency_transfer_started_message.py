@@ -119,7 +119,7 @@ class BuyerSendCounterCurrencyTransferStartedMessage(SendMailboxMessageTask):
             self.run_intercept_hook()
             super().run()
         except Exception as e:
-            self.failed(e)
+            self.failed(exc=e)
         finally:
             self._cleanup()
 
