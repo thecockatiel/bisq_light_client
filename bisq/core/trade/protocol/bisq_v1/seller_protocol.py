@@ -61,11 +61,11 @@ class SellerProtocol(DisputeProtocol):
 
         if isinstance(message, DelayedPayoutTxSignatureResponse):
             self.expect(
-                self.phase(TradePhase.TAKER_FEE_PUBLISHED)
+                self.add_phase(TradePhase.TAKER_FEE_PUBLISHED)
                 .with_message(message)
                 .from_peer(peer)
             ).with_setup(
-                self.tasks(
+                self.with_tasks(
                     SellerProcessDelayedPayoutTxSignatureResponse,
                     SellerFinalizesDelayedPayoutTx,
                     SellerSendsDepositTxAndDelayedPayoutTxMessage,
@@ -75,7 +75,7 @@ class SellerProtocol(DisputeProtocol):
             ).execute_tasks()
         elif isinstance(message, ShareBuyerPaymentAccountMessage):
             self.expect(
-                self.any_phase(
+                self.add_phases(
                     TradePhase.TAKER_FEE_PUBLISHED,
                     TradePhase.DEPOSIT_PUBLISHED,
                     TradePhase.DEPOSIT_CONFIRMED,
@@ -83,7 +83,7 @@ class SellerProtocol(DisputeProtocol):
                 .with_message(message)
                 .from_peer(peer)
             ).with_setup(
-                self.tasks(
+                self.with_tasks(
                     SellerProcessShareBuyerPaymentAccountMessage,
                     ApplyFilter,
                     VerifyPeersAccountAgeWitness,
@@ -101,13 +101,13 @@ class SellerProtocol(DisputeProtocol):
             # JAVA TODO A better fix would be to add a listener for the wallet sync state and process
             # the mailbox msg once wallet is ready and trade state set.
             self.expect(
-                self.any_phase(
+                self.add_phases(
                     TradePhase.DEPOSIT_CONFIRMED,
                     TradePhase.DEPOSIT_PUBLISHED,
                 )
                 .with_message(message)
                 .from_peer(peer)
-                .add_precondition(
+                .with_precondition(
                     self.trade.get_payout_tx() is None,
                     lambda: (
                         logger.warning(
@@ -120,7 +120,7 @@ class SellerProtocol(DisputeProtocol):
                     ),
                 )
             ).with_setup(
-                self.tasks(
+                self.with_tasks(
                     SellerProcessCounterCurrencyTransferStartedMessage,
                     ApplyFilter,
                     self.get_verify_peers_fee_payment_class(),
@@ -134,14 +134,14 @@ class SellerProtocol(DisputeProtocol):
     def on_payment_received(self, result_handler: ResultHandler, error_message_handler: ErrorMessageHandler) -> None:
         event = SellerEvent.PAYMENT_RECEIVED
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.FIAT_SENT,
                 TradePhase.PAYOUT_PUBLISHED,
             )
             .with_event(event)
-            .add_precondition(self.trade.confirm_permitted())
+            .with_precondition(self.trade.confirm_permitted())
         ).with_setup(
-            self.tasks(
+            self.with_tasks(
                 ApplyFilter,
                 self.get_verify_peers_fee_payment_class(),
                 SellerSignAndFinalizePayoutTx,

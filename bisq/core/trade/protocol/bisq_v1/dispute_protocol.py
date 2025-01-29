@@ -119,13 +119,13 @@ class DisputeProtocol(TradeProtocol):
         event = DisputeProtocolEvent.MEDIATION_RESULT_ACCEPTED
 
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
             )
             .with_event(event)
-            .add_precondition(
+            .with_precondition(
                 (self.trade.process_model.trade_peer.mediated_payout_tx_signature 
                  is None) or (self.trade.payout_tx is None),
                 lambda: error_message_handler(
@@ -133,7 +133,7 @@ class DisputeProtocol(TradeProtocol):
                 ),
             )
         ).with_setup(
-            self.tasks(
+            self.with_tasks(
                 ApplyFilter,
                 SignMediatedPayoutTx,
                 SendMediatedPayoutSignatureMessage,
@@ -161,18 +161,18 @@ class DisputeProtocol(TradeProtocol):
         event = DisputeProtocolEvent.MEDIATION_RESULT_ACCEPTED
 
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
             )
             .with_event(event)
-            .add_precondition(
+            .with_precondition(
                 self.trade.payout_tx is None,
                 lambda: error_message_handler("Payout tx is already published."),
             )
         ).with_setup(
-            self.tasks(
+            self.with_tasks(
                 ApplyFilter,
                 SignMediatedPayoutTx,
                 FinalizeMediatedPayoutTx,
@@ -200,20 +200,20 @@ class DisputeProtocol(TradeProtocol):
         self, message: "MediatedPayoutTxSignatureMessage", peer: "NodeAddress"
     ) -> None:
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
             )
             .with_message(message)
             .from_peer(peer)
-        ).with_setup(self.tasks(ProcessMediatedPayoutSignatureMessage)).execute_tasks()
+        ).with_setup(self.with_tasks(ProcessMediatedPayoutSignatureMessage)).execute_tasks()
 
     def handle_mediated_payout_tx_published_message(
         self, message: "MediatedPayoutTxPublishedMessage", peer: "NodeAddress"
     ) -> None:
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
@@ -221,7 +221,7 @@ class DisputeProtocol(TradeProtocol):
             .with_message(message)
             .from_peer(peer)
         ).with_setup(
-            self.tasks(ProcessMediatedPayoutTxPublishedMessage)
+            self.with_tasks(ProcessMediatedPayoutTxPublishedMessage)
         ).execute_tasks()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -236,18 +236,18 @@ class DisputeProtocol(TradeProtocol):
         event = DisputeProtocolEvent.ARBITRATION_REQUESTED
 
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
             )
             .with_event(event)
-            .add_precondition(
+            .with_precondition(
                 self.trade.delayed_payout_tx is not None,
                 lambda: error_message_handler("Delayed payout tx is null"),
             )
         ).with_setup(
-            self.tasks(
+            self.with_tasks(
                 PublishedDelayedPayoutTx,
                 SendPeerPublishedDelayedPayoutTxMessage,
             ).using(
@@ -272,7 +272,7 @@ class DisputeProtocol(TradeProtocol):
         self, message: "PeerPublishedDelayedPayoutTxMessage", peer: "NodeAddress"
     ) -> None:
         self.expect(
-            self.any_phase(
+            self.add_phases(
                 TradePhase.DEPOSIT_CONFIRMED,
                 TradePhase.FIAT_SENT,
                 TradePhase.FIAT_RECEIVED,
@@ -280,7 +280,7 @@ class DisputeProtocol(TradeProtocol):
             .with_message(message)
             .from_peer(peer)
         ).with_setup(
-            self.tasks(ProcessPeerPublishedDelayedPayoutTxMessage)
+            self.with_tasks(ProcessPeerPublishedDelayedPayoutTxMessage)
         ).execute_tasks()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

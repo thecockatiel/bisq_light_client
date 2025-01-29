@@ -209,16 +209,16 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
     def given(self, condition: "FluentProtocolCondition") -> "FluentProtocol":
         return FluentProtocol(self).with_condition(condition)
 
-    def phase(self, expected_phase: "TradePhase") -> "FluentProtocolCondition":
+    def add_phase(self, expected_phase: "TradePhase") -> "FluentProtocolCondition":
         return FluentProtocolCondition(self.trade_model).add_phase(expected_phase)
 
-    def any_phase(self, *expected_phases: "TradePhase") -> "FluentProtocolCondition":
+    def add_phases(self, *expected_phases: "TradePhase") -> "FluentProtocolCondition":
         return FluentProtocolCondition(self.trade_model).add_phases(*expected_phases)
 
-    def precondition(self, pre_condition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
-        return FluentProtocolCondition(self.trade_model).add_precondition(pre_condition, condition_failed_handler)
+    def with_precondition(self, pre_condition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
+        return FluentProtocolCondition(self.trade_model).with_precondition(pre_condition, condition_failed_handler)
 
-    def tasks(self, *tasks: type["Task"]) -> "FluentProtocolSetup":
+    def with_tasks(self, *tasks: type["Task"]) -> "FluentProtocolSetup":
         return FluentProtocolSetup(self, self.trade_model).with_tasks(*tasks)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
