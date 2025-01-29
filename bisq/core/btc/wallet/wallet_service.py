@@ -144,6 +144,9 @@ class WalletService(ABC):
     def remove_balance_listener(self, listener: "BalanceListener"):
         self.balance_listeners.discard(listener)
 
+    def get_confidence_for_address(self, address: "Address") -> "TransactionConfidence":
+        raise RuntimeError("WalletService.get_confidence_for_address Not implemented yet")
+
     def get_confidence_for_address_from_block_height(
         self, address: "Address", target_height: int
     ) -> "TransactionConfidence":
