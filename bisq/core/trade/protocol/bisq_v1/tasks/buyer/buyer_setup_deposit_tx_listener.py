@@ -11,13 +11,13 @@ from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
+from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
     from bitcoinj.core.network_parameters import NetworkParameters
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bisq.core.trade.model.bisq_v1.trade import Trade
-    from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
 logger = get_logger(__name__)
 
