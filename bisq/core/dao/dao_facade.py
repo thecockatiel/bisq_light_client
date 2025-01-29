@@ -63,6 +63,9 @@ class DaoFacade(DaoSetupService):
     def remove_bsq_state_listener(self, listener: "DaoStateListener"):
         self.dao_state_service.remove_dao_state_listener(listener)
 
+    def get_chain_height(self):
+        return self.dao_state_service.get_chain_height()
+
     @property
     def is_parse_block_chain_complete(self):
         return self.dao_state_service.parse_block_chain_complete
