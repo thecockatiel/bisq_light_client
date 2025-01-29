@@ -17,7 +17,7 @@ class SellerProcessDelayedPayoutTxSignatureResponse(TradeTask):
             
             self.process_model.trade_peer.delayed_payout_tx_signature = response.delayed_payout_tx_buyer_signature
             
-            self.process_model.trade_wallet_service.seller_adds_buyer_witness_to_deposit_tx(
+            self.process_model.trade_wallet_service.seller_adds_buyer_witnesses_to_deposit_tx(
                 self.process_model.deposit_tx,
                 self.process_model.btc_wallet_service.get_tx_from_serialized_tx(response.deposit_tx),
             )
