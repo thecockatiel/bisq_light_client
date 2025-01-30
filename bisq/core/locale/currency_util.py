@@ -214,6 +214,33 @@ def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
 def get_fiat_currency(currency_code: str) -> Optional["FiatCurrency"]:
     return CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(currency_code, None)
 
+def get_trade_currency(currency_code: str) -> Optional["TradeCurrency"]:
+    fiat_currency = get_fiat_currency(currency_code)
+    if fiat_currency and is_fiat_currency(currency_code):
+        return fiat_currency
+
+    crypto_currency = get_crypto_currency(currency_code)
+    if crypto_currency and is_crypto_currency(currency_code):
+        return crypto_currency
+
+    return None
+
+def get_trade_currencies(currency_codes: list[str]) -> Optional[list["TradeCurrency"]]:
+    trade_currencies = []
+    for code in currency_codes:
+        trade_currency = get_trade_currency(code)
+        if trade_currency is None:
+            raise ValueError(f"{code} is not a valid trade currency code")
+        trade_currencies.append(trade_currency)
+    return trade_currencies if trade_currencies else None
+
+def get_trade_currencies_in_list(currency_codes: list[str], valid_currencies: list["TradeCurrency"]) -> Optional[list["TradeCurrency"]]:
+    trade_currencies = get_trade_currencies(currency_codes)
+    if trade_currencies:
+        for trade_currency in trade_currencies:
+            if trade_currency not in valid_currencies:
+                raise ValueError(f"{trade_currency.code} is not a member of valid currencies list")
+    return trade_currencies
 
 def get_currency_name_by_code(currency_code: str) -> str:
     if is_crypto_currency(currency_code):
