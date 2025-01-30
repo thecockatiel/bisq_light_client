@@ -2,6 +2,8 @@
 # keep this updated with the latest version from the bisq repository and also make sure the coins and tokens exist.
 import re
 
+from utils.formatting import to_snake_case
+
 
 _bisq_assets = """
 # All assets available for trading on the Bisq network.
@@ -142,21 +144,7 @@ ASSET_COINS = re.findall(r"coins\.(\w+)", _bisq_assets)
 ASSET_TOKENS: dict[str, str] = dict.fromkeys(ASSET_TOKENS)
 ASSET_COINS: dict[str, str] = dict.fromkeys(ASSET_COINS)
 
-_lone_capital = re.compile(r"(?<!^)([A-Z])(?=[a-z])")
-_grouped_capital = re.compile(r"(?<!^)(?<=[a-z_])([A-Z]{2,})")
-
-
-def snake_case(name: str) -> str:
-    # replace lone capitals with lower case and underscore
-    name = _lone_capital.sub(r"_\1", name)
-    name = _grouped_capital.sub(r"_\1", name)
-    name = name.lower()
-    if name == "c_rowdc_lassic":  # I hate you
-        return "crowd_classic"
-    return name.lower()
-
-
 # snake case the names
 # snake_case(x) for x in ASSET_TOKENS
-ASSET_TOKENS = {snake_case(x): x for x in ASSET_TOKENS}
-ASSET_COINS = {snake_case(x): x for x in ASSET_COINS}
+ASSET_TOKENS = {to_snake_case(x): x for x in ASSET_TOKENS}
+ASSET_COINS = {to_snake_case(x): x for x in ASSET_COINS}
