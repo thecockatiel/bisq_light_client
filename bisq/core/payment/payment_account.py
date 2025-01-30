@@ -111,6 +111,7 @@ class PaymentAccount(PersistablePayload, ABC):
         if trade_currency in self.trade_currencies:
             self.trade_currencies.remove(trade_currency)
 
+    @property
     def has_multiple_currencies(self) -> bool:
         return len(self.trade_currencies) > 1
 
