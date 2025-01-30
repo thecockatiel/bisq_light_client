@@ -121,6 +121,7 @@ class PaymentAccountForm:
             raise IllegalStateException(err_msg)
         return Path(file_path)
 
+    @staticmethod
     def to_payment_account(json_string: str):
         clazz = PaymentAccountForm.get_payment_account_class_from_json(json_string)
         return PaymentAccountTypeAdapter(clazz, PaymentAccountForm.excluded_fields).read(json_string)
