@@ -94,3 +94,17 @@ def get_short_id(id: str, sep='-'):
         return chunks[0]
     else:
         return id[:min(8, len(id))]
+
+
+_lone_capital = re.compile(r"(?<!^)([A-Z])(?=[a-z])")
+_grouped_capital = re.compile(r"(?<!^)(?<=[a-z_])([A-Z]{2,})")
+
+def to_snake_case(name: str) -> str:
+    # replace lone capitals with lower case and underscore
+    name = name.strip()
+    name = _lone_capital.sub(r"_\1", name)
+    name = _grouped_capital.sub(r"_\1", name)
+    name = name.lower()
+    if name == "c_rowdc_lassic":  # I hate you
+        return "crowd_classic"
+    return name.lower()

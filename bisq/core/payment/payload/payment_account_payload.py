@@ -7,6 +7,7 @@ import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
+from utils.formatting import to_snake_case
 
 logger = get_logger(__name__)
 
@@ -109,8 +110,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         try:
             return object.__getattribute__(self, name)
         except AttributeError:
-            snake_case = ''.join(['_' + c.lower() if c.isupper() else c for c in name]).lstrip('_')
-            return object.__getattribute__(self, snake_case)
+            return object.__getattribute__(self, to_snake_case(name))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PaymentAccountPayload):
