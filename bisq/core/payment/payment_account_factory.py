@@ -1,9 +1,13 @@
 from typing import TYPE_CHECKING
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
+from bisq.core.payment.bsq_swap_account import BsqSwapAccount
+from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.revolute_account import RevolutAccount
+from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
+from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.swift_account import SwiftAccount
 
 if TYPE_CHECKING:
@@ -21,8 +25,8 @@ _account_map = {
     PaymentMethod.SEPA_INSTANT_ID: lambda: SepaInstantAccount(),
     # PaymentMethod.FASTER_PAYMENTS_ID: lambda: FasterPaymentsAccount(),
     # PaymentMethod.NATIONAL_BANK_ID: lambda: NationalBankAccount(),
-    # PaymentMethod.SAME_BANK_ID: lambda: SameBankAccount(),
-    # PaymentMethod.SPECIFIC_BANKS_ID: lambda: SpecificBanksAccount(),
+    PaymentMethod.SAME_BANK_ID: lambda: SameBankAccount(),
+    PaymentMethod.SPECIFIC_BANKS_ID: lambda: SpecificBanksAccount(),
     # PaymentMethod.JAPAN_BANK_ID: lambda: JapanBankAccount(),
     # PaymentMethod.AUSTRALIA_PAYID_ID: lambda: AustraliaPayidAccount(),
     # PaymentMethod.ALI_PAY_ID: lambda: AliPayAccount(),
@@ -34,7 +38,7 @@ _account_map = {
     # PaymentMethod.US_POSTAL_MONEY_ORDER_ID: lambda: USPostalMoneyOrderAccount(),
     # PaymentMethod.CASH_DEPOSIT_ID: lambda: CashDepositAccount(),
     # PaymentMethod.BLOCK_CHAINS_ID: lambda: CryptoCurrencyAccount(),
-    # PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
+    PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
     # PaymentMethod.WESTERN_UNION_ID: lambda: WesternUnionAccount(),
     # PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
     # PaymentMethod.F2F_ID: lambda: F2FAccount(),
@@ -65,7 +69,7 @@ _account_map = {
     PaymentMethod.SWIFT_ID: lambda: SwiftAccount(),
     # PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
     # PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
-    # PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
+    PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
     
     # Cannot be deleted as it would break old trade history entries
