@@ -161,7 +161,6 @@ class PaymentAccount(PersistablePayload, ABC):
     def is_country_based_payment_account(self) -> bool:
         return False
     
-    @property
     def has_payment_method_with_id(self, payment_method_id: str):
         return self.payment_method.id == payment_method_id
     
