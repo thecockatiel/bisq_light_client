@@ -108,3 +108,8 @@ def to_snake_case(name: str) -> str:
     if name == "c_rowdc_lassic":  # I hate you
         return "crowd_classic"
     return name.lower()
+
+def snake_to_camel_case(string: str) -> str:
+    """Convert a snake_case string to camelCase. normalizes other letters to lowercase."""
+    components = string.split('_')
+    return components[0].lower() + ''.join(x.title() for x in components[1:])
