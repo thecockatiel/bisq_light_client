@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.asset.asset import Asset
+from bisq.asset.coin import Coin
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
@@ -14,6 +15,7 @@ from bisq.core.locale.trade_currency import TradeCurrency
 from utils.data import SimpleProperty
 
 if TYPE_CHECKING:
+    from bisq.common.config.base_currency_network import BaseCurrencyNetwork
     from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
@@ -260,7 +262,35 @@ def get_currency_name_by_code(currency_code: str) -> str:
             return fiat_currency.name
         logger.debug(f"No currency name available {currency_code}")
         return currency_code
+    
+def asset_matches_network(asset: "Asset", base_currency_network: "BaseCurrencyNetwork") -> bool:
+    # coin here is from bisq coin, not bitcoinj.
+    return not isinstance(asset, Coin) or asset.network.name == base_currency_network.network
 
+def find_asset(currency_code_or_ticker: str, base_currency_network: "BaseCurrencyNetwork" = None, dao_trading_activated: bool = None) -> Optional["Asset"]:
+    if currency_code_or_ticker == "BSQ" and base_currency_network and base_currency_network.is_mainnet() and not dao_trading_activated:
+        return None
+    
+    if base_currency_network is None or not base_currency_network.is_mainnet():
+        # In testnet or regtest we want to show all coins as well. Most coins have only Mainnet defined so we deliver that
+        assets = filter(
+            lambda asset: asset.get_ticker_symbol() == currency_code_or_ticker,
+            AssetRegistry.registered_assets,
+        )
+    else:
+        # We check for exact match with network, e.g. BTC$TESTNET
+        assets = filter(
+            lambda asset: asset.get_ticker_symbol() == currency_code_or_ticker and asset_matches_network(asset, base_currency_network),
+            AssetRegistry.registered_assets,
+        )
+    
+    optional_asset = next(iter(assets), None)
+
+    if optional_asset is None and base_currency_network and base_currency_network.is_mainnet():
+        # If we are in mainnet we need have a mainnet asset defined.
+        raise ValueError("We are on mainnet and we could not find an asset with network type mainnet")
+
+    return optional_asset
 
 def get_currency_pair(currency_code: str) -> str:
     if is_fiat_currency(currency_code):
