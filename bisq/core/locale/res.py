@@ -1,6 +1,5 @@
-# TODO: Implemented partially since it was used widely, to complete later as needed.
+import textwrap
 from typing import TYPE_CHECKING
-from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
 from resources import get_resources_path
 from utils.java_compat import parse_resource_bundle
@@ -62,3 +61,21 @@ class Res:
     @staticmethod
     def get_with_col(key: str, *args):
         return Res.resources.get(key, key).format(*args) + ":"
+
+    @staticmethod
+    def get_with_col_and_cap(key: str, *args):
+        return Res.get(key, *args).capitalize() + ":"
+
+    @staticmethod
+    def get_wrapped_as_list(key: str, wrap_length: int) -> list[str]:
+        raw = Res.get(key).split("\n")
+        wrapped = []
+        for s in raw:
+            list_of_wrapped_strings = textwrap.wrap(s, wrap_length)
+            for line in list_of_wrapped_strings:
+                if line:
+                    wrapped.append(line)
+        return wrapped
+
+
+# We only support english thats why we don't listen for locale changes
