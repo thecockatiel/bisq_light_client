@@ -3,20 +3,22 @@ from dataclasses import fields
 from enum import IntEnum
 import inspect
 
+
 class FieldType(IntEnum):
     DATA = 1
     PROPERTY = 2
 
+
 def get_settable_fields(cls: type):
+    private_fields = []
+    public_fields = []
     if hasattr(cls, "__dataclass_fields__"):
         # Handle dataclass
-        dataclass_fields = [(field.name, FieldType.DATA) for field in fields(cls)]
-        property_with_setters = [
-            (field, FieldType.PROPERTY)
-            for field in cls.__dict__
-            if isinstance(getattr(cls, field), property) and getattr(cls, field).fset
-        ]
-        return dataclass_fields + property_with_setters
+        for field in fields(cls):
+            if field.name.startswith("_"):
+                private_fields.append((field.name, FieldType.DATA))
+            else:
+                public_fields.append((field.name, FieldType.DATA))
 
     # Get source code of the class
     source = inspect.getsource(cls)
@@ -37,7 +39,6 @@ def get_settable_fields(cls: type):
     )
 
     # Find self assignments in __init__
-    self_assignments = []
     if init_method:
         for stmt in init_method.body:
             if isinstance(stmt, ast.Assign):
@@ -47,21 +48,30 @@ def get_settable_fields(cls: type):
                         and isinstance(target.value, ast.Name)
                         and target.value.id == "self"
                     ):
-                        if not target.attr.startswith("_"):
-                            self_assignments.append((target.attr, FieldType.DATA))
+                        if target.attr.startswith("_"):
+                            private_fields.append((target.attr, FieldType.DATA))
+                        else:
+                            public_fields.append((target.attr, FieldType.DATA))
             elif (
                 isinstance(stmt, ast.AnnAssign)
                 and isinstance(stmt.target, ast.Attribute)
                 and stmt.target.value.id == "self"
             ):
-                if not stmt.target.attr.startswith("_"):
-                    self_assignments.append((stmt.target.attr, FieldType.DATA))
+                if stmt.target.attr.startswith("_"):
+                    private_fields.append((stmt.target.attr, FieldType.DATA))
+                else:
+                    public_fields.append((stmt.target.attr, FieldType.DATA))
 
     # Find properties with setters directly from class def
     properties_with_setters = []
     for key in cls.__dict__:
         value = getattr(cls, key)
-        if isinstance(value, property) and value.fset:
+        if (
+            isinstance(value, property)
+            and value.fset
+            and not key.startswith("_")
+            and (f"_{key}", FieldType.DATA) in private_fields
+        ):
             properties_with_setters.append((key, FieldType.PROPERTY))
 
-    return self_assignments + properties_with_setters
+    return set(public_fields).union(set(properties_with_setters))
