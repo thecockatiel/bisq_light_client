@@ -1,6 +1,5 @@
 import re
 import math
-import textwrap
 
 # Pre-compile regex patterns for performance
 pattern_one_second = re.compile(r"(^|\b)1 seconds")
@@ -109,7 +108,10 @@ def to_snake_case(name: str) -> str:
         return "crowd_classic"
     return name.lower()
 
-def snake_to_camel_case(string: str) -> str:
-    """Convert a snake_case string to camelCase. normalizes other letters to lowercase."""
+def to_camel_case(string: str) -> str:
+    """cleans up the string and normalizes letters to camelCase"""
+    string = re.sub(r'\s+', '_', string.strip())
+    string = re.sub(r'_+', '_', string)
+    string = re.sub(r'\W', '', string)
     components = string.split('_')
     return components[0].lower() + ''.join(x.title() for x in components[1:])
