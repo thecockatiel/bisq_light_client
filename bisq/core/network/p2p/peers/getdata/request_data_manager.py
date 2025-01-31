@@ -20,6 +20,7 @@ from bisq.common.version import Version
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
 from bisq.core.network.p2p.peers.peer_manager import PeerManager
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -165,9 +166,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
             self.listener.on_no_seed_node_available()
 
     def request_update_data(self):
-        assert (
-            self.node_address_of_preliminary_data_request
-        ), "node_address_of_preliminary_data_request must be present"
+        check_argument(
+            self.node_address_of_preliminary_data_request,
+            "node_address_of_preliminary_data_request must be present"
+        )
         self.data_update_requested = True
         self.is_preliminary_data_request = False
         node_addresses = list(self.seed_node_addresses)

@@ -17,6 +17,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import Prot
 from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
 from utils.clock import Clock
+from utils.preconditions import check_argument
 
 
 if TYPE_CHECKING:
@@ -40,8 +41,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         if creation_time_stamp is None:
             creation_time_stamp = clock.millis()
         
-        if isinstance(protected_storage_payload, PersistableNetworkPayload):
-            raise ValueError("protected_storage_payload cannot be an instance of PersistableNetworkPayload")
+        check_argument(not isinstance(protected_storage_payload, PersistableNetworkPayload), "protected_storage_payload cannot be an instance of PersistableNetworkPayload")
         
         self.protected_storage_payload = protected_storage_payload
         self.owner_pub_key = owner_pub_key

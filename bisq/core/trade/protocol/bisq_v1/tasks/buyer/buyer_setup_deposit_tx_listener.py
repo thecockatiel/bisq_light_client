@@ -12,6 +12,7 @@ from bisq.core.trade.model.trade_state import TradeState
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
@@ -42,10 +43,11 @@ class BuyerSetupDepositTxListener(TradeTask):
                 prepared_deposit_tx = Transaction(
                     params, self.process_model.prepared_deposit_tx
                 )
-                assert (
+                check_argument(
                     prepared_deposit_tx.outputs is not None
-                    and len(prepared_deposit_tx.outputs) > 0
-                ), "prepared_deposit_tx.outputs must not be empty"
+                    and len(prepared_deposit_tx.outputs) > 0,
+                    "prepared_deposit_tx.outputs must not be empty",
+                )
                 deposit_tx_address = (
                     prepared_deposit_tx.outputs[0]
                     .get_script_pub_key()

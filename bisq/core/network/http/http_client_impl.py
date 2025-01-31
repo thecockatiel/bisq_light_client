@@ -9,6 +9,7 @@ from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import get_logger
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
 logger = get_logger(__name__)
@@ -84,12 +85,9 @@ class HttpClientImpl(HttpClient):
         params: dict[str, str] = {},
         headers: dict[str, str] = {},
     ):
-        if not self.base_url:
-            raise IllegalArgumentException("baseUrl must be set before calling doRequest")
-        if self.has_pending_request:
-            raise IllegalArgumentException(
-                "We got called on the same HttpClient again while a request is still open."
-            )
+        assert self.base_url is not None, "baseUrl must be set before calling doRequest"
+        check_argument(not self.has_pending_request, "We got called on the same HttpClient again while a request is still open.")
+
         self.has_pending_request = True
 
         socks5_proxy: Socks5Proxy = None

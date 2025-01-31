@@ -7,6 +7,7 @@ from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.validator import Validator
+from utils.preconditions import check_argument
 
 
 class SellerProcessShareBuyerPaymentAccountMessage(TradeTask):
@@ -29,9 +30,10 @@ class SellerProcessShareBuyerPaymentAccountMessage(TradeTask):
             peers_payment_hash = contract.get_hash_of_peers_payment_account_payload(
                 self.process_model.pub_key_ring
             )
-            assert (
-                buyer_payment_hash == peers_payment_hash
-            ), "Hash of payment account is invalid"
+            check_argument(
+                (buyer_payment_hash == peers_payment_hash),
+                "Hash of payment account is invalid",
+            )
 
             self.process_model.trade_peer.payment_account_payload = (
                 buyer_payment_account_payload

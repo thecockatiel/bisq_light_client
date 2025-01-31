@@ -11,6 +11,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_mess
 )
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.validator import Validator
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
@@ -33,7 +34,7 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
                     f"Invalid message type. expected type: MediatedPayoutTxPublishedMessage, actual type: {type(message)}"
                 )
             Validator.check_trade_id(self.process_model.offer_id, message)
-            assert message.payout_tx is not None, "message.payout_tx must not be None"
+            check_argument(message.payout_tx is not None, "message.payout_tx must not be None")
 
             # update to the latest peer address of our peer if the message is correct
             self.trade.trading_peer_node_address = (

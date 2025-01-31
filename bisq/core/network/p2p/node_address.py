@@ -4,6 +4,7 @@ from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 import pb_pb2 as protobuf
+from utils.preconditions import check_argument
 
 
 @dataclass(eq=False)
@@ -17,15 +18,13 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
         # Handle IPv6 addresses
         if full_address.startswith("["):
             split = full_address.split("]")
-            if len(split) != 2:
-                raise AssertionError("Invalid IPv6 address format")
+            check_argument(len(split) == 2, "Invalid IPv6 address format")
             host_name = split[0][1:]  # Remove the leading '['
             port = int(split[1].replace(":", ""))
         else:
             # Handle IPv4 addresses and hostnames
             split = full_address.split(":")
-            if len(split) != 2:
-                raise AssertionError("fullAddress must contain ':'")
+            check_argument(len(split) == 2, "fullAddress must contain ':'")
             host_name = split[0]
             port = int(split[1])
         

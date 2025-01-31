@@ -13,6 +13,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.setup_listener import SetupListener
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.utils.utils import Utils
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.core.network.p2p.node_address import NodeAddress
 
@@ -68,7 +69,7 @@ class TorNetworkNode(NetworkNode):
         await self.create_tor_and_hidden_service(local_port, self.service_port)
         
     def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
-        assert peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address"
+        check_argument(peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address")
         assert self.socks_proxy, "Tor proxy not ready"
         sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(240) # Connection.SOCKET_TIMEOUT_SEC

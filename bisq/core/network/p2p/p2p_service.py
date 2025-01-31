@@ -21,6 +21,7 @@ from bisq.core.network.p2p.send_direct_message_listener import SendDirectMessage
 from bisq.core.network.utils.capability_utils import CapabilityUtils
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty, SimplePropertyChangeEvent, combine_simple_properties
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
@@ -168,7 +169,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
             listener.on_tor_node_ready()
 
     def on_hidden_service_published(self):
-        assert self.network_node.node_address_property.value is not None, "Address must be set when we have the hidden service ready"
+        check_argument(self.network_node.node_address_property.value is not None, "Address must be set when we have the hidden service ready")
 
         self.hidden_service_published.set(True)
         
@@ -189,7 +190,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
             self.network_ready_unsubscribe()
 
         seed_node = self.request_data_manager.get_node_address_of_preliminary_data_request()
-        assert seed_node is not None, "seed_node_of_preliminary_data_request must be present"
+        check_argument(seed_node is not None, "seed_node_of_preliminary_data_request must be present")
 
         self.request_data_manager.request_update_data()
 
@@ -206,7 +207,7 @@ class P2PService(SetupListener, MessageListener, ConnectionListener, RequestData
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_preliminary_data_received(self):
-        assert not self.preliminary_data_received.get(), "preliminary_data_received was already set before."
+        check_argument(not self.preliminary_data_received.get(), "preliminary_data_received was already set before.")
         self.preliminary_data_received.set(True)
 
     def on_updated_data_received(self):
