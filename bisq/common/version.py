@@ -1,6 +1,8 @@
 from typing import List, Optional
 
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.preconditions import check_argument
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 
 logger = get_logger(__name__)
 
@@ -56,8 +58,7 @@ class Version:
     @staticmethod
     def get_sub_version(version: str, index: int) -> int:
         split = version.split(".")
-        if len(split) != 3:
-            raise ValueError(f"Version number must be in semantic version format (contain 2 '.'). version={version}")
+        check_argument(len(split) == 3, f"Version number must be in semantic version format (contain 2 '.'). version={version}")
         return int(split[index])
 
     # The version no. for the objects sent over the network. A change will break the serialization of old objects.
