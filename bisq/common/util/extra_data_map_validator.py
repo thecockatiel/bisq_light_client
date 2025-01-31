@@ -1,6 +1,7 @@
-from typing import Dict, Optional
+from typing import Optional
 
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.preconditions import check_argument
 
 logger = get_logger(__name__)
 
@@ -16,40 +17,33 @@ class ExtraDataMapValidator:
     MAX_VALUE_LENGTH = 100000  # 100 kb
 
     @staticmethod
-    def get_validated_extra_data_map(extra_data_map: Optional[Dict[str, str]] = None) -> Optional[Dict[str, str]]:
+    def get_validated_extra_data_map(extra_data_map: Optional[dict[str, str]] = None) -> Optional[dict[str, str]]:
         return ExtraDataMapValidator.get_validated_extra_data_map_with_limits(extra_data_map, ExtraDataMapValidator.MAX_SIZE, ExtraDataMapValidator.MAX_KEY_LENGTH, ExtraDataMapValidator.MAX_VALUE_LENGTH)
 
     @staticmethod
-    def get_validated_extra_data_map_with_limits(extra_data_map: Optional[Dict[str, str]], max_size: int, max_key_length: int, max_value_length: int) -> Optional[Dict[str, str]]:
+    def get_validated_extra_data_map_with_limits(extra_data_map: Optional[dict[str, str]], max_size: int, max_key_length: int, max_value_length: int) -> Optional[dict[str, str]]:
         if extra_data_map is None:
             return None
 
         try:
-            if len(extra_data_map) > max_size:
-                raise ValueError(f"Size of map must not exceed {max_size}")
+            check_argument(len(extra_data_map) <= max_size, f"Size of map must not exceed {max_size}")
             for key, value in extra_data_map.items():
-                if len(key) > max_key_length:
-                    raise ValueError(f"Length of key must not exceed {max_key_length}")
-                if len(value) > max_value_length:
-                    raise ValueError(f"Length of value must not exceed {max_value_length}")
+                check_argument(len(key) <= max_key_length, f"Length of key must not exceed {max_key_length}")
+                check_argument(len(value) <= max_value_length, f"Length of value must not exceed {max_value_length}")
             return extra_data_map
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
             return {}
 
     @staticmethod
-    def validate(extra_data_map: Optional[Dict[str, str]] = None):
+    def validate(extra_data_map: Optional[dict[str, str]] = None):
         ExtraDataMapValidator.validate_with_limits(extra_data_map, ExtraDataMapValidator.MAX_SIZE, ExtraDataMapValidator.MAX_KEY_LENGTH, ExtraDataMapValidator.MAX_VALUE_LENGTH)
 
     @staticmethod
-    def validate_with_limits(extra_data_map: Optional[Dict[str, str]], max_size: int, max_key_length: int, max_value_length: int):
+    def validate_with_limits(extra_data_map: Optional[dict[str, str]], max_size: int, max_key_length: int, max_value_length: int):
         if extra_data_map is None:
             return
 
-        if len(extra_data_map) > max_size:
-            raise ValueError(f"Size of map must not exceed {max_size}")
+        check_argument(len(extra_data_map) <= max_size, f"Size of map must not exceed {max_size}")
         for key, value in extra_data_map.items():
-            if len(key) > max_key_length:
-                raise ValueError(f"Length of key must not exceed {max_key_length}")
-            if len(value) > max_value_length:
-                raise ValueError(f"Length of value must not exceed {max_value_length}")
+            check_argument(len(key) <= max_key_length, f"Length of key must not exceed {max_key_length}")
+            check_argument(len(value) <= max_value_length, f"Length of value must not exceed {max_value_length}")

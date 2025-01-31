@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from typing import TYPE_CHECKING
 
+from bisq.common.util.preconditions import check_argument
+
 if TYPE_CHECKING:
     from bisq.common.crypto.proof_of_work import ProofOfWork
 
@@ -44,8 +46,7 @@ class ProofOfWorkService(ABC):
         owner_id: str,
         control_difficulty: float,
     ) -> bool:
-        if proof_of_work.version != self.version:
-            raise ValueError("Version mismatch")
+        check_argument(proof_of_work.version == self.version, "Version mismatch")
 
         control_challenge = self.get_challenge(item_id, owner_id)
         return (
