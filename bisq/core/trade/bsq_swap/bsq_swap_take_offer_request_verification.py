@@ -6,6 +6,7 @@ from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.util.coin.coin_util import CoinUtil
 from bisq.core.util.validator import Validator
 from bitcoinj.base.coin import Coin
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -30,31 +31,34 @@ class BsqSwapTakeOfferRequestVerification:
             logger.info(f"Received {request.__class__.__name__} from {peer} with tradeId {request.trade_id} and uid {request.uid}")
             
             assert request is not None, "Request cannot be None"
-            assert Validator.non_empty_string_of(request.trade_id), "Trade ID must be valid"
+            Validator.non_empty_string_of(request.trade_id), "Trade ID must be valid"
             
-            assert request.sender_node_address == peer, "Node address not matching"
+            check_argument(request.sender_node_address == peer, "Node address not matching")
             
             open_offer = open_offer_manager.get_open_offer_by_id(request.trade_id)
-            assert open_offer is not None, "Offer not found in open offers"
+            check_argument(open_offer is not None, "Offer not found in open offers")
             
-            assert open_offer.state == OpenOfferState.AVAILABLE, "Offer not available"
+            check_argument(open_offer.state == OpenOfferState.AVAILABLE, "Offer not available")
             
             offer = open_offer.offer
             Validator.check_trade_id(offer.id, request)
-            assert offer.is_my_offer(key_ring), "Offer must be mine"
+            check_argument(offer.is_my_offer(key_ring), "Offer must be mine")
             
             trade_amount = request.trade_amount
             amount_as_coin = Coin.value_of(request.trade_amount)
             
-            assert (trade_amount >= offer.min_amount.value and 
-                   trade_amount <= offer.amount.value), "TradeAmount not within offers amount range"
-            assert BsqSwapTakeOfferRequestVerification._is_date_in_tolerance(request), "Trade date is out of tolerance"
-            assert BsqSwapTakeOfferRequestVerification._is_tx_fee_in_tolerance(request, fee_service), "Miner fee from taker not in tolerance"
+            check_argument(
+                trade_amount >= offer.min_amount.value and 
+                trade_amount <= offer.amount.value,
+                "TradeAmount not within offers amount range"
+            )
+            check_argument(BsqSwapTakeOfferRequestVerification._is_date_in_tolerance(request), "Trade date is out of tolerance")
+            check_argument(BsqSwapTakeOfferRequestVerification._is_tx_fee_in_tolerance(request, fee_service), "Miner fee from taker not in tolerance")
             
             maker_fee = CoinUtil.get_maker_fee(False, amount_as_coin)
             taker_fee = CoinUtil.get_taker_fee(False, amount_as_coin)
-            assert maker_fee is not None and request.maker_fee == maker_fee.value
-            assert taker_fee is not None and request.taker_fee == taker_fee.value
+            check_argument(maker_fee is not None and request.maker_fee == maker_fee.value, "Maker fee not matching")
+            check_argument(taker_fee is not None and request.taker_fee == taker_fee.value, "Taker fee not matching")
             
             return True
 

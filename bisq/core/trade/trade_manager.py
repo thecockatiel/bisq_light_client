@@ -55,6 +55,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_request imp
 from bisq.core.trade.model.bsq_swap.bsq_swap_seller_as_maker_trade import BsqSwapSellerAsMakerTrade
 from bisq.core.trade.model.bsq_swap.bsq_swap_buyer_as_maker_trade import BsqSwapBuyerAsMakerTrade
 from bisq.core.trade.model.bisq_v1.trade import Trade
+from utils.preconditions import check_argument
 
 
 if TYPE_CHECKING:
@@ -257,7 +258,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         #     return
 
         # open_offer_optional = self.open_offer_manager.get_open_offer_by_id(request.trade_id)
-        # assert open_offer_optional is not None
+        # check_argument(open_offer_optional is not None, "OpenOffer cannot be None")
         # open_offer = open_offer_optional
         # offer = open_offer.get_offer()
         # self.open_offer_manager.reserve_open_offer(open_offer)
@@ -266,7 +267,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         # bsq_swap_protocol_model = BsqSwapProtocolModel(self.key_ring.pub_key_ring)
         
         # if isinstance(request, BuyersBsqSwapRequest):
-        #     assert not offer.is_buy_offer(), "offer is expected to be a sell offer at handle_bsq_swap_request"
+        #     check_argument(not offer.is_buy_offer(), "offer is expected to be a sell offer at handle_bsq_swap_request")
         #     bsq_swap_trade = BsqSwapSellerAsMakerTrade(
         #         offer=offer,
         #         amount=amount,
@@ -277,8 +278,8 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         #         taker_fee=request.taker_fee,
         #         bsq_swap_protocol_model=bsq_swap_protocol_model)
         # else:
-        #     assert isinstance(request, SellersBsqSwapRequest)
-        #     assert offer.is_buy_offer(), "offer is expected to be a buy offer at handle_bsq_swap_request"
+        #     check_argument(isinstance(request, SellersBsqSwapRequest))
+        #     check_argument(offer.is_buy_offer(), "offer is expected to be a buy offer at handle_bsq_swap_request")
         #     bsq_swap_trade = BsqSwapBuyerAsMakerTrade(
         #         offer=offer,
         #         amount=amount,
@@ -433,7 +434,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                      trade_result_handler: 'TradeResultHandler[Trade]',
                      error_message_handler: 'ErrorMessageHandler'):
         
-        assert not self.was_offer_already_used_in_trade(offer.id)
+        check_argument(not self.was_offer_already_used_in_trade(offer.id), "Offer was already used in a trade")
 
         model = self.get_offer_availability_model(offer, is_taker_api_user)
         
@@ -497,7 +498,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                               trade_result_handler: 'TradeResultHandler[BsqSwapTrade]',
                               error_message_handler: 'ErrorMessageHandler'):
         
-        assert not self.was_offer_already_used_in_trade(offer.id)
+        check_argument(not self.was_offer_already_used_in_trade(offer.id), "Offer was already used in a trade")
 
         model = self.get_offer_availability_model(offer, is_taker_api_user)
 
