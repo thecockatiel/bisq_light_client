@@ -20,6 +20,7 @@ import pb_pb2 as protobuf
 import re
 
 from utils.data import raise_required
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
@@ -83,13 +84,13 @@ class Contract(NetworkPayload):
         ) or maker_payment_method_id == taker_payment_method_id
 
         # Note: Original bisq implementation does not assign the validated data back to the object, so we also do not.
-        if not is_valid:
-            raise ValueError(
-                f"Payment methods of maker and taker must be the same.\n"
-                f"maker_payment_method_id={maker_payment_method_id}\n"
-                f"taker_payment_method_id={taker_payment_method_id}"
-            )
-    
+        check_argument(
+            is_valid,
+            f"Payment methods of maker and taker must be the same.\n"
+            f"maker_payment_method_id={maker_payment_method_id}\n"
+            f"taker_payment_method_id={taker_payment_method_id}"
+        )
+
     @staticmethod
     def from_proto(proto: protobuf.Contract, core_proto_resolver: "CoreProtoResolver"):
         maker_payment_account_payload = proto.maker_payment_account_payload and core_proto_resolver.from_proto(proto.maker_payment_account_payload)
