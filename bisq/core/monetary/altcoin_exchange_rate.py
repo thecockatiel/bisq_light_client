@@ -1,5 +1,7 @@
 
 # Cloned from ExchangeRate. Use Altcoin instead of Altcoin.
+from bisq.common.util.preconditions import check_argument
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.monetary.altcoin import Altcoin
 from bitcoinj.base.coin import Coin
 
@@ -15,11 +17,11 @@ class AltcoinExchangeRate:
             coin = Coin.COIN()
         
         if altcoin is None:
-            raise ValueError("altcoin is required")
+            raise IllegalArgumentException("altcoin is required")
 
-        assert coin.is_positive(), "coin must be positive"
-        assert altcoin.is_positive(), "altcoin must be positive"
-        assert altcoin.currency_code is not None, "altcoin.currency_code is required"
+        check_argument(coin.is_positive(), "coin must be positive")
+        check_argument(altcoin.is_positive(), "altcoin must be positive")
+        check_argument(altcoin.currency_code is not None, "altcoin.currency_code is required")
         
         self._coin = coin
         self._altcoin = altcoin
@@ -43,8 +45,8 @@ class AltcoinExchangeRate:
 
     def altcoin_to_coin(self, convert_altcoin: Altcoin) -> Coin:
         """Convert a altcoin amount to a coin amount using this exchange rate."""
-        assert convert_altcoin.currency_code == self.altcoin.currency_code, \
-            f"Currency mismatch: {convert_altcoin.currency_code} vs {self.altcoin.currency_code}"
+        check_argument(convert_altcoin.currency_code == self.altcoin.currency_code, 
+                       f"Currency mismatch: {convert_altcoin.currency_code} vs {self.altcoin.currency_code}")
             
         converted = convert_altcoin.value * self._coin.value // self._altcoin.value
         
