@@ -7,6 +7,7 @@ from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message impor
 )
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.validator import Validator
+from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
 
@@ -23,7 +24,7 @@ class BuyerProcessPayoutTxPublishedMessage(TradeTask):
                 )
             Validator.check_trade_id(self.process_model.offer_id, message)
             assert message is not None, "Message is required"
-            assert message.payout_tx is not None, "Payout tx is required"
+            check_argument(message.payout_tx is not None, "Payout tx is required")
 
             # update to the latest peer address of our peer if the message is correct
             self.trade.trading_peer_node_address = (

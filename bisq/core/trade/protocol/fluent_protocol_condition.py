@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.trade.protocol.fluent_protocol_condition_result import FluentProtocolConditionResult
 from bisq.core.util.validator import Validator
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.trade.protocol.fluent_protocol_event import FluentProtocolEvent
@@ -31,42 +32,42 @@ class FluentProtocolCondition:
         self.pre_conditions_failed_handler: Optional[Callable[[], None]] = None
         
     def add_phase(self, phase: "TradePhase") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.expected_phases.add(phase)
         return self
         
     def add_phases(self, *phases: "TradePhase") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.expected_phases.update(phases)
         return self
         
     def add_state(self, state: "TradeState") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.expected_states.add(state)
         return self
         
     def add_states(self, *states: "TradeState") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.expected_states.update(states)
         return self
         
     def with_message(self, message: "TradeMessage") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.message = message
         return self
         
     def with_event(self, event: "FluentProtocolEvent") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.event = event
         return self
         
     def from_peer(self, peer: "NodeAddress") -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.peer = peer
         return self
         
     def with_precondition(self, precondition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
-        assert self.result is None
+        check_argument(self.result is None, "result must be None")
         self.pre_conditions.add(precondition)
         if condition_failed_handler is not None:
             self.pre_conditions_failed_handler = condition_failed_handler

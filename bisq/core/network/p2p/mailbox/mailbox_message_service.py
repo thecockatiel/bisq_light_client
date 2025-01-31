@@ -24,6 +24,7 @@ from utils.concurrency import AtomicInt, ThreadSafeSet
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 
 from utils.formatting import readable_file_size
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
 
@@ -216,9 +217,9 @@ class MailboxMessageService:
             logger.debug("send_encrypted_mailbox_message: peers_pub_key_ring is None. Ignoring the call.")
             return
  
-        assert peer is not None, "peer must not be None"
-        assert self.network_node.node_address_property.value is not None, "My node address must not be None"
-        assert self.key_ring.pub_key_ring == peers_pub_key_ring, "We got own keyring instead of that from peer"
+        assert peer is not None, "peer node address must not be None (send_encrypted_mailbox_message)"
+        assert self.network_node.node_address_property.value is not None, "My node address must not be None at send_encrypted_mailbox_message"
+        check_argument(self.key_ring.pub_key_ring == peers_pub_key_ring, "We got own keyring instead of that from peer")
 
         if not self.is_bootstrapped:
             raise NetworkNotReadyException()
@@ -357,7 +358,7 @@ class MailboxMessageService:
         self.p2p_data_storage.add_hash_map_changed_listener(self)
 
     def process_single_mailbox_entry(self, protected_mailbox_storage_entries: Collection["ProtectedMailboxStorageEntry"]):
-        assert len(protected_mailbox_storage_entries) == 1
+        check_argument(len(protected_mailbox_storage_entries) == 1, "entries must have exactly one entry")
         mailbox_items = list(self.get_mailbox_items(protected_mailbox_storage_entries))
         if len(mailbox_items) == 1:
             self.handle_mailbox_item(mailbox_items[0])
@@ -420,7 +421,7 @@ class MailboxMessageService:
             decrypted_msg_with_pubkey = self.encryption_service.decrypt_and_verify(
                 sealed_and_signed
             )
-            assert isinstance(decrypted_msg_with_pubkey.network_envelope, MailboxMessage)
+            check_argument(isinstance(decrypted_msg_with_pubkey.network_envelope, MailboxMessage), "decrypted_msg_with_pubkey's network envelope must be a MailboxMessage")
             return MailboxItem(protected_mailbox_storage_entry, decrypted_msg_with_pubkey)
         except CryptoException:
             # Expected if message was not intended for us

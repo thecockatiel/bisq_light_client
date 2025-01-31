@@ -3,6 +3,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.base.coin import Coin
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
@@ -48,11 +49,12 @@ class SignMediatedPayoutTx(TradeTask):
                 self.process_model.seller_payout_amount_from_mediation
             )
 
-            assert total_payout_amount == buyer_payout_amount.add(
-                seller_payout_amount
-            ), (
-                f"Payout amount does not match buyer_payout_amount={buyer_payout_amount.to_friendly_string()}; "
-                f"seller_payout_amount={seller_payout_amount}"
+            check_argument(
+                total_payout_amount == buyer_payout_amount.add(seller_payout_amount),
+                (
+                    f"Payout amount does not match buyer_payout_amount={buyer_payout_amount.to_friendly_string()}; "
+                    f"seller_payout_amount={seller_payout_amount}"
+                ),
             )
 
             is_my_role_buyer = contract.is_my_role_buyer(
@@ -83,12 +85,13 @@ class SignMediatedPayoutTx(TradeTask):
                 trade_id, my_multi_sig_pub_key
             )
 
-            assert (
+            check_argument(
                 my_multi_sig_pub_key
                 == wallet_service.get_or_create_address_entry(
                     trade_id, AddressEntryContext.MULTI_SIG
-                ).pub_key
-            ), f"my_multi_sig_pub_key from AddressEntry must match the one from the trade data. trade id = {trade_id}"
+                ).pub_key,
+                f"my_multi_sig_pub_key from AddressEntry must match the one from the trade data. trade id = {trade_id}",
+            )
 
             mediated_payout_tx_signature = (
                 self.process_model.trade_wallet_service.sign_mediated_payout_tx(

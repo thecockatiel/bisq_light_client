@@ -7,6 +7,7 @@ from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import GetPeersResponse
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
@@ -40,14 +41,14 @@ class GetPeersRequestHandler:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def handle(self, get_peers_request: "GetPeersRequest", connection: "Connection"):
-        assert connection.peers_node_address, "The peers address must have been already set at the moment"
+        check_argument(connection.peers_node_address is not None, "The peers address must have been already set at the moment")
         
         get_peers_response = GetPeersResponse(
             request_nonce=get_peers_request.nonce,
             reported_peers=set(self.peer_manager.get_live_peers(connection.peers_node_address))
         )
 
-        assert self.timeout_timer is None, "onGetPeersRequest must not be called twice."
+        check_argument(self.timeout_timer is None, "onGetPeersRequest must not be called twice.")
         
         def timeout_handler():
             if not self.stopped:

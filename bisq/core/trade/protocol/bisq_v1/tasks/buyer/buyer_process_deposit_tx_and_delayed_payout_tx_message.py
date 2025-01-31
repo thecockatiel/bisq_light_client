@@ -11,6 +11,7 @@ from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.validator import Validator
+from utils.preconditions import check_argument
 
 
 class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
@@ -46,7 +47,7 @@ class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
             # To access tx confidence we need to add that tx into our wallet.
             delayed_payout_tx_bytes = message.delayed_payout_tx
             assert delayed_payout_tx_bytes is not None
-            assert delayed_payout_tx_bytes == self.trade.delayed_payout_tx_bytes, (
+            check_argument(delayed_payout_tx_bytes == self.trade.delayed_payout_tx_bytes, 
                 f"mismatch between delayedPayoutTx received from peer and our one. \n"
                 f"Expected: {bytes_as_hex_string(self.trade.delayed_payout_tx_bytes)}\n"
                 f"Received: {bytes_as_hex_string(delayed_payout_tx_bytes)}"
@@ -71,10 +72,11 @@ class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
                         self.process_model.pub_key_ring
                     )
                 )
-                assert (
+                check_argument(
                     seller_payment_account_payload_hash
-                    == peers_payment_account_payload_hash
-                ), "Hash of payment account is invalid"
+                    == peers_payment_account_payload_hash,
+                    "Hash of payment account is invalid"
+                )
 
                 self.process_model.trade_peer.payment_account_payload = (
                     seller_payment_account_payload

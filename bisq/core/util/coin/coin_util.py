@@ -6,7 +6,8 @@ from bisq.core.provider.fee.fee_service import FeeService
 from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin 
 from bisq.core.monetary.price import Price
-from bisq.core.monetary.volume import Volume 
+from bisq.core.monetary.volume import Volume
+from utils.preconditions import check_argument 
 
 
 class CoinUtil:
@@ -109,10 +110,8 @@ class CoinUtil:
         Raises:
             ValueError: If amount < 10k sats or factor <= 0
         """
-        if amount.value < 10_000:
-            raise ValueError("amount needs to be above minimum of 10k satoshis")
-        if factor <= 0:
-            raise ValueError("factor needs to be positive")
+        check_argument(amount.value >= 10_000, "amount needs to be above minimum of 10k satoshis")
+        check_argument(factor > 0, "factor needs to be positive")
 
         # Amount must result in a volume of min factor units of the fiat currency, e.g. 1 EUR or
         # 10 EUR in case of HalCash.
@@ -124,8 +123,7 @@ class CoinUtil:
         min_trade_amount = Restrictions.get_min_trade_amount().value
 
         # We use 10 000 satoshi as min allowed amount
-        if min_trade_amount < 10_000:
-            raise ValueError("MinTradeAmount must be at least 10k satoshis")
+        check_argument(min_trade_amount >= 10_000, "MinTradeAmount must be at least 10k satoshis")
 
         smallest_unit_for_amount = Coin.value_of(max(min_trade_amount, 
                                                    smallest_unit_for_amount.value))

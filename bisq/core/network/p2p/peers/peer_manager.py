@@ -17,6 +17,7 @@ from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.common.capabilities import Capabilities
 from bisq.core.network.p2p.peers.peerexchange.peer import Peer
@@ -394,7 +395,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             # We lookup if we have already stored the supported_capabilities at the persisted or reported peers
             # and if so we use that.
             peers_node_address = connection.peers_node_address
-            assert peers_node_address  # confirmed connections should always have node address
+            check_argument(peers_node_address, "connection missing node address at _get_connected_reported_peers")  # confirmed connections should always have node address
 
             capabilities_not_found_in_connection = supported_capabilities.is_empty()
             if capabilities_not_found_in_connection:

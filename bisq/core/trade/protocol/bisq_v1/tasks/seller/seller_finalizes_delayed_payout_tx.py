@@ -2,6 +2,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
+from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
 
@@ -18,8 +19,8 @@ class SellerFinalizesDelayedPayoutTx(TradeTask):
             
             buyer_multi_sig_pub_key  = self.process_model.trade_peer.multi_sig_pub_key
             seller_multi_sig_pub_key = self.process_model.my_multi_sig_pub_key
-            assert seller_multi_sig_pub_key == btc_wallet_service.get_or_create_address_entry(id, AddressEntryContext.MULTI_SIG).pub_key, \
-                    f"sellerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id = {id}"
+            check_argument(seller_multi_sig_pub_key == btc_wallet_service.get_or_create_address_entry(id, AddressEntryContext.MULTI_SIG).pub_key,
+                    f"sellerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id = {id}")
                     
             buyer_signature = self.process_model.trade_peer.delayed_payout_tx_signature
             seller_signature = self.process_model.delayed_payout_tx_signature

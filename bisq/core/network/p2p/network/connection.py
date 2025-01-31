@@ -42,6 +42,7 @@ from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
 from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
 
@@ -261,8 +262,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     ####################################
 
     def on_message(self, network_envelope: 'NetworkEnvelope', connection: 'Connection'):
-        if connection != self:
-            raise RuntimeError("unexpected different connection was passed to on_message")
+        check_argument(connection == self, "unexpected different connection was passed to on_message")
         
         if isinstance(network_envelope, BundleOfEnvelopes):
             self.on_bundle_of_envelopes(network_envelope, connection)
@@ -470,8 +470,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         assert sender_node_address, "sender_node_address must not be None at SendersNodeAddressMessage"
         
         if self.peers_node_address:
-            if self.peers_node_address != sender_node_address:
-                raise ValueError(f"sender_node_address not matching connection's peer address.\n\t message={senders_node_address_message}")
+            check_argument(self.peers_node_address == sender_node_address, f"sender_node_address not matching connection's peer address.\n\t message={senders_node_address_message}")
         else:
             self.set_peers_node_address(sender_node_address)
 

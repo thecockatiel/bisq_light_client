@@ -1,5 +1,6 @@
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
+from utils.preconditions import check_argument
 
 
 class BuyerSignPayoutTx(TradeTask):
@@ -34,12 +35,13 @@ class BuyerSignPayoutTx(TradeTask):
             )
 
             buyer_multisig_pubkey = self.process_model.my_multi_sig_pub_key
-            assert (
+            check_argument(
                 buyer_multisig_pubkey
                 == wallet_service.get_or_create_address_entry(
                     trade_id, AddressEntryContext.MULTI_SIG
-                ).pub_key
-            ), f"buyerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id = {trade_id}"
+                ).pub_key,
+                f"buyerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id = {trade_id}"
+            )
             seller_multisig_pubkey = self.process_model.trade_peer.multi_sig_pub_key
 
             payout_tx_signature = (
