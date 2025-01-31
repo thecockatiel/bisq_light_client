@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.crypto.hash import get_ripemd160_hash, get_sha256_ripemd160_hash
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.preconditions import check_argument
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.trade.model.bisq_v1.trade import Trade
@@ -157,15 +158,13 @@ class AccountAgeWitnessUtils:
                                                          key_ring.pub_key_ring)
         if not witness:
             return None
-            
-        if account_age_witness_service.is_filtered_witness(witness):
-            raise ValueError("Invalid account age witness")
+        
+        check_argument(not account_age_witness_service.is_filtered_witness(witness), "Invalid account age witness")
             
         hash_as_hex = witness.get_hash().hex()
         date = witness.date
         
-        if date <= 0:
-            raise ValueError("Date must be > 0")
+        check_argument(date > 0, "Date must be > 0")
             
         message = profile_id + hash_as_hex + str(date)
         signature_key_pair = key_ring.signature_key_pair
@@ -192,24 +191,20 @@ class AccountAgeWitnessUtils:
                                                          key_ring.pub_key_ring)
         if not witness:
             return None
-            
-        if account_age_witness_service.is_filtered_witness(witness):
-            raise ValueError("Invalid account age witness")
-            
+
+        check_argument(not account_age_witness_service.is_filtered_witness(witness), "Invalid account age witness")
+
         witness_sign_date = account_age_witness_service.get_witness_sign_date(witness)
         age_in_days = int((get_time_ms() - witness_sign_date) / (timedelta(days=1).total_seconds * 1000))
         
         if not DevEnv.is_dev_mode():
-            if witness_sign_date <= 0:
-                raise ValueError("Account is not signed yet")
-            if age_in_days <= 60:
-                raise ValueError("Account must have been signed at least 61 days ago")
+            check_argument(witness_sign_date > 0, "Account is not signed yet")
+            check_argument(age_in_days > 60, "Account must have been signed at least 61 days ago")
 
         hash_as_hex = witness.get_hash().hex()
         date = witness.date
         
-        if date <= 0:
-            raise ValueError("AccountAgeWitness date must be > 0")
+        check_argument(date > 0, "AccountAgeWitness date must be > 0")
             
         message = profile_id + hash_as_hex + str(date) + str(witness_sign_date)
         signature_key_pair = key_ring.signature_key_pair

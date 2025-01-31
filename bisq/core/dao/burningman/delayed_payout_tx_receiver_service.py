@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List
 from datetime import datetime, timezone
 
+from bisq.common.util.preconditions import check_argument
 from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 from bisq.core.dao.burningman.burning_man_service import BurningManService
 from global_container import GLOBAL_CONTAINER
@@ -106,9 +107,10 @@ class DelayedPayoutTxReceiverService:
         trade_tx_fee: int,
         is_bugfix_6699_activated: bool = None,
     ) -> List[tuple[int, str]]:
-        assert (
-            burning_man_selection_height >= self.MIN_SNAPSHOT_HEIGHT
-        ), f"Selection height must be >= {self.MIN_SNAPSHOT_HEIGHT}"
+        check_argument(
+            burning_man_selection_height >= self.MIN_SNAPSHOT_HEIGHT,
+            f"Selection height must be >= {self.MIN_SNAPSHOT_HEIGHT}"
+        )
         
         if is_bugfix_6699_activated is None:
             is_bugfix_6699_activated = DelayedPayoutTxReceiverService.is_bugfix_6699_activated()

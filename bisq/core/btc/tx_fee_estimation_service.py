@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List, Tuple
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.preconditions import check_argument
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 
@@ -192,8 +193,8 @@ class TxFeeEstimationService:
 
     @staticmethod
     def is_in_tolerance(estimated_vsize: int, tx_vsize: int, tolerance: float) -> bool:
-        assert estimated_vsize > 0, "estimated_vsize must be positive"
-        assert tx_vsize > 0, "tx_vsize must be positive"
-        assert tolerance > 0, "tolerance must be positive"
+        check_argument(estimated_vsize > 0, "estimated_vsize must be positive")
+        check_argument(tx_vsize > 0, "tx_vsize must be positive")
+        check_argument(tolerance > 0, "tolerance must be positive")
         deviation = abs(1 - (estimated_vsize / tx_vsize))
         return deviation <= tolerance

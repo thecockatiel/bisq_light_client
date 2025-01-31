@@ -10,6 +10,7 @@ from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.proof_of_work_service_instance_holder import pow_service_for_version
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.preconditions import check_argument
 from bisq.core.locale.res import Res
 from bisq.core.filter.filter import Filter
 from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
@@ -395,7 +396,7 @@ class FilterManager:
         if filter is None:
             return True
 
-        assert offer.bsq_swap_offer_payload is not None, "Offer payload must be BsqSwapOfferPayload"
+        check_argument(offer.bsq_swap_offer_payload is not None, "Offer payload must be BsqSwapOfferPayload")
         pow = offer.bsq_swap_offer_payload.get_proof_of_work()
         service = pow_service_for_version(pow.version)
         return (service is not None and 
