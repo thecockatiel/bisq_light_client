@@ -2,6 +2,7 @@ from decimal import ROUND_DOWN, Decimal
 from functools import total_ordering
 from typing import Tuple
 
+from bisq.common.util.preconditions import check_argument
 from bitcoinj.base.monetary import Monetary
 import bitcoinj.base.utils.monetary_format
 
@@ -40,7 +41,7 @@ class Fiat(Monetary):
         return Fiat(currency_code, value)
 
     def smallest_unit_exponent(self) -> int:
-        return self.SMALLEST_UNIT_EXPONENT
+        return Fiat.SMALLEST_UNIT_EXPONENT
 
     def get_value(self) -> int:
         return self._value
@@ -57,8 +58,8 @@ class Fiat(Monetary):
             # First multiply to shift decimal places
             scaled = Decimal(value_str) * Decimal(10**cls.SMALLEST_UNIT_EXPONENT)
             # Check if value would fit in an integer
-            if not scaled.is_finite() or scaled != scaled.to_integral_exact():
-                raise ValueError("Cannot convert to exact integer value")
+            check_argument(scaled.is_finite() and scaled == scaled.to_integral_exact(), 
+                         "Cannot convert to exact integer value")
             val = int(scaled)
             return cls(currency_code, val)
         except ArithmeticError as e:
@@ -79,17 +80,13 @@ class Fiat(Monetary):
             raise ValueError(str(e))
 
     def add(self, other: "Fiat") -> "Fiat":
-        if other.currency_code != self.currency_code:
-            raise ValueError(
-                f"Cannot add different currencies: {other.currency_code} vs {self.currency_code}"
-            )
+        check_argument(other.currency_code == self.currency_code,
+                      f"Cannot add different currencies: {other.currency_code} vs {self.currency_code}")
         return Fiat(self.currency_code, self.value + other.value)
 
     def subtract(self, other: "Fiat") -> "Fiat":
-        if other.currency_code != self.currency_code:
-            raise ValueError(
-                f"Cannot subtract different currencies: {other.currency_code} vs {self.currency_code}"
-            )
+        check_argument(other.currency_code == self.currency_code,
+                      f"Cannot subtract different currencies: {other.currency_code} vs {self.currency_code}")
         return Fiat(self.currency_code, self.value - other.value)
 
     def multiply(self, factor: int) -> "Fiat":
@@ -97,10 +94,8 @@ class Fiat(Monetary):
 
     def divide(self, divisor) -> "Fiat":
         if isinstance(divisor, Fiat):
-            if divisor.currency_code != self.currency_code:
-                raise ValueError(
-                    f"Cannot divide different currencies: {divisor.currency_code} vs {self.currency_code}"
-                )
+            check_argument(divisor.currency_code == self.currency_code,
+                         f"Cannot divide different currencies: {divisor.currency_code} vs {self.currency_code}")
             return self.value // divisor.value
         return Fiat(self.currency_code, self.value // divisor)
 
@@ -158,8 +153,10 @@ class Fiat(Monetary):
         return self.value == other.value and self.currency_code == other.currency_code
 
     def __lt__(self, other: "Fiat") -> bool:
+        if not isinstance(other, Fiat):
+            return NotImplemented
         if self.currency_code != other.currency_code:
-            raise ValueError("Cannot compare different currencies")
+            return self.currency_code < other.currency_code
         return self.value < other.value
     
     def __hash__(self) -> int:
