@@ -1,6 +1,7 @@
 from functools import total_ordering
 from typing import TYPE_CHECKING
 
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.altcoin_exchange_rate import AltcoinExchangeRate
@@ -58,9 +59,9 @@ class Price(MonetaryWrapper):
         if isinstance(self.monetary, Fiat):
             return Volume(self.coin_to_fiat(ExchangeRate(self.monetary), amount))
         elif isinstance(self.monetary, Altcoin):
-            return Volume(AltcoinExchangeRate(self.monetary).coin_to_altcoin(amount))
+            return Volume(AltcoinExchangeRate(altcoin=self.monetary).coin_to_altcoin(amount))
         else:
-            raise RuntimeError("Monetary must be either of type Fiat or Altcoin")
+            raise IllegalStateException("Monetary must be either of type Fiat or Altcoin")
     
     @staticmethod
     def coin_to_fiat(rate: ExchangeRate, convert_coin: Coin) -> Fiat:
