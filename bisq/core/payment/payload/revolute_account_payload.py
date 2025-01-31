@@ -2,6 +2,7 @@ from typing import Optional
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import pb_pb2 as protobuf
+from utils.preconditions import check_argument
 
 
 class RevolutAccountPayload(PaymentAccountPayload):
@@ -67,16 +68,16 @@ class RevolutAccountPayload(PaymentAccountPayload):
         return f"{Res.get(self.payment_method_id)} - {tuple[0]}: {tuple[1]}"
 
     def get_label_value_tuple(self) -> tuple[str, str]:
-        if not self.user_name and not self.has_old_account_id():
-            raise ValueError(
-                "Either username must be set or we have an old account with accountId"
-            )
+        check_argument(
+            self.user_name or self.has_old_account_id,
+            "Either username must be set or we have an old account with accountId"
+        )
 
         if self.user_name:
             label = Res.get("payment.account.userName")
             value = self.user_name
 
-            if self.has_old_account_id():
+            if self.has_old_account_id:
                 label += "/" + Res.get("payment.account.phoneNr")
                 value += "/" + self.account_id
         else:
@@ -97,7 +98,7 @@ class RevolutAccountPayload(PaymentAccountPayload):
 
     def get_age_witness_input_data(self) -> bytes:
         # getAgeWitnessInputData is called at new account creation when accountId is empty string.
-        if self.has_old_account_id():
+        if self.has_old_account_id:
             # If the accountId was already in place (updated user who had used accountId for account age) we keep the
             # old accountId to not invalidate the existing account age witness.
             return self.get_age_witness_input_data_using_bytes(
