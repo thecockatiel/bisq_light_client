@@ -4,6 +4,7 @@ from bisq.core.support.dispute.dispute_list import DisputeList
 from bisq.core.support.support_type import SupportType
 import pb_pb2 as protobuf
 from bisq.core.support.dispute.dispute import Dispute
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
@@ -20,7 +21,7 @@ class ArbitrationDisputeList(DisputeList[_T]):
         
     def to_proto_message(self):
         for dispute in self.list:
-            assert dispute.support_type == SupportType.ARBITRATION, "Support type has to be ARBITRATION"
+            check_argument(dispute.support_type == SupportType.ARBITRATION, "Support type has to be ARBITRATION")
 
         return protobuf.PersistableEnvelope(
             arbitration_dispute_list=protobuf.ArbitrationDisputeList(

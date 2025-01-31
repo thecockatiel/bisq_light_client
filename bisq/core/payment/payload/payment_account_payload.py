@@ -8,6 +8,7 @@ import pb_pb2 as protobuf
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
 from utils.formatting import to_snake_case
+from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
 
@@ -66,7 +67,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
 
     @property
     def salt(self) -> bytes:
-        assert PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map"
+        check_argument(PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map")
         return binascii.unhexlify(self.exclude_from_json_data_map[self.SALT])
 
     @salt.setter

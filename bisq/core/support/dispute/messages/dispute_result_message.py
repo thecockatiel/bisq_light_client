@@ -6,6 +6,7 @@ from bisq.core.support.dispute.messages.dispute_message import DisputeMessage
 from bisq.core.support.support_type import SupportType 
 import pb_pb2 as protobuf
 from utils.data import raise_required
+from utils.preconditions import check_argument
 
 @dataclass
 class DisputeResultMessage(DisputeMessage):
@@ -24,7 +25,7 @@ class DisputeResultMessage(DisputeMessage):
 
     @staticmethod
     def from_proto(proto: protobuf.DisputeResultMessage, message_version: int) -> 'DisputeResultMessage':
-        assert proto.HasField('dispute_result'), "DisputeResult must be set"
+        check_argument(proto.HasField('dispute_result'), "DisputeResult must be set")
         return DisputeResultMessage(
             message_version=message_version,
             dispute_result=DisputeResult.from_proto(proto.dispute_result),
