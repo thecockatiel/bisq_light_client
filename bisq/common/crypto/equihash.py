@@ -6,6 +6,7 @@ import math
 from typing import Optional
 import struct
 
+from bisq.common.util.preconditions import check_argument
 from bisq.common.util.utilities import (
     bytes_to_ints_be,
     copy_right_aligned,
@@ -25,16 +26,18 @@ class Equihash:
     """Mean solution count per nonce for Equihash puzzles with unit difficulty. """
 
     def __init__(self, n: int, k: int, difficulty: float):
-        assert (
-            k > 0 and k < self.HASH_BIT_LENGTH / 32
-        ), f"Tree depth k must be a positive integer less than {self.HASH_BIT_LENGTH / 32}"
-        assert (
-            n > 0 and n < self.HASH_BIT_LENGTH and n % (k + 1) == 0
-        ), f"Collision bit count n must be a positive multiple of k + 1 and less than {self.HASH_BIT_LENGTH}"
-        assert (
-            n / (k + 1) < 30
-        ), f"Sub-collision bit count n / (k + 1) must be less than 30, got {n / (k + 1)}"
-
+        check_argument(
+            k > 0 and k < self.HASH_BIT_LENGTH / 32,
+            f"Tree depth k must be a positive integer less than {self.HASH_BIT_LENGTH / 32}",
+        )
+        check_argument(
+            n > 0 and n < self.HASH_BIT_LENGTH and n % (k + 1) == 0,
+            f"Collision bit count n must be a positive multiple of k + 1 and less than {self.HASH_BIT_LENGTH}",
+        )
+        check_argument(
+            n / (k + 1) < 30,
+            f"Sub-collision bit count n / (k + 1) must be less than 30, got {n / (k + 1)}",
+        )
         self.k = k
         self.input_num = 1 << k
         self.input_bits = n // (k + 1) + 1
@@ -62,7 +65,7 @@ class Equihash:
 
     @staticmethod
     def inverse_difficulty_minus_one(difficulty: float) -> int:
-        assert difficulty >= 1.0, "Difficulty must be at least 1."
+        check_argument(difficulty >= 1.0, "Difficulty must be at least 1.")
         exponent = get_exponent_double(difficulty) - 52
         mantissa = math.ldexp(difficulty, -exponent)
         if mantissa == float("inf"):
@@ -155,15 +158,16 @@ def deserialize_equihash_puzzle_solution(data: bytes, equihash: "Equihash"):
     byte_len = (bit_len + 7) // 8
 
     # Validate input length
-    if len(data) != byte_len:
-        raise ValueError(
-            f"Incorrect solution byte length. Expected {byte_len} but got {len(data)}"
-        )
+    check_argument(
+        len(data) == byte_len,
+        f"Incorrect solution byte length. Expected {byte_len} but got {len(data)}",
+    )
 
     # Check padding bits are zero
-    if byte_len > 0:
-        if (data[byte_len - 1] << ((bit_len + 7 & 7) + 1)) & 0xFF != 0:
-            raise ValueError("Nonzero padding bits found at end of solution byte array")
+    check_argument(
+        byte_len == 0 or ((data[byte_len - 1] << ((bit_len + 7 & 7) + 1)) & 0xFF == 0),
+        "Nonzero padding bits found at end of solution byte array",
+    )
 
     # Pad bytes to multiple of 4
     padded_data = data if (byte_len & 3) == 0 else data + bytes((-byte_len & 3))
