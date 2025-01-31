@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.core.api.exception.not_available_exception import NotAvailableException
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.unsupported_operation_exception import (
     UnsupportedOperationException,
 )
@@ -54,12 +55,12 @@ class CoreDisputeAgentsService:
             )
 
         if registration_key != DevEnv.DEV_PRIVILEGE_PRIV_KEY:
-            raise ValueError("invalid registration key")
+            raise IllegalArgumentException("invalid registration key")
 
         support_type = self._get_support_type(dispute_agent_type)
 
         if support_type is None:
-            raise ValueError(f"unknown dispute agent type '{dispute_agent_type}'")
+            raise IllegalArgumentException(f"unknown dispute agent type '{dispute_agent_type}'")
 
         if support_type == SupportType.ARBITRATION:
             raise UnsupportedOperationException(
