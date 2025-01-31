@@ -8,6 +8,7 @@ from bisq.core.util.json_util import JsonUtil
 from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Set
 
 from bisq.core.util.regex_validator_factory import RegexValidatorFactory
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
@@ -26,14 +27,14 @@ class DisputeValidation:
     def validate_dispute_data(dispute: "Dispute", btc_wallet_service: "BtcWalletService"):
         try:
             contract = dispute.contract
-            assert contract.offer_payload.id == dispute.trade_id, "Invalid tradeId"
-            assert dispute.contract_as_json == JsonUtil.object_to_json(contract), "Invalid contractAsJson"
-            assert dispute.contract_hash == get_sha256_hash(dispute.contract_as_json), "Invalid contractHash"
+            check_argument(contract.offer_payload.id == dispute.trade_id, "Invalid tradeId")
+            check_argument(dispute.contract_as_json == JsonUtil.object_to_json(contract), "Invalid contractAsJson")
+            check_argument(dispute.contract_hash == get_sha256_hash(dispute.contract_as_json), "Invalid contractHash")
 
             deposit_tx = dispute.find_deposit_tx(btc_wallet_service)
             if deposit_tx:
-                assert deposit_tx.get_tx_id() == dispute.deposit_tx_id, "Invalid depositTxId"
-                assert len(deposit_tx.inputs) >= 2, "DepositTx must have at least 2 inputs"
+                check_argument(deposit_tx.get_tx_id() == dispute.deposit_tx_id, "Invalid depositTxId")
+                check_argument(len(deposit_tx.inputs) >= 2, "DepositTx must have at least 2 inputs")
 
             try:
                 # Only the dispute opener has set the signature
@@ -61,17 +62,17 @@ class DisputeValidation:
     @staticmethod
     def validate_trade_and_dispute(dispute: "Dispute", trade: "Trade") -> None:
         try:
-            assert dispute.contract == trade.contract, "contract must match contract from trade"
+            check_argument(dispute.contract == trade.contract, "contract must match contract from trade")
 
             assert trade.delayed_payout_tx is not None, "trade.delayed_payout_tx must not be None"
             assert dispute.delayed_payout_tx_id is not None, "delayed_payout_tx_id must not be None"
-            assert dispute.delayed_payout_tx_id == trade.delayed_payout_tx.get_tx_id(), \
-                "delayed_payout_tx_id must match delayed_payout_tx_id from trade"
+            check_argument(dispute.delayed_payout_tx_id == trade.delayed_payout_tx.get_tx_id(), 
+                           "delayed_payout_tx_id must match delayed_payout_tx_id from trade")
 
             assert trade.get_deposit_tx() is not None, "trade.get_deposit_tx() must not be None"
             assert dispute.deposit_tx_id is not None, "deposit_tx_id must not be None"
-            assert dispute.deposit_tx_id == trade.get_deposit_tx().get_tx_id(), \
-                "deposit_tx must match deposit_tx from trade"
+            check_argument(dispute.deposit_tx_id == trade.get_deposit_tx().get_tx_id(), 
+                           "deposit_tx must match deposit_tx from trade")
 
             assert dispute.deposit_tx_serialized is not None, "deposit_tx_serialized must not be None"
         except Exception as e:
@@ -124,11 +125,10 @@ class DisputeValidation:
         #     raise DisputeValidationAddressException(dispute, error_msg)
 
         # delayed_payout_tx_output_address = str(address)
-        # if delayed_payout_tx_output_address != dispute.donation_address_of_delayed_payout_tx:
-        #     raise ValueError(
-        #         f"donationAddressOfDelayedPayoutTx from dispute does not match address from delayed payout tx. "
-        #         f"delayedPayoutTxOutputAddress={delayed_payout_tx_output_address}; "
-        #         f"dispute.getDonationAddressOfDelayedPayoutTx()={dispute.donation_address_of_delayed_payout_tx}")
+        # check_argument(delayed_payout_tx_output_address == dispute.donation_address_of_delayed_payout_tx,
+        #            f"donationAddressOfDelayedPayoutTx from dispute does not match address from delayed payout tx. "
+        #            f"delayedPayoutTxOutputAddress={delayed_payout_tx_output_address}; "
+        #            f"dispute.getDonationAddressOfDelayedPayoutTx()={dispute.donation_address_of_delayed_payout_tx}")
 
     @staticmethod
     def test_if_any_dispute_tried_replay(dispute_list: List["Dispute"], 
@@ -206,15 +206,15 @@ class DisputeValidation:
             assert uid is not None, f"agents_uid must not be None. Trade ID: {trade_id}"
 
             disputes_per_trade_id_items = disputes_per_trade_id.get(trade_id)
-            assert disputes_per_trade_id_items is not None and len(disputes_per_trade_id_items) <= 2, f"We found more than 2 disputes with the same trade ID. Trade ID: {trade_id}"
+            check_argument(disputes_per_trade_id_items is not None and len(disputes_per_trade_id_items) <= 2, f"We found more than 2 disputes with the same trade ID. Trade ID: {trade_id}")
 
             if disputes_per_delayed_payout_tx_id:
                 items = disputes_per_delayed_payout_tx_id.get(delayed_payout_tx_id)
-                assert items is not None and len(items) <= 2, f"We found more than 2 disputes with the same delayedPayoutTxId. Trade ID: {trade_id}"
+                check_argument(items is not None and len(items) <= 2, f"We found more than 2 disputes with the same delayedPayoutTxId. Trade ID: {trade_id}")
 
             if disputes_per_deposit_tx_id:
                 items = disputes_per_deposit_tx_id.get(deposit_tx_id)
-                assert items is not None and len(items) <= 2, f"We found more than 2 disputes with the same depositTxId. Trade ID: {trade_id}"
+                check_argument(items is not None and len(items) <= 2, f"We found more than 2 disputes with the same depositTxId. Trade ID: {trade_id}")
                 
         except Exception as e:
             logger.error(f"Error at test_if_dispute_tries_replay: dispute_to_test={dispute_to_test}, "

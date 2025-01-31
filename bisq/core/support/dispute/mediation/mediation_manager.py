@@ -28,6 +28,7 @@ from bisq.core.support.support_type import SupportType
 from bisq.common.version import Version
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.core.trade.protocol.bisq_v1.dispute_protocol import DisputeProtocol
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -247,7 +248,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
     ) -> None:
         trade_id = trade.get_id()
         optional_dispute = self._find_dispute_by_ids(trade_id)
-        assert optional_dispute is not None, "dispute must be present"
+        check_argument(optional_dispute is not None, "dispute must be present")
         dispute_result = optional_dispute.dispute_result_property.value
         buyer_payout_amount = dispute_result.buyer_payout_amount
         seller_payout_amount = dispute_result.seller_payout_amount

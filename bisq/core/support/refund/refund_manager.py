@@ -22,6 +22,7 @@ from bisq.core.support.dispute.agent.dispute_agent_lookup_map import (
 from bisq.core.locale.res import Res
 from bisq.common.version import Version
 from global_container import GLOBAL_CONTAINER
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
@@ -324,17 +325,18 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             if not taker_fee_tx_found:
                 taker_fee_tx_found = funding_tx_id == taker_fee_tx.get_tx_id()
 
-        assert maker_fee_tx_found, "makerFeeTx not found at deposit_tx inputs"
-        assert taker_fee_tx_found, "takerFeeTx not found at deposit_tx inputs"
-        assert len(deposit_tx.inputs) >= 2, "deposit_tx must have at least 2 inputs"
-        assert (
-            len(delayed_payout_tx.inputs) >= 1
-        ), "delayed_payout_tx must have at least 1 inputs"
+        check_argument(maker_fee_tx_found, "makerFeeTx not found at deposit_tx inputs")
+        check_argument(taker_fee_tx_found, "takerFeeTx not found at deposit_tx inputs")
+        check_argument(len(deposit_tx.inputs) >= 2, "deposit_tx must have at least 2 inputs")
+        check_argument(
+            len(delayed_payout_tx.inputs) >= 1,
+            "delayed_payout_tx must have at least 1 inputs"
+        )
         delayed_payout_tx_outpoint = delayed_payout_tx.inputs[0].outpoint
         funding_tx_id = str(
             delayed_payout_tx_outpoint.hash
         )
-        assert funding_tx_id == deposit_tx.get_tx_id(), "First input at delayed_payout_tx does not connect to deposit_tx"
+        check_argument(funding_tx_id == deposit_tx.get_tx_id(), "First input at delayed_payout_tx does not connect to deposit_tx")
 
     def verify_delayed_payout_tx_receivers(
         self, delayed_payout_tx: "Transaction", dispute: "Dispute"
@@ -361,17 +363,20 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
         logger.info(
             f"Verify delayedPayoutTx using selectionHeight {selection_height} and receivers {delayed_payout_tx_receivers}"
         )
-        assert len(delayed_payout_tx.outputs) == len(
-            delayed_payout_tx_receivers
-        ), "Size of outputs and delayed_payout_tx_receivers must be the same"
+        check_argument(
+            len(delayed_payout_tx.outputs) == len(delayed_payout_tx_receivers),
+            "Size of outputs and delayed_payout_tx_receivers must be the same"
+        )
 
         params = self.btc_wallet_service.params
         for i, tx_output in enumerate(delayed_payout_tx.outputs):
             receiver_tuple = delayed_payout_tx_receivers[0]
-            assert (
+            check_argument(
                 str(tx_output.get_script_pub_key().get_to_address(params))
-                == receiver_tuple[1]
-            ), f"output address does not match delayedPayoutTxReceivers address. transactionOutput={tx_output}"
-            assert (
-                tx_output.get_value().value == receiver_tuple[0]
-            ), f"output value does not match delayedPayoutTxReceivers value. transactionOutput={tx_output}"
+                == receiver_tuple[1],
+                f"output address does not match delayedPayoutTxReceivers address. transactionOutput={tx_output}"
+            )
+            check_argument(
+                tx_output.get_value().value == receiver_tuple[0],
+                f"output value does not match delayedPayoutTxReceivers value. transactionOutput={tx_output}"
+            )

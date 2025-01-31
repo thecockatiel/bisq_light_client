@@ -9,6 +9,7 @@ from bisq.core.util.coin.coin_util import CoinUtil
 from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin
 from bisq.core.offer.offer_util import OfferUtil
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.account.witness.account_age_witness_service import (
@@ -227,7 +228,7 @@ class TakeOfferModel(TaskModel):
     def _validate_model_inputs(self):
         assert self.offer is not None, "offer must not be null"
         assert self.offer.amount is not None, "offer amount must not be null"
-        assert self.offer.amount.value > 0, "offer amount must not be zero"
+        check_argument(self.offer.amount.value > 0, "offer amount must not be zero")
         assert self.offer.get_price() is not None, "offer price must not be null"
         assert self.payment_account is not None, "payment account must not be null"
         assert self.address_entry is not None, "address entry must not be null"

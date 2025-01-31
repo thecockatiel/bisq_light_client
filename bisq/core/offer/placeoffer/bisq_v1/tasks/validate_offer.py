@@ -3,6 +3,8 @@ from bitcoinj.base.coin import Coin
 from bisq.common.taskrunner.task import Task
 from typing import Optional
 
+from utils.preconditions import check_argument
+
 if TYPE_CHECKING:
     from bisq.core.offer.placeoffer.bisq_v1.place_offer_model import PlaceOfferModel
     from bisq.common.taskrunner.task_runner import TaskRunner
@@ -17,7 +19,7 @@ class ValidateOffer(Task['PlaceOfferModel']):
         try:
             self.run_intercept_hook()
 
-            assert not offer.is_bsq_swap_offer(), "BSQ swap offers not supported"
+            check_argument(not offer.is_bsq_swap_offer(), "BSQ swap offers not supported")
 
             # Validate coins
             self.check_coin_not_null_or_zero(offer.amount, "Amount")
@@ -29,16 +31,16 @@ class ValidateOffer(Task['PlaceOfferModel']):
             self.check_coin_not_null_or_zero(offer.max_trade_limit, "MaxTradeLimit")
 
             # Amount validations
-            assert offer.amount <= offer.payment_method.get_max_trade_limit_as_coin(offer.currency_code), \
-                f"Amount is larger than {offer.payment_method.get_max_trade_limit_as_coin(offer.currency_code).to_friendly_string()}"
-            assert offer.amount >= offer.min_amount, "MinAmount is larger than Amount"
+            check_argument(offer.amount <= offer.payment_method.get_max_trade_limit_as_coin(offer.currency_code),
+                           f"Amount is larger than {offer.payment_method.get_max_trade_limit_as_coin(offer.currency_code).to_friendly_string()}")
+            check_argument(offer.amount >= offer.min_amount, "MinAmount is larger than Amount")
 
             # Price validations
             assert offer.get_price() is not None, "Price is null"
-            assert offer.get_price().is_positive(), f"Price must be positive. price={offer.get_price().to_friendly_string()}"
+            check_argument(offer.get_price().is_positive(), f"Price must be positive. price={offer.get_price().to_friendly_string()}")
 
             # Date validation
-            assert offer.date.timestamp() > 0, f"Date must not be 0. date={offer.date}"
+            check_argument(offer.date.timestamp() > 0, f"Date must not be 0. date={offer.date}")
 
             # Other validations
             assert offer.currency_code is not None, "Currency is null"
@@ -50,7 +52,7 @@ class ValidateOffer(Task['PlaceOfferModel']):
             assert offer.tx_fee is not None, "txFee is null"
             assert offer.maker_fee is not None, "MakerFee is null"
             assert offer.version_nr is not None, "VersionNr is null"
-            assert offer.max_trade_period > 0, f"maxTradePeriod must be positive. maxTradePeriod={offer.max_trade_period}"
+            check_argument(offer.max_trade_period > 0, f"maxTradePeriod must be positive. maxTradePeriod={offer.max_trade_period}")
             # JAVA TODO check upper and lower bounds for fiat
             # JAVA TODO check rest of new parameters
             # JAVA TODO check for account age witness base tradeLimit is missing
@@ -63,31 +65,31 @@ class ValidateOffer(Task['PlaceOfferModel']):
     @staticmethod
     def check_coin_not_null_or_zero(value: Optional[Coin], name: str) -> None:
         assert value is not None, f"{name} is None"
-        assert value.is_positive(), f"{name} must be positive. {name}={value.to_friendly_string()}"
+        check_argument(value.is_positive(), f"{name} must be positive. {name}={value.to_friendly_string()}")
 
     @staticmethod
     def non_empty_string_of(value: Optional[str]) -> str:
         assert value is not None, "String value is None"
-        assert len(value) > 0, "String value is empty"
+        check_argument(len(value) > 0, "String value is empty")
         return value
 
     @staticmethod
     def non_negative_long_of(value: int) -> int:
-        assert value >= 0, "Value must be non-negative"
+        check_argument(value >= 0, "Value must be non-negative")
         return value
 
     @staticmethod
     def non_zero_coin_of(value: Optional[Coin]) -> Coin:
         assert value is not None, "Coin value is None"
-        assert not value.is_zero(), "Coin value is zero"
+        check_argument(not value.is_zero(), "Coin value is zero")
         return value
 
     @staticmethod
     def positive_coin_of(value: Optional[Coin]) -> Coin:
         assert value is not None, "Coin value is None"
-        assert value.is_positive(), "Coin value must be positive"
+        check_argument(value.is_positive(), "Coin value must be positive")
         return value
 
     @staticmethod
     def check_trade_id(trade_id: str, trade_message: 'TradeMessage') -> None:
-        assert trade_id == trade_message.trade_id, "Trade IDs do not match"
+        check_argument(trade_id == trade_message.trade_id, "Trade IDs do not match")

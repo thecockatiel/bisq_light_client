@@ -25,6 +25,7 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bitcoinj.base.coin import Coin
 from utils.data import ObservableChangeEvent, SimplePropertyChangeEvent
 from bisq.core.offer.bsq_swap.open_bsq_swap_offer import OpenBsqSwapOffer
+from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.common.version import Version
 from bisq.core.offer.offer import Offer
@@ -202,7 +203,7 @@ class OpenBsqSwapOfferService:
         result_handler: Callable[[], None],
         error_message_handler: ErrorMessageHandler,
     ):
-        assert offer.is_bsq_swap_offer
+        check_argument(offer.is_bsq_swap_offer, "Offer must be a BSQ swap offer")
         model = PlaceBsqSwapOfferModel(offer, self.offer_book_service)
 
         def on_complete():
@@ -340,9 +341,10 @@ class OpenBsqSwapOfferService:
                     new_offer = Offer(new_payload)
                     new_offer.state = OfferState.AVAILABLE
 
-                    assert (
-                        not open_offer.is_deactivated
-                    ), "We must not get called at _redo_proof_of_work_and_republish if offer was deactivated"
+                    check_argument(
+                        not open_offer.is_deactivated,
+                        "We must not get called at _redo_proof_of_work_and_republish if offer was deactivated"
+                    )
 
                     new_open_offer = OpenOffer(new_offer)
                     if not new_open_offer.is_deactivated:

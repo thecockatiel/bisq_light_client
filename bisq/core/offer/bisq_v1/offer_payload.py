@@ -10,6 +10,7 @@ from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
 import pb_pb2 as protobuf
 from utils.data import raise_required
+from utils.preconditions import check_argument
 
 
 # OfferPayload has about 1.4 kb. We should look into options to make it smaller but will be hard to do it in a
@@ -147,9 +148,10 @@ class OfferPayload(OfferPayloadBase):
 
     @staticmethod
     def from_proto(proto: protobuf.OfferPayload) -> "OfferPayload":
-        assert (
-            proto.offer_fee_payment_tx_id
-        ), "OfferFeePaymentTxId must be set in PB.OfferPayload"
+        check_argument(
+            proto.offer_fee_payment_tx_id,
+            "OfferFeePaymentTxId must be set in PB.OfferPayload"
+        )
 
         return OfferPayload(
             id=proto.id,
