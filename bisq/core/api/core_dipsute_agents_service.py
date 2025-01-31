@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.core.api.exception.not_available_exception import NotAvailableException
-from bisq.core.api.exception.unsupported_operation_exception import (
+from bisq.core.exceptions.unsupported_operation_exception import (
     UnsupportedOperationException,
 )
 from bisq.core.network.p2p.node_address import NodeAddress
