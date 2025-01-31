@@ -4,6 +4,7 @@ import json
 import re
 from typing import Any, Generic, Type, TypeVar, Union
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.country_util import find_country_by_code
 from bisq.core.locale.currency_util import (
@@ -323,7 +324,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
                 raise IllegalStateException(f"programmer error: {err_msg}")
             return True
         else:
-            raise ValueError(f"'{country_code}' is an invalid country code.")
+            raise IllegalArgumentException(f"'{country_code}' is an invalid country code.")
 
     def _get_payment_account_payload_type(self) -> type:
         try:
