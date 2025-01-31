@@ -2,6 +2,7 @@ from typing import Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
+from bisq.common.util.preconditions import check_argument
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer import Offer
 from bisq.core.offer.open_offer_state import OpenOfferState
@@ -149,9 +150,10 @@ class OpenOffer(Tradable):
         return self.trigger_price > 0 or self.fee_validation_status.fails()
 
     def get_bsq_swap_offer_payload(self):
-        assert (
-            self.offer.bsq_swap_offer_payload is not None
-        ), "get_bsq_swap_offer_payload must be called only when BsqSwapOfferPayload is the expected payload"
+        check_argument(
+            self.offer.bsq_swap_offer_payload is not None,
+            "get_bsq_swap_offer_payload must be called only when BsqSwapOfferPayload is the expected payload"
+        )
         return self.offer.bsq_swap_offer_payload
 
     def _on_timed_out(self):

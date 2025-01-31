@@ -1,6 +1,7 @@
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task import Task
 from bisq.common.taskrunner.task_runner import TaskRunner
+from bisq.common.util.preconditions import check_argument
 from bisq.core.offer.availability.availability_result import AvailabilityResult
 from bisq.core.offer.availability.dispute_agent_selection import DisputeAgentSelection
 from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
@@ -19,7 +20,7 @@ class ProcessOfferAvailabilityResponse(Task[OfferAvailabilityModel]):
         try:
             self.run_intercept_hook()
 
-            assert offer.state != OfferState.REMOVED, "Offer state must not be Offer.State.REMOVED"
+            check_argument(offer.state != OfferState.REMOVED, "Offer state must not be Offer.State.REMOVED")
 
             offer_availability_response = self.model.message
 

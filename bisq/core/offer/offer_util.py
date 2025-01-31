@@ -3,6 +3,7 @@ import uuid
 from bisq.common.capabilities import Capabilities
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.common.util.preconditions import check_argument
 from bisq.common.util.utilities import get_random_prefix
 from bisq.common.version import Version
 from bisq.core.btc.wallet.restrictions import Restrictions
@@ -339,10 +340,10 @@ class OfferUtil:
         max_deposit = Restrictions.get_max_buyer_security_deposit_as_percent()
         min_deposit = Restrictions.get_min_buyer_security_deposit_as_percent()
         
-        if buyer_security_deposit > max_deposit:
-            raise ValueError(f"securityDeposit must not exceed {max_deposit}")
-        if buyer_security_deposit < min_deposit:
-            raise ValueError(f"securityDeposit must not be less than {min_deposit}")
+        check_argument(buyer_security_deposit <= max_deposit, 
+                   f"securityDeposit must not exceed {max_deposit}")
+        check_argument(buyer_security_deposit >= min_deposit, 
+                   f"securityDeposit must not be less than {min_deposit}")
 
     def validate_basic_offer_data(self, payment_method: 'PaymentMethod', currency_code: str) -> None:
         """
@@ -357,11 +358,11 @@ class OfferUtil:
         """
         assert self.p2p_service.get_address() is not None, "Address must not be None"
         
-        if self.filter_manager.is_currency_banned(currency_code):
-            raise ValueError(Res.get("offerbook.warning.currencyBanned"))
+        check_argument(not self.filter_manager.is_currency_banned(currency_code),
+                   Res.get("offerbook.warning.currencyBanned"))
         
-        if self.filter_manager.is_payment_method_banned(payment_method):
-            raise ValueError(Res.get("offerbook.warning.paymentMethodBanned"))
+        check_argument(not self.filter_manager.is_payment_method_banned(payment_method),
+                   Res.get("offerbook.warning.paymentMethodBanned"))
 
     def get_merged_offer_payload(self, open_offer: 'OpenOffer', 
                                mutable_offer_payload_fields: 'MutableOfferPayloadFields') -> 'OfferPayload':
