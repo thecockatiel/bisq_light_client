@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, TypeVar
 import random
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.support.dispute.agent.dispute_agent_manager import (

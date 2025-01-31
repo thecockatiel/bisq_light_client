@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List
 from datetime import datetime, timezone
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 from bisq.core.dao.burningman.burning_man_service import BurningManService
 from global_container import GLOBAL_CONTAINER

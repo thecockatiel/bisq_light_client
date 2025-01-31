@@ -1,6 +1,6 @@
 from decimal import Decimal
 from functools import total_ordering
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bitcoinj.base.monetary import Monetary
 from bitcoinj.base.utils.monetary_format import (

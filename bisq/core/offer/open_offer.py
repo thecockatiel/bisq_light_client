@@ -2,7 +2,7 @@ from typing import Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer import Offer
 from bisq.core.offer.open_offer_state import OpenOfferState

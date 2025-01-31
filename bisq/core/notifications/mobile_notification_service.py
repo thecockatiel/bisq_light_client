@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.notifications.mobile_message_type import MobileMessageType
 from bisq.core.notifications.mobile_model_os import MobileModelOS
 from bisq.core.util.json_util import JsonUtil

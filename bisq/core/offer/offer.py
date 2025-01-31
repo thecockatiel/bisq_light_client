@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional, cast, Any
 from decimal import Decimal
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
 import pb_pb2 as protobuf
 
