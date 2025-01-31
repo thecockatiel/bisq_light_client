@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 import grpc_pb2
 
 if TYPE_CHECKING:

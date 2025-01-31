@@ -3,7 +3,7 @@ from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.model.payment_account_form import PaymentAccountForm
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import (
     api_supports_crypto_currency,
     find_asset,

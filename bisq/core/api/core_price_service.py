@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import is_crypto_currency, is_fiat_currency
 from bisq.core.util.average_price_util import get_average_price_tuple
 

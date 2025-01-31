@@ -6,7 +6,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.api.edit_offer_validator import EditOfferValidator
 from bisq.core.api.exception.not_found_exception import NotFoundException
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import api_supports_crypto_currency, is_crypto_currency, is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.price import Price

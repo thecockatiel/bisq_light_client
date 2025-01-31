@@ -5,7 +5,7 @@ from bisq.core.api.exception.failed_precondition_exception import (
 )
 from bisq.core.api.exception.not_available_exception import NotAvailableException
 from bisq.core.api.exception.not_found_exception import NotFoundException
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.model.trade_model import TradeModel
 from bisq.core.trade.protocol.bisq_v1.buyer_protocol import BuyerProtocol

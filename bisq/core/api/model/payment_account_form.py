@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.model.payment_account_type_adapter import PaymentAccountTypeAdapter
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payment_account_factory import PaymentAccountFactory
 from bisq.core.util.json_util import JsonUtil
