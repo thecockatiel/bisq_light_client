@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Tuple, Optional, Union
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.util.utilities import bytes_as_hex_string
-from bisq.core.btc.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.locale.res import Res
 from bisq.core.trade.model.bsq_swap.bsq_swap_trade import BsqSwapTrade
