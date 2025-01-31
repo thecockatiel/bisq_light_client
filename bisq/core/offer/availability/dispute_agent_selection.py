@@ -1,5 +1,7 @@
-from typing import TYPE_CHECKING, TypeVar, List
+from typing import TYPE_CHECKING, TypeVar
 import random
+
+from bisq.common.util.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.support.dispute.agent.dispute_agent_manager import (
@@ -27,6 +29,6 @@ class DisputeAgentSelection:
         random.shuffle(dispute_agents)
 
         if not dispute_agents:
-            raise ValueError("dispute_agents must not be empty")
+            check_argument(dispute_agents, "dispute_agents must not be empty")
 
         return dispute_agents[0]

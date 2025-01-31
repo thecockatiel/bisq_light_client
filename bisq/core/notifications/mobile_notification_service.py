@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
+from bisq.common.util.preconditions import check_argument
 from bisq.core.notifications.mobile_message_type import MobileMessageType
 from bisq.core.notifications.mobile_model_os import MobileModelOS
 from bisq.core.util.json_util import JsonUtil
@@ -233,8 +234,7 @@ class MobileNotificationService:
             try:
                 result = t.result()
                 logger.info(f"sendMobileNotification result={result}")
-                if result != MobileNotificationService.SUCCESS:
-                    raise ValueError(f"Result was not 'success'. result={result}")
+                check_argument(result == MobileNotificationService.SUCCESS, f"Result was not 'success'. result={result}")
                 UserThread.execute(lambda: result_handler(result))
             except Exception as e:
                 UserThread.execute(lambda: error_handler(e))

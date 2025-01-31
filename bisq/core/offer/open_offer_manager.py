@@ -1,5 +1,6 @@
 from datetime import timedelta
 from typing import TYPE_CHECKING, List, Callable, Optional
+from bisq.common.util.preconditions import check_argument
 from bisq.common.version import Version
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
@@ -395,7 +396,7 @@ class OpenOfferManager(
         error_message_handler: ErrorMessageHandler,
     ):
         assert offer.maker_fee is not None, "maker_fee must not be none"
-        assert not offer.is_bsq_swap_offer
+        check_argument(not offer.is_bsq_swap_offer, "Offer must not be a BSQ swap offer")
 
         num_clones = len(
             self.get_open_offers_by_maker_fee_tx_id(offer.offer_fee_payment_tx_id)
@@ -916,13 +917,16 @@ class OpenOfferManager(
 
             try:
                 takers_burning_man_selection_height = request.burning_man_selection_height
-                assert takers_burning_man_selection_height > 0, "takersBurningManSelectionHeight must not be 0"
+                check_argument(takers_burning_man_selection_height > 0, "takersBurningManSelectionHeight must not be 0")
                 
                 makers_burning_man_selection_height = (
                     self.delayed_payout_tx_receiver_service.get_burning_man_selection_height()
                 )
-                assert takers_burning_man_selection_height == makers_burning_man_selection_height, ("takersBurningManSelectionHeight does no match makersBurningManSelectionHeight. "
-                                                                                                   f"takersBurningManSelectionHeight={takers_burning_man_selection_height}; makersBurningManSelectionHeight={makers_burning_man_selection_height}")
+                check_argument(
+                    takers_burning_man_selection_height == makers_burning_man_selection_height,
+                    "takersBurningManSelectionHeight does not match makersBurningManSelectionHeight. "
+                    f"takersBurningManSelectionHeight={takers_burning_man_selection_height}; makersBurningManSelectionHeight={makers_burning_man_selection_height}"
+                )
             except Exception as e:
                 error_message = (
                     f"Message validation failed. Error={e}, Message={request}"

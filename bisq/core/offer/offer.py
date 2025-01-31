@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional, cast, Any
 from decimal import Decimal
 
+from bisq.common.util.preconditions import check_argument
 from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
 import pb_pb2 as protobuf
 
@@ -158,11 +159,11 @@ class Offer(NetworkPayload, PersistablePayload):
 
     def verify_takers_trade_price(self, takers_trade_price: int) -> None:
         if not self.is_use_market_based_price:
-            if takers_trade_price != self.fixed_price:
-                raise ValueError(
-                    f"Takers price does not match offer price. "
-                    f"Takers price={takers_trade_price}; offer price={self.fixed_price}"
-                )
+            check_argument(
+                takers_trade_price == self.fixed_price,
+                f"Takers price does not match offer price. "
+                f"Takers price={takers_trade_price}; offer price={self.fixed_price}"
+            )
             return
 
         trade_price = Price.value_of(self.currency_code, takers_trade_price)
@@ -172,8 +173,7 @@ class Offer(NetworkPayload, PersistablePayload):
                 "Market price required for calculating trade price is not available."
             )
 
-        if takers_trade_price <= 0:
-            raise ValueError("takers_trade_price must be positive")
+        check_argument(takers_trade_price > 0, "takers_trade_price must be positive")
 
         relation = Decimal(takers_trade_price) / Decimal(offer_price.get_value())
         # We allow max. 2 % difference between own offerPayload price calculation and takers calculation.
