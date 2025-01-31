@@ -5,6 +5,7 @@ from bisq.core.api.exception.failed_precondition_exception import (
 )
 from bisq.core.api.exception.not_available_exception import NotAvailableException
 from bisq.core.api.exception.not_found_exception import NotFoundException
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.model.trade_model import TradeModel
@@ -125,7 +126,7 @@ class CoreTradesService:
 
         payment_account = self.user.get_payment_account(payment_account_id)
         if payment_account is None:
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"payment account with id '{payment_account_id}' not found"
             )
 
@@ -392,7 +393,7 @@ class CoreTradesService:
     # Raises a RuntimeError trade is already closed.
     def _verify_trade_is_not_closed(self, trade_id: str):
         if self._get_closed_trade(trade_id) is not None:
-            raise RuntimeError(f"trade '{trade_id}' is already closed")
+            raise IllegalArgumentException(f"trade '{trade_id}' is already closed")
 
     # Raises a RuntimeError if address is not valid.
     def _verify_is_valid_btc_address(self, address: str):
@@ -400,7 +401,7 @@ class CoreTradesService:
             BtcAddressValidator().validate(address)
         except Exception as e:
             logger.error("", exc_info=e)
-            raise ValueError(f"'{address}' is not a valid btc address")
+            raise IllegalArgumentException(f"'{address}' is not a valid btc address")
 
     # Raises a RuntimeError if address has a zero balance.
     def _verify_funds_not_withdrawn(self, from_address_entry: "AddressEntry"):
@@ -447,7 +448,7 @@ class CoreTradesService:
             intended_trade_amount < offer.min_amount.value
             or intended_trade_amount > offer.amount.value
         ):
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"intended trade amount {Coin.value_of(intended_trade_amount).to_plain_string().lower()} "
                 f"is outside offer's min - max amount range of "
                 f"{offer.min_amount.to_plain_string().lower()} - {offer.amount.to_plain_string().lower()}"

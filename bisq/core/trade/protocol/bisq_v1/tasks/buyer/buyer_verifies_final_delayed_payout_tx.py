@@ -1,4 +1,5 @@
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.trade.bisq_v1.trade_data_validation import TradeDataValidation
 from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
     TradeDataValidationException,
@@ -60,7 +61,7 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
                     f"\nDaoState.chainHeight={self.process_model.dao_facade.get_chain_height()}, "
                     f"\nisDaoStateIsInSync={self.process_model.dao_facade.is_dao_state_ready_and_in_sync()}"
                 )
-                raise ValueError(error_msg)
+                raise IllegalArgumentException(error_msg)
 
             self.complete()
         except TradeDataValidationException as e:

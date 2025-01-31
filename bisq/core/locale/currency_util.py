@@ -4,6 +4,7 @@ from bisq.asset.coin import Coin
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.currency_data import (
     COUNTRY_TO_CURRENCY_CODE_MAP,
@@ -241,7 +242,7 @@ def get_trade_currencies_in_list(currency_codes: list[str], valid_currencies: li
     if trade_currencies:
         for trade_currency in trade_currencies:
             if trade_currency not in valid_currencies:
-                raise ValueError(f"{trade_currency.code} is not a member of valid currencies list")
+                raise IllegalArgumentException(f"{trade_currency.code} is not a member of valid currencies list")
     return trade_currencies
 
 def get_currency_name_by_code(currency_code: str) -> str:
@@ -288,7 +289,7 @@ def find_asset(currency_code_or_ticker: str, base_currency_network: "BaseCurrenc
 
     if optional_asset is None and base_currency_network and base_currency_network.is_mainnet():
         # If we are in mainnet we need have a mainnet asset defined.
-        raise ValueError("We are on mainnet and we could not find an asset with network type mainnet")
+        raise IllegalArgumentException("We are on mainnet and we could not find an asset with network type mainnet")
 
     return optional_asset
 
@@ -305,6 +306,6 @@ def api_supports_crypto_currency(currency_code: str):
     if is_crypto_currency(currency_code):
         return currency_code in ["BTC", "BSQ", "XMR"]
     else:
-        raise ValueError(
+        raise IllegalArgumentException(
             f"Method requires a crypto currency code, but was given '{currency_code}'."
         )

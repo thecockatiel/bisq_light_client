@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 import grpc_pb2
 
@@ -208,13 +209,13 @@ class EditOfferValidator:
     def _check_not_bsq_offer(self):
         if self._currently_open_offer.get_offer().currency_code == "BSQ":
             # is a user error.
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"cannot set mkt price margin or trigger price on fixed price bsq offer with id '{self._currently_open_offer.get_id()}'"
             )
 
     def _check_not_bsq_swap_offer(self):
         if self._currently_open_offer.get_offer().is_bsq_swap_offer:
             # is a user error.
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"cannot edit bsq swap offer with id '{self._currently_open_offer.get_id()}', replace it with a new swap offer instead"
             )

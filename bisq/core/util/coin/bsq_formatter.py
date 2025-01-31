@@ -2,6 +2,7 @@ from typing import Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.dao.governance.proposal.proposal_validation_exception import ProposalValidationException
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.util.coin.coin_formatter import CoinFormatter
@@ -91,13 +92,13 @@ class BsqFormatter(CoinFormatter):
         elif param.param_type == ParamType.BTC:
             return self.parse_to_btc(input_value)
         else:
-            raise ValueError(f"Unsupported paramType. param: {param}")
+            raise IllegalArgumentException(f"Unsupported paramType. param: {param}")
 
     def parse_param_value_to_blocks(self, param: "Param", input_value: str) -> int:
         if param.param_type == ParamType.BLOCK:
             return int(input_value)
         else:
-            raise ValueError(f"Unsupported paramType. param: {param}")
+            raise IllegalArgumentException(f"Unsupported paramType. param: {param}")
 
     def parse_param_value_to_string(self, param: "Param", input_value: str) -> str:
         if param.param_type == ParamType.UNDEFINED:

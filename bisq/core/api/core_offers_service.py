@@ -6,6 +6,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.api.edit_offer_validator import EditOfferValidator
 from bisq.core.api.exception.not_found_exception import NotFoundException
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import api_supports_crypto_currency, is_crypto_currency, is_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
@@ -226,7 +227,7 @@ class CoreOffersService:
                 ]
                 return sorted(filtered, key=self.price_comparator(direction, False))
             else:
-                raise ValueError(
+                raise IllegalArgumentException(
                     f"api does not support the '{upper_case_currency_code}' crypto currency"
                 )
 
@@ -268,7 +269,7 @@ class CoreOffersService:
                     filtered, key=self.open_offer_price_comparator(direction, False)
                 )
             else:
-                raise ValueError(
+                raise IllegalArgumentException(
                     f"api does not support the '{upper_case_currency_code}' crypto currency"
                 )
 
@@ -360,7 +361,7 @@ class CoreOffersService:
 
         payment_account = self.user.get_payment_account(payment_account_id)
         if payment_account is None:
-            raise ValueError(f"payment account with id {payment_account_id} not found")
+            raise IllegalArgumentException(f"payment account with id {payment_account_id} not found")
 
         upper_case_currency_code = currency_code.upper()
         offer_id = OfferUtil.get_random_offer_id()

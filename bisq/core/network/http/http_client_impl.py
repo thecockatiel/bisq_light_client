@@ -3,6 +3,7 @@ import uuid
 from requests import Session, Response
 
 from bisq.common.version import Version
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.network.http.http_client import HttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
@@ -84,9 +85,9 @@ class HttpClientImpl(HttpClient):
         headers: dict[str, str] = {},
     ):
         if not self.base_url:
-            raise ValueError("baseUrl must be set before calling doRequest")
+            raise IllegalArgumentException("baseUrl must be set before calling doRequest")
         if self.has_pending_request:
-            raise ValueError(
+            raise IllegalArgumentException(
                 "We got called on the same HttpClient again while a request is still open."
             )
         self.has_pending_request = True

@@ -2,6 +2,8 @@ from math import isnan, pow
 from bisq.common.setup.log_setup import get_logger
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
+
 logger = get_logger(__name__)
 
 _infinities = (float("inf"), float("-inf"))
@@ -14,9 +16,9 @@ class MathUtils:
         value: float, precision: int, rounding_mode: int = ROUND_HALF_UP
     ) -> float:
         if precision < 0:
-            raise ValueError("Precision cannot be negative")
+            raise IllegalArgumentException("Precision cannot be negative")
         if not isinstance(value, (int, float)) or value in _infinities or isnan(value):
-            raise ValueError(f"Expected a finite float, but found {value}")
+            raise IllegalArgumentException(f"Expected a finite float, but found {value}")
 
         try:
             dec = Decimal(str(value))
@@ -29,7 +31,7 @@ class MathUtils:
     @staticmethod
     def round_double_to_long(value: float, rounding_mode: int = ROUND_HALF_UP) -> int:
         if not isinstance(value, (int, float)) or value in _infinities or isnan(value):
-            raise ValueError(f"Expected a finite float, but found {value}")
+            raise IllegalArgumentException(f"Expected a finite float, but found {value}")
 
         try:
             dec = Decimal(str(value))

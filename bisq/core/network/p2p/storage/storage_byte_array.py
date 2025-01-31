@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Set
 
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 import pb_pb2 as protobuf
 
 # moved from P2PDataStorage.ByteArray here
@@ -21,13 +22,13 @@ class StorageByteArray(PersistablePayload):
     
     def verify_bytes_not_empty(self):
         if self.bytes is None:
-            raise ValueError("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with None bytes argument.")
+            raise IllegalArgumentException("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with None bytes argument.")
         if len(self.bytes) == 0:
-            raise ValueError("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with empty bytes argument.")
+            raise IllegalArgumentException("Cannot create StorageByteArray(or P2PDataStorage.ByteArray) with empty bytes argument.")
 
     def __post_init__(self):
         if not self.bytes:
-            raise ValueError("ByteArray cannot be empty")
+            raise IllegalArgumentException("ByteArray cannot be empty")
         
     def __str__(self):
         return f"ByteArray{{bytes as Hex={self.get_hex()}}}"

@@ -5,6 +5,7 @@ import aiohttp
 from aiohttp_socks import ProxyType, ProxyConnector
 
 from bisq.common.version import Version
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.network.http.async_http_client import AsyncHttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.http.http_response_error import HttpResponseError
@@ -101,9 +102,9 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         timeout: asyncio.TimeoutError = None,
     ):
         if not self.base_url:
-            raise ValueError("baseUrl must be set before calling doRequest")
+            raise IllegalArgumentException("baseUrl must be set before calling doRequest")
         if self.has_pending_request:
-            raise ValueError(
+            raise IllegalArgumentException(
                 "We got called on the same HttpClient again while a request is still open."
             )
         self.has_pending_request = True

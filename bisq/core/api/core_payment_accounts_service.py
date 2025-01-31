@@ -3,6 +3,7 @@ from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.model.payment_account_form import PaymentAccountForm
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.currency_util import (
     api_supports_crypto_currency,
@@ -129,7 +130,7 @@ class CorePaymentAccountsService:
         else:
             asset = self._get_asset(crypto_currency_code)
             if not asset.validate_address(address).is_valid:
-                raise ValueError(
+                raise IllegalArgumentException(
                     f"{address} is not a valid {crypto_currency_code.lower()} address"
                 )
 
@@ -137,7 +138,7 @@ class CorePaymentAccountsService:
         self, crypto_currency_code: str
     ):
         if not api_supports_crypto_currency(crypto_currency_code):
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"api does not currently support {crypto_currency_code.lower()} accounts"
             )
 
@@ -161,6 +162,6 @@ class CorePaymentAccountsService:
             not payment_account.has_multiple_currencies
             and payment_account.get_single_trade_currency() is None
         ):
-            raise ValueError(
+            raise IllegalArgumentException(
                 f"no trade currency defined for {payment_account.payment_method.get_display_string().lower()} payment account"
             )
