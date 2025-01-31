@@ -6,7 +6,7 @@ import math
 from typing import Optional
 import struct
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.common.util.utilities import (
     bytes_to_ints_be,
     copy_right_aligned,

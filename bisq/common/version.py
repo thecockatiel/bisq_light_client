@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 
 logger = get_logger(__name__)

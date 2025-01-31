@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, List, Tuple
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 

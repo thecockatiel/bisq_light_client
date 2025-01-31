@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future
 from typing import TYPE_CHECKING
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.common.crypto.proof_of_work import ProofOfWork

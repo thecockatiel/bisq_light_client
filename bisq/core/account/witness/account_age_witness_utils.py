@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.crypto.hash import get_ripemd160_hash, get_sha256_ripemd160_hash
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.trade.model.bisq_v1.trade import Trade

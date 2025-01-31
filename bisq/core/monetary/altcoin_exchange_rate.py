@@ -1,6 +1,6 @@
 
 # Cloned from ExchangeRate. Use Altcoin instead of Altcoin.
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.monetary.altcoin import Altcoin
 from bitcoinj.base.coin import Coin

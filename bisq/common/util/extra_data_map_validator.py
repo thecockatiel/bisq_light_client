@@ -1,7 +1,7 @@
 from typing import Optional
 
 from bisq.common.setup.log_setup import get_logger
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
 

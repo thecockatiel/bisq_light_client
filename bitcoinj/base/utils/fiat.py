@@ -2,7 +2,7 @@ from decimal import ROUND_DOWN, Decimal
 from functools import total_ordering
 from typing import Tuple
 
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 from bitcoinj.base.monetary import Monetary
 import bitcoinj.base.utils.monetary_format
 

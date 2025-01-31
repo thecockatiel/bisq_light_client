@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass, field 
 from google.protobuf.message import Message
 from bisq.common.envelope import Envelope
-from bisq.common.util.preconditions import check_argument
+from utils.preconditions import check_argument
 import pb_pb2 as protobuf
 from bisq.common.version import Version
 
