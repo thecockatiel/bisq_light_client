@@ -43,13 +43,12 @@ class PasswordAuthInterceptor(ServerInterceptor):
     def intercept_call(
         self, continuation: Callable, handler_call_details: "HandlerCallDetails"
     ) -> Callable:
-        metadata = handler_call_details.invocation_metadata
 
         actual_password = next(
             (
-                item.value
-                for item in metadata
-                if item.key == PasswordAuthInterceptor.PASSWORD_KEY
+                value
+                for header, value in handler_call_details.invocation_metadata
+                if header == PasswordAuthInterceptor.PASSWORD_KEY
             ),
             None,
         )
