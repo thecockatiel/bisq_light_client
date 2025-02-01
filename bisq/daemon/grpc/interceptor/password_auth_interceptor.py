@@ -41,7 +41,7 @@ class PasswordAuthInterceptor(ServerInterceptor):
             f"incorrect '{PasswordAuthInterceptor.PASSWORD_KEY}' rpc header",
         )
 
-    def intercept_call(
+    def intercept_service(
         self, continuation: Callable, handler_call_details: "HandlerCallDetails"
     ) -> Callable:
 
