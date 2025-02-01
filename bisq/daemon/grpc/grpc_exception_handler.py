@@ -1,5 +1,4 @@
 from logging import Logger
-from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.exception.already_exists_exception import AlreadyExistsException
 from bisq.core.api.exception.failed_precondition_exception import (
