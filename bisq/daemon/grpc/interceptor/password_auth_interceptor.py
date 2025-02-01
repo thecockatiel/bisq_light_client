@@ -1,14 +1,15 @@
 from typing import TYPE_CHECKING, Callable
 from grpc import (
     ServerInterceptor,
-    HandlerCallDetails,
     StatusCode,
     ServicerContext,
     unary_unary_rpc_method_handler,
 )
 
+
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
+    from utils.grpc_type_hints import HandlerCallDetails
 
 
 def _unary_unary_rpc_terminator(code: StatusCode, details: str):
