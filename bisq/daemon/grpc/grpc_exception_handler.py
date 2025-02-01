@@ -1,5 +1,4 @@
 from logging import Logger
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.exception.already_exists_exception import AlreadyExistsException
 from bisq.core.api.exception.failed_precondition_exception import (
     FailedPreconditionException,
@@ -12,9 +11,6 @@ from bisq.core.exceptions.unsupported_operation_exception import (
     UnsupportedOperationException,
 )
 from grpc import StatusCode, Status, ServicerContext
-
-logger = get_logger(__name__)
-
 
 class GrpcStatus(Status):
 
