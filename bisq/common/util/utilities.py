@@ -1,4 +1,8 @@
+from collections.abc import Callable
 import platform
+import threading
+from typing import Any, Generic, TypeVar
+from utils.data import SimpleProperty
 from utils.dir import user_data_dir
 import random
 import string
@@ -59,3 +63,19 @@ def ints_to_bytes_be(ints: list[int]) -> bytes:
 
 def is_qubes_os() -> bool:
     return platform.system().lower() == "linux" and "qubes" in platform.platform().lower()
+
+
+_T = TypeVar('_T')
+
+class WaitableResultHandler(Generic[_T], Callable[[_T], None]):
+    def __init__(self):
+        self._result_container = SimpleProperty[_T]()
+        self._completion_event = threading.Event()
+
+    def __call__(self, result: _T):
+        self._result_container.set(result)
+        self._completion_event.set()
+    
+    def wait(self) -> _T:
+        self._completion_event.wait()
+        return self._result_container.get()
