@@ -41,7 +41,6 @@ logger = get_logger(__name__)
 class GrpcOffersService(OffersServicer):
 
     def __init__(self, core_api: "CoreApi", exception_handler: "GrpcExceptionHandler"):
-        super().__init__()
         self.core_api = core_api
         self.exception_handler = exception_handler
 
