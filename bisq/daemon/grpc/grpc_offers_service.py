@@ -1,6 +1,7 @@
 import threading
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
+from bisq.common.util.utilities import WaitableResultHandler
 from bisq.core.api.model.offer_info import OfferInfo
 from grpc_pb2_grpc import OffersServicer
 from grpc_pb2 import (
@@ -176,28 +177,21 @@ class GrpcOffersService(OffersServicer):
     def CreateBsqSwapOffer(
         self, request: "CreateBsqSwapOfferRequest", context: "ServicerContext"
     ):
-        # NOTE: this is only fine because grpc is running in a separate thread
         try:
-            result_container = {"offer": None}
-            completion_event = threading.Event()
-
-            def callback(offer: "Offer"):
-                result_container["offer"] = offer
-                completion_event.set()
+            # NOTE: blocking is only fine because grpc is running in a separate thread
+            waitable_handler = WaitableResultHandler["Offer"]()
 
             self.core_api.create_and_place_bsq_swap_offer(
                 request.direction,
                 request.amount,
                 request.min_amount,
                 request.price,
-                callback,
+                waitable_handler,
             )
 
             # NOTE: while it may be dangerous to wait indefinitely here, we should
             # thats because we want to know the result no matter what happens. either the offer is created or an error should be thrown
-            completion_event.wait()
-
-            offer = result_container["offer"]
+            offer = waitable_handler.wait()
             offer_info = OfferInfo.to_my_pending_offer_info(offer)
             return CreateBsqSwapOfferReply(bsq_swap_offer=offer_info.to_proto_message())
         except Exception as e:
@@ -205,13 +199,7 @@ class GrpcOffersService(OffersServicer):
 
     def CreateOffer(self, request: "CreateOfferRequest", context: "ServicerContext"):
         try:
-            result_container = {"offer": None}
-            completion_event = threading.Event()
-
-            def callback(offer: "Offer"):
-                result_container["offer"] = offer
-                completion_event.set()
-
+            waitable_handler = WaitableResultHandler["Offer"]()
             self.core_api.create_and_place_offer(
                 request.currency_code,
                 request.direction,
@@ -224,13 +212,11 @@ class GrpcOffersService(OffersServicer):
                 request.trigger_price,
                 request.payment_account_id,
                 request.maker_fee_currency_code,
-                callback,
+                waitable_handler,
             )
 
             # Wait for callback (indefinitely)
-            completion_event.wait()
-
-            offer = result_container["offer"]
+            offer = waitable_handler.wait()
             offer_info = OfferInfo.to_my_pending_offer_info(offer)
             return CreateOfferReply(offer=offer_info.to_proto_message())
         except Exception as e:
