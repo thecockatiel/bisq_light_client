@@ -57,6 +57,10 @@ class BsqSwapTrade(TradeModel):
     @property
     def taker_fee_as_long(self) -> int:
         return self._taker_fee_as_long
+    
+    @property
+    def maker_fee_as_long(self):
+        return self._maker_fee_as_long
 
     @property
     def bsq_swap_protocol_model(self) -> "BsqSwapProtocolModel":
@@ -145,9 +149,6 @@ class BsqSwapTrade(TradeModel):
     
     def get_tx_fee(self):
         return Coin.value_of(self.bsq_swap_protocol_model.tx_fee)
-    
-    def get_maker_fee_as_long(self):
-        return self._maker_fee_as_long
     
     def get_taker_fee(self):
         return Coin.value_of(self._taker_fee_as_long)
