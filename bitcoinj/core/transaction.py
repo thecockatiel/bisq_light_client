@@ -187,7 +187,13 @@ class Transaction:
         if self._electrum_transaction.get_fee() is None:
             return None
         return Coin.value_of(self._electrum_transaction.get_fee())
-    
+
+    def is_any_output_spent(self) -> bool:
+        for output in self.outputs:
+            if not output.available_for_spending:
+                return True
+        return False
+
     @staticmethod
     def verify(network: "NetworkParameters", tx: "Transaction") -> None:
         # since we use electrum under the hood, the first check is to run deserialize on it.

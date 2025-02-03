@@ -14,11 +14,12 @@ if TYPE_CHECKING:
 # TODO
 class TransactionOutput:
 
-    def __init__(self, tx: "Transaction", ec_tx_output: "ElectrumTxOutput", index: int):
+    def __init__(self, tx: "Transaction", ec_tx_output: "ElectrumTxOutput", index: int, available_for_spending: bool = True):
         self.parent = tx
         self._ec_tx_output = ec_tx_output
         self.index = index
         self.spent_by: Optional["TransactionInput"] = None
+        self.available_for_spending = available_for_spending
 
     def get_value(self) -> Coin:
         assert isinstance(
