@@ -45,6 +45,12 @@ class BsqSwapTrade(TradeModel):
         self._transaction: Optional["Transaction"] = None # transient
 
     @property
+    def is_bsq_swap(self) -> bool:
+        # does not make much sense to have a bsq swap trade without a bsq swap offer
+        # but we can't be exactly sure that the offer is a bsq swap offer anyway.
+        return self._offer.is_bsq_swap_offer
+
+    @property
     def tx_fee_per_vbyte(self) -> int:
         return self._tx_fee_per_vbyte
 
