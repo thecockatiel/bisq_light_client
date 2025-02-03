@@ -5,6 +5,7 @@ from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.utils import encode_mpi, sha1
 from bitcoinj.core.verification_exception import VerificationException
+from bitcoinj.script.script_opcodes import is_opcode
 from bitcoinj.script.script_utils import ScriptUtils
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script_chunk import chunk_to_string, is_shortest_possible_push_data
@@ -787,3 +788,30 @@ class Script:
         else:
             ScriptUtils.write_bytes(signature)
         return bytes(array)
+    
+    @staticmethod
+    def get_sig_op_count(chunks: list[tuple[int, Optional[bytes], int]], accurate: bool):
+        sig_ops = 0
+        last_op_code = opcodes.OP_INVALIDOPCODE
+        for chunk in chunks:
+            if is_opcode(chunk[0]):
+                if chunk[0] == opcodes.OP_CHECKSIG or chunk[0] == opcodes.OP_CHECKSIGVERIFY:
+                    sig_ops += 1
+                elif chunk[0] == opcodes.OP_CHECKMULTISIG or chunk[0] == opcodes.OP_CHECKMULTISIGVERIFY:
+                    if accurate and opcodes.OP_1 <= last_op_code <= opcodes.OP_16:
+                        sig_ops += ScriptUtils.decode_from_op_n(last_op_code)
+                    else:
+                        sig_ops += 20
+                last_op_code = chunk[0]
+        return sig_ops
+    
+    @staticmethod
+    def get_program_sig_op_count(program: bytes):
+        chunks = []
+        try:
+            for x in script_GetOp(program):
+                chunks.append(x)
+        except:
+            # Ignore errors and count up to the parse-able length
+            pass
+        return Script.get_sig_op_count(chunks, False)

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
 from bitcoinj.core.verification_exception import VerificationException
@@ -101,6 +102,18 @@ class Transaction:
 
     def get_confidence(self, *, context=None, table=None) -> "TransactionConfidence":
         return TransactionConfidence()
+    
+    @property
+    def has_confidence(self):
+        return self.get_confidence().confidence_type != TransactionConfidenceType.UNKNOWN
+    
+    def get_sig_op_count(self):
+        sig_ops = 0
+        for tx_input in self.inputs:
+            sig_ops += Script.get_program_sig_op_count(tx_input.script_sig)
+        for tx_output in self.outputs:
+            sig_ops += Script.get_program_sig_op_count(tx_output.script_pub_key)
+        return sig_ops
 
     def serialize(self) -> bytes:
         return self._electrum_transaction.serialize_as_bytes()
@@ -117,10 +130,35 @@ class Transaction:
 
     def get_vsize(self) -> int:
         return self._electrum_transaction.estimated_size()
+    
+    def get_input_sum(self) -> Coin:
+        input_total = Coin.ZERO()
+
+        for tx_input in self.inputs:
+            if tx_input.value is not None:
+                input_total = input_total.add(tx_input.value)
+        
+        return input_total
+    
+    def get_output_sum(self) -> Coin:
+        total_out = Coin.ZERO()
+
+        for output in self.outputs:
+            if output.value is not None:
+                total_out = total_out.add(output.value)
+
+        return total_out
 
     @property
     def is_time_locked(self):
         return self.lock_time > 0
+    
+    @property
+    def memo(self):
+        # TODO
+        # it should be retrieved from the wallet
+        # it's called "label" in electrum
+        return ""
 
     @property
     def has_relative_lock_time(self):
@@ -135,6 +173,15 @@ class Transaction:
     @property
     def is_coin_base(self):
         return len(self.inputs) == 1 and self.inputs[0].is_coin_base
+    
+    @property
+    def is_pending(self):
+        return self.get_confidence().confidence_type == TransactionConfidenceType.PENDING
+
+    @property
+    def appears_in_hashes(self) -> Optional[dict[str, int]]:
+        # todo
+        return None
 
     def get_fee(self) -> Optional[Coin]:
         if self._electrum_transaction.get_fee() is None:
