@@ -2,7 +2,6 @@ from collections.abc import Callable
 import platform
 import threading
 from typing import Any, Generic, TypeVar
-from utils.data import SimpleProperty
 from utils.dir import user_data_dir
 import random
 import string
