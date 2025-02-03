@@ -290,15 +290,15 @@ class CoreApi:
     def withdraw_funds(self, trade_id: str, address: str, memo: str) -> None:
         self.core_trades_service.withdraw_funds(trade_id, address, memo)
 
-    def get_trade_model(self, trade_id: str) -> "Trade":
+    def get_trade_model(self, trade_id: str) -> "TradeModel":
         return self.core_trades_service.get_trade_model(trade_id)
 
-    def get_open_trades(self) -> "list[Trade]":
+    def get_open_trades(self) -> "list[TradeModel]":
         return self.core_trades_service.get_open_trades()
 
     def get_trade_history(
         self, category: grpc_pb2.GetTradesRequest.Category
-    ) -> "list[Trade]":
+    ) -> "list[TradeModel]":
         return self.core_trades_service.get_trade_history(category)
 
     def get_trade_role(self, trade_model: "TradeModel") -> str:
