@@ -32,7 +32,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         self.id = id
         # Is just kept for not breaking backward compatibility. Set to -1 to indicate it is no used anymore.
         # In v0.6 we removed maxTradePeriod but we need to keep it in the PB file for backward compatibility
-        self.max_trade_period = max_trade_period
+        self.max_trade_period = max_trade_period if max_trade_period is not None else -1
         # Used for new data (e.g. salt introduced in v0.6) which would break backward compatibility as
         # PaymentAccountPayload is used for the json contract and a trade with a user who has an older version would
         # fail the contract verification.
