@@ -69,13 +69,13 @@ _T = TypeVar('_T')
 
 class WaitableResultHandler(Generic[_T], Callable[[_T], None]):
     def __init__(self):
-        self._result_container = SimpleProperty[_T]()
+        self._result_container: dict[str, _T] = {"value": None}
         self._completion_event = threading.Event()
 
     def __call__(self, result: _T):
-        self._result_container.set(result)
+        self._result_container["value"] = result
         self._completion_event.set()
     
     def wait(self) -> _T:
         self._completion_event.wait()
-        return self._result_container.get()
+        return self._result_container["value"]
