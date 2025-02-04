@@ -354,8 +354,7 @@ class Config:
             "--help",
             dest="helpRequested",
             help=(
-                f"Specify configuration file. "
-                f"Relative paths will be prefixed by appDataDir location."
+                "Print this help text." 
             ),
             action="store_true",
         )
