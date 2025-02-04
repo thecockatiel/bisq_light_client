@@ -1,4 +1,4 @@
-from typing import Union
+from typing import TYPE_CHECKING, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.dao.governance.proposal.proposal_validation_exception import ProposalValidationException
@@ -15,7 +15,11 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.monetary_format import MonetaryFormat 
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.governance.param.param_type import ParamType
-from global_container import GLOBAL_CONTAINER
+from bitcoinj.core.address import Address
+from bitcoinj.core.address_format_exception import AddressFormatException
+
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -25,9 +29,10 @@ class BsqFormatter(CoinFormatter):
     use_bsq_address_format: bool = True # always true in java impl
     prefix = "B"
     
-    def __init__(self):
+    def __init__(self, config: "Config"):
         super().__init__()
-        self.btc_coin_format = GLOBAL_CONTAINER.value.config.base_currency_network.parameters.get_monetary_format()
+        self.config = config
+        self.btc_coin_format = config.base_currency_network.parameters.get_monetary_format()
         self.monetary_format = MonetaryFormat().with_shift(6).code(6, "BSQ").with_min_decimals(2)
         self.immutable_coin_formatter = ImmutableCoinFormatter(self.monetary_format)
         self.amount_format: DecimalFormat = None
@@ -40,6 +45,16 @@ class BsqFormatter(CoinFormatter):
         self.amount_format.set_maximum_fraction_digits(2)
         self.market_cap_format = DecimalFormat()
         self.market_cap_format.set_maximum_fraction_digits(0)
+
+    def get_address_from_bsq_address(self, encoded: str) -> Address:
+        maybe_updated_encoded = encoded
+        if self.use_bsq_address_format:
+            maybe_updated_encoded = encoded[len(BsqFormatter.prefix):]
+
+        try:
+            return Address.from_string(maybe_updated_encoded, self.config.base_currency_network.parameters)
+        except AddressFormatException as e:
+            raise RuntimeError(e)
 
     def format_amount_with_group_separator_and_code(self, amount: "Coin"):
         return f"{self.amount_format.format(MathUtils.scale_down_by_power_of_10(amount.value, 2))} BSQ"
