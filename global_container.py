@@ -235,7 +235,7 @@ class GlobalContainer:
         if GlobalContainer._bsq_formatter is None:
             from bisq.core.util.coin.bsq_formatter import BsqFormatter
 
-            GlobalContainer._bsq_formatter = BsqFormatter()
+            GlobalContainer._bsq_formatter = BsqFormatter(self.config)
         return GlobalContainer._bsq_formatter
 
     @property
