@@ -5,10 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python Debugger: bisq client",
+      "name": "Python Debugger: bisq daemon",
       "type": "debugpy",
       "request": "launch",
-      "program": "run_client.py",
+      "program": "run_daemon.py",
       "console": "integratedTerminal",
       "args": [
         "--apiPassword=123456",
