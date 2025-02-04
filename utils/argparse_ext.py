@@ -1,4 +1,3 @@
-
 import argparse
 
 
@@ -114,3 +113,45 @@ class CustomArgumentParser(argparse.ArgumentParser):
                                 )
                             )
         return namespace, extras
+
+class CustomHelpFormatter(argparse.HelpFormatter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._usage = ""
+
+    def format_help(self):
+        row_format = "{:<25} {}"
+        help_lines = [self._usage or ""]
+        help_lines.append(row_format.format("Option", "Description"))
+        help_lines.append(row_format.format("------", "-----------"))
+        help_lines.extend([func(*args) for func, args in self._current_section.items])
+        return '\n'.join(help_lines) + "\n"
+
+    def start_section(self, heading):
+        pass
+
+    def end_section(self):
+        pass
+
+    def add_text(self, text):
+        pass
+
+    def add_usage(self, usage, actions, groups, prefix=None):
+        if usage is not argparse.SUPPRESS:
+            self._usage = self._format_usage(usage, actions, groups, prefix).rstrip("\n") + "\n"
+            
+    def add_argument(self, action):
+        if action.help is not argparse.SUPPRESS:
+            parts = self._format_action_invocation(action).split()
+            option = parts[0]
+            if len(parts) > 1 and parts[1].startswith('--'):
+                option = parts[1]
+            if action.metavar is not None:
+                option += f" {action.metavar}"
+            description = action.help
+            if action.default is not argparse.SUPPRESS and action.default is not None and not option.startswith('--help'):
+                description += f" (default: {action.default})"
+            self._add_item(self._format_custom, (option, description))
+
+    def _format_custom(self, option, description):
+        return f'{option:<25} {description}'

@@ -6,7 +6,7 @@ from typing import Any
 
 from bisq.cli.cli_methods import CliMethods
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
-from utils.argparse_ext import CustomArgumentParser
+from utils.argparse_ext import CustomArgumentParser, CustomHelpFormatter
 
 
 class CliMain:
@@ -49,7 +49,7 @@ class CliMain:
     @staticmethod
     def get_parser():
         parser = CustomArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            formatter_class=CustomHelpFormatter,
             allow_abbrev=False,
             add_help=False,
             usage="bisq-cli [options] <method> [params]"
@@ -58,12 +58,32 @@ class CliMain:
             "-h",
             "--help",
             dest="helpRequested",
-            help=(
-                f"Print this help text."
-            ),
+            help="Print this help text.",
             action="store_true",
         )
-
+        parser.add_argument(
+            "--host",
+            dest="host",
+            help="rpc server hostname or ip",
+            type=str,
+            metavar="<String>",
+            default="127.0.0.1",
+        )
+        parser.add_argument(
+            "--port",
+            dest="port",
+            help="rpc server port",
+            type=int,
+            metavar="<Integer>",
+            default=9998,
+        )
+        parser.add_argument(
+            "--password",
+            dest="password",
+            help="rpc server password",
+            type=str,
+            metavar="<String>",
+        )
         return parser
 
     @staticmethod
@@ -73,7 +93,9 @@ class CliMain:
         try:
 
             p("Bisq RPC Client")
+            p()
             parser.print_help(file=file)
+            p()
             row_format = "{:<25}{:<52}{}"
             p(row_format.format("Method", "Params", "Description"))
             p(row_format.format("------", "------", "------------"))
