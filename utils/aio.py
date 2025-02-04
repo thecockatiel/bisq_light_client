@@ -6,7 +6,7 @@ import inspect
 import platform
 import sys
 import threading
-from typing import Any, Awaitable, Optional, Tuple, Union, Coroutine, TypeVar
+from typing import Any, Awaitable, Generic, Optional, Tuple, Union, Coroutine, TypeVar
 from twisted.internet.defer import Deferred
 
 _T = TypeVar("T")
@@ -160,7 +160,7 @@ def run_in_thread(
     return as_future(threads.deferToThread(func, *args, **kwargs))
 
 
-class FutureCallback(Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]):
+class FutureCallback(Generic[_T], Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]):
 
     def __init__(
         self,
