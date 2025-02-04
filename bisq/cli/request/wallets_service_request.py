@@ -25,16 +25,14 @@ class WalletsServiceRequest:
         )
         return response.is_dao_state_ready_and_in_sync
 
-    def get_all_balances(self) -> grpc_pb2.BalancesInfo:
-        return self.get_balances("")
-
     def get_bsq_balances(self) -> grpc_pb2.BsqBalanceInfo:
         return self.get_balances("BSQ").bsq
 
     def get_btc_balances(self) -> grpc_pb2.BtcBalanceInfo:
         return self.get_balances("BTC").btc
 
-    def get_balances(self, currency_code: str) -> grpc_pb2.BalancesInfo:
+    def get_balances(self, currency_code: str = "") -> grpc_pb2.BalancesInfo:
+        # currency_code is optional, if not provided, it will return all balances
         request = grpc_pb2.GetBalancesRequest(currency_code=currency_code)
         response: grpc_pb2.GetBalancesReply = (
             self.grpc_stubs.wallets_service.GetBalances(request)
