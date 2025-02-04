@@ -84,6 +84,55 @@ class OffersServiceRequest:
         )
         return response.offer
 
+    def edit_offer_activation_state(self, offer_id: str, enable: int):
+        offer = self.get_my_offer(offer_id)
+        offer_price = "0.00" if offer.use_market_based_price else offer.price
+        return self.edit_offer(
+            offer_id=offer_id,
+            scaled_price_string=offer_price,
+            use_market_based_price=offer.use_market_based_price,
+            market_price_margin_pct=offer.market_price_margin_pct,
+            trigger_price=offer.trigger_price,
+            enable=enable,
+            edit_type=grpc_pb2.EditOfferRequest.EditType.ACTIVATION_STATE_ONLY,
+        )
+
+    def edit_offer_fixed_price(self, offer_id: str, raw_price_string: str):
+        offer = self.get_my_offer(offer_id)
+        return self.edit_offer(
+            offer_id=offer_id,
+            scaled_price_string=raw_price_string,
+            use_market_based_price=False,
+            market_price_margin_pct=offer.market_price_margin_pct,
+            trigger_price=offer.trigger_price,
+            enable=1 if offer.is_activated else 0,
+            edit_type=grpc_pb2.EditOfferRequest.EditType.FIXED_PRICE_ONLY,
+        )
+
+    def edit_offer_price_margin(self, offer_id: str, market_price_margin_pct: float):
+        offer = self.get_my_offer(offer_id)
+        return self.edit_offer(
+            offer_id=offer_id,
+            scaled_price_string="0.00",
+            use_market_based_price=True,
+            market_price_margin_pct=market_price_margin_pct,
+            trigger_price=offer.trigger_price,
+            enable=1 if offer.is_activated else 0,
+            edit_type=grpc_pb2.EditOfferRequest.EditType.MKT_PRICE_MARGIN_ONLY,
+        )
+
+    def edit_offer_trigger_price(self, offer_id: str, trigger_price: str):
+        offer = self.get_my_offer(offer_id)
+        return self.edit_offer(
+            offer_id=offer_id,
+            scaled_price_string="0.00",
+            use_market_based_price=offer.use_market_based_price,
+            market_price_margin_pct=offer.market_price_margin_pct,
+            trigger_price=trigger_price,
+            enable=1 if offer.is_activated else 0,
+            edit_type=grpc_pb2.EditOfferRequest.EditType.TRIGGER_PRICE_ONLY,
+        )
+
     def edit_offer(
         self,
         offer_id: str,
@@ -93,7 +142,7 @@ class OffersServiceRequest:
         trigger_price: str,
         enable: int,
         edit_type: grpc_pb2.EditOfferRequest.EditType,
-    ):
+    ) -> grpc_pb2.EditOfferReply:
         # Take care when using this method directly:
         #  use_market_based_price = True if margin based offer, False for fixed priced offer
         #  scaled_price_string fmt = ######.####
