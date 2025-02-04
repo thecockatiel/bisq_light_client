@@ -4,9 +4,11 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
+from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
+from utils.aio import FutureCallback
 
 if TYPE_CHECKING:
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
@@ -18,6 +20,19 @@ logger = get_logger(__name__)
 
 # TODO
 class BtcWalletService(WalletService, DaoStateListener):
+
+    # // BISQ issue #4039: Prevent dust outputs from being created.
+    # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
+    # // add up the dust, log the details, and return the cumulative dust amount.
+    def get_dust(self, proposed_transaction: "Transaction") -> Coin:
+        dust = Coin.ZERO()
+        for transaction_output in proposed_transaction.outputs:
+            if transaction_output.get_value().is_less_than(
+                Restrictions.get_min_non_dust_output()
+            ):
+                dust = dust.add(transaction_output.get_value())
+                logger.info(f"Dust TXO = {transaction_output}")
+        return dust
 
     def get_tx_from_serialized_tx(self, serialized_tx: bytes) -> "Transaction":
         raise RuntimeError(
@@ -97,19 +112,6 @@ class BtcWalletService(WalletService, DaoStateListener):
             "BtcWalletService.get_address_entries_for_available_balance_stream Not implemented yet"
         )
 
-    def send_funds(
-        self,
-        from_address: str,
-        to_address: str,
-        receiver_amount: Coin,
-        fee: Coin,
-        aes_key: Optional[bytes] = None,
-        context: Optional[AddressEntryContext] = None,
-        memo: Optional[str] = None,
-        callback: Optional[Callable[[Future["Transaction"]], None]] = None,
-    ) -> str:
-        raise RuntimeError("BtcWalletService.send_funds Not implemented yet")
-
     def reset_address_entries_for_pending_trade(self, offer_id: str) -> None:
         raise RuntimeError(
             "BtcWalletService.reset_address_entries_for_pending_trade Not implemented yet"
@@ -176,8 +178,10 @@ class BtcWalletService(WalletService, DaoStateListener):
             if entry.context == AddressEntryContext.MULTI_SIG
             or entry.context == AddressEntryContext.TRADE_PAYOUT
         ]
-        
-    def complete_prepared_send_bsq_tx(self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None) -> "Transaction":
+
+    def complete_prepared_send_bsq_tx(
+        self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None
+    ) -> "Transaction":
         raise RuntimeError(
             "BtcWalletService.complete_prepared_send_bsq_tx Not implemented yet"
         )
@@ -190,3 +194,50 @@ class BtcWalletService(WalletService, DaoStateListener):
         required: Coin,
     ) -> tuple[list["RawTransactionInput"], Coin]:
         raise RuntimeError("BtcWalletService.get_inputs_and_change Not implemented yet")
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Withdrawal Fee calculation
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_fee_estimation_transaction_for_multiple_addresses(
+        self,
+        from_addresses: set[str],
+        to_address: str,
+        amount: Coin,
+        tx_fee_for_withdrawal_per_vbyte: Coin,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.get_fee_estimation_transaction_for_multiple_addresses Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Withdrawal Send
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def send_funds(
+        self,
+        from_address: str,
+        to_address: str,
+        receiver_amount: Coin,
+        fee: Coin,
+        aes_key: Optional[bytes],
+        context: AddressEntryContext,
+        memo: Optional[str],
+        callback: FutureCallback["Transaction"],
+    ) -> str:
+        raise RuntimeError("BtcWalletService.send_funds Not implemented yet")
+
+    def send_funds_for_multiple_addresses(
+        self,
+        from_addresses: set[str],
+        to_address: str,
+        receiver_amount: Coin,
+        fee: Coin,
+        change_address: Optional[str],
+        aes_key: Optional[bytes],
+        memo: Optional[str],
+        callback: FutureCallback["Transaction"],
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.send_funds_for_multiple_addresses Not implemented yet"
+        )

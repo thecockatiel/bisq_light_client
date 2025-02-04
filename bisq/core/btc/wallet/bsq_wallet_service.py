@@ -39,9 +39,6 @@ class BsqWalletService(WalletService, DaoStateListener):
     def add_wallet_transactions_change_listener(self, listener: Callable[[], None]):
         pass
 
-    def get_available_balance(self) -> Coin:
-        return Coin.ZERO()
-
     def get_prepared_trade_fee_tx(self) -> "Transaction":
         raise RuntimeError(
             "BsqWalletService.get_prepared_trade_fee_tx Not implemented yet"
@@ -77,14 +74,19 @@ class BsqWalletService(WalletService, DaoStateListener):
         )
 
     def get_unused_address(self) -> "Address":
-        raise RuntimeError(
-            "BsqWalletService.get_unused_address Not implemented yet"
-        )
+        raise RuntimeError("BsqWalletService.get_unused_address Not implemented yet")
 
     def get_unused_bsq_address_as_string(self) -> str:
         return "B" + self.get_unused_address()
 
-    def get_buyers_bsq_inputs_for_bsq_swap_tx(self, required: Coin) -> tuple[list["RawTransactionInput"], Coin]:
+    def get_buyers_bsq_inputs_for_bsq_swap_tx(
+        self, required: Coin
+    ) -> tuple[list["RawTransactionInput"], Coin]:
         raise RuntimeError(
             "BsqWalletService.get_buyers_bsq_inputs_for_bsq_swap_tx Not implemented yet"
+        )
+
+    def get_spendable_bsq_transaction_outputs(self) -> list["TransactionOutput"]:
+        raise RuntimeError(
+            "BsqWalletService.get_spendable_bsq_transaction_outputs Not implemented yet"
         )
