@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import timedelta
+import sys
 from typing import TYPE_CHECKING, Optional
 
 from utils.aio import stop_reactor_and_exit
@@ -58,10 +59,10 @@ class BisqExecutable(
                 return stop_reactor_and_exit(BisqExecutable.EXIT_SUCCESS)
             configure_logging(log_file=self._config.app_data_dir.joinpath("bisq.log"), log_level=self._config.log_level)
         except ConfigException as e:
-            print(f"error: {e}")
+            print(f"error: {e}", file=sys.stderr)
             return stop_reactor_and_exit(BisqExecutable.EXIT_FAILURE)
         except Exception as e:
-            print(f"fault: An unexpected error occurred. Please file a report at https://github.com/thecockatiel/bisq_light_client")
+            print(f"fault: An unexpected error occurred. Please file a report at https://github.com/thecockatiel/bisq_light_client", file=sys.stderr)
             traceback.print_exc()
             return stop_reactor_and_exit(BisqExecutable.EXIT_FAILURE)
         
