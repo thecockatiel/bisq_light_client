@@ -5,20 +5,296 @@ from typing import Optional
 from utils.data import SimpleProperty
 from utils.di import DependencyProvider
 
+
 class GlobalContainer:
     ###############################################################################
+    _core_context = None
+    _core_api = None
+
+    _core_dispute_agents_service = None
+    _core_help_service = None
+    _core_offers_service = None
+    _core_payment_accounts_service = None
+    _core_price_service = None
+    _core_trades_service = None
+    _core_wallets_service = None
+
     _grpc_server = None
-    
+    _grpc_exception_handler = None
+    _grpc_dispute_agents_service = None
+    _grpc_help_service = None
+    _grpc_offers_service = None
+    _grpc_payment_accounts_service = None
+    _grpc_price_service = None
+    _grpc_shutdown_service = None
+    _grpc_version_service = None
+    _grpc_trades_service = None
+    _grpc_wallets_service = None
+
+    @property
+    def core_context(self):
+        if GlobalContainer._core_context is None:
+            from bisq.core.api.core_context import CoreContext
+
+            GlobalContainer._core_context = CoreContext()
+        return GlobalContainer._core_context
+
+    @property
+    def core_api(self):
+        if GlobalContainer._core_api is None:
+            from bisq.core.api.core_api import CoreApi
+
+            GlobalContainer._core_api = CoreApi(
+                self.config,
+                self.core_dispute_agents_service,
+                self.core_help_service,
+                self.core_offers_service,
+                self.core_payment_accounts_service,
+                self.core_price_service,
+                self.core_trades_service,
+                self.core_wallets_service,
+                self.trade_statistics_manager,
+            )
+        return GlobalContainer._core_api
+
+    @property
+    def core_dispute_agents_service(self):
+        if GlobalContainer._core_dispute_agents_service is None:
+            from bisq.core.api.core_dipsute_agents_service import (
+                CoreDisputeAgentsService,
+            )
+
+            GlobalContainer._core_dispute_agents_service = CoreDisputeAgentsService(
+                self.config,
+                self.key_ring,
+                self.mediator_manager,
+                self.refund_agent_manager,
+                self.p2p_service,
+            )
+        return GlobalContainer._core_dispute_agents_service
+
+    @property
+    def core_help_service(self):
+        if GlobalContainer._core_help_service is None:
+            from bisq.core.api.core_help_service import CoreHelpService
+
+            GlobalContainer._core_help_service = CoreHelpService()
+        return GlobalContainer._core_help_service
+
+    @property
+    def core_offers_service(self):
+        if GlobalContainer._core_offers_service is None:
+            from bisq.core.api.core_offers_service import CoreOffersService
+
+            GlobalContainer._core_offers_service = CoreOffersService(
+                self.core_context,
+                self.key_ring,
+                self.core_wallets_service,
+                self.create_offer_service,
+                self.offer_book_service,
+                self.offer_filter_service,
+                self.open_offer_manager,
+                self.open_bsq_swap_offer_service,
+                self.offer_util,
+                self.price_feed_service,
+                self.user,
+            )
+        return GlobalContainer._core_offers_service
+
+    @property
+    def core_payment_accounts_service(self):
+        if GlobalContainer._core_payment_accounts_service is None:
+            from bisq.core.api.core_payment_accounts_service import (
+                CorePaymentAccountsService,
+            )
+
+            GlobalContainer._core_payment_accounts_service = CorePaymentAccountsService(
+                self.core_wallets_service,
+                self.account_age_witness_service,
+                self.user,
+                self.config,
+            )
+        return GlobalContainer._core_payment_accounts_service
+
+    @property
+    def core_price_service(self):
+        if GlobalContainer._core_price_service is None:
+            from bisq.core.api.core_price_service import CorePriceService
+
+            GlobalContainer._core_price_service = CorePriceService(
+                self.preferences,
+                self.price_feed_service,
+                self.trade_statistics_manager,
+            )
+        return GlobalContainer._core_price_service
+
+    @property
+    def core_trades_service(self):
+        if GlobalContainer._core_trades_service is None:
+            from bisq.core.api.core_trades_service import CoreTradesService
+
+            GlobalContainer._core_trades_service = CoreTradesService(
+                self.core_context,
+                self.core_wallets_service,
+                self.btc_wallet_service,
+                self.offer_util,
+                self.bsq_swap_trade_manager,
+                self.closed_tradable_manager,
+                self.closed_tradable_formatter,
+                self.failed_trades_manager,
+                self.take_offer_model,
+                self.bsq_swap_take_offer_model,
+                self.trade_manager,
+                self.trade_util,
+                self.user,
+            )
+        return GlobalContainer._core_trades_service
+
+    @property
+    def core_wallets_service(self):
+        if GlobalContainer._core_wallets_service is None:
+            from bisq.core.api.core_wallets_service import CoreWalletsService
+
+            GlobalContainer._core_wallets_service = CoreWalletsService(
+                self.app_startup_state,
+                self.core_context,
+                self.balances,
+                self.wallets_manager,
+                self.bsq_wallet_service,
+                self.bsq_transfer_service,
+                self.bsq_formatter,
+                self.btc_wallet_service,
+                self.btc_formatter,
+                self.fee_service,
+                self.dao_facade,
+                self.preferences,
+            )
+        return GlobalContainer._core_wallets_service
+
     @property
     def grpc_server(self):
         if GlobalContainer._grpc_server is None:
             from bisq.daemon.grpc.grpc_server import GrpcServer
 
             GlobalContainer._grpc_server = GrpcServer(
-                # TODO
+                self.core_context,
+                self.config,
+                self.grpc_dispute_agents_service,
+                self.grpc_help_service,
+                self.grpc_offers_service,
+                self.grpc_payment_accounts_service,
+                self.grpc_price_service,
+                self.grpc_shutdown_service,
+                self.grpc_version_service,
+                self.grpc_trades_service,
+                self.grpc_wallets_service,
             )
         return GlobalContainer._grpc_server
-    
+
+    @property
+    def grpc_exception_handler(self):
+        if GlobalContainer._grpc_exception_handler is None:
+            from bisq.daemon.grpc.grpc_exception_handler import GrpcExceptionHandler
+
+            GlobalContainer._grpc_exception_handler = GrpcExceptionHandler()
+        return GlobalContainer._grpc_exception_handler
+
+    @property
+    def grpc_dispute_agents_service(self):
+        if GlobalContainer._grpc_dispute_agents_service is None:
+            from bisq.daemon.grpc.grpc_dispute_agent_service import (
+                GrpcDisputeAgentsService,
+            )
+
+            GlobalContainer._grpc_dispute_agents_service = GrpcDisputeAgentsService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_dispute_agents_service
+
+    @property
+    def grpc_help_service(self):
+        if GlobalContainer._grpc_help_service is None:
+            from bisq.daemon.grpc.grpc_help_service import (
+                GrpcHelpService,
+            )
+
+            GlobalContainer._grpc_help_service = GrpcHelpService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_help_service
+
+    @property
+    def grpc_offers_service(self):
+        if GlobalContainer._grpc_offers_service is None:
+            from bisq.daemon.grpc.grpc_offers_service import GrpcOffersService
+
+            GlobalContainer._grpc_offers_service = GrpcOffersService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_offers_service
+
+    @property
+    def grpc_payment_accounts_service(self):
+        if GlobalContainer._grpc_payment_accounts_service is None:
+            from bisq.daemon.grpc.grpc_payment_accounts_service import (
+                GrpcPaymentAccountsService,
+            )
+
+            GlobalContainer._grpc_payment_accounts_service = GrpcPaymentAccountsService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_payment_accounts_service
+
+    @property
+    def grpc_price_service(self):
+        if GlobalContainer._grpc_price_service is None:
+            from bisq.daemon.grpc.grpc_price_service import GrpcPriceService
+
+            GlobalContainer._grpc_price_service = GrpcPriceService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_price_service
+
+    @property
+    def grpc_shutdown_service(self):
+        if GlobalContainer._grpc_shutdown_service is None:
+            from bisq.daemon.grpc.grpc_shutdown_service import GrpcShutdownService
+
+            GlobalContainer._grpc_shutdown_service = GrpcShutdownService(
+                self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_shutdown_service
+
+    @property
+    def grpc_version_service(self):
+        if GlobalContainer._grpc_version_service is None:
+            from bisq.daemon.grpc.grpc_version_service import GrpcVersionService
+
+            GlobalContainer._grpc_version_service = GrpcVersionService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_version_service
+
+    @property
+    def grpc_trades_service(self):
+        if GlobalContainer._grpc_trades_service is None:
+            from bisq.daemon.grpc.grpc_trades_service import GrpcTradesService
+
+            GlobalContainer._grpc_trades_service = GrpcTradesService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_trades_service
+
+    @property
+    def grpc_wallets_service(self):
+        if GlobalContainer._grpc_wallets_service is None:
+            from bisq.daemon.grpc.grpc_wallets_service import GrpcWalletsService
+
+            GlobalContainer._grpc_wallets_service = GrpcWalletsService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_wallets_service
+
     ############################################################################### (not listed in ModuleForAppWithP2p)
     _config = None
     _bisq_setup = None
@@ -225,9 +501,13 @@ class GlobalContainer:
     @property
     def btc_formatter(self):
         if GlobalContainer._btc_formatter is None:
-            from bisq.core.util.coin.immutable_coin_formatter import ImmutableCoinFormatter
+            from bisq.core.util.coin.immutable_coin_formatter import (
+                ImmutableCoinFormatter,
+            )
 
-            GlobalContainer._btc_formatter = ImmutableCoinFormatter(self.config.base_currency_network_parameters.get_monetary_format())
+            GlobalContainer._btc_formatter = ImmutableCoinFormatter(
+                self.config.base_currency_network_parameters.get_monetary_format()
+            )
         return GlobalContainer._btc_formatter
 
     @property
@@ -874,9 +1154,7 @@ class GlobalContainer:
                 LocalBitcoinNode,
             )
 
-            GlobalContainer._local_bitcoin_node = LocalBitcoinNode(
-                self.config
-            )
+            GlobalContainer._local_bitcoin_node = LocalBitcoinNode(self.config)
         return GlobalContainer._local_bitcoin_node
 
     @property
@@ -1084,7 +1362,10 @@ class GlobalContainer:
     ###############################################################################
     _trade_manager = None
     _closed_tradable_manager = None
+    _closed_tradable_formatter = None
     _failed_trades_manager = None
+    _take_offer_model = None
+    _bsq_swap_take_offer_model = None
     _account_age_witness_service = None
     _account_age_witness_storage_service = None
     _signed_witness_service = None
@@ -1150,6 +1431,21 @@ class GlobalContainer:
         return GlobalContainer._closed_tradable_manager
 
     @property
+    def closed_tradable_formatter(self):
+        if GlobalContainer._closed_tradable_formatter is None:
+            from bisq.core.trade.closed_tradable_formatter import (
+                ClosedTradableFormatter,
+            )
+
+            GlobalContainer._closed_tradable_formatter = ClosedTradableFormatter(
+                self.closed_tradable_manager,
+                self.bsq_formatter,
+                self.btc_formatter,
+                self.bsq_wallet_service,
+            )
+        return GlobalContainer._closed_tradable_formatter
+
+    @property
     def failed_trades_manager(self):
         if GlobalContainer._failed_trades_manager is None:
             from bisq.core.trade.bisq_v1.failed_trades_manager import (
@@ -1173,6 +1469,37 @@ class GlobalContainer:
                 self.config.allow_faulty_delayed_txs,
             )
         return GlobalContainer._failed_trades_manager
+
+    @property
+    def take_offer_model(self):
+        if GlobalContainer._take_offer_model is None:
+            from bisq.core.offer.bisq_v1.take_offer_model import TakeOfferModel
+
+            GlobalContainer._take_offer_model = TakeOfferModel(
+                self.account_age_witness_service,
+                self.btc_wallet_service,
+                self.fee_service,
+                self.offer_util,
+                self.price_feed_service,
+            )
+        return GlobalContainer._take_offer_model
+
+    @property
+    def bsq_swap_take_offer_model(self):
+        if GlobalContainer._bsq_swap_take_offer_model is None:
+            from bisq.core.offer.bsq_swap.bsq_swap_take_offer_model import (
+                BsqSwapTakeOfferModel,
+            )
+
+            GlobalContainer._bsq_swap_take_offer_model = BsqSwapTakeOfferModel(
+                self.offer_util,
+                self.btc_wallet_service,
+                self.bsq_wallet_service,
+                self.fee_service,
+                self.trade_manager,
+                self.filter_manager,
+            )
+        return GlobalContainer._bsq_swap_take_offer_model
 
     @property
     def account_age_witness_service(self):
@@ -1274,17 +1601,9 @@ class GlobalContainer:
         return GlobalContainer._encryption_service
 
     ############################################################################### OfferModule
-    _core_context = None
     _open_offer_manager = None
     _offer_book_service = None
-
-    @property
-    def core_context(self):
-        if GlobalContainer._core_context is None:
-            from bisq.core.api.core_context import CoreContext
-
-            GlobalContainer._core_context = CoreContext()
-        return GlobalContainer._core_context
+    _offer_filter_service = None
 
     @property
     def open_offer_manager(self):
@@ -1336,6 +1655,19 @@ class GlobalContainer:
                 self.config.dump_statistics,
             )
         return GlobalContainer._offer_book_service
+
+    @property
+    def offer_filter_service(self):
+        if GlobalContainer._offer_filter_service is None:
+            from bisq.core.offer.offer_filter_service import OfferFilterService
+
+            GlobalContainer._offer_filter_service = OfferFilterService(
+                self.user,
+                self.preferences,
+                self.filter_manager,
+                self.account_age_witness_service,
+            )
+        return GlobalContainer._offer_filter_service
 
     ############################################################################### P2PModule
     _clock = None
@@ -1557,7 +1889,9 @@ class GlobalContainer:
     @property
     def http_client(self):
         if GlobalContainer._http_client is None:
-            from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
+            from bisq.core.network.http.async_http_client_impl import (
+                AsyncHttpClientImpl,
+            )
 
             GlobalContainer._http_client = AsyncHttpClientImpl(
                 None, self.socks5_proxy_provider
@@ -1570,6 +1904,7 @@ class GlobalContainer:
     _wallets_setup = None
     _btc_wallet_service = None
     _bsq_wallet_service = None
+    _bsq_transfer_service = None
     _trade_wallet_service = None
     _providers_repository = None
     _balances = None
@@ -1629,6 +1964,19 @@ class GlobalContainer:
             )
 
         return GlobalContainer._bsq_wallet_service
+
+    @property
+    def bsq_transfer_service(self):
+        if GlobalContainer._bsq_transfer_service is None:
+            from bisq.core.btc.wallet.bsq_transfer_service import BsqTransferService
+
+            GlobalContainer._bsq_transfer_service = BsqTransferService(
+                self.wallets_manager,
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+            )
+
+        return GlobalContainer._bsq_transfer_service
 
     @property
     def trade_wallet_service(self):
@@ -1888,13 +2236,15 @@ class GlobalContainer:
         return GlobalContainer._pub_key_ring
 
 
-GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]]() 
+GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]]()
 # TODO: init with None for catching bugs later.
 # this is done for convenience during dev
 GLOBAL_CONTAINER.value = GlobalContainer()
 from bisq.common.config.config import Config
 from utils.dir import user_data_dir
+
 GLOBAL_CONTAINER.value._config = Config("bisq_light_client", user_data_dir())
+
 
 def set_global_container(container: GlobalContainer):
     global GLOBAL_CONTAINER
