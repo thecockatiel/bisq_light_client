@@ -56,6 +56,17 @@ class ProtoUtil:
             except:
                 return None
 
+    @staticmethod
+    def proto_enum_to_str(proto_enum_type: Type[T], proto_enum_value: Optional[Any] = None) -> Optional[T]:
+        try:
+            if proto_enum_value is None:
+                enum_name = "None"
+            else:
+                enum_name = proto_enum_type.Name(proto_enum_value)
+            return enum_name
+        except:
+            return "UNDEFINED"
+
     # NOTE: check for improvements
     @staticmethod
     def collection_to_proto(collection: Collection['Proto'], message_type: Type[T]) -> Iterable[T]:
