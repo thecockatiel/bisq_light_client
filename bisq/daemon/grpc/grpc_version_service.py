@@ -17,7 +17,7 @@ class GrpcVersionService(GetVersionServicer):
         self.core_api = core_api
         self.exception_handler = exception_handler
 
-    def GetMethodHelp(
+    def GetVersion(
         self, request: "GetVersionRequest", context: "ServicerContext"
     ):
         try:
