@@ -34,9 +34,21 @@ class Balances:
         self.failed_trades_manager = failed_trades_manager
         self.refund_manager = refund_manager
 
-        self.available_balance_property = SimpleProperty(Coin.value_of(0))
-        self.reserved_balance_property = SimpleProperty(Coin.value_of(0))
-        self.locked_balance_property = SimpleProperty(Coin.value_of(0))
+        self.available_balance_property = SimpleProperty[Coin]()
+        self.reserved_balance_property = SimpleProperty[Coin]()
+        self.locked_balance_property = SimpleProperty[Coin]()
+
+    @property
+    def available_balance(self) -> Coin:
+        return self.available_balance_property.get()
+    
+    @property
+    def reserved_balance(self) -> Coin:
+        return self.reserved_balance_property.get()
+    
+    @property
+    def locked_balance(self) -> Coin:
+        return self.locked_balance_property.get()
 
     def on_all_services_initialized(self):
         # TODO:

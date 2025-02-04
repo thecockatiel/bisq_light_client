@@ -141,7 +141,7 @@ class OfferUtil:
         # We have to keep a minimum amount of BSQ == bitcoin dust limit, otherwise there
         # would be dust violations for change UTXOs; essentially means the minimum usable
         # balance of BSQ is 5.46.
-        usable_bsq_balance = self.bsq_wallet_service.get_available_balance().subtract(Restrictions.get_min_non_dust_output())
+        usable_bsq_balance = self.bsq_wallet_service.available_balance.subtract(Restrictions.get_min_non_dust_output())
         return Coin.ZERO() if usable_bsq_balance.is_negative() else usable_bsq_balance
 
     @staticmethod
@@ -199,7 +199,7 @@ class OfferUtil:
         Returns:
             True if the balance is sufficient, False otherwise
         """
-        available_balance = self.bsq_wallet_service.get_available_balance()
+        available_balance = self.bsq_wallet_service.available_balance
         maker_fee = CoinUtil.get_maker_fee(False, amount)
 
         # If we don't know yet the maker fee (amount is not set) we return true,
@@ -225,7 +225,7 @@ class OfferUtil:
         return pay_fee_in_btc or not bsq_for_fee_available
 
     def is_bsq_for_taker_fee_available(self, amount: Optional[Coin]) -> bool:
-        available_balance = self.bsq_wallet_service.get_available_balance()
+        available_balance = self.bsq_wallet_service.available_balance
         taker_fee = self.get_taker_fee(False, amount)
 
         # If we don't know yet the maker fee (amount is not set) we return true,

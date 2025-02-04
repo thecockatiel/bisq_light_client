@@ -137,15 +137,17 @@ class WalletService(ABC):
         raise RuntimeError(
             "WalletService.remove_address_confidence_listener Not implemented yet"
         )
-    
+
     def add_balance_listener(self, listener: "BalanceListener"):
         self.balance_listeners.add(listener)
-    
+
     def remove_balance_listener(self, listener: "BalanceListener"):
         self.balance_listeners.discard(listener)
 
     def get_confidence_for_address(self, address: "Address") -> "TransactionConfidence":
-        raise RuntimeError("WalletService.get_confidence_for_address Not implemented yet")
+        raise RuntimeError(
+            "WalletService.get_confidence_for_address Not implemented yet"
+        )
 
     def get_confidence_for_address_from_block_height(
         self, address: "Address", target_height: int
@@ -156,7 +158,7 @@ class WalletService(ABC):
 
     def get_balance_for_address(self, address: "Address") -> "Coin":
         raise RuntimeError("WalletService.get_balance_for_address Not implemented yet")
-    
+
     def is_address_unused(self, address: "Address") -> bool:
         raise RuntimeError("BtcWalletService.is_address_unused Not implemented yet")
 
@@ -175,7 +177,9 @@ class WalletService(ABC):
         )
 
     @staticmethod
-    def maybe_add_self_tx_to_wallet(transaction: "Transaction", wallet: "Wallet") -> "Transaction":
+    def maybe_add_self_tx_to_wallet(
+        transaction: "Transaction", wallet: "Wallet"
+    ) -> "Transaction":
         raise RuntimeError(
             "WalletService.maybe_add_self_tx_to_wallet Not implemented yet"
         )
@@ -183,7 +187,7 @@ class WalletService(ABC):
     @staticmethod
     def check_wallet_consistency(wallet: "Wallet"):
         raise RuntimeError("WalletService.check_wallet_consistency Not implemented yet")
-    
+
     def get_best_chain_height(self) -> int:
         raise RuntimeError("WalletService.get_best_chain_height Not implemented yet")
 
@@ -196,3 +200,6 @@ class WalletService(ABC):
     def shut_down(self):
         # TODO
         pass
+
+    def get_transactions(self, include_dead: bool) -> set["Transaction"]:
+        raise RuntimeError("WalletService.get_transactions Not implemented yet")
