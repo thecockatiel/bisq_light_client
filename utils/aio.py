@@ -13,6 +13,7 @@ _T = TypeVar("T")
 _R = TypeVar("R")
 _K = TypeVar("K")
 
+
 def _get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
     """Returns the asyncio event loop that is *running in this thread*, if any."""
     try:
@@ -20,9 +21,12 @@ def _get_running_loop() -> Optional[asyncio.AbstractEventLoop]:
     except RuntimeError:
         return None
 
+
 AS_LIB_USER_I_WANT_TO_MANAGE_MY_OWN_ASYNCIO_LOOP = False
-    
+
 _asyncio_event_loop = None  # type: Optional[asyncio.AbstractEventLoop]
+
+
 def get_asyncio_loop() -> asyncio.AbstractEventLoop:
     """Returns the global asyncio event loop we use."""
     if loop := _asyncio_event_loop:
@@ -33,14 +37,14 @@ def get_asyncio_loop() -> asyncio.AbstractEventLoop:
     raise Exception("event loop not created yet")
 
 
-def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
-                                           asyncio.Future,
-                                           threading.Thread]:
+def create_event_loop() -> (
+    Tuple[asyncio.AbstractEventLoop, asyncio.Future, threading.Thread]
+):
     global _asyncio_event_loop
     if _asyncio_event_loop is not None:
         raise Exception("there is already a running event loop")
 
-    if platform.system().lower() == 'windows':
+    if platform.system().lower() == "windows":
         asyncio.DefaultEventLoopPolicy = asyncio.WindowsSelectorEventLoopPolicy
 
     # asyncio.get_event_loop() became deprecated in python3.10. (see https://github.com/python/cpython/issues/83710)
@@ -58,6 +62,7 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
                 return running_loop
             # Otherwise, return our global loop:
             return get_asyncio_loop()
+
     asyncio.set_event_loop_policy(MyEventLoopPolicy())
 
     loop = asyncio.new_event_loop()
@@ -66,56 +71,78 @@ def create_event_loop() -> Tuple[asyncio.AbstractEventLoop,
 
 
 try:
-    def as_future(d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
+
+    def as_future(
+        d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any, Any, _T]]
+    ) -> asyncio.Future[_T]:
         if isinstance(d, Deferred):
             return d.asFuture(get_asyncio_loop())
         if isinstance(d, ConcurrentFuture):
             return asyncio.wrap_future(d, loop=get_asyncio_loop())
-        if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
-            return asyncio.ensure_future(d, loop=get_asyncio_loop())
-        raise TypeError(f"unexpected type {type(d)}")
-except:
-    # for where twisted deferred is not typed yet.
-    def as_future(d: Union[Deferred, ConcurrentFuture[_T], Coroutine[Any,Any,_T]]) -> asyncio.Future[_T]:
-        if isinstance(d, Deferred):
-            return d.asFuture(get_asyncio_loop())
-        if isinstance(d, ConcurrentFuture):
-            return asyncio.wrap_future(d, loop=get_asyncio_loop())
-        if asyncio.iscoroutine(d) or isinstance(d, asyncio.Future) or isinstance(d, asyncio.Task):
+        if (
+            asyncio.iscoroutine(d)
+            or isinstance(d, asyncio.Future)
+            or isinstance(d, asyncio.Task)
+        ):
             return asyncio.ensure_future(d, loop=get_asyncio_loop())
         raise TypeError(f"unexpected type {type(d)}")
 
-try:  
+except:
+    # for where twisted deferred is not typed yet.
+    def as_future(
+        d: Union[Deferred, ConcurrentFuture[_T], Coroutine[Any, Any, _T]]
+    ) -> asyncio.Future[_T]:
+        if isinstance(d, Deferred):
+            return d.asFuture(get_asyncio_loop())
+        if isinstance(d, ConcurrentFuture):
+            return asyncio.wrap_future(d, loop=get_asyncio_loop())
+        if (
+            asyncio.iscoroutine(d)
+            or isinstance(d, asyncio.Future)
+            or isinstance(d, asyncio.Task)
+        ):
+            return asyncio.ensure_future(d, loop=get_asyncio_loop())
+        raise TypeError(f"unexpected type {type(d)}")
+
+
+try:
+
     def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred[_T]:
         return Deferred.fromFuture(asyncio.ensure_future(f))
+
 except:
     # for where twisted deferred is not typed yet.
     def as_deferred(f: Union[Coroutine, asyncio.Future[_T]]) -> Deferred:
         return Deferred.fromFuture(asyncio.ensure_future(f))
 
+
 def is_async_callable(obj):
     """Check if an object is an async callable"""
-    if hasattr(obj, '__call__'):
+    if hasattr(obj, "__call__"):
         # Check if it's a coroutine function
         if asyncio.iscoroutinefunction(obj):
             return True
         # Check if it's an async __call__ method
-        if inspect.iscoroutinefunction(getattr(obj, '__call__')):
+        if inspect.iscoroutinefunction(getattr(obj, "__call__")):
             return True
         # Handle partial functions
         if isinstance(obj, partial):
             return is_async_callable(obj.func)
     return False
 
+
 def run_in_loop(coro: Awaitable[_T]) -> asyncio.Future[_T]:
-    '''Run a function in current thread's asyncio loop and return a future'''
+    """Run a function in current thread's asyncio loop and return a future"""
     concurrent_future = asyncio.run_coroutine_threadsafe(coro, get_asyncio_loop())
     return asyncio.wrap_future(concurrent_future, loop=get_asyncio_loop())
 
+
 from twisted.internet import asyncioreactor
+
 asyncioreactor.install(create_event_loop())
 
 from twisted.internet import reactor, threads
+
 
 def stop_reactor_and_exit(status_code: int = 0):
     try:
@@ -125,6 +152,35 @@ def stop_reactor_and_exit(status_code: int = 0):
         pass
     sys.exit(status_code)
 
-def run_in_thread(func: Callable[..., _T], *args: _R, **kwargs: _K) -> asyncio.Future[_T]:
-    '''Run a function in a separate thread, and await its completion.'''
+
+def run_in_thread(
+    func: Callable[..., _T], *args: _R, **kwargs: _K
+) -> asyncio.Future[_T]:
+    """Run a function in a separate thread, and await its completion."""
     return as_future(threads.deferToThread(func, *args, **kwargs))
+
+
+class FutureCallback(Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]):
+
+    def __init__(
+        self,
+        on_success: Optional[Callable[[_T], None]] = None,
+        on_failure: Optional[Callable[[Exception], None]] = None,
+    ):
+        self._on_success = on_success
+        self._on_failure = on_failure
+
+    def on_success(self, result: _T):
+        if self._on_success:
+            self._on_success(result)
+
+    def on_failure(self, e: Exception):
+        if self._on_failure:
+            self._on_failure(e)
+
+    def __call__(self, future: Union[asyncio.Future[_T], ConcurrentFuture[_T]]):
+        try:
+            result = future.result()
+            self.on_success(result)
+        except Exception as e:
+            self.on_failure(e)
