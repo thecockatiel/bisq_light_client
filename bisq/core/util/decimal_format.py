@@ -36,7 +36,7 @@ class DecimalFormat:
             self.min_fraction_digits = self.max_fraction_digits
         return self
 
-    def format(self, number: Union[int, float, "Decimal"]) -> str:
+    def format(self, number: Union[int, float, Decimal, str]) -> str:
         """
         Format number according to the pattern
         Args:
