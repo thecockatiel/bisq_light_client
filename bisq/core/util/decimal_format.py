@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, Union
-
-if TYPE_CHECKING:
-    from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_EVEN
 
 class DecimalFormat:
     def __init__(self, pattern="#.###", *, grouping_used = False, grouping_size = 3):
@@ -15,6 +13,7 @@ class DecimalFormat:
         self.max_fraction_digits = self.decimal_places
         self.grouping_used = grouping_used
         self.grouping_size = grouping_size if grouping_size else 3
+        self.rounding_mode = ROUND_HALF_EVEN
 
     def set_minimum_fraction_digits(self, digits):
         """Set the minimum number of digits allowed in the fraction portion"""
@@ -40,7 +39,7 @@ class DecimalFormat:
             return "0"
         
         # Round to maximum fraction digits
-        rounded = round(float(number), self.max_fraction_digits)
+        rounded = Decimal(number).quantize(Decimal('1.' + '0' * self.max_fraction_digits), rounding=self.rounding_mode)
         
         # Format with maximum digits
         formatted = f"{rounded:.{self.max_fraction_digits}f}"
