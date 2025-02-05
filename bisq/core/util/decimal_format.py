@@ -1,5 +1,7 @@
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
+if TYPE_CHECKING:
+    from decimal import Decimal
 
 class DecimalFormat:
     def __init__(self, pattern="#.###", *, grouping_used = False, grouping_size = 3):
@@ -26,7 +28,7 @@ class DecimalFormat:
         if self.max_fraction_digits < self.min_fraction_digits:
             self.min_fraction_digits = self.max_fraction_digits
 
-    def format(self, number: Union[int, float]) -> str:
+    def format(self, number: Union[int, float, Decimal]) -> str:
         """
         Format number according to the pattern
         Args:
