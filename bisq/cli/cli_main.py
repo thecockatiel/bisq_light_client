@@ -7,9 +7,13 @@ from typing import Any
 from bisq.cli.cli_methods import CliMethods
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
+from bisq.cli.opts.get_balance_option_parser import GetBalanceOptionParser
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
+from bisq.cli.table.builder.table_builder import TableBuilder
+from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
+import grpc_pb2
 from utils.argparse_ext import CustomArgumentParser, CustomHelpFormatter
 from datetime import datetime
 
@@ -70,13 +74,39 @@ class CliMain:
             raise IllegalArgumentException(f"'{method_name}' is not a supported method")
 
         with GrpcClient(host, port, password) as client:
-            if method == CliMethods.getversion:
-                if SimpleMethodOptionParser(method_args).parse().is_for_help():
-                    print(client.get_method_help(method))
-                    return
-                version = client.get_version()
-                print(version)
+            # may cause double parse, but reduces code duplication
+            if SimpleMethodOptionParser(method_args).parse().is_for_help():
+                print(client.get_method_help(method))
                 return
+            if method == CliMethods.getversion:
+                return print(client.get_version())
+            elif method == CliMethods.getnetwork:
+                return print(client.get_network())
+            elif method == CliMethods.getdaostatus:
+                return print(client.get_dao_status())
+            elif method == CliMethods.getbalance:
+                currency_code = (
+                    GetBalanceOptionParser(method_args).parse().get_currency_code()
+                )
+                balances = client.get_balances(currency_code)
+                currency_code = currency_code.upper()
+                if currency_code == "BSQ":
+                    TableBuilder(
+                        TableType.BSQ_BALANCE_TBL, balances.bsq
+                    ).build().print()
+                elif currency_code == "BTC":
+                    TableBuilder(
+                        TableType.BTC_BALANCE_TBL, balances.btc
+                    ).build().print()
+                else:
+                    print("BTC")
+                    TableBuilder(
+                        TableType.BTC_BALANCE_TBL, balances.btc
+                    ).build().print()
+                    print("BSQ")
+                    TableBuilder(
+                        TableType.BSQ_BALANCE_TBL, balances.bsq
+                    ).build().print()
 
     @staticmethod
     def _get_parser():
