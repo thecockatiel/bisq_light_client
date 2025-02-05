@@ -2,6 +2,7 @@ import ast
 from dataclasses import fields
 from enum import IntEnum
 import inspect
+from typing import Iterable, Union
 
 
 class FieldType(IntEnum):
@@ -75,3 +76,24 @@ def get_settable_fields(cls: type):
             properties_with_setters.append((key, FieldType.PROPERTY))
 
     return set(public_fields).union(set(properties_with_setters))
+
+
+def is_instance_of(obj, class_name_or_names: Union[str, Iterable[str]]):
+    """
+    Check if object implements any of the given class names without imports
+    Args:
+        obj: Object to check
+        class_names: class name(s) to check against
+    """
+
+    def get_all_bases(cls):
+        bases = set([cls.__name__])
+        for base in cls.__bases__:
+            bases.update(get_all_bases(base))
+        return bases
+
+    obj_bases = get_all_bases(obj.__class__)
+
+    if isinstance(class_name_or_names, str):
+        return class_name_or_names in obj_bases
+    return any(base in class_name_or_names for base in obj_bases)
