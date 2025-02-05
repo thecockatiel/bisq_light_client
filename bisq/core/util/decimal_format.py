@@ -27,12 +27,14 @@ class DecimalFormat:
         self.min_fraction_digits = max(0, int(digits))
         if self.min_fraction_digits > self.max_fraction_digits:
             self.max_fraction_digits = self.min_fraction_digits
+        return self
 
     def set_maximum_fraction_digits(self, digits):
         """Set the maximum number of digits allowed in the fraction portion"""
         self.max_fraction_digits = max(0, int(digits))
         if self.max_fraction_digits < self.min_fraction_digits:
             self.min_fraction_digits = self.max_fraction_digits
+        return self
 
     def format(self, number: Union[int, float, "Decimal"]) -> str:
         """
