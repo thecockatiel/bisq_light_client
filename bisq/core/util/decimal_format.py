@@ -10,11 +10,10 @@ class DecimalFormat:
             pattern: Format pattern (default "#.###")
         """
         split = pattern.split(".")
-        self.decimal_places = len(split[1]) if "." in pattern else 1
         self.min_fraction_digits = 0
         if "." in pattern and split[1].startswith("0"):
             self.min_fraction_digits = len(split[1]) - len(split[1].lstrip("0"))
-        self.max_fraction_digits = self.decimal_places
+        self.max_fraction_digits = len(split[1]) if "." in pattern else 0
         if grouping_used is not None:
             self.grouping_used = grouping_used
         else:
