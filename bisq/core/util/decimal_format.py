@@ -3,7 +3,7 @@ from decimal import Decimal, ROUND_HALF_EVEN, localcontext
 
 
 class DecimalFormat:
-    def __init__(self, pattern="#.###", *, grouping_used=None, grouping_size=3):
+    def __init__(self, pattern="#.###", *, grouping_used=None, grouping_size=3, rounding = ROUND_HALF_EVEN):
         """
         Initialize DecimalFormat with pattern similar to Java
         Args:
@@ -20,7 +20,7 @@ class DecimalFormat:
         else:
             self.grouping_used = "," in split[0]
         self.grouping_size = grouping_size if grouping_size else 3
-        self.rounding_mode = ROUND_HALF_EVEN
+        self.rounding_mode = rounding
 
     def set_minimum_fraction_digits(self, digits):
         """Set the minimum number of digits allowed in the fraction portion"""
