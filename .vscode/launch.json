@@ -26,6 +26,10 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args": [
+        // "--password=123456",
+        // "getversion",
+        // "--help"
+        // #################################
         // "--logLevel=DEBUG",
         // #################################
         // "--torControlPort=9052",

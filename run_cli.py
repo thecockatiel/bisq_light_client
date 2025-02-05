@@ -15,4 +15,4 @@ if sys.version_info[:3] < _min_python_version_tuple:
 from bisq.cli.cli_main import CliMain
 
 if __name__ == '__main__':
-    CliMain.main()
+    CliMain.main(sys.argv[1:])
