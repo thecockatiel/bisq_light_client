@@ -1,3 +1,5 @@
+from typing import Union
+from bisq.cli.cli_methods import CliMethods
 from bisq.cli.grpc_stubs import GrpcStubs
 from bisq.cli.request.offers_service_request import OffersServiceRequest
 from bisq.cli.request.payment_accounts_service_request import (
@@ -375,7 +377,9 @@ class GrpcClient:
         response: grpc_pb2.StopReply = self.grpc_stubs.shutdown_service.Stop(request)
         return response
 
-    def get_method_help(self, method: str):
+    def get_method_help(self, method: Union[CliMethods, str]):
+        if isinstance(method, CliMethods):
+            method = method.name
         request = grpc_pb2.GetMethodHelpRequest(method_name=method)
         response: grpc_pb2.GetMethodHelpReply = (
             self.grpc_stubs.help_service.GetMethodHelp(request)
