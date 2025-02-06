@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Any
 from bisq.cli.opts.method_otps import MethodOps
+from bisq.cli.opts.opt_label import OptLabel
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from utils.argparse_ext import CustomArgumentParser
 
@@ -17,7 +18,7 @@ class SimpleMethodOptionParser(MethodOps):
             "-h",
             "--help",
             help="Print method help",
-            dest="helpRequested",
+            dest=OptLabel.OPT_HELP,
             action="store_true",
         )
         self.options = defaultdict[str, Any](lambda: None)
@@ -38,7 +39,7 @@ class SimpleMethodOptionParser(MethodOps):
             raise IllegalArgumentException(SimpleMethodOptionParser._cli_exception_message_style(e), e)
         
     def is_for_help(self) -> bool:
-        return self.options.get("helpRequested", False)
+        return self.options.get(OptLabel.OPT_HELP, False)
     
     def verify_string_is_valid_decimal(self, string: str):
         try:
