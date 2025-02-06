@@ -7,6 +7,7 @@ from typing import Any
 import grpc
 
 from bisq.cli.cli_methods import CliMethods
+from bisq.cli.currency_format import CurrencyFormat
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
 from bisq.cli.opts.get_address_balance_option_parser import (
@@ -14,6 +15,9 @@ from bisq.cli.opts.get_address_balance_option_parser import (
 )
 from bisq.cli.opts.get_avg_bsq_price_option_parser import GetAvgBsqPriceOptionParser
 from bisq.cli.opts.get_balance_option_parser import GetBalanceOptionParser
+from bisq.cli.opts.get_btc_market_price_option_parser import (
+    GetBTCMarketPriceOptionParser,
+)
 from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.cli.table.builder.table_builder import TableBuilder
@@ -32,12 +36,18 @@ class CliMain:
         try:
             CliMain._run(args)
         except Exception as e:
-            if isinstance(e, grpc.RpcError) and e.args and hasattr(e.args[0], "details"):
+            if (
+                isinstance(e, grpc.RpcError)
+                and e.args
+                and hasattr(e.args[0], "details")
+            ):
                 message = e.args[0].details
             else:
                 message = str(e)
             print(f"Error: {message}", file=sys.stderr)
-            if not isinstance(e, (IllegalArgumentException, IllegalStateException, grpc.RpcError)):
+            if not isinstance(
+                e, (IllegalArgumentException, IllegalStateException, grpc.RpcError)
+            ):
                 traceback.print_exc(file=sys.stderr)
             sys.exit(1)
 
@@ -138,6 +148,14 @@ class CliMain:
                 print(
                     f"avg {days} day btc price: {price.btc_price}    avg {days} day usd price: {price.usd_price}"
                 )
+            elif method == CliMethods.getbtcprice:
+                opts = GetBTCMarketPriceOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                currency_code = opts.get_currency_code()
+                price = client.get_btc_price(currency_code)
+                print(CurrencyFormat.format_internal_fiat_price(price))
 
     @staticmethod
     def _get_parser():
