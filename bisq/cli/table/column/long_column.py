@@ -21,7 +21,7 @@ class LongColumn(NumberColumn["LongColumn", int]):
             self.max_width = len(s)
 
     @property
-    def rows(self) -> list[str]:
+    def rows(self) -> list[int]:
         return self._rows
 
     @property
