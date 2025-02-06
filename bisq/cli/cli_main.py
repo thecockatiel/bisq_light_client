@@ -10,6 +10,7 @@ from bisq.cli.cli_methods import CliMethods
 from bisq.cli.currency_format import CurrencyFormat
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
+from bisq.cli.opts.create_offer_option_parser import CreateOfferOptionParser
 from bisq.cli.opts.get_address_balance_option_parser import (
     GetAddressBalanceOptionParser,
 )
@@ -214,10 +215,49 @@ class CliMain:
                 txs = client.get_transactions()
                 TableBuilder(TableType.TRANSACTION_TBL, txs).build().print()
             elif method == CliMethods.gettransaction:
-                opts = GetTransactionOptionParser(method_args)
+                opts = GetTransactionOptionParser(method_args).parse()
                 tx_id = opts.get_tx_id()
                 tx = client.get_transaction(tx_id)
                 TableBuilder(TableType.TRANSACTION_TBL, tx).build().print()
+            elif method == CliMethods.createoffer:
+                opts = CreateOfferOptionParser(method_args).parse()
+                is_swap = opts.get_is_swap()
+                payment_acct_id = opts.get_payment_account_id()
+                direction = opts.get_direction()
+                currency_code = opts.get_currency_code()
+                amount = CurrencyFormat.to_satoshis(opts.get_amount())
+                min_amount = CurrencyFormat.to_satoshis(opts.get_min_amount())
+                use_market_based_price = opts.is_using_mkt_price_margin()
+                fixed_price = opts.get_fixed_price()
+                market_price_margin_pct = opts.get_mkt_price_margin_pct()
+                security_deposit_pct = (
+                    0.00 if is_swap else opts.get_security_deposit_pct()
+                )
+                maker_fee_currency_code = opts.get_maker_fee_currency_code()
+                trigger_price = (
+                    "0"  # Cannot be defined until the new offer is added to book.
+                )
+
+                if is_swap:
+                    offer = client.create_bsq_swap_offer(
+                        direction, amount, min_amount, fixed_price
+                    )
+                else:
+                    offer = client.create_offer(
+                        direction,
+                        currency_code,
+                        amount,
+                        min_amount,
+                        use_market_based_price,
+                        fixed_price,
+                        market_price_margin_pct,
+                        security_deposit_pct,
+                        payment_acct_id,
+                        maker_fee_currency_code,
+                        trigger_price,
+                    )
+
+                TableBuilder(TableType.OFFER_TBL, offer).build().print()
 
     @staticmethod
     def _get_parser():
