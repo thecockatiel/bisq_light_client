@@ -6,8 +6,8 @@ from bisq.cli.table.table import Table
 import grpc_pb2
 
 
-class BsqBalanceTableBuilder(AbstractTableBuilder):
-    def __init__(self, protos: list):
+class BsqBalanceTableBuilder(AbstractTableBuilder["grpc_pb2.BsqBalanceInfo"]):
+    def __init__(self, protos: list["grpc_pb2.BsqBalanceInfo"]):
         super().__init__(TableType.BSQ_BALANCE_TBL, protos)
         # Default columns not dynamically generated with bsq balance info.
         self.col_available_confirmed_balance = SatoshiColumn(
@@ -34,7 +34,7 @@ class BsqBalanceTableBuilder(AbstractTableBuilder):
         )
 
     def build(self):
-        balance: grpc_pb2.BsqBalanceInfo = self.protos[0]
+        balance = self.protos[0]
 
         # Populate columns with bsq balance info.
         self.col_available_confirmed_balance.add_row(
