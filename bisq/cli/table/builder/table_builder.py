@@ -1,4 +1,5 @@
 from typing import Any, Union
+from collections.abc import Iterable
 from bisq.cli.table.builder.abstract_table_builder import AbstractTableBuilder
 from bisq.cli.table.builder.address_balance_table_builder import AddressBalanceTableBuilder
 from bisq.cli.table.builder.bsq_balance_table_builder import BsqBalanceTableBuilder
@@ -12,12 +13,13 @@ from bisq.cli.table.builder.table_type import TableType
 from bisq.cli.table.builder.trade_detail_table_builder import TradeDetailTableBuilder
 from bisq.cli.table.builder.transaction_table_builder import TransactionTableBuilder
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
+from utils.custom_iterators import is_iterable
 
 class TableBuilder(AbstractTableBuilder):
     def __init__(self, table_type: TableType, proto_or_protos: Union[Any, list]):
         super().__init__(
             table_type,
-            proto_or_protos if isinstance(proto_or_protos, list) else [proto_or_protos],
+            list(proto_or_protos) if is_iterable(proto_or_protos) else [proto_or_protos],
         )
 
     def build(self):

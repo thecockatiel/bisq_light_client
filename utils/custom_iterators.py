@@ -22,6 +22,15 @@ class UniqueIterator(Generic[T]):
 def distinct_iterator(iterator: Iterator[T]) -> Iterator[T]:
     return UniqueIterator(iterator)
 
+
 def not_none_iterator(iterable: Iterable[T]) -> Iterator[T]:
     """Returns an iterator that filters out None values from the input iterable"""
     return filter(lambda x: x is not None, iterable)
+
+
+def is_iterable(obj):
+    try:
+        iter(obj)
+        return True
+    except:
+        return False
