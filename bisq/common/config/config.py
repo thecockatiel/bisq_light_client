@@ -9,7 +9,7 @@ from typing import Any, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.config.config_exception import ConfigException
 from bisq.common.config.config_file_reader import ConfigFileReader
-from utils.argparse_ext import CustomArgumentParser
+from utils.argparse_ext import CustomArgumentParser, parse_bool
 from utils.dir import user_data_dir
 from utils.tor import parse_tor_hidden_service_port
 
@@ -34,14 +34,6 @@ def _temp_user_data_dir():
 
 def _comma_separated_str_list(value: str):
     return value.split(",")
-
-
-def _parse_bool(value: str) -> bool:
-    if value.lower() in {"true", "1"}:
-        return True
-    if value.lower() in {"false", "0"}:
-        return False
-    raise argparse.ArgumentTypeError("Boolean value expected")
 
 
 _torrc_options_re = re.compile(r"^([^\s,]+\s[^,]+,?\s*)+$")
@@ -452,7 +444,7 @@ class Config:
         parser.add_argument(
             "--ignoreLocalBtcNode",
             help="If set to true a Bitcoin Core node running locally will be ignored",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -472,7 +464,7 @@ class Config:
         parser.add_argument(
             "--useDevMode",
             help="Enables dev mode which is used for convenience for developer testing",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -480,7 +472,7 @@ class Config:
         parser.add_argument(
             "--useDevModeHeader",
             help="Use dev mode css scheme to distinguish dev instances.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -488,7 +480,7 @@ class Config:
         parser.add_argument(
             "--useDevPrivilegeKeys",
             help="If set to true all privileged features requiring a private key to be enabled are overridden by a dev key pair (This is for developers only!)",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -496,7 +488,7 @@ class Config:
         parser.add_argument(
             "--dumpStatistics",
             help="If set to true dump trade statistics to a json file in appDataDir",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -509,7 +501,7 @@ class Config:
                 "Version update alert, Filters for offers, nodes or "
                 "trading account data)"
             ),
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -538,7 +530,7 @@ class Config:
         parser.add_argument(
             "--useLocalhostForP2P",
             help="Use localhost P2P network for development. Only available for non-BTC_MAINNET configuration.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -595,7 +587,7 @@ class Config:
         parser.add_conditional_argument(
             "--torUseBridgesFile",
             help="Use lines from 'bridges' file in Tor data directory as bridge entries, if exists. Defaults to True.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -660,7 +652,7 @@ class Config:
         parser.add_argument(
             "--torControlUseSafeCookieAuth",
             help="Use the SafeCookie method when authenticating to the already running Tor service.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -669,7 +661,7 @@ class Config:
             "--torStreamIsolation",
             help="This option is not supported. Do NOT use.",
             disable_message="torStreamIsolation is not supported. Do NOT use.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -768,7 +760,7 @@ class Config:
         parser.add_argument(
             "--useTorForBtc",
             help="If set to true BitcoinJ is routed over tor (socks 5 proxy).",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -782,7 +774,7 @@ class Config:
         parser.add_argument(
             "--useAllProvidedNodes",
             help="Set to true if connection of bitcoin nodes should include clear net nodes",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -838,7 +830,7 @@ class Config:
         parser.add_argument(
             "--dumpBlockchainData",
             help="If set to true the blockchain data from RPC requests to Bitcoin Core are stored as json file in the data dir.",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -850,7 +842,7 @@ class Config:
                 "from Bitcoin Core and provide the validated BSQ txs to the network. It requires that the "
                 "other RPC properties are set as well."
             ),
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -876,7 +868,7 @@ class Config:
         parser.add_argument(
             "--dumpDelayedPayoutTxs",
             help="Dump delayed payout transactions to file",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -884,7 +876,7 @@ class Config:
         parser.add_argument(
             "--allowFaultyDelayedTxs",
             help="Allow completion of trades with faulty delayed payout transactions",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -903,7 +895,7 @@ class Config:
         parser.add_argument(
             "--preventPeriodicShutdownAtSeedNode",
             help="Prevents periodic shutdown at seed nodes",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -911,7 +903,7 @@ class Config:
         parser.add_argument(
             "--republishMailboxEntries",
             help="Republish mailbox messages at startup",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -919,7 +911,7 @@ class Config:
         parser.add_argument(
             "--bypassMempoolValidation",
             help="Prevents mempool check of trade parameters",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
@@ -938,7 +930,7 @@ class Config:
         parser.add_argument(
             "--isBmFullNode",
             help="Run as Burningman full node",
-            type=_parse_bool,
+            type=parse_bool,
             metavar="<Boolean>",
             nargs="?",
             const=True,
