@@ -13,9 +13,9 @@ class Iso8601DateTimeColumn(NumberColumn[int]):
         self.max_width: int = len(name)
 
     def get_row_as_formatted_string(self, row_index: int) -> str:
-        time = self.get_row(row_index)
+        time = self.get_row(row_index) # time is in ms
         iso_formatted = (
-            datetime.fromtimestamp(time, tz=timezone.utc)
+            datetime.fromtimestamp(time/1000, tz=timezone.utc)
             .isoformat(timespec="seconds")
             .rstrip("+00:00")
             .rstrip("Z")
