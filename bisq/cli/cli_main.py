@@ -29,7 +29,6 @@ from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
-import grpc_pb2
 from utils.argparse_ext import CustomArgumentParser, CustomHelpFormatter
 from datetime import datetime
 
@@ -135,9 +134,6 @@ class CliMain:
                     ).build().print()
             elif method == CliMethods.getaddressbalance:
                 opts = GetAddressBalanceOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 address = opts.get_address()
                 address_balance = client.get_address_balance(address)
                 TableBuilder(
@@ -145,9 +141,6 @@ class CliMain:
                 ).build().print()
             elif method == CliMethods.getavgbsqprice:
                 opts = GetAvgBsqPriceOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 days = opts.get_days()
                 price = client.get_average_bsq_trade_price(days)
                 print(
@@ -155,31 +148,19 @@ class CliMain:
                 )
             elif method == CliMethods.getbtcprice:
                 opts = GetBTCMarketPriceOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 currency_code = opts.get_currency_code()
                 price = client.get_btc_price(currency_code)
                 print(CurrencyFormat.format_internal_fiat_price(price))
             elif method == CliMethods.getfundingaddresses:
-                if SimpleMethodOptionParser(method_args).parse().is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 funding_addresses = client.get_funding_addresses()
                 TableBuilder(
                     TableType.ADDRESS_BALANCE_TBL, funding_addresses
                 ).build().print()
             elif method == CliMethods.getunusedbsqaddress:
-                if SimpleMethodOptionParser(method_args).parse().is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 address = client.get_unused_bsq_address()
                 print(address)
             elif method == CliMethods.sendbsq:
                 opts = SendBsqOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 address = opts.get_address()
                 amount = opts.get_amount()
                 CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
@@ -194,10 +175,6 @@ class CliMain:
                 print(f"{amount} bsq sent to {address} in tx {tx_info.tx_id}")
             elif method == CliMethods.sendbtc:
                 opts = SendBtcOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
-
                 address = opts.get_address()
                 amount = opts.get_amount()
                 CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
@@ -213,9 +190,6 @@ class CliMain:
                 print(f"{amount} btc sent to {address} in tx {tx_info.tx_id}")
             elif method == CliMethods.verifybsqsenttoaddress:
                 opts = VerifyBsqSentToAddressOptionParser(method_args).parse()
-                if opts.is_for_help():
-                    print(client.get_method_help(method))
-                    return
                 address = opts.get_address()
                 amount = opts.get_amount()
                 CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
