@@ -22,6 +22,9 @@ from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
+from bisq.cli.opts.verify_bsq_sent_to_address_option_parser import (
+    VerifyBsqSentToAddressOptionParser,
+)
 from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
@@ -208,6 +211,20 @@ class CliMain:
                 memo = opts.get_memo()
                 tx_info = client.send_btc(address, amount, tx_fee_rate, memo)
                 print(f"{amount} btc sent to {address} in tx {tx_info.tx_id}")
+            elif method == CliMethods.verifybsqsenttoaddress:
+                opts = VerifyBsqSentToAddressOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                address = opts.get_address()
+                amount = opts.get_amount()
+                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
+
+                bsq_was_sent = client.verify_bsq_sent_to_address(address, amount)
+                print(
+                    f"{amount} bsq {'has been' if bsq_was_sent else 'has not been'} sent to address {address}"
+                )
+            
 
     @staticmethod
     def _get_parser():
