@@ -7,7 +7,12 @@ from typing import Any
 from bisq.cli.cli_methods import CliMethods
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
+from bisq.cli.opts.get_address_balance_option_parser import (
+    GetAddressBalanceOptionParser,
+)
+from bisq.cli.opts.get_avg_bsq_price_option_parser import GetAvgBsqPriceOptionParser
 from bisq.cli.opts.get_balance_option_parser import GetBalanceOptionParser
+from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
@@ -47,11 +52,11 @@ class CliMain:
 
         options.update(cli_opts)
 
-        if not options["helpRequested"] and not non_option_args:
+        if not options[OptLabel.OPT_HELP] and not non_option_args:
             CliMain._print_help(parser, file=sys.stdout)
             raise IllegalArgumentException("no method specified")
 
-        if options["helpRequested"] and not non_option_args:
+        if options[OptLabel.OPT_HELP] and not non_option_args:
             CliMain._print_help(parser, file=sys.stdout)
             return
 
@@ -107,6 +112,26 @@ class CliMain:
                     TableBuilder(
                         TableType.BSQ_BALANCE_TBL, balances.bsq
                     ).build().print()
+            elif method == CliMethods.getaddressbalance:
+                opts = GetAddressBalanceOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                address = opts.get_address()
+                address_balance = client.get_address_balance(address)
+                TableBuilder(
+                    TableType.ADDRESS_BALANCE_TBL, address_balance
+                ).build().print()
+            elif method == CliMethods.getavgbsqprice:
+                opts = GetAvgBsqPriceOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                days = opts.get_days()
+                price = client.get_average_bsq_trade_price(days)
+                print(
+                    f"avg {days} day btc price: {price.btc_price}    avg {days} day usd price: {price.usd_price}"
+                )
 
     @staticmethod
     def _get_parser():
@@ -119,7 +144,7 @@ class CliMain:
         parser.add_argument(
             "-h",
             "--help",
-            dest="helpRequested",
+            dest=OptLabel.OPT_HELP,
             help="Print this help text.",
             action="store_true",
         )
