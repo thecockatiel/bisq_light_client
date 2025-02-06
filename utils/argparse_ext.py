@@ -155,3 +155,10 @@ class CustomHelpFormatter(argparse.HelpFormatter):
 
     def _format_custom(self, option, description):
         return f'{option:<25} {description}'
+    
+def parse_bool(value: str) -> bool:
+    if value.lower() in {"true", "1"}:
+        return True
+    if value.lower() in {"false", "0"}:
+        return False
+    raise argparse.ArgumentTypeError("Boolean value expected")
