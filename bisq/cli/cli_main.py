@@ -156,6 +156,21 @@ class CliMain:
                 currency_code = opts.get_currency_code()
                 price = client.get_btc_price(currency_code)
                 print(CurrencyFormat.format_internal_fiat_price(price))
+            elif method == CliMethods.getfundingaddresses:
+                if SimpleMethodOptionParser(method_args).parse().is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                funding_addresses = client.get_funding_addresses()
+                TableBuilder(
+                    TableType.ADDRESS_BALANCE_TBL, funding_addresses
+                ).build().print()
+            elif method == CliMethods.getunusedbsqaddress:
+                if SimpleMethodOptionParser(method_args).parse().is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                address = client.get_unused_bsq_address()
+                print(address)
+
 
     @staticmethod
     def _get_parser():
