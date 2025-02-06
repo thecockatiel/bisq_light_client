@@ -26,6 +26,7 @@ class AddressBalanceTableBuilder(AbstractTableBuilder["grpc_pb2.AddressBalanceIn
         )
 
     def build(self):
+        # Populate columns with address info.
         for a in self.protos:
             self.col_address.add_row(a.address)
             self.col_available_balance.add_row(a.balance)
