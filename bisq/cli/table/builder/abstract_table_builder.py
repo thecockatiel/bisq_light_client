@@ -2,15 +2,16 @@ from abc import ABC, abstractmethod
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 import grpc_pb2
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
     from bisq.cli.table.table import Table
 
+_T = TypeVar("_T")
 
-class AbstractTableBuilder(ABC):
+class AbstractTableBuilder(Generic[_T], ABC):
 
-    def __init__(self, table_type: TableType, protos: list):
+    def __init__(self, table_type: TableType, protos: list[_T]):
         self.table_type = table_type
         self.protos = protos
         if not protos:
