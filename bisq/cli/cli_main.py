@@ -19,6 +19,8 @@ from bisq.cli.opts.get_btc_market_price_option_parser import (
     GetBTCMarketPriceOptionParser,
 )
 from bisq.cli.opts.opt_label import OptLabel
+from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
+from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
@@ -170,7 +172,42 @@ class CliMain:
                     return
                 address = client.get_unused_bsq_address()
                 print(address)
+            elif method == CliMethods.sendbsq:
+                opts = SendBsqOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+                address = opts.get_address()
+                amount = opts.get_amount()
+                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
 
+                tx_fee_rate = opts.get_fee_rate()
+                if tx_fee_rate:
+                    CliMain._verify_string_is_valid_long(
+                        OptLabel.OPT_TX_FEE_RATE, tx_fee_rate
+                    )
+
+                tx_info = client.send_bsq(address, amount, tx_fee_rate)
+                print(f"{amount} bsq sent to {address} in tx {tx_info.tx_id}")
+            elif method == CliMethods.sendbtc:
+                opts = SendBtcOptionParser(method_args).parse()
+                if opts.is_for_help():
+                    print(client.get_method_help(method))
+                    return
+
+                address = opts.get_address()
+                amount = opts.get_amount()
+                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
+
+                tx_fee_rate = opts.get_fee_rate()
+                if tx_fee_rate:
+                    CliMain._verify_string_is_valid_long(
+                        OptLabel.OPT_TX_FEE_RATE, tx_fee_rate
+                    )
+
+                memo = opts.get_memo()
+                tx_info = client.send_btc(address, amount, tx_fee_rate, memo)
+                print(f"{amount} btc sent to {address} in tx {tx_info.tx_id}")
 
     @staticmethod
     def _get_parser():
