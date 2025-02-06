@@ -32,7 +32,11 @@ class CliMain:
         try:
             CliMain._run(args)
         except Exception as e:
-            print(f"Error: {str(e)}", file=sys.stderr)
+            if isinstance(e, grpc.RpcError) and e.args and hasattr(e.args[0], "details"):
+                message = e.args[0].details
+            else:
+                message = str(e)
+            print(f"Error: {message}", file=sys.stderr)
             if not isinstance(e, (IllegalArgumentException, IllegalStateException, grpc.RpcError)):
                 traceback.print_exc(file=sys.stderr)
             sys.exit(1)
