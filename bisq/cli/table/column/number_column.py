@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Generic, TypeVar, Union
 from bisq.cli.table.column.abstract_column import AbstractColumn
 from bisq.cli.table.column.column_justification import ColumnJustification
 
@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 _N = TypeVar("_N", bound=Union[int, float, "Decimal"])
 
 
-class NumberColumn(AbstractColumn["NumberColumn", _N]):
+class NumberColumn(Generic[_N], AbstractColumn["NumberColumn", _N]):
     def __init__(self, name: str, justification: ColumnJustification = None):
         if justification is None:
             justification = ColumnJustification.RIGHT
@@ -27,7 +27,7 @@ class NumberColumn(AbstractColumn["NumberColumn", _N]):
             self.max_width = len(s)
 
     @property
-    def rows(self) -> list[_N]:
+    def rows(self):
         return self._rows
 
     @property
