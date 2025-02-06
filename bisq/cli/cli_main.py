@@ -4,6 +4,8 @@ import sys
 import traceback
 from typing import Any
 
+import grpc
+
 from bisq.cli.cli_methods import CliMethods
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
@@ -31,7 +33,7 @@ class CliMain:
             CliMain._run(args)
         except Exception as e:
             print(f"Error: {str(e)}", file=sys.stderr)
-            if not isinstance(e, (IllegalArgumentException, IllegalStateException)):
+            if not isinstance(e, (IllegalArgumentException, IllegalStateException, grpc.RpcError)):
                 traceback.print_exc(file=sys.stderr)
             sys.exit(1)
 
