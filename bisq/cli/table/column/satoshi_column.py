@@ -1,9 +1,9 @@
 from bisq.cli.currency_format import CurrencyFormat
 from bisq.cli.table.column.column_justification import ColumnJustification
-from bisq.cli.table.column.long_column import LongColumn
+from bisq.cli.table.column.number_column import NumberColumn
 
 
-class SatoshiColumn(LongColumn):
+class SatoshiColumn(NumberColumn):
 
     def __init__(self, name: str, justification: ColumnJustification = None, is_bsq_satoshis = False):
         if justification is None:
