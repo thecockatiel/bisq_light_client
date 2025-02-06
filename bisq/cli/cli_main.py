@@ -18,9 +18,11 @@ from bisq.cli.opts.get_balance_option_parser import GetBalanceOptionParser
 from bisq.cli.opts.get_btc_market_price_option_parser import (
     GetBTCMarketPriceOptionParser,
 )
+from bisq.cli.opts.get_transaction_option_parser import GetTransactionOptionParser
 from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
+from bisq.cli.opts.set_tx_fee_rate_option_parser import SetTxFeeRateOptionParser
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.cli.opts.verify_bsq_sent_to_address_option_parser import (
     VerifyBsqSentToAddressOptionParser,
@@ -198,7 +200,24 @@ class CliMain:
                 print(
                     f"{amount} bsq {'has been' if bsq_was_sent else 'has not been'} sent to address {address}"
                 )
-            
+            elif method == CliMethods.gettxfeerate:
+                tx_fee_rate = client.get_tx_fee_rate()
+                print(CurrencyFormat.format_tx_fee_rate_info(tx_fee_rate))
+            elif method == CliMethods.settxfeerate:
+                opts = SetTxFeeRateOptionParser(method_args).parse()
+                tx_fee_rate = client.set_tx_fee_rate(int(opts.get_fee_rate()))
+                print(CurrencyFormat.format_tx_fee_rate_info(tx_fee_rate))
+            elif method == CliMethods.unsettxfeerate:
+                tx_fee_rate = client.unset_tx_fee_rate()
+                print(CurrencyFormat.format_tx_fee_rate_info(tx_fee_rate))
+            elif method == CliMethods.gettransactions:
+                txs = client.get_transactions()
+                TableBuilder(TableType.TRANSACTION_TBL, txs).build().print()
+            elif method == CliMethods.gettransaction:
+                opts = GetTransactionOptionParser(method_args)
+                tx_id = opts.get_tx_id()
+                tx = client.get_transaction(tx_id)
+                TableBuilder(TableType.TRANSACTION_TBL, tx).build().print()
 
     @staticmethod
     def _get_parser():
