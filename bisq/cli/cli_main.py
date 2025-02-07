@@ -22,6 +22,7 @@ from bisq.cli.opts.get_btc_market_price_option_parser import (
 )
 from bisq.cli.opts.get_offers_option_parser import GetOffersOptionParser
 from bisq.cli.opts.get_trade_option_parser import GetTradeOptionParser
+from bisq.cli.opts.get_trades_option_parser import GetTradesOptionParser
 from bisq.cli.opts.get_transaction_option_parser import GetTransactionOptionParser
 from bisq.cli.opts.offer_id_option_parser import OfferIdOptionParser
 from bisq.cli.opts.opt_label import OptLabel
@@ -38,7 +39,7 @@ from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
-from grpc_pb2 import GetOfferCategoryReply
+from grpc_pb2 import GetOfferCategoryReply, GetTradesRequest
 from utils.argparse_ext import CustomArgumentParser, CustomHelpFormatter
 from datetime import datetime
 
@@ -359,6 +360,28 @@ class CliMain:
                     print(trade.contract_as_json)
                 else:
                     TableBuilder(TableType.TRADE_DETAIL_TBL, trade).build().print()
+            elif method == CliMethods.gettrades:
+                opts = GetTradesOptionParser(method_args).parse()
+                category = opts.get_category()
+                category_name = opts.get_category_name()
+                trades = (
+                    client.get_open_trades()
+                    if category == GetTradesRequest.Category.OPEN
+                    else client.get_trade_history(category)
+                )
+                if not trades:
+                    print(f"no {category_name} trades found")
+                else:
+                    table_type = (
+                        TableType.OPEN_TRADES_TBL
+                        if category == GetTradesRequest.Category.OPEN
+                        else (
+                            TableType.CLOSED_TRADES_TBL
+                            if category == GetTradesRequest.Category.CLOSED
+                            else TableType.FAILED_TRADES_TBL
+                        )
+                    )
+                    TableBuilder(table_type, trades).build().print()
 
     @staticmethod
     def _get_parser():
