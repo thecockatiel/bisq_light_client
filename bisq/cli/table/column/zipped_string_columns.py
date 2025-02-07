@@ -96,7 +96,7 @@ class ZippedStringColumns:
             raise IllegalStateException("1st column has no data")
 
         for col_index in range(1, len(self.columns)):
-            if len(self.columns[col_index].row_count) != first_column.row_count:
+            if self.columns[col_index].row_count != first_column.row_count:
                 raise IllegalStateException(
                     "Columns do not have the same number of rows"
                 )
