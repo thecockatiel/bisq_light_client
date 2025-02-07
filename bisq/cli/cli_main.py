@@ -21,6 +21,7 @@ from bisq.cli.opts.get_btc_market_price_option_parser import (
     GetBTCMarketPriceOptionParser,
 )
 from bisq.cli.opts.get_offers_option_parser import GetOffersOptionParser
+from bisq.cli.opts.get_trade_option_parser import GetTradeOptionParser
 from bisq.cli.opts.get_transaction_option_parser import GetTransactionOptionParser
 from bisq.cli.opts.offer_id_option_parser import OfferIdOptionParser
 from bisq.cli.opts.opt_label import OptLabel
@@ -334,7 +335,9 @@ class CliMain:
                 # 'takeoffer' request.
                 offer_category = client.get_available_offer_category(offer_id)
                 if offer_category == GetOfferCategoryReply.OfferCategory.BSQ_SWAP:
-                    opts = TakeBsqSwapOfferOptionParser(offer_id_opts.non_option_args).parse()
+                    opts = TakeBsqSwapOfferOptionParser(
+                        offer_id_opts.non_option_args
+                    ).parse()
                     amount = CurrencyFormat.to_satoshis(opts.get_amount())
                     trade = client.take_bsq_swap_offer(offer_id, amount)
                 else:
@@ -346,7 +349,16 @@ class CliMain:
                         offer_id, payment_account_id, taker_fee_currency_code, amount
                     )
                 print(f"trade {trade.trade_id} successfully taken")
-
+            elif method == CliMethods.gettrade:
+                # JAVA TODO make short-id a valid argument?
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                show_contract = opts.get_show_contract()
+                trade = client.get_trade(trade_id)
+                if show_contract:
+                    print(trade.contract_as_json)
+                else:
+                    TableBuilder(TableType.TRADE_DETAIL_TBL, trade).build().print()
 
     @staticmethod
     def _get_parser():
