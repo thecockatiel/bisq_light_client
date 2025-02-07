@@ -134,7 +134,7 @@ class CreateOfferOptionParser(SimpleMethodOptionParser):
                 if not mkt_price_margin_pct_string:
                     raise IllegalArgumentException("no market price margin specified")
                 else:
-                    self.verify_string_is_valid_decimal(mkt_price_margin_pct_string)
+                    self.verify_string_is_valid_float(mkt_price_margin_pct_string)
 
             if OptLabel.OPT_FIXED_PRICE in self.options and not self.options.get(
                 OptLabel.OPT_FIXED_PRICE
@@ -144,7 +144,7 @@ class CreateOfferOptionParser(SimpleMethodOptionParser):
             if not self.options.get(OptLabel.OPT_SECURITY_DEPOSIT, None):
                 raise IllegalArgumentException("no security deposit specified")
             else:
-                self.verify_string_is_valid_decimal(
+                self.verify_string_is_valid_float(
                     self.options.get(OptLabel.OPT_SECURITY_DEPOSIT)
                 )
 
