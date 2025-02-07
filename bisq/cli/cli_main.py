@@ -10,7 +10,13 @@ from bisq.cli.cli_methods import CliMethods
 from bisq.cli.currency_format import CurrencyFormat
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
+from bisq.cli.opts.create_crypto_currency_payment_account_option_parser import (
+    CreateCryptoCurrencyPaymentAccountOptionParser,
+)
 from bisq.cli.opts.create_offer_option_parser import CreateOfferOptionParser
+from bisq.cli.opts.create_payment_account_option_parser import (
+    CreatePaymentAccountOptionParser,
+)
 from bisq.cli.opts.edit_offer_option_parser import EditOfferOptionParser
 from bisq.cli.opts.get_address_balance_option_parser import (
     GetAddressBalanceOptionParser,
@@ -21,17 +27,30 @@ from bisq.cli.opts.get_btc_market_price_option_parser import (
     GetBTCMarketPriceOptionParser,
 )
 from bisq.cli.opts.get_offers_option_parser import GetOffersOptionParser
+from bisq.cli.opts.get_payment_account_form_option_parser import (
+    GetPaymentAccountFormOptionParser,
+)
 from bisq.cli.opts.get_trade_option_parser import GetTradeOptionParser
 from bisq.cli.opts.get_trades_option_parser import GetTradesOptionParser
 from bisq.cli.opts.get_transaction_option_parser import GetTransactionOptionParser
 from bisq.cli.opts.offer_id_option_parser import OfferIdOptionParser
 from bisq.cli.opts.opt_label import OptLabel
+from bisq.cli.opts.register_dispute_agent_option_parser import (
+    RegisterDisputeAgentOptionParser,
+)
+from bisq.cli.opts.remove_wallet_password_option_parser import (
+    RemoveWalletPasswordOptionParser,
+)
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
 from bisq.cli.opts.set_tx_fee_rate_option_parser import SetTxFeeRateOptionParser
+from bisq.cli.opts.set_wallet_password_option_parser import (
+    SetWalletPasswordOptionParser,
+)
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.cli.opts.take_bsq_swap_offer_option_parser import TakeBsqSwapOfferOptionParser
 from bisq.cli.opts.take_offer_option_parser import TakeOfferOptionParser
+from bisq.cli.opts.unlock_wallet_option_parser import UnlockWalletOptionParser
 from bisq.cli.opts.verify_bsq_sent_to_address_option_parser import (
     VerifyBsqSentToAddressOptionParser,
 )
@@ -427,6 +446,90 @@ class CliMain:
                 trade_id = opts.get_trade_id()
                 client.unfail_trade(trade_id)
                 print(f"failed trade {trade_id} changed to open trade")
+            elif method == CliMethods.getpaymentacctform:
+                opts = GetPaymentAccountFormOptionParser(method_args).parse()
+                payment_method_id = opts.get_payment_method_id()
+                json_string = client.get_payment_account_form_as_json(payment_method_id)
+                json_file = CliMain._save_file_to_disk(
+                    payment_method_id.lower(), ".json", json_string
+                )
+                print(f"payment account form {json_string}\nsaved to {json_file}\n")
+                print(
+                    "Edit the file, and use as the argument to a 'createpaymentacct' command."
+                )
+            elif method == CliMethods.createpaymentacct:
+                opts = CreatePaymentAccountOptionParser(method_args).parse()
+                payment_account_form = opts.get_payment_account_form()
+                try:
+                    with open(payment_account_form, "r") as file:
+                        json_string = file.read()
+                except Exception as e:
+                    raise IllegalStateException(
+                        f"could not read {payment_account_form}: {str(e)}"
+                    )
+
+                payment_account = client.create_payment_account(json_string)
+                print("payment account saved")
+                TableBuilder(
+                    TableType.PAYMENT_ACCOUNT_TBL, payment_account
+                ).build().print()
+            elif method == CliMethods.createcryptopaymentacct:
+                opts = CreateCryptoCurrencyPaymentAccountOptionParser(
+                    method_args
+                ).parse()
+                account_name = opts.get_account_name()
+                currency_code = opts.get_currency_code()
+                address = opts.get_address()
+                is_trade_instant = opts.get_is_trade_instant()
+                payment_account = client.create_crypto_currency_payment_account(
+                    account_name, currency_code, address, is_trade_instant
+                )
+                print("payment account saved")
+                TableBuilder(
+                    TableType.PAYMENT_ACCOUNT_TBL, payment_account
+                ).build().print()
+            elif method == CliMethods.getpaymentaccts:
+                payment_accounts = client.get_payment_accounts()
+                if payment_accounts:
+                    TableBuilder(
+                        TableType.PAYMENT_ACCOUNT_TBL, payment_accounts
+                    ).build().print()
+                else:
+                    print("no payment accounts are saved")
+            elif method == CliMethods.lockwallet:
+                client.lock_wallet()
+                print("wallet locked")
+            elif method == CliMethods.unlockwallet:
+                opts = UnlockWalletOptionParser(method_args).parse()
+                wallet_password = opts.get_password()
+                timeout = opts.get_unlock_timeout()
+                client.unlock_wallet(wallet_password, timeout)
+                print("wallet unlocked")
+            elif method == CliMethods.removewalletpassword:
+                opts = RemoveWalletPasswordOptionParser(method_args).parse()
+                wallet_password = opts.get_password()
+                client.remove_wallet_password(wallet_password)
+                print("wallet decrypted")
+            elif method == CliMethods.setwalletpassword:
+                opts = SetWalletPasswordOptionParser(method_args).parse()
+                wallet_password = opts.get_password()
+                new_wallet_password = opts.get_new_password()
+                client.set_wallet_password(wallet_password, new_wallet_password)
+                print(
+                    "wallet encrypted"
+                    + (" with new password" if new_wallet_password else "")
+                )
+            elif method == CliMethods.registerdisputeagent:
+                opts = RegisterDisputeAgentOptionParser(method_args).parse()
+                dispute_agent_type = opts.get_dispute_agent_type()
+                registration_key = opts.get_registration_key()
+                client.register_dispute_agent(dispute_agent_type, registration_key)
+                print(f"{dispute_agent_type} registered")
+            elif method == CliMethods.stop:
+                client.stop_server()
+                print("server shutdown signal received")
+            else:
+                raise IllegalArgumentException(f"'{method_name}' is not a supported method")
 
     @staticmethod
     def _get_parser():
