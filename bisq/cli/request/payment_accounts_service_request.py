@@ -14,7 +14,7 @@ class PaymentAccountsServiceRequest:
     def __init__(self, grpc_stubs: "GrpcStubs"):
         self.grpc_stubs = grpc_stubs
 
-    def get_payment_methods(self) -> pb_pb2.PaymentMethod:
+    def get_payment_methods(self) -> list[pb_pb2.PaymentMethod]:
         request = grpc_pb2.GetPaymentMethodsRequest()
         response: grpc_pb2.GetPaymentMethodsReply = (
             self.grpc_stubs.payment_accounts_service.GetPaymentMethods(request)
