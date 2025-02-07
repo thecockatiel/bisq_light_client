@@ -31,6 +31,10 @@ class AbstractColumn(Generic[_C, _T], Column[_T], ABC):
     @property
     def name(self) -> str:
         return self._name
+    
+    @name.setter
+    def name(self, value: str):
+        self._name = value
 
     @property
     def width(self) -> int:
