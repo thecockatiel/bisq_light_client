@@ -56,7 +56,7 @@ class Table:
                 else column.width + Table.column_delimiter_length
             )
             print(justified_name.ljust(padded_width), end='', file=file)
-        print("\n", file=file)
+        print("", file=file)
 
     def _print_row(self, file: "SupportsWrite[str]", row_index: int):
         for col_index, column in enumerate(self.columns):
@@ -67,7 +67,7 @@ class Table:
             )
             print(str(column.get_row(row_index)).ljust(padded_width), end='', file=file)
             if col_index == len(self.columns) - 1:
-                print("\n", file=file)
+                print("", file=file)
 
     def __str__(self):
         output = StringIO()
