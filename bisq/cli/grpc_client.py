@@ -360,7 +360,7 @@ class GrpcClient:
         self, wallet_password: str, new_wallet_password: str = None
     ):
         return self.wallets_service_request.set_wallet_password(
-            wallet_password, new_wallet_password=None
+            wallet_password, new_wallet_password
         )
 
     def register_dispute_agent(self, dispute_agent_type: str, registration_key: str):
