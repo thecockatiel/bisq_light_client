@@ -35,6 +35,7 @@ from bisq.cli.opts.take_offer_option_parser import TakeOfferOptionParser
 from bisq.cli.opts.verify_bsq_sent_to_address_option_parser import (
     VerifyBsqSentToAddressOptionParser,
 )
+from bisq.cli.opts.withdraw_funds_option_parser import WithdrawFundsOptionParser
 from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
@@ -382,6 +383,50 @@ class CliMain:
                         )
                     )
                     TableBuilder(table_type, trades).build().print()
+            elif method == CliMethods.confirmpaymentstarted:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                client.confirm_payment_started(trade_id)
+                print(f"trade {trade_id} payment started message sent")
+            elif method == CliMethods.confirmpaymentstartedxmr:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                tx_id = opts.get_tx_id()
+                tx_key = opts.get_tx_key()
+                client.confirm_payment_started_xmr(trade_id, tx_id, tx_key)
+                print(f"trade {trade_id} payment started message sent")
+            elif method == CliMethods.confirmpaymentreceived:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                client.confirm_payment_received(trade_id)
+                print(f"trade {trade_id} payment received message sent")
+            elif method == CliMethods.closetrade:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                client.close_trade(trade_id)
+                print(f"trade {trade_id} is closed")
+            elif method == CliMethods.withdrawfunds:
+                opts = WithdrawFundsOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                address = opts.get_address()
+                # Multi-word memos must be double-quoted.
+                memo = opts.get_memo()
+                client.withdraw_funds(trade_id, address, memo)
+                print(f"trade {trade_id} funds sent to btc address {address}")
+            elif method == CliMethods.getpaymentmethods:
+                payment_methods = client.get_payment_methods()
+                for method in payment_methods:
+                    print(method.id)
+            elif method == CliMethods.failtrade:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                client.fail_trade(trade_id)
+                print(f"open trade {trade_id} changed to failed trade")
+            elif method == CliMethods.unfailtrade:
+                opts = GetTradeOptionParser(method_args).parse()
+                trade_id = opts.get_trade_id()
+                client.unfail_trade(trade_id)
+                print(f"failed trade {trade_id} changed to open trade")
 
     @staticmethod
     def _get_parser():
