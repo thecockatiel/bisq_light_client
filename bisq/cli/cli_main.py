@@ -11,6 +11,7 @@ from bisq.cli.currency_format import CurrencyFormat
 from bisq.cli.grpc_client import GrpcClient
 from bisq.cli.opts.argument_list import ArgumentList
 from bisq.cli.opts.create_offer_option_parser import CreateOfferOptionParser
+from bisq.cli.opts.edit_offer_option_parser import EditOfferOptionParser
 from bisq.cli.opts.get_address_balance_option_parser import (
     GetAddressBalanceOptionParser,
 )
@@ -19,12 +20,16 @@ from bisq.cli.opts.get_balance_option_parser import GetBalanceOptionParser
 from bisq.cli.opts.get_btc_market_price_option_parser import (
     GetBTCMarketPriceOptionParser,
 )
+from bisq.cli.opts.get_offers_option_parser import GetOffersOptionParser
 from bisq.cli.opts.get_transaction_option_parser import GetTransactionOptionParser
+from bisq.cli.opts.offer_id_option_parser import OfferIdOptionParser
 from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
 from bisq.cli.opts.set_tx_fee_rate_option_parser import SetTxFeeRateOptionParser
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
+from bisq.cli.opts.take_bsq_swap_offer_option_parser import TakeBsqSwapOfferOptionParser
+from bisq.cli.opts.take_offer_option_parser import TakeOfferOptionParser
 from bisq.cli.opts.verify_bsq_sent_to_address_option_parser import (
     VerifyBsqSentToAddressOptionParser,
 )
@@ -32,6 +37,7 @@ from bisq.cli.table.builder.table_builder import TableBuilder
 from bisq.cli.table.builder.table_type import TableType
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
+from grpc_pb2 import GetOfferCategoryReply
 from utils.argparse_ext import CustomArgumentParser, CustomHelpFormatter
 from datetime import datetime
 
@@ -76,7 +82,7 @@ class CliMain:
         options.update(cli_opts)
 
         if not options[OptLabel.OPT_HELP] and not non_option_args:
-            CliMain._print_help(parser, file=sys.stdout)
+            CliMain._print_help(parser, file=sys.stderr)
             raise IllegalArgumentException("no method specified")
 
         if options[OptLabel.OPT_HELP] and not non_option_args:
@@ -166,7 +172,7 @@ class CliMain:
                 opts = SendBsqOptionParser(method_args).parse()
                 address = opts.get_address()
                 amount = opts.get_amount()
-                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
+                CliMain._verify_string_is_valid_float(OptLabel.OPT_AMOUNT, amount)
 
                 tx_fee_rate = opts.get_fee_rate()
                 if tx_fee_rate:
@@ -180,7 +186,7 @@ class CliMain:
                 opts = SendBtcOptionParser(method_args).parse()
                 address = opts.get_address()
                 amount = opts.get_amount()
-                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
+                CliMain._verify_string_is_valid_float(OptLabel.OPT_AMOUNT, amount)
 
                 tx_fee_rate = opts.get_fee_rate()
                 if tx_fee_rate:
@@ -195,7 +201,7 @@ class CliMain:
                 opts = VerifyBsqSentToAddressOptionParser(method_args).parse()
                 address = opts.get_address()
                 amount = opts.get_amount()
-                CliMain._verify_string_is_valid_decimal(OptLabel.OPT_AMOUNT, amount)
+                CliMain._verify_string_is_valid_float(OptLabel.OPT_AMOUNT, amount)
 
                 bsq_was_sent = client.verify_bsq_sent_to_address(address, amount)
                 print(
@@ -258,6 +264,89 @@ class CliMain:
                     )
 
                 TableBuilder(TableType.OFFER_TBL, offer).build().print()
+            elif method == CliMethods.editoffer:
+                offer_id_opts = OfferIdOptionParser(method_args).parse()
+                # What kind of offer is being edited? BSQ swaps cannot be edited.
+                offer_id = offer_id_opts.get_offer_id()
+                offer_category = client.get_my_offer_category(offer_id)
+                if offer_category == GetOfferCategoryReply.OfferCategory.BSQ_SWAP:
+                    raise IllegalStateException(
+                        "bsq swap offers cannot be edited, but you may cancel them without forfeiting any funds"
+                    )
+
+                opts = EditOfferOptionParser(offer_id_opts.non_option_args).parse()
+                fixed_price = opts.get_fixed_price()
+                is_using_mkt_price_margin = opts.is_using_mkt_price_margin()
+                market_price_margin_pct = opts.get_mkt_price_margin_pct()
+                trigger_price = opts.get_trigger_price()
+                enable = opts.get_enable_as_signed_int()
+                edit_offer_type = opts.get_offer_edit_type()
+
+                client.edit_offer(
+                    offer_id,
+                    fixed_price,
+                    is_using_mkt_price_margin,
+                    market_price_margin_pct,
+                    trigger_price,
+                    enable,
+                    edit_offer_type,
+                )
+                print("offer has been edited")
+            elif method == CliMethods.canceloffer:
+                opts = OfferIdOptionParser(method_args).parse()
+                offer_id = opts.get_offer_id()
+                client.cancel_offer(offer_id)
+                print("offer canceled and removed from offer book")
+            elif method == CliMethods.getoffer:
+                opts = OfferIdOptionParser(method_args).parse()
+                offer_id = opts.get_offer_id()
+                offer = client.get_offer(offer_id)
+                TableBuilder(TableType.OFFER_TBL, offer).build().print()
+            elif method == CliMethods.getmyoffer:
+                opts = OfferIdOptionParser(method_args).parse()
+                offer_id = opts.get_offer_id()
+                offer = client.get_my_offer(offer_id)
+                TableBuilder(TableType.OFFER_TBL, offer).build().print()
+            elif method == CliMethods.getoffers:
+                opts = GetOffersOptionParser(method_args).parse()
+                direction = opts.get_direction()
+                currency_code = opts.get_currency_code()
+                all_offers = opts.get_all()
+                offers = client.get_offers(direction, currency_code, all_offers)
+                if not offers:
+                    print(f"no {direction} {currency_code} offers found")
+                else:
+                    TableBuilder(TableType.OFFER_TBL, offers).build().print()
+            elif method == CliMethods.getmyoffers:
+                opts = GetOffersOptionParser(method_args).parse()
+                direction = opts.get_direction()
+                currency_code = opts.get_currency_code()
+                offers = client.get_my_offers(direction, currency_code)
+                if not offers:
+                    print(f"no {direction} {currency_code} offers found")
+                else:
+                    TableBuilder(TableType.OFFER_TBL, offers).build().print()
+            elif method == CliMethods.takeoffer:
+                offer_id_opts = OfferIdOptionParser(method_args).parse()
+                offer_id = offer_id_opts.get_offer_id()
+                # We only send an 'offer-id' param when taking a BsqSwapOffer.
+                # Find out what kind of offer is being taken before sending a
+                # 'takeoffer' request.
+                offer_category = client.get_available_offer_category(offer_id)
+                if offer_category == GetOfferCategoryReply.OfferCategory.BSQ_SWAP:
+                    opts = TakeBsqSwapOfferOptionParser(offer_id_opts.non_option_args).parse()
+                    amount = CurrencyFormat.to_satoshis(opts.get_amount())
+                    trade = client.take_bsq_swap_offer(offer_id, amount)
+                else:
+                    opts = TakeOfferOptionParser(offer_id_opts.non_option_args).parse()
+                    amount = CurrencyFormat.to_satoshis(opts.get_amount())
+                    payment_account_id = opts.get_payment_account_id()
+                    taker_fee_currency_code = opts.get_taker_fee_currency_code()
+                    trade = client.take_offer(
+                        offer_id, payment_account_id, taker_fee_currency_code, amount
+                    )
+                print(f"trade {trade.trade_id} successfully taken")
+
 
     @staticmethod
     def _get_parser():
@@ -677,7 +766,7 @@ class CliMain:
             raise IllegalArgumentException(f"'{method_name}' is not a supported method")
 
     @staticmethod
-    def _verify_string_is_valid_decimal(option_label: str, option_value: str):
+    def _verify_string_is_valid_float(option_label: str, option_value: str):
         try:
             float(option_value)
         except ValueError:
