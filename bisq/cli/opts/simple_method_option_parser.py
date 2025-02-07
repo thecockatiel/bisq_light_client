@@ -41,7 +41,7 @@ class SimpleMethodOptionParser(MethodOps):
     def is_for_help(self) -> bool:
         return self.options.get(OptLabel.OPT_HELP, False)
     
-    def verify_string_is_valid_decimal(self, string: str):
+    def verify_string_is_valid_float(self, string: str):
         try:
             float(string)
         except:
