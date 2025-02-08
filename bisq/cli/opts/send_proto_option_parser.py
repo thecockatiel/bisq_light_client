@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Optional, Type
+from typing import Any, Optional, Type
 from bisq.cli.opts.opt_label import OptLabel
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
@@ -156,9 +156,10 @@ class SendProtoOptionParser(SimpleMethodOptionParser):
         return concrete_class(**kw_args)
 
     @staticmethod
-    def _to_binary_or_passthrough(value: str):
-        if value.startswith("b'") and value.endswith("'"):
-            return value[2:-1].encode("utf-8")
-        if value.startswith("bh'") and value.endswith("'"):
-            return bytes.fromhex(value[3:-1])
+    def _to_binary_or_passthrough(value: Any):
+        if isinstance(value, str):
+            if value.startswith("b'") and value.endswith("'"):
+                return value[2:-1].encode("utf-8")
+            if value.startswith("bh'") and value.endswith("'"):
+                return bytes.fromhex(value[3:-1])
         return value
