@@ -147,6 +147,10 @@ class SendProtoOptionParser(SimpleMethodOptionParser):
                                     v, clazz
                                 )
                             )
+                        else:
+                            arr.append(
+                                SendProtoOptionParser._to_binary_or_passthrough(v)
+                            )
                     kw_args[key] = arr
                 else:
                     kw_args[key] = SendProtoOptionParser._to_binary_or_passthrough(
