@@ -43,6 +43,7 @@ from bisq.cli.opts.remove_wallet_password_option_parser import (
 )
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
+from bisq.cli.opts.send_proto_option_parser import SendProtoOptionParser
 from bisq.cli.opts.set_tx_fee_rate_option_parser import SetTxFeeRateOptionParser
 from bisq.cli.opts.set_wallet_password_option_parser import (
     SetWalletPasswordOptionParser,
@@ -528,6 +529,13 @@ class CliMain:
             elif method == CliMethods.stop:
                 client.stop_server()
                 print("server shutdown signal received")
+            elif method == CliMethods.sendproto:
+                opts = SendProtoOptionParser(method_args).parse()
+                reply = client.send_proto(opts.node_address, opts.proto)
+                if reply.success:
+                    print("proto message sent successfully")
+                else:
+                    print(f"error sending proto message: {reply.error_message}")
             else:
                 raise IllegalArgumentException(f"'{method_name}' is not a supported method")
 

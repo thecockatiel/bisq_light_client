@@ -7,7 +7,9 @@ from bisq.cli.request.payment_accounts_service_request import (
 )
 from bisq.cli.request.trades_service_request import TradesServiceRequest
 from bisq.cli.request.wallets_service_request import WalletsServiceRequest
+import grpc_extra_pb2
 import grpc_pb2
+import pb_pb2
 
 
 class GrpcClient:
@@ -385,3 +387,10 @@ class GrpcClient:
             self.grpc_stubs.help_service.GetMethodHelp(request)
         )
         return response.method_help
+
+    def send_proto(self, node_address: pb_pb2.NodeAddress, network_envelope: pb_pb2.NetworkEnvelope): 
+        request = grpc_extra_pb2.SendProtoRequest(destination_node_address=node_address, network_envelope=network_envelope)
+        response: grpc_extra_pb2.SendProtoReply = (
+            self.grpc_stubs.dev_commands_service.SendProto(request)
+        )
+        return response
