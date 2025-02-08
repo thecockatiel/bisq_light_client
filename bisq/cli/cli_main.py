@@ -535,7 +535,7 @@ class CliMain:
                 if reply.success:
                     print("proto message sent successfully")
                 else:
-                    print(f"error sending proto message: {reply.error_message}")
+                    print(f"error sending proto message: {reply.error_message}", file=sys.stderr)
             else:
                 raise IllegalArgumentException(f"'{method_name}' is not a supported method")
 
