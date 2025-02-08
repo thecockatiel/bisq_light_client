@@ -29,6 +29,8 @@ def not_none_iterator(iterable: Iterable[T]) -> Iterator[T]:
 
 
 def is_iterable(obj):
+    if isinstance(obj, str):
+        return False
     try:
         iter(obj)
         return True
