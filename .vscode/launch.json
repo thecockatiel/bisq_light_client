@@ -12,23 +12,7 @@
       "console": "integratedTerminal",
       "args": [
         "--apiPassword=123456",
-      ],
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}",
-      },
-      "justMyCode": false,
-      "subProcess": false,
-    },
-    {
-      "name": "Python Debugger: Current File",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
-      "args": [
-        // "--password=123456",
-        // "getversion",
-        // "--help"
+        "--useDevCommands"
         // #################################
         // "--logLevel=DEBUG",
         // #################################
@@ -41,10 +25,40 @@
         // "--torProxyHiddenServicePort='9999 127.0.0.1:65018'",
       ],
       "env": {
-        "PYTHONPATH": "${workspaceFolder}",
+        "PYTHONPATH": "${workspaceFolder}"
       },
       "justMyCode": false,
-      "subProcess": false,
+      "subProcess": false
     },
+    {
+      "name": "Python Debugger: Cli",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "run_cli.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--password=123456",
+        // "getversion",
+        // "--help"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "subProcess": false
+    },
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "subProcess": false
+    }
   ]
 }
