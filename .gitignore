@@ -182,3 +182,7 @@ grpc_pb2.pyi
 pb_pb2_grpc.py
 pb_pb2.py
 pb_pb2.pyi
+
+grpc_extra_pb2_grpc.py
+grpc_extra_pb2.py
+grpc_extra_pb2.pyi

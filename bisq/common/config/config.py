@@ -211,6 +211,7 @@ class Config:
             else Config.UNSPECIFIED_PORT
         )
         self.referral_id: str = options["referralId"] or ""
+        self.use_dev_commands: bool = options["useDevCommands"] or False
         self.use_dev_mode: bool = options["useDevMode"] or False
         self.use_dev_mode_header: bool = options["useDevModeHeader"] or False
         self.use_dev_privilege_keys: bool = options["useDevPrivilegeKeys"] or False
@@ -460,6 +461,14 @@ class Config:
             help="Optional Referral ID (e.g. for API users or pro market makers)",
             type=str,
             metavar="<String>",
+        )
+        parser.add_argument(
+            "--useDevCommands",
+            help="Enables dev commands which is used for convenience for developer testing",
+            type=parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
         )
         parser.add_argument(
             "--useDevMode",

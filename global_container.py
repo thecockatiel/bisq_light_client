@@ -30,6 +30,7 @@ class GlobalContainer:
     _grpc_version_service = None
     _grpc_trades_service = None
     _grpc_wallets_service = None
+    _grpc_dev_commands_service = None
 
     @property
     def core_context(self):
@@ -54,6 +55,7 @@ class GlobalContainer:
                 self.core_trades_service,
                 self.core_wallets_service,
                 self.trade_statistics_manager,
+                self.network_node,
             )
         return GlobalContainer._core_api
 
@@ -188,6 +190,7 @@ class GlobalContainer:
                 self.grpc_version_service,
                 self.grpc_trades_service,
                 self.grpc_wallets_service,
+                self.grpc_dev_commands_service,
             )
         return GlobalContainer._grpc_server
 
@@ -294,6 +297,18 @@ class GlobalContainer:
                 self.core_api, self.grpc_exception_handler
             )
         return GlobalContainer._grpc_wallets_service
+
+    @property
+    def grpc_dev_commands_service(self):
+        if GlobalContainer._grpc_dev_commands_service is None:
+            from bisq.daemon.grpc.grpc_dev_commands_service import (
+                GrpcDevCommandsService,
+            )
+
+            GlobalContainer._grpc_dev_commands_service = GrpcDevCommandsService(
+                self.core_api, self.grpc_exception_handler
+            )
+        return GlobalContainer._grpc_dev_commands_service
 
     ############################################################################### (not listed in ModuleForAppWithP2p)
     _config = None

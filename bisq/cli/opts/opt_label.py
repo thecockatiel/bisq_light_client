@@ -38,3 +38,5 @@ class OptLabel:
     OPT_NEW_WALLET_PASSWORD = "new-wallet-password"
     OPT_TX_ID = "tx-id"
     OPT_TX_KEY = "tx-key"
+    OPT_NODE_ADDRESS = "node-address"
+    OPT_PROTO = "proto"

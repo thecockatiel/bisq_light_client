@@ -3,10 +3,14 @@ from typing import TYPE_CHECKING, Optional
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.version import Version
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 import grpc_pb2
 
 
 if TYPE_CHECKING:
+    from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+    from bisq.core.network.p2p.network.network_node import NetworkNode
+    from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.common.handlers.error_message_handler import ErrorMessageHandler
     from bisq.core.api.model.tx_fee_rate_info import TxFeeRateInfo
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
@@ -50,6 +54,7 @@ class CoreApi:
         core_trades_service: "CoreTradesService",
         wallets_service: "CoreWalletsService",
         trade_statistics_manager: "TradeStatisticsManager",
+        network_node: "NetworkNode",
     ):
         self.config = config
         self.core_dispute_agents_service = core_dispute_agents_service
@@ -60,6 +65,7 @@ class CoreApi:
         self.core_trades_service = core_trades_service
         self.wallets_service = wallets_service
         self.trade_statistics_manager = trade_statistics_manager
+        self.network_node = network_node
 
     def get_version(self) -> str:
         return Version.VERSION
@@ -399,3 +405,10 @@ class CoreApi:
         return self.wallets_service.get_num_confirmations_for_most_recent_transaction(
             address_string
         )
+
+    def send_network_envelope(
+        self, node_address: "NodeAddress", envelope: "NetworkEnvelope"
+    ):
+        if not self.config.use_dev_commands:
+            raise IllegalStateException("send_network_envelope is only available when useDevCommands is true")
+        return self.network_node.send_message(node_address, envelope)

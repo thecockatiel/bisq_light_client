@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.core_context import CoreContext
+from bisq.daemon.grpc.grpc_dev_commands_service import GrpcDevCommandsService
 from bisq.daemon.grpc.grpc_offers_service import GrpcOffersService
 from bisq.daemon.grpc.grpc_payment_accounts_service import GrpcPaymentAccountsService
 from bisq.daemon.grpc.grpc_price_service import GrpcPriceService
@@ -15,6 +16,7 @@ from bisq.daemon.grpc.interceptor.password_auth_interceptor import (
 )
 import grpc
 import grpc_pb2_grpc
+import grpc_extra_pb2_grpc
 
 if TYPE_CHECKING:
     from bisq.daemon.grpc.grpc_dispute_agent_service import GrpcDisputeAgentsService
@@ -38,6 +40,7 @@ class GrpcServer:
         version_service: "GrpcVersionService",
         trades_service: "GrpcTradesService",
         wallets_service: "GrpcWalletsService",
+        dev_commands_service: "GrpcDevCommandsService"
     ):
         self.config = config
         self.server = grpc.server(
@@ -59,6 +62,7 @@ class GrpcServer:
         grpc_pb2_grpc.add_GetVersionServicer_to_server(version_service, self.server)
         grpc_pb2_grpc.add_TradesServicer_to_server(trades_service, self.server)
         grpc_pb2_grpc.add_WalletsServicer_to_server(wallets_service, self.server)
+        grpc_extra_pb2_grpc.add_DevCommandsServicer_to_server(dev_commands_service, self.server)
         # TODO: generate ssl certs and random password to file and use for cli to secure the connection
         self.server.add_insecure_port(f"127.0.0.1:{self.config.api_port}")
         coreContext.is_api_user = True

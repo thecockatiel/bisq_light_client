@@ -51,3 +51,6 @@ class CliMethods(IntEnum):
     stop = auto()
     getdaostatus = auto()
     confirmpaymentstartedxmr = auto()
+
+    # bisq light specific
+    sendproto = auto()
