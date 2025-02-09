@@ -45,7 +45,7 @@ class NeftAccountPayload(IfscBasedAccountPayload):
         return NeftAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based_payment_account_payload.countryCode,
+            country_code=country_based_payment_account_payload.countryCode, # weird protobuf names
             holder_name=ifsc_based_account_payload.holder_name,
             account_nr=ifsc_based_account_payload.account_nr,
             ifsc=ifsc_based_account_payload.ifsc,
