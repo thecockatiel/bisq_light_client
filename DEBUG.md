@@ -2,6 +2,8 @@
 
 ## `sendproto` cli command
 
+in order to use `sendproto` cli command, daemon service must be launched with `--useDevCommands`
+
 In bisq, all messages are encapsulated by a `NetworkEnvelope` protobuf message, which can be found [here](https://github.com/thecockatiel/bisq_light_client/blob/e9eab8844ed53ce960049a157b6ecf691e843bdf/proto/pb.proto#L23)
 
 this command sends a custom crafted network envelope to the specified node address
@@ -9,7 +11,7 @@ this command sends a custom crafted network envelope to the specified node addre
 It accepts two parameters:
 
 - `--node-address`: full address of target node in the format of `hostname:port`
-- `--proto`: path to the file containing the network envelope definition to send to the `--node-address` specified
+- `--proto`: path to the json file containing the network envelope definition to send to the `--node-address` specified
 
 ### proto json file format
 
