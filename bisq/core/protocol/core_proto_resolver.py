@@ -11,6 +11,7 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import Pe
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
+from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
@@ -123,7 +124,7 @@ bank_account_payload_cases = {
 }
 
 ifsc_based_account_payload_cases = {
-    # "neft_account_payload": NeftAccountPayload.from_proto,
+    "neft_account_payload": NeftAccountPayload.from_proto,
     # "rtgs_account_payload": RtgsAccountPayload.from_proto,
     # "imps_account_payload": ImpsAccountPayload.from_proto,
 }
