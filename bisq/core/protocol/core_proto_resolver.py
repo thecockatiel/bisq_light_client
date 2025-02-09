@@ -8,6 +8,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
+from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
@@ -121,7 +122,7 @@ bank_account_payload_cases = {
     # "national_bank_account_payload": NationalBankAccountPayload.from_proto,
     "same_bank_accunt_payload": SameBankAccountPayload.from_proto,
     "specific_banks_account_payload": SpecificBanksAccountPayload.from_proto,
-    # "ach_transfer_account_payload": AchTransferAccountPayload.from_proto,
+    "ach_transfer_account_payload": AchTransferAccountPayload.from_proto,
     # "domestic_wire_transfer_account_payload": DomesticWireTransferAccountPayload.from_proto,
 }
 
