@@ -3,7 +3,8 @@ from bisq.core.locale.res import Res
 from bisq.core.payment.payload.ifsc_based_account_payload import IfscBasedAccountPayload
 import pb_pb2 as protobuf
 
-class RtgsAccountPayload(IfscBasedAccountPayload):
+
+class ImpsAccountPayload(IfscBasedAccountPayload):
 
     def __init__(
         self,
@@ -42,7 +43,7 @@ class RtgsAccountPayload(IfscBasedAccountPayload):
         ifsc_based_account_payload = (
             country_based_payment_account_payload.ifsc_based_account_payload
         )
-        return RtgsAccountPayload(
+        return ImpsAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
             country_code=country_based_payment_account_payload.countryCode,
