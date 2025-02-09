@@ -1,13 +1,7 @@
-from typing import TYPE_CHECKING, Union
-from bisq.core.locale.bank_util import BankUtil
-from bisq.core.locale.country_util import get_name_by_code
+from typing import Union
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.ifsc_based_account_payload import IfscBasedAccountPayload
 import pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.locale.country import Country
-
 
 class NeftAccountPayload(IfscBasedAccountPayload):
 
