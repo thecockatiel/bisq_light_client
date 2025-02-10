@@ -18,10 +18,10 @@ class IfscBasedAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHold
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
-        holder_name: str = "",
-        account_nr: str = "",
-        ifsc: str = "",
+        country_code: str = None,
+        holder_name: str = None,
+        account_nr: str = None,
+        ifsc: str = None,
         max_trade_period: int = -1,
         exclude_from_json_data_map: Union[dict[str, str]] = None,
     ):
@@ -32,9 +32,9 @@ class IfscBasedAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHold
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self._holder_name = holder_name
-        self.account_nr = account_nr
-        self.ifsc = ifsc
+        self._holder_name = holder_name or ""
+        self.ifsc = ifsc or ""
+        self.account_nr = account_nr or ""
 
     @property
     def holder_name(self):
