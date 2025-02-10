@@ -20,6 +20,7 @@ from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAc
 from bisq.core.payment.payload.cel_pay_account_payload import CelPayAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
+from bisq.core.payment.payload.hal_cash_account_payload import HalCashAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.instant_crypto_currency_account_payload import InstantCryptoCurrencyPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     # "revolut_account_payload": RevolutAccountPayload.from_proto,
     # "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
     # "swish_account_payload": SwishAccountPayload.from_proto,
-    # "hal_cash_account_payload": HalCashAccountPayload.from_proto,
+    "hal_cash_account_payload": HalCashAccountPayload.from_proto,
     "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
     "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
