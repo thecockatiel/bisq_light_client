@@ -32,6 +32,7 @@ from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayloa
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
+from bisq.core.payment.payload.western_union_account_payload import WesternUnionAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from utils.clock import Clock
@@ -113,7 +114,7 @@ persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetwo
 
 country_based_payment_account_payload_cases = {
     "bank_account_payload": _handle_bank_account_payload,
-    # "western_union_account_payload": WesternUnionAccountPayload.from_proto,
+    "western_union_account_payload": WesternUnionAccountPayload.from_proto,
     "cash_deposit_account_payload": CashDepositAccountPayload.from_proto,
     "sepa_account_payload": SepaAccountPayload.from_proto,
     "sepa_instant_account_payload": SepaInstantAccountPayload.from_proto,
