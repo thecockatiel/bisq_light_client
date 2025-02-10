@@ -32,6 +32,7 @@ from bisq.core.payment.payload.paxum_account_payload import PaxumAccountPayload
 from bisq.core.payment.payload.paysera_account_payload import PayseraAccountPayload
 from bisq.core.payment.payload.paytm_account_payload import PaytmAccountPayload
 from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
+from bisq.core.payment.payload.prompt_pay_account_payload import PromptPayAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.satispay_account_payload import SatispayAccountPayload
@@ -97,7 +98,7 @@ payment_account_payload_cases = {
     # "hal_cash_account_payload": HalCashAccountPayload.from_proto,
     # "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
-    # "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
+    "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
     "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
     "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
     "paysera_account_payload": PayseraAccountPayload.from_proto,
