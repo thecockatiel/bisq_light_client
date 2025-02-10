@@ -3,6 +3,7 @@ import secrets
 from typing import Optional
 import binascii
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.locale.res import Res
 import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -79,7 +80,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         return self.exclude_from_json_data_map.get(self.HOLDER_NAME, "")
 
     def get_holder_name_or_prompt_if_empty(self) -> str:
-        return "payment.account.owner.ask" if self.holder_name == "" else self.holder_name
+        return Res.get("payment.account.owner.ask") if not self.holder_name else self.holder_name
 
     @holder_name.setter
     def holder_name(self, holder_name: str) -> None:
