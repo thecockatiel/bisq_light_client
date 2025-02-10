@@ -36,13 +36,10 @@ class F2FAccountPayload(CountryBasedPaymentAccountPayload):
             extra_info=self.extra_info
         )
         
-        country_based_payload = self.get_payment_account_payload_builder().country_based_payment_account_payload
-        country_based_payload.f2f_account_payload.CopyFrom(f2f_payload)
-        
-        payload = self.get_payment_account_payload_builder()
-        payload.country_based_payment_account_payload.CopyFrom(country_based_payload)
-        
-        return payload
+        builder = self.get_payment_account_payload_builder()
+        builder.country_based_payment_account_payload.f2f_account_payload.CopyFrom(f2f_payload)
+
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "F2FAccountPayload":
