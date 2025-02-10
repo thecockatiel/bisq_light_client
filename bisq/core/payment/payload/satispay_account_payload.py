@@ -25,8 +25,16 @@ class SatispayAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
         self.mobile_nr = mobile_nr or ""
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         satispay_payload = protobuf.SatispayAccountPayload(
