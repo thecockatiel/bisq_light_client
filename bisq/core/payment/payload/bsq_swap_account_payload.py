@@ -10,9 +10,9 @@ class BsqSwapAccountPayload(PaymentAccountPayload):
         super().__init__(payment_method_id, id)
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.bsq_swap_account_payload.CopyFrom(protobuf.BsqSwapAccountPayload())
-        return payload
+        builder = self.get_payment_account_payload_builder()
+        builder.bsq_swap_account_payload.CopyFrom(protobuf.BsqSwapAccountPayload())
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> 'BsqSwapAccountPayload':

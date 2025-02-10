@@ -60,23 +60,18 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self._holder_name = value
 
     def to_proto_message(self) -> protobuf.PaymentAccountPayload:
-        sepa_payload = protobuf.SepaAccountPayload(
-            holder_name=self.holder_name,
-            iban=self.iban,
-            bic=self.bic,
-            email=self.email,
-            accepted_country_codes=self.accepted_country_codes,
+        builder = self.get_payment_account_payload_builder()
+        builder.country_based_payment_account_payload.sepa_account_payload.CopyFrom(
+            protobuf.SepaAccountPayload(
+                holder_name=self.holder_name,
+                iban=self.iban,
+                bic=self.bic,
+                email=self.email,
+                accepted_country_codes=self.accepted_country_codes,
+            )
         )
 
-        country_based_payload = (
-            self.get_payment_account_payload_builder().country_based_payment_account_payload
-        )
-        country_based_payload.sepa_account_payload.CopyFrom(sepa_payload)
-
-        payload = self.get_payment_account_payload_builder()
-        payload.country_based_payment_account_payload.CopyFrom(country_based_payload)
-
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "SepaAccountPayload":

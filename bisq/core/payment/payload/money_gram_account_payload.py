@@ -40,17 +40,17 @@ class MoneyGramAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
         self._holder_name = value
 
     def to_proto_message(self):
-        money_gram_account_payload = protobuf.MoneyGramAccountPayload(
-            holder_name=self.holder_name,
-            country_code=self.country_code,
-            state=self.state,
-            email=self.email,
+        builder = self.get_payment_account_payload_builder()
+        builder.money_gram_account_payload.CopyFrom(
+            protobuf.MoneyGramAccountPayload(
+                holder_name=self.holder_name,
+                country_code=self.country_code,
+                state=self.state,
+                email=self.email,
+            )
         )
 
-        payload = self.get_payment_account_payload_builder()
-        payload.money_gram_account_payload.CopyFrom(money_gram_account_payload)
-
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "MoneyGramAccountPayload":

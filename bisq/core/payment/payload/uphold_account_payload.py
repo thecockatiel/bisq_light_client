@@ -32,15 +32,15 @@ class UpholdAccountPayload(PaymentAccountPayload):
         return result
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.uphold_account_payload.CopyFrom(
+        builder = self.get_payment_account_payload_builder()
+        builder.uphold_account_payload.CopyFrom(
             protobuf.UpholdAccountPayload(
                 account_id=self.account_id,
                 account_owner=self.account_owner,
             )
         )
 
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "UpholdAccountPayload":

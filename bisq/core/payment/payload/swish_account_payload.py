@@ -34,15 +34,15 @@ class SwishAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
         self._holder_name = value
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.swish_account_payload.CopyFrom(
+        builder = self.get_payment_account_payload_builder()
+        builder.swish_account_payload.CopyFrom(
             protobuf.SwishAccountPayload(
                 mobile_nr=self.mobile_nr,
                 holder_name=self.holder_name,
             )
         )
 
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "SwishAccountPayload":

@@ -74,13 +74,13 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         return ordered_dict
 
     def get_payment_account_payload_builder(self):
-        payload = protobuf.PaymentAccountPayload(
+        builder = protobuf.PaymentAccountPayload(
             payment_method_id=self.payment_method_id,
             max_trade_period=self.max_trade_period,
             id=self.id,
             exclude_from_json_data=self.exclude_from_json_data_map,
         )
-        return payload
+        return builder
 
     @abstractmethod
     def get_payment_details(self) -> str:
