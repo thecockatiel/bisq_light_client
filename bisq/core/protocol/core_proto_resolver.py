@@ -25,6 +25,8 @@ from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.instant_crypto_currency_account_payload import InstantCryptoCurrencyPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
 from bisq.core.payment.payload.monese_account_payload import MoneseAccountPayload
+from bisq.core.payment.payload.money_beam_account_payload import MoneyBeamAccountPayload
+from bisq.core.payment.payload.money_gram_account_payload import MoneyGramAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.nequi_account_payload import NequiAccountPayload
@@ -49,6 +51,7 @@ from bisq.core.payment.payload.swish_account_payload import SwishAccountPayload
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
 from bisq.core.payment.payload.transferwise_account_payload import TransferwiseAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
+from bisq.core.payment.payload.uphold_account_payload import UpholdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
 from bisq.core.payment.payload.us_postal_money_order_account_payload import USPostalMoneyOrderAccountPayload
 from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
@@ -94,9 +97,9 @@ payment_account_payload_cases = {
     # "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
     # "japan_bank_account_payload": JapanBankAccountPayload.from_proto,
     # "australia_payid_payload": AustraliaPayidAccountPayload.from_proto,
-    # "uphold_account_payload": UpholdAccountPayload.from_proto,
-    # "money_beam_account_payload": MoneyBeamAccountPayload.from_proto,
-    # "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
+    "uphold_account_payload": UpholdAccountPayload.from_proto,
+    "money_beam_account_payload": MoneyBeamAccountPayload.from_proto,
+    "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
     "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
     "revolut_account_payload": RevolutAccountPayload.from_proto,
     "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
