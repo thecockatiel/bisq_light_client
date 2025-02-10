@@ -29,7 +29,7 @@ class AchTransferAccountPayload(BankAccountPayload):
             branch_id,
             account_nr,
             account_type,
-            None,  # holder_tx_id not used
+            None,  # holder_tax_id not used
             None,  # bank_id not used
             None,  # national_account_id not used
             max_trade_period,

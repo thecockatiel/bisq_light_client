@@ -21,7 +21,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         branch_id: str = None,
         account_nr: str = None,
         account_type: str = None,
-        holder_tx_id: str = None,
+        holder_tax_id: str = None,
         bank_id: str = None,
         national_account_id: str = "",
         max_trade_period: int = -1,
@@ -39,7 +39,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self.branch_id = branch_id or ""
         self.account_nr = account_nr or ""
         self.account_type = account_type or ""
-        self.holder_tx_id = holder_tx_id or ""
+        self.holder_tax_id = holder_tax_id or ""
         self.bank_id = bank_id or ""
         self.national_account_id = national_account_id or ""
 
@@ -48,8 +48,8 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             holder_name=self.holder_name,
         )
 
-        if self.holder_tx_id:
-            builder.holder_tax_id = self.holder_tx_id
+        if self.holder_tax_id:
+            builder.holder_tax_id = self.holder_tax_id
         if self.bank_name:
             builder.bank_name = self.bank_name
         if self.branch_id:
@@ -115,7 +115,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             else ""
         )
         holder_tax_id_string = (
-            f"{BankUtil.get_holder_id_label(self.country_code)}: {self.holder_tx_id}\n"
+            f"{BankUtil.get_holder_id_label(self.country_code)}: {self.holder_tax_id}\n"
             if BankUtil.is_holder_id_required(self.country_code)
             else ""
         )
@@ -163,7 +163,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             else ""
         )
         holder_tax_id_string = (
-            f"{BankUtil.get_holder_id_label(self.country_code)} {self.holder_tx_id}\n"
+            f"{BankUtil.get_holder_id_label(self.country_code)} {self.holder_tax_id}\n"
             if BankUtil.is_holder_id_required(self.country_code)
             else ""
         )
