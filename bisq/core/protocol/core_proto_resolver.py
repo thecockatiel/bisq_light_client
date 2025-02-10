@@ -10,6 +10,7 @@ from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
+from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
@@ -116,7 +117,7 @@ country_based_payment_account_payload_cases = {
     # "upi_account_payload": UpiAccountPayload.from_proto,
     # "paytm_account_payload": PaytmAccountPayload.from_proto,
     # "nequi_account_payload": NequiAccountPayload.from_proto,
-    # "bizum_account_payload": BizumAccountPayload.from_proto,
+    "bizum_account_payload": BizumAccountPayload.from_proto,
     "pix_account_payload": PixAccountPayload.from_proto,
     "satispay_account_payload": SatispayAccountPayload.from_proto,
     "tikkie_account_payload": TikkieAccountPayload.from_proto,
