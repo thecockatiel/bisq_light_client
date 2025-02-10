@@ -12,7 +12,7 @@ class UpiAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         virtual_payment_address: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -24,7 +24,7 @@ class UpiAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.virtual_payment_address = virtual_payment_address or ""
+        self.virtual_payment_address = virtual_payment_address
 
     def to_proto_message(self):
         upi_payload = protobuf.UpiAccountPayload(

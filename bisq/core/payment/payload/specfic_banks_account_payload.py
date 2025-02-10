@@ -1,7 +1,6 @@
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.bank_account_payload import BankAccountPayload
 import pb_pb2 as protobuf
-from typing import Dict, List
 
 
 class SpecificBanksAccountPayload(BankAccountPayload):
@@ -10,7 +9,7 @@ class SpecificBanksAccountPayload(BankAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str = None,
+        country_code: str = "",
         holder_name: str = None,
         bank_name: str = None,
         branch_id: str = None,
@@ -19,9 +18,9 @@ class SpecificBanksAccountPayload(BankAccountPayload):
         holder_tax_id: str = None,
         bank_id: str = None,
         national_account_id: str = None,
-        accepted_banks: List[str] = None,
+        accepted_banks: list[str] = None,
         max_trade_period: int = -1,
-        exclude_from_json_data_map: Dict[str, str] = None,
+        exclude_from_json_data_map: dict[str, str] = None,
     ):
         super().__init__(
             payment_method_name,

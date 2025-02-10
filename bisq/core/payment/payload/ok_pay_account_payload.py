@@ -11,14 +11,14 @@ class OKPayAccountPayload(PaymentAccountPayload):
         self,
         payment_method_id: str,
         id: str,
-        account_nr: str = None,
+        account_nr: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_id, id, max_trade_period, exclude_from_json_data_map
         )
-        self.account_nr = account_nr or ""
+        self.account_nr = account_nr
 
     def to_proto_message(self):
         ok_payload = protobuf.OKPayAccountPayload(

@@ -9,7 +9,7 @@ class RtgsAccountPayload(IfscBasedAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         holder_name: str = "",
         account_nr: str = "",
         ifsc: str = "",

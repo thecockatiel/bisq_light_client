@@ -12,7 +12,7 @@ class BizumAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         mobile_nr: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -24,7 +24,7 @@ class BizumAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.mobile_nr = mobile_nr or ""
+        self.mobile_nr = mobile_nr
 
     def to_proto_message(self):
         bizum_payload = protobuf.BizumAccountPayload(

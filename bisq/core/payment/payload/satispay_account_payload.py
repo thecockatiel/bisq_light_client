@@ -12,7 +12,7 @@ class SatispayAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         holder_name: str = "",
         mobile_nr: str = "",
         max_trade_period: int = -1,
@@ -25,8 +25,8 @@ class SatispayAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self._holder_name = holder_name or ""
-        self.mobile_nr = mobile_nr or ""
+        self._holder_name = holder_name
+        self.mobile_nr = mobile_nr
 
     @property
     def holder_name(self):

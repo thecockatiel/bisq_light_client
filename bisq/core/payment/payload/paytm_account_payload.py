@@ -12,7 +12,7 @@ class PaytmAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         email_or_mobile_nr: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -24,7 +24,7 @@ class PaytmAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.email_or_mobile_nr = email_or_mobile_nr or ""
+        self.email_or_mobile_nr = email_or_mobile_nr
 
     def to_proto_message(self):
         paytm_payload = protobuf.PaytmAccountPayload(

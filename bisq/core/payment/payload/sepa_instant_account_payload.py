@@ -19,7 +19,7 @@ class SepaInstantAccountPayload(
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         holder_name: str = "",
         iban: str = "",
         bic: str = "",

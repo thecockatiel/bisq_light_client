@@ -12,7 +12,7 @@ class PixAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         pix_key: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -24,7 +24,7 @@ class PixAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.pix_key = pix_key or ""
+        self.pix_key = pix_key
 
     def to_proto_message(self):
         pix_payload = protobuf.PixAccountPayload(

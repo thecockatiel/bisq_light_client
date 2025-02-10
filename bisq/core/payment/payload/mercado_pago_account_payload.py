@@ -12,7 +12,7 @@ class MercadoPagoAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         account_holder_name: str = "",
         account_holder_id: str = "",
         max_trade_period: int = -1,
@@ -25,8 +25,8 @@ class MercadoPagoAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.account_holder_name = account_holder_name or ""
-        self.account_holder_id = account_holder_id or ""
+        self.account_holder_name = account_holder_name
+        self.account_holder_id = account_holder_id
 
     def to_proto_message(self):
         mercado_payload = protobuf.MercadoPagoAccountPayload(

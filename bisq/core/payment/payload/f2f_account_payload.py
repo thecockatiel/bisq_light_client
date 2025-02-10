@@ -11,7 +11,7 @@ class F2FAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         contact: str = "",
         city: str = "",
         extra_info: str = "",
@@ -25,9 +25,9 @@ class F2FAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.contact = contact or ""
-        self.city = city or ""
-        self.extra_info = extra_info or ""
+        self.contact = contact
+        self.city = city
+        self.extra_info = extra_info
 
     def to_proto_message(self):
         f2f_payload = protobuf.F2FAccountPayload(

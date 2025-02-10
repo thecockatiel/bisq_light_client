@@ -12,14 +12,14 @@ class CashAppAccountPayload(PaymentAccountPayload):
         self,
         payment_method_id: str,
         id: str,
-        cash_tag: str = None,
+        cash_tag: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_id, id, max_trade_period, exclude_from_json_data_map
         )
-        self.cash_tag = cash_tag or ""
+        self.cash_tag = cash_tag
 
     def to_proto_message(self):
         cash_app_payload = protobuf.CashAppAccountPayload(
