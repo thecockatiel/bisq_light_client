@@ -1,7 +1,7 @@
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.bank_account_payload import BankAccountPayload
 import pb_pb2 as protobuf
-from typing import Dict
+from typing import Dict, Optional
 
 
 class SameBankAccountPayload(BankAccountPayload):
@@ -15,10 +15,10 @@ class SameBankAccountPayload(BankAccountPayload):
         bank_name: str = None,
         branch_id: str = None,
         account_nr: str = None,
-        account_type: str = None,
-        holder_tax_id: str = None,
+        account_type: Optional[str] = None,
+        holder_tax_id: Optional[str] = None,
         bank_id: str = None,
-        national_account_id: str = None,
+        national_account_id: Optional[str] = None,
         max_trade_period: int = -1,
         exclude_from_json_data_map: Dict[str, str] = None,
     ):
@@ -67,5 +67,5 @@ class SameBankAccountPayload(BankAccountPayload):
         )
 
     def get_payment_details(self) -> str:
-        details = self.get_payment_details_for_trade_popup().replace('\n', ', ')
+        details = self.get_payment_details_for_trade_popup().replace("\n", ", ")
         return f"{Res.get(self.payment_method_id)} - {details}"
