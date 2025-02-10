@@ -13,6 +13,7 @@ from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
 
+
 # todo: double check impl
 class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     """
@@ -20,14 +21,18 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     If a field gets added it need to be be annotated with @JsonExclude (excluded from contract).
     We should add an extraDataMap as in StoragePayload objects
     """
-    
+
     # Keys for excludeFromJsonDataMap
     SALT = "salt"
     HOLDER_NAME = "holderName"
 
-    def __init__(self, payment_method_id: str, id: str, 
-                 max_trade_period: int = -1, 
-                 exclude_from_json_data_map: Optional[dict[str, str]] = None):
+    def __init__(
+        self,
+        payment_method_id: str,
+        id: str,
+        max_trade_period: int = -1,
+        exclude_from_json_data_map: Optional[dict[str, str]] = None,
+    ):
         """Constructor for PaymentAccountPayload"""
         self.payment_method_id = payment_method_id
         self.id = id
@@ -44,7 +49,9 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         # Persisted value will overwrite that
         if PaymentAccountPayload.SALT not in self.exclude_from_json_data_map:
             random_bytes = secrets.token_bytes(32)
-            self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(random_bytes).decode()
+            self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = (
+                binascii.hexlify(random_bytes).decode()
+            )
 
     def get_json_dict(self):
         self_dict = self.__dict__.copy()
@@ -53,9 +60,19 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         self_dict.pop("payment_method_id")
         self_dict.pop("id")
         self_dict.pop("max_trade_period")
-        self_dict.update({"payment_method_id": self.payment_method_id, "id": self.id, "max_trade_period": self.max_trade_period})
-        # make all keys camelCase
-        self_dict = {to_camel_case(k): v for k, v in self_dict.items()}
+        self_dict.update(
+            {
+                "payment_method_id": self.payment_method_id,
+                "id": self.id,
+                "max_trade_period": self.max_trade_period,
+            }
+        )
+        # remove starting underscore from keys
+        # and make all keys camelCase
+        self_dict = {
+            to_camel_case(k[1:] if k.startswith("_") else k): v
+            for k, v in self_dict.items()
+        }
         return self_dict
 
     def get_payment_account_payload_builder(self):
@@ -63,8 +80,8 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
             payment_method_id=self.payment_method_id,
             max_trade_period=self.max_trade_period,
             id=self.id,
-            exclude_from_json_data=self.exclude_from_json_data_map
-        ) 
+            exclude_from_json_data=self.exclude_from_json_data_map,
+        )
         return payload
 
     @abstractmethod
@@ -80,25 +97,40 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
 
     @property
     def salt(self) -> bytes:
-        check_argument(PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map")
-        return bytes.fromhex(self.exclude_from_json_data_map[PaymentAccountPayload.SALT])
+        check_argument(
+            PaymentAccountPayload.SALT in self.exclude_from_json_data_map,
+            "Salt must have been set in exclude_from_json_data_map",
+        )
+        return bytes.fromhex(
+            self.exclude_from_json_data_map[PaymentAccountPayload.SALT]
+        )
 
     @salt.setter
     def salt(self, salt: bytes) -> None:
-        self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(salt).decode()
+        self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(
+            salt
+        ).decode()
 
     @property
     def holder_name(self) -> str:
-        return self.exclude_from_json_data_map.get(PaymentAccountPayload.HOLDER_NAME, "")
+        return self.exclude_from_json_data_map.get(
+            PaymentAccountPayload.HOLDER_NAME, ""
+        )
 
     def get_holder_name_or_prompt_if_empty(self) -> str:
-        return Res.get("payment.account.owner.ask") if not PaymentAccountPayload.HOLDER_NAME else PaymentAccountPayload.HOLDER_NAME
+        return (
+            Res.get("payment.account.owner.ask")
+            if not PaymentAccountPayload.HOLDER_NAME
+            else PaymentAccountPayload.HOLDER_NAME
+        )
 
     @holder_name.setter
     def holder_name(self, holder_name: str) -> None:
         # an empty string must result in the mapping removing the entry.
         if holder_name:
-            self.exclude_from_json_data_map[PaymentAccountPayload.HOLDER_NAME] = holder_name
+            self.exclude_from_json_data_map[PaymentAccountPayload.HOLDER_NAME] = (
+                holder_name
+            )
         elif PaymentAccountPayload.HOLDER_NAME in self.exclude_from_json_data_map:
             del self.exclude_from_json_data_map[PaymentAccountPayload.HOLDER_NAME]
 
@@ -110,16 +142,16 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         Any change would break validation of historical data!
         """
         pass
-    
+
     def get_age_witness_input_data_using_bytes(self, data: bytes) -> bytes:
-        return self.payment_method_id.encode('utf-8') + data
+        return self.payment_method_id.encode("utf-8") + data
 
     @property
     def owner_id(self) -> Optional[str]:
         return None
-    
+
     # NOTE: we need to handle this for java compatiblity because of FilterManager calling the methods dynamically and name coming over the wire
-    
+
     def __getattr__(self, name: str):
         try:
             return object.__getattribute__(self, name)
@@ -129,15 +161,19 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PaymentAccountPayload):
             return False
-        return (self.payment_method_id == other.payment_method_id and
-                self.id == other.id and
-                self.max_trade_period == other.max_trade_period and
-                self.exclude_from_json_data_map == other.exclude_from_json_data_map)
+        return (
+            self.payment_method_id == other.payment_method_id
+            and self.id == other.id
+            and self.max_trade_period == other.max_trade_period
+            and self.exclude_from_json_data_map == other.exclude_from_json_data_map
+        )
 
     def __str__(self) -> str:
-        return (f"PaymentAccountPayload(payment_method_id={self.payment_method_id}, "
-                f"id={self.id}, max_trade_period={self.max_trade_period}, "
-                f"exclude_from_json_data_map={self.exclude_from_json_data_map})")
-        
+        return (
+            f"PaymentAccountPayload(payment_method_id={self.payment_method_id}, "
+            f"id={self.id}, max_trade_period={self.max_trade_period}, "
+            f"exclude_from_json_data_map={self.exclude_from_json_data_map})"
+        )
+
     def __hash__(self):
         return hash((self.payment_method_id, self.id, self.max_trade_period))
