@@ -45,6 +45,7 @@ from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayloa
 from bisq.core.payment.payload.transferwise_account_payload import TransferwiseAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
+from bisq.core.payment.payload.us_postal_money_order_account_payload import USPostalMoneyOrderAccountPayload
 from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
 from bisq.core.payment.payload.verse_account_payload import VerseAccountPayload
 from bisq.core.payment.payload.western_union_account_payload import WesternUnionAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     # "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
     # "swish_account_payload": SwishAccountPayload.from_proto,
     # "hal_cash_account_payload": HalCashAccountPayload.from_proto,
-    # "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
+    "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
     "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
     "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
