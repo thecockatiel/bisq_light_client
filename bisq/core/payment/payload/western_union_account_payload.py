@@ -5,10 +5,11 @@ from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
     CountryBasedPaymentAccountPayload,
 )
+from bisq.core.payment.payload.payload_with_holder_name import PayloadWithHolderName
 import pb_pb2 as protobuf
 
 
-class WesternUnionAccountPayload(CountryBasedPaymentAccountPayload):
+class WesternUnionAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderName):
 
     def __init__(
         self,
