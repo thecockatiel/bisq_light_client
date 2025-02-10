@@ -58,7 +58,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         # Build an ordering list from MRO: parent's keys first
         ordered_dict = {}
         for cls in self.__class__.__mro__:
-            if not cls.__module__.startswith("bisq.core.payment.payload"):
+            if not cls.__name__.endswith("AccountPayload"):
                 continue
             for key in get_public_fields(cls):
                 # remove starting underscore from keys
