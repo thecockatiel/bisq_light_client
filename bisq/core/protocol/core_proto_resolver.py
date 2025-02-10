@@ -40,6 +40,7 @@ from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBank
 from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayload
 from bisq.core.payment.payload.swift_account_payload import SwiftAccountPayload
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
+from bisq.core.payment.payload.transferwise_account_payload import TransferwiseAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
 from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
@@ -97,7 +98,7 @@ payment_account_payload_cases = {
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
     # "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
     # "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
-    # "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
+    "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
     "paysera_account_payload": PayseraAccountPayload.from_proto,
     "paxum_account_payload": PaxumAccountPayload.from_proto,
     "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
