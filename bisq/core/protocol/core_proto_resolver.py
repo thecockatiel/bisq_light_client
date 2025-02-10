@@ -38,6 +38,7 @@ from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayloa
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
 from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
+from bisq.core.payment.payload.verse_account_payload import VerseAccountPayload
 from bisq.core.payment.payload.western_union_account_payload import WesternUnionAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
@@ -99,7 +100,7 @@ payment_account_payload_cases = {
     # "capitual_account_payload": CapitualAccountPayload.from_proto,
     # "cel_pay_account_payload": CelPayAccountPayload.from_proto,
     # "monese_account_payload": MoneseAccountPayload.from_proto,
-    # "verse_account_payload": VerseAccountPayload.from_proto,
+    "verse_account_payload": VerseAccountPayload.from_proto,
     "swift_account_payload": SwiftAccountPayload.from_proto,
     "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
     
