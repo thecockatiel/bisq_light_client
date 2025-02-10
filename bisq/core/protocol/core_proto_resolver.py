@@ -13,6 +13,7 @@ from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGif
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
+from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
@@ -119,7 +120,7 @@ country_based_payment_account_payload_cases = {
 }
 
 bank_account_payload_cases = {
-    # "national_bank_account_payload": NationalBankAccountPayload.from_proto,
+    "national_bank_account_payload": NationalBankAccountPayload.from_proto,
     "same_bank_accunt_payload": SameBankAccountPayload.from_proto,
     "specific_banks_account_payload": SpecificBanksAccountPayload.from_proto,
     "ach_transfer_account_payload": AchTransferAccountPayload.from_proto,
