@@ -9,6 +9,7 @@ from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
+from bisq.core.payment.payload.advanced_cash_account_payload import AdvancedCashAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPayload
@@ -97,7 +98,7 @@ payment_account_payload_cases = {
     # "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
     # "prompt_pay_account_payload": PromptPayAccountPayload.from_proto,
-    # "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
+    "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
     "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
     "paysera_account_payload": PayseraAccountPayload.from_proto,
     "paxum_account_payload": PaxumAccountPayload.from_proto,
