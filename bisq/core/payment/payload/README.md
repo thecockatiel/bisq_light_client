@@ -5,3 +5,5 @@ Since account payloads are serialized to json and sent with contracts, they are 
 Since java bisq uses Gson and implicitly relies on `null` values to be removed from the final json, and because account payloads have a mix of empty strings and `null` values, constructor parameters and values passed around are also sensitive.
 This makes the contract signature very brittle and sensitive.
 Please keep these in mind when modifying these files.
+
+also order of definition of variables in class init method matters. as it is used to determine the order of fields inside json.
