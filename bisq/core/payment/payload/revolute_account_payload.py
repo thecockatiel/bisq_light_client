@@ -11,8 +11,8 @@ class RevolutAccountPayload(PaymentAccountPayload):
         self,
         payment_method_id: str,
         id: str,
-        account_id: str = None,
-        user_name: str = None,
+        account_id: str = "",
+        user_name: Optional[str] = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
@@ -22,7 +22,7 @@ class RevolutAccountPayload(PaymentAccountPayload):
 
         # Only used as internal Id to not break existing account witness objects
         # We still show it in case it is different to the userName for additional security
-        self.account_id = account_id or ""
+        self.account_id = account_id
         # Was added in 1.3.8
         # To not break signed accounts we keep accountId as internal id used for signing.
         # Old accounts get a popup to add the new required field userName but accountId is
@@ -32,7 +32,12 @@ class RevolutAccountPayload(PaymentAccountPayload):
         # For backward compatibility we need to exclude the new field for the contract json.
         # We can remove that after a while when risk that users with pre 1.3.8 version trade with updated
         # users is very low.
-        self.user_name = user_name or ""
+        self.user_name = user_name
+
+    def get_json_dict(self):
+        result = super().get_json_dict()
+        result.pop("userName", None)
+        return result
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
@@ -70,7 +75,7 @@ class RevolutAccountPayload(PaymentAccountPayload):
     def get_label_value_tuple(self) -> tuple[str, str]:
         check_argument(
             self.user_name or self.has_old_account_id,
-            "Either username must be set or we have an old account with accountId"
+            "Either username must be set or we have an old account with accountId",
         )
 
         if self.user_name:
