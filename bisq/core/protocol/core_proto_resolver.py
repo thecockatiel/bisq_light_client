@@ -17,6 +17,7 @@ from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
+from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.satispay_account_payload import SatispayAccountPayload
@@ -116,7 +117,7 @@ country_based_payment_account_payload_cases = {
     # "paytm_account_payload": PaytmAccountPayload.from_proto,
     # "nequi_account_payload": NequiAccountPayload.from_proto,
     # "bizum_account_payload": BizumAccountPayload.from_proto,
-    # "pix_account_payload": PixAccountPayload.from_proto,
+    "pix_account_payload": PixAccountPayload.from_proto,
     "satispay_account_payload": SatispayAccountPayload.from_proto,
     "tikkie_account_payload": TikkieAccountPayload.from_proto,
     "strike_account_payload": StrikeAccountPayload.from_proto,
