@@ -46,6 +46,11 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
             random_bytes = secrets.token_bytes(32)
             self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(random_bytes).decode()
 
+    def get_json_dict(self):
+        self_dict = self.__dict__.copy()
+        self_dict.pop("exclude_from_json_data_map")
+        return self_dict
+
     def get_payment_account_payload_builder(self):
         payload = protobuf.PaymentAccountPayload(
             payment_method_id=self.payment_method_id,
