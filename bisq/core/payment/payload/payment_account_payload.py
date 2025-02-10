@@ -61,9 +61,14 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
             if not cls.__name__.endswith("AccountPayload"):
                 continue
             for key in get_public_fields(cls):
-                # remove starting underscore from keys
-                # and make all keys camelCase
-                ordered_dict[to_camel_case(key[1:] if key.startswith("_") else key)] = getattr(self, key, None)
+                value = getattr(self, key, None)
+                # we only should return values which are not None,
+                # because Gson only serializes non-null values by default
+                # and original bisq project relies on this behavior
+                if value is not None:
+                    # remove starting underscore from keys
+                    # and make all keys camelCase
+                    ordered_dict[to_camel_case(key[1:] if key.startswith("_") else key)] = value
 
         ordered_dict.pop("excludeFromJsonDataMap", None)
         return ordered_dict
