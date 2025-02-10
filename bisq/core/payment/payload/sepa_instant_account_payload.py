@@ -67,17 +67,12 @@ class SepaInstantAccountPayload(
             accepted_country_codes=self.accepted_country_codes,
         )
 
-        country_based_payload = (
-            self.get_payment_account_payload_builder().country_based_payment_account_payload
-        )
-        country_based_payload.sepa_instant_account_payload.CopyFrom(
+        builder = self.get_payment_account_payload_builder()
+        builder.country_based_payment_account_payload.sepa_instant_account_payload.CopyFrom(
             sepa_instant_payload
         )
 
-        payload = self.get_payment_account_payload_builder()
-        payload.country_based_payment_account_payload.CopyFrom(country_based_payload)
-
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(
