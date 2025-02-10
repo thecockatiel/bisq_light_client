@@ -12,7 +12,7 @@ class TransferwiseUsdAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         email: str = "",
         holder_name: str = "",
         beneficiary_address: str = "",
@@ -26,9 +26,9 @@ class TransferwiseUsdAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.email = email or ""
-        self._holder_name = holder_name or ""
-        self.beneficiary_address = beneficiary_address or ""
+        self.email = email
+        self._holder_name = holder_name
+        self.beneficiary_address = beneficiary_address
 
     @property
     def holder_name(self):

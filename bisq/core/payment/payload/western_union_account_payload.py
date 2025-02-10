@@ -17,7 +17,7 @@ class WesternUnionAccountPayload(
         self,
         payment_method_name: str,
         id: str,
-        country_code: str = None,
+        country_code: str = "",
         holder_name: Optional[str] = None,
         city: Optional[str] = None,
         state: str = "",

@@ -10,7 +10,7 @@ class NationalBankAccountPayload(BankAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str = None,
+        country_code: str = "",
         holder_name: str = None,
         bank_name: str = None,
         branch_id: str = None,

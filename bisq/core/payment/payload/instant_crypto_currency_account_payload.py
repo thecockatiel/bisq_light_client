@@ -9,14 +9,14 @@ class InstantCryptoCurrencyPayload(AssetsAccountPayload):
         self,
         payment_method_id: str,
         id: str,
-        address: str = None,
+        address: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_id, id, max_trade_period, exclude_from_json_data_map
         )
-        self.address = address or ""
+        self.address = address
 
     def to_proto_message(self):
         builder = self.get_payment_account_payload_builder()

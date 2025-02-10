@@ -10,16 +10,16 @@ class MoneseAccountPayload(PaymentAccountPayload):
         self,
         payment_method_id: str,
         id: str,
-        holder_name: str = None,
-        mobile_nr: str = None,
+        holder_name: str = "",
+        mobile_nr: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_id, id, max_trade_period, exclude_from_json_data_map
         )
-        self._holder_name = holder_name or ""
-        self.mobile_nr = mobile_nr or ""
+        self._holder_name = holder_name
+        self.mobile_nr = mobile_nr
 
     @property
     def holder_name(self):

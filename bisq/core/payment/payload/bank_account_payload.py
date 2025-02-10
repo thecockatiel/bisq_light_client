@@ -15,14 +15,14 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self,
         payment_method_name: str,
         id: str,
-        country_code: str = None,
-        holder_name: str = None,
-        bank_name: str = None,
-        branch_id: str = None,
-        account_nr: str = None,
+        country_code: str = "",
+        holder_name: str = "",
+        bank_name: Optional[str] = "",
+        branch_id: Optional[str] = "",
+        account_nr: Optional[str] = "",
         account_type: Optional[str] = None,
         holder_tax_id: Optional[str] = None,
-        bank_id: str = None,
+        bank_id: Optional[str] = "",
         national_account_id: Optional[str] = None,
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -34,13 +34,13 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self._holder_name = holder_name or ""
-        self.bank_name = bank_name or ""
-        self.branch_id = branch_id or ""
-        self.account_nr = account_nr or ""
+        self._holder_name = holder_name
+        self.bank_name = bank_name
+        self.branch_id = branch_id
+        self.account_nr = account_nr
         self.account_type = account_type
         self.holder_tax_id = holder_tax_id
-        self.bank_id = bank_id or ""
+        self.bank_id = bank_id
         self.national_account_id = national_account_id
 
     @property

@@ -26,9 +26,9 @@ class MoneyGramAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self._holder_name = holder_name or ""
-        self.country_code = country_code or ""
-        self.state = state or ""
+        self._holder_name = holder_name
+        self.country_code = country_code
+        self.state = state
         self.email = email
 
     @property

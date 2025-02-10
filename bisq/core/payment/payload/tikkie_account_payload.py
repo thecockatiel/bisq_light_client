@@ -12,7 +12,7 @@ class TikkieAccountPayload(CountryBasedPaymentAccountPayload):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = "",
         iban: str = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
@@ -24,7 +24,7 @@ class TikkieAccountPayload(CountryBasedPaymentAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.iban = iban or ""
+        self.iban = iban
 
     def to_proto_message(self):
         tikkie_payload = protobuf.TikkieAccountPayload(
