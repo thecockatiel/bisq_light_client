@@ -11,6 +11,7 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import Pe
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
+from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
@@ -124,7 +125,7 @@ bank_account_payload_cases = {
     "same_bank_accunt_payload": SameBankAccountPayload.from_proto,
     "specific_banks_account_payload": SpecificBanksAccountPayload.from_proto,
     "ach_transfer_account_payload": AchTransferAccountPayload.from_proto,
-    # "domestic_wire_transfer_account_payload": DomesticWireTransferAccountPayload.from_proto,
+    "domestic_wire_transfer_account_payload": DomesticWireTransferAccountPayload.from_proto,
 }
 
 ifsc_based_account_payload_cases = {
