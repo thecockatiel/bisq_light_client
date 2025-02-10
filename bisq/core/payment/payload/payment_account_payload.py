@@ -69,7 +69,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     @property
     def salt(self) -> bytes:
         check_argument(PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map")
-        return binascii.unhexlify(self.exclude_from_json_data_map[PaymentAccountPayload.SALT])
+        return bytes.fromhex(self.exclude_from_json_data_map[PaymentAccountPayload.SALT])
 
     @salt.setter
     def salt(self, salt: bytes) -> None:
