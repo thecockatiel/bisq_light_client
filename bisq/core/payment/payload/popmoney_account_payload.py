@@ -34,15 +34,15 @@ class PopmoneyAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
         self._holder_name = value
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.popmoney_account_payload.CopyFrom(
+        builder = self.get_payment_account_payload_builder()
+        builder.popmoney_account_payload.CopyFrom(
             protobuf.PopmoneyAccountPayload(
                 account_id=self.account_id,
                 holder_name=self.holder_name,
             )
         )
 
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "PopmoneyAccountPayload":

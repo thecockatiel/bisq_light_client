@@ -24,14 +24,14 @@ class MoneyBeamAccountPayload(PaymentAccountPayload):
         self.account_id = account_id
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.money_beam_account_payload.CopyFrom(
+        builder = self.get_payment_account_payload_builder()
+        builder.money_beam_account_payload.CopyFrom(
             protobuf.MoneyBeamAccountPayload(
                 account_id=self.account_id,
             )
         )
 
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "MoneyBeamAccountPayload":

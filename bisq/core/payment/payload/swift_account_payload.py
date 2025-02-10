@@ -44,8 +44,8 @@ class SwiftAccountPayload(PaymentAccountPayload):
         
 
     def to_proto_message(self):
-        payload = self.get_payment_account_payload_builder()
-        payload.swift_account_payload.CopyFrom(protobuf.SwiftAccountPayload(
+        builder = self.get_payment_account_payload_builder()
+        builder.swift_account_payload.CopyFrom(protobuf.SwiftAccountPayload(
             bank_swift_code=self.bank_swift_code,
             bank_country_code=self.bank_country_code,
             bank_name=self.bank_name,
@@ -63,7 +63,7 @@ class SwiftAccountPayload(PaymentAccountPayload):
             intermediary_branch=self.intermediary_branch,
             intermediary_address=self.intermediary_address,
         ))
-        return payload
+        return builder
     
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "SwiftAccountPayload":

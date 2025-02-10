@@ -34,10 +34,10 @@ class CashByMailAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
             extra_info=self.extra_info,
         )
 
-        payload = self.get_payment_account_payload_builder()
-        payload.cash_by_mail_account_payload.CopyFrom(cash_by_mail_payload)
+        builder = self.get_payment_account_payload_builder()
+        builder.cash_by_mail_account_payload.CopyFrom(cash_by_mail_payload)
 
-        return payload
+        return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload) -> "CashByMailAccountPayload":
