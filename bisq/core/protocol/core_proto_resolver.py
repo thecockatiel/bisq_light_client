@@ -15,6 +15,7 @@ from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPay
 from bisq.core.payment.payload.cash_app_account_payload import CashAppAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
+from bisq.core.payment.payload.cel_pay_account_payload import CelPayAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
@@ -99,7 +100,7 @@ payment_account_payload_cases = {
     "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
     "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
     # "capitual_account_payload": CapitualAccountPayload.from_proto,
-    # "cel_pay_account_payload": CelPayAccountPayload.from_proto,
+    "cel_pay_account_payload": CelPayAccountPayload.from_proto,
     "monese_account_payload": MoneseAccountPayload.from_proto,
     "verse_account_payload": VerseAccountPayload.from_proto,
     "swift_account_payload": SwiftAccountPayload.from_proto,
