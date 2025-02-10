@@ -42,6 +42,7 @@ from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAc
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
 from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayload
 from bisq.core.payment.payload.swift_account_payload import SwiftAccountPayload
+from bisq.core.payment.payload.swish_account_payload import SwishAccountPayload
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
 from bisq.core.payment.payload.transferwise_account_payload import TransferwiseAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     # "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
     # "revolut_account_payload": RevolutAccountPayload.from_proto,
     # "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
-    # "swish_account_payload": SwishAccountPayload.from_proto,
+    "swish_account_payload": SwishAccountPayload.from_proto,
     "hal_cash_account_payload": HalCashAccountPayload.from_proto,
     "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
     "cash_by_mail_account_payload": CashByMailAccountPayload.from_proto,
