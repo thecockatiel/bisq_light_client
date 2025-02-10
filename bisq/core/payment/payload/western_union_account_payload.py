@@ -18,10 +18,10 @@ class WesternUnionAccountPayload(
         payment_method_name: str,
         id: str,
         country_code: str = None,
-        holder_name: str = None,
-        city: str = None,
-        state: str = None,
-        email: str = None,
+        holder_name: Optional[str] = None,
+        city: Optional[str] = None,
+        state: str = "",
+        email: Optional[str] = None,
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
@@ -32,10 +32,10 @@ class WesternUnionAccountPayload(
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self._holder_name = holder_name or ""
-        self.city = city or ""
-        self.state = state or ""
-        self.email = email or ""
+        self._holder_name = holder_name
+        self.city = city
+        self.state = state
+        self.email = email
 
     @property
     def holder_name(self):
