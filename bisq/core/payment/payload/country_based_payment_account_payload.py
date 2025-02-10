@@ -9,14 +9,14 @@ class CountryBasedPaymentAccountPayload(PaymentAccountPayload, ABC):
         self,
         payment_method_name: str,
         id: str,
-        country_code: str,
+        country_code: str = None,
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
         super().__init__(
             payment_method_name, id, max_trade_period, exclude_from_json_data_map
         )
-        self._country_code = country_code
+        self._country_code = country_code or ""
     
     @property
     def country_code(self) -> str:
