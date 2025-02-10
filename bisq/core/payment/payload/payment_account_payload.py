@@ -8,7 +8,7 @@ import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.used_for_trade_contract_json import UsedForTradeContractJson
-from utils.formatting import to_snake_case
+from utils.formatting import to_camel_case, to_snake_case
 from utils.preconditions import check_argument
 
 logger = get_logger(__name__)
@@ -49,6 +49,13 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     def get_json_dict(self):
         self_dict = self.__dict__.copy()
         self_dict.pop("exclude_from_json_data_map")
+        # move payment_method_id, id, max_trade_period to end of dict
+        self_dict.pop("payment_method_id")
+        self_dict.pop("id")
+        self_dict.pop("max_trade_period")
+        self_dict.update({"payment_method_id": self.payment_method_id, "id": self.id, "max_trade_period": self.max_trade_period})
+        # make all keys camelCase
+        self_dict = {to_camel_case(k): v for k, v in self_dict.items()}
         return self_dict
 
     def get_payment_account_payload_builder(self):
