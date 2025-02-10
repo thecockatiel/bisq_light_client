@@ -30,6 +30,7 @@ from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBank
 from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayload
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
+from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from utils.clock import Clock
@@ -116,7 +117,7 @@ country_based_payment_account_payload_cases = {
     "sepa_account_payload": SepaAccountPayload.from_proto,
     "sepa_instant_account_payload": SepaInstantAccountPayload.from_proto,
     "f2f_account_payload": F2FAccountPayload.from_proto,
-    # "upi_account_payload": UpiAccountPayload.from_proto,
+    "upi_account_payload": UpiAccountPayload.from_proto,
     "paytm_account_payload": PaytmAccountPayload.from_proto,
     "nequi_account_payload": NequiAccountPayload.from_proto,
     "bizum_account_payload": BizumAccountPayload.from_proto,
