@@ -42,7 +42,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
         # If not set (old versions) we set by default a random 256 bit salt
         # User can set salt as well by hex string.
         # Persisted value will overwrite that
-        if self.SALT not in self.exclude_from_json_data_map:
+        if PaymentAccountPayload.SALT not in self.exclude_from_json_data_map:
             random_bytes = secrets.token_bytes(32)
             self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(random_bytes).decode()
 
@@ -69,26 +69,26 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
     @property
     def salt(self) -> bytes:
         check_argument(PaymentAccountPayload.SALT in self.exclude_from_json_data_map, "Salt must have been set in exclude_from_json_data_map")
-        return binascii.unhexlify(self.exclude_from_json_data_map[self.SALT])
+        return binascii.unhexlify(self.exclude_from_json_data_map[PaymentAccountPayload.SALT])
 
     @salt.setter
     def salt(self, salt: bytes) -> None:
-        self.exclude_from_json_data_map[self.SALT] = binascii.hexlify(salt).decode()
+        self.exclude_from_json_data_map[PaymentAccountPayload.SALT] = binascii.hexlify(salt).decode()
 
     @property
     def holder_name(self) -> str:
-        return self.exclude_from_json_data_map.get(self.HOLDER_NAME, "")
+        return self.exclude_from_json_data_map.get(PaymentAccountPayload.HOLDER_NAME, "")
 
     def get_holder_name_or_prompt_if_empty(self) -> str:
-        return Res.get("payment.account.owner.ask") if not self.holder_name else self.holder_name
+        return Res.get("payment.account.owner.ask") if not PaymentAccountPayload.HOLDER_NAME else PaymentAccountPayload.HOLDER_NAME
 
     @holder_name.setter
     def holder_name(self, holder_name: str) -> None:
         # an empty string must result in the mapping removing the entry.
         if holder_name:
-            self.exclude_from_json_data_map[self.HOLDER_NAME] = holder_name
-        elif self.HOLDER_NAME in self.exclude_from_json_data_map:
-            del self.exclude_from_json_data_map[self.HOLDER_NAME]
+            self.exclude_from_json_data_map[PaymentAccountPayload.HOLDER_NAME] = holder_name
+        elif PaymentAccountPayload.HOLDER_NAME in self.exclude_from_json_data_map:
+            del self.exclude_from_json_data_map[PaymentAccountPayload.HOLDER_NAME]
 
     @abstractmethod
     def get_age_witness_input_data(self) -> bytes:
