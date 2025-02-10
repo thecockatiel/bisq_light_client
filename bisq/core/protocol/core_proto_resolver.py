@@ -20,6 +20,7 @@ from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.instant_crypto_currency_account_payload import InstantCryptoCurrencyPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
+from bisq.core.payment.payload.monese_account_payload import MoneseAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.nequi_account_payload import NequiAccountPayload
@@ -99,7 +100,7 @@ payment_account_payload_cases = {
     "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
     # "capitual_account_payload": CapitualAccountPayload.from_proto,
     # "cel_pay_account_payload": CelPayAccountPayload.from_proto,
-    # "monese_account_payload": MoneseAccountPayload.from_proto,
+    "monese_account_payload": MoneseAccountPayload.from_proto,
     "verse_account_payload": VerseAccountPayload.from_proto,
     "swift_account_payload": SwiftAccountPayload.from_proto,
     "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
