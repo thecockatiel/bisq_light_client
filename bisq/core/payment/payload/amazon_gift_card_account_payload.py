@@ -10,7 +10,7 @@ class AmazonGiftCardAccountPayload(PaymentAccountPayload):
         payment_method_id: str,
         id: str,
         email_or_mobile_nr: Optional[str] = None,
-        country_code: Optional[str] = None,
+        country_code: Optional[str] = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Optional[dict[str, str]] = None,
     ):
