@@ -12,6 +12,7 @@ from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAc
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
+from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
@@ -113,7 +114,7 @@ persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetwo
 country_based_payment_account_payload_cases = {
     "bank_account_payload": _handle_bank_account_payload,
     # "western_union_account_payload": WesternUnionAccountPayload.from_proto,
-    # "cash_deposit_account_payload": CashDepositAccountPayload.from_proto,
+    "cash_deposit_account_payload": CashDepositAccountPayload.from_proto,
     "sepa_account_payload": SepaAccountPayload.from_proto,
     "sepa_instant_account_payload": SepaInstantAccountPayload.from_proto,
     "f2f_account_payload": F2FAccountPayload.from_proto,
