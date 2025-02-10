@@ -12,6 +12,7 @@ from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAc
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPayload
+from bisq.core.payment.payload.cash_app_account_payload import CashAppAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
@@ -103,7 +104,7 @@ payment_account_payload_cases = {
     
     # Cannot be deleted as it would break old trade history entries
     # "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
-    # "cash_app_account_payload": CashAppAccountPayload.from_proto,
+    "cash_app_account_payload": CashAppAccountPayload.from_proto,
     "venmo_account_payload": VenmoAccountPayload.from_proto,
 }
 
