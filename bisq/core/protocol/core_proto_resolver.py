@@ -27,6 +27,7 @@ from bisq.core.payment.payload.national_bank_account_payload import NationalBank
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.nequi_account_payload import NequiAccountPayload
 from bisq.core.payment.payload.ok_pay_account_payload import OKPayAccountPayload
+from bisq.core.payment.payload.paxum_account_payload import PaxumAccountPayload
 from bisq.core.payment.payload.paytm_account_payload import PaytmAccountPayload
 from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
@@ -97,7 +98,7 @@ payment_account_payload_cases = {
     # "advanced_cash_account_payload": AdvancedCashAccountPayload.from_proto,
     # "transferwise_account_payload": TransferwiseAccountPayload.from_proto,
     # "paysera_account_payload": PayseraAccountPayload.from_proto,
-    # "paxum_account_payload": PaxumAccountPayload.from_proto,
+    "paxum_account_payload": PaxumAccountPayload.from_proto,
     "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
     "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
     "capitual_account_payload": CapitualAccountPayload.from_proto,
