@@ -1,10 +1,6 @@
+from typing import Protocol, runtime_checkable
 
-from abc import ABC, abstractmethod
 
-
-class PayloadWithHolderName(ABC):
-    
-    @property
-    @abstractmethod
-    def holder_name(self) -> str:
-        pass
+@runtime_checkable
+class PayloadWithHolderName(Protocol):
+    holder_name: str
