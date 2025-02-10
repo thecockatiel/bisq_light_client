@@ -12,6 +12,7 @@ from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAc
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPayload
+from bisq.core.payment.payload.capitual_account_payload import CapitualAccountPayload
 from bisq.core.payment.payload.cash_app_account_payload import CashAppAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
@@ -99,7 +100,7 @@ payment_account_payload_cases = {
     # "paxum_account_payload": PaxumAccountPayload.from_proto,
     "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
     "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
-    # "capitual_account_payload": CapitualAccountPayload.from_proto,
+    "capitual_account_payload": CapitualAccountPayload.from_proto,
     "cel_pay_account_payload": CelPayAccountPayload.from_proto,
     "monese_account_payload": MoneseAccountPayload.from_proto,
     "verse_account_payload": VerseAccountPayload.from_proto,
