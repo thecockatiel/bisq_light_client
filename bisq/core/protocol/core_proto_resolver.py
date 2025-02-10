@@ -22,6 +22,7 @@ from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountP
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
+from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
@@ -116,7 +117,7 @@ country_based_payment_account_payload_cases = {
     # "pix_account_payload": PixAccountPayload.from_proto,
     # "satispay_account_payload": SatispayAccountPayload.from_proto,
     # "tikkie_account_payload": TikkieAccountPayload.from_proto,
-    # "strike_account_payload": StrikeAccountPayload.from_proto,
+    "strike_account_payload": StrikeAccountPayload.from_proto,
     "transferwise_usd_account_payload": TransferwiseUsdAccountPayload.from_proto,
     "mercado_pago_account_payload": MercadoPagoAccountPayload.from_proto,
     "ifsc_based_account_payload": _handle_ifsc_based_account_payload,
