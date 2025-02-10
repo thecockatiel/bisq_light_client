@@ -41,8 +41,8 @@ class CashDepositAccountPayload(BankAccountPayload):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_email = holder_email or ""
-        self.requirements = requirements or ""
+        self.holder_email = holder_email
+        self.requirements = requirements
 
     def to_proto_message(self):
         deposit_payload = protobuf.CashDepositAccountPayload(
@@ -83,15 +83,15 @@ class CashDepositAccountPayload(BankAccountPayload):
             id=proto.id,
             country_code=country_based.countryCode,  # Weird protobuf names
             holder_name=deposit_payload.holder_name,
-            holder_email=deposit_payload.holder_email,
-            bank_name=deposit_payload.bank_name,
-            branch_id=deposit_payload.branch_id,
-            account_nr=deposit_payload.account_nr,
-            account_type=deposit_payload.account_type,
-            requirements=deposit_payload.requirements,
-            holder_tax_id=deposit_payload.holder_tax_id,
-            bank_id=deposit_payload.bank_id,
-            national_account_id=deposit_payload.national_account_id,
+            holder_email=deposit_payload.holder_email or None,
+            bank_name=deposit_payload.bank_name or None,
+            branch_id=deposit_payload.branch_id or None,
+            account_nr=deposit_payload.account_nr or None,
+            account_type=deposit_payload.account_type or None,
+            requirements=deposit_payload.requirements or None,
+            holder_tax_id=deposit_payload.holder_tax_id or None,
+            bank_id=deposit_payload.bank_id or None,
+            national_account_id=deposit_payload.national_account_id or None,
             max_trade_period=proto.max_trade_period,
             exclude_from_json_data_map=dict(proto.exclude_from_json_data),
         )

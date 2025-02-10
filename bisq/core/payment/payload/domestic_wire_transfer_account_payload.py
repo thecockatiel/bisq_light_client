@@ -16,7 +16,7 @@ class DomesticWireTransferAccountPayload(BankAccountPayload):
         bank_name: Optional[str] = None,
         branch_id: Optional[str] = None,
         account_nr: Optional[str] = None,
-        holder_address: Optional[str] = None,
+        holder_address: Optional[str] = "",
         max_trade_period: int = -1,
         exclude_from_json_data_map: Dict[str, str] = None,
     ):
