@@ -21,9 +21,9 @@ class AmazonGiftCardAccountPayload(PaymentAccountPayload):
         self.country_code = country_code  # JsonExclude
 
     def get_json_dict(self):
-        self_dict = self.__dict__.copy()
-        self_dict.pop("country_code")
-        return self_dict
+        result = super().get_json_dict()
+        result.pop("countryCode")
+        return result
 
     def to_proto_message(self):
         amazon_payload = protobuf.AmazonGiftCardAccountPayload(
