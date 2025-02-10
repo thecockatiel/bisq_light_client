@@ -23,6 +23,7 @@ from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAc
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.nequi_account_payload import NequiAccountPayload
+from bisq.core.payment.payload.ok_pay_account_payload import OKPayAccountPayload
 from bisq.core.payment.payload.paytm_account_payload import PaytmAccountPayload
 from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
@@ -103,7 +104,7 @@ payment_account_payload_cases = {
     "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
     
     # Cannot be deleted as it would break old trade history entries
-    # "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
+    "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
     "cash_app_account_payload": CashAppAccountPayload.from_proto,
     "venmo_account_payload": VenmoAccountPayload.from_proto,
 }
