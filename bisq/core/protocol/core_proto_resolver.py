@@ -32,6 +32,7 @@ from bisq.core.payment.payload.ok_pay_account_payload import OKPayAccountPayload
 from bisq.core.payment.payload.paxum_account_payload import PaxumAccountPayload
 from bisq.core.payment.payload.paysera_account_payload import PayseraAccountPayload
 from bisq.core.payment.payload.paytm_account_payload import PaytmAccountPayload
+from bisq.core.payment.payload.perfect_money_account_payload import PerfectMoneyAccountPayload
 from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
 from bisq.core.payment.payload.prompt_pay_account_payload import PromptPayAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     # "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
     # "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
     # "revolut_account_payload": RevolutAccountPayload.from_proto,
-    # "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
+    "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
     "swish_account_payload": SwishAccountPayload.from_proto,
     "hal_cash_account_payload": HalCashAccountPayload.from_proto,
     "u_s_postal_money_order_account_payload": USPostalMoneyOrderAccountPayload.from_proto,
