@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Union
 
 from bisq.common.protocol.proto_resolver import ProtoResolver
@@ -34,7 +34,9 @@ from bisq.core.payment.payload.paysera_account_payload import PayseraAccountPayl
 from bisq.core.payment.payload.paytm_account_payload import PaytmAccountPayload
 from bisq.core.payment.payload.perfect_money_account_payload import PerfectMoneyAccountPayload
 from bisq.core.payment.payload.pix_account_payload import PixAccountPayload
+from bisq.core.payment.payload.popmoney_account_payload import PopmoneyAccountPayload
 from bisq.core.payment.payload.prompt_pay_account_payload import PromptPayAccountPayload
+from bisq.core.payment.payload.revolute_account_payload import RevolutAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.satispay_account_payload import SatispayAccountPayload
@@ -95,8 +97,8 @@ payment_account_payload_cases = {
     # "uphold_account_payload": UpholdAccountPayload.from_proto,
     # "money_beam_account_payload": MoneyBeamAccountPayload.from_proto,
     # "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
-    # "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
-    # "revolut_account_payload": RevolutAccountPayload.from_proto,
+    "popmoney_account_payload": PopmoneyAccountPayload.from_proto,
+    "revolut_account_payload": RevolutAccountPayload.from_proto,
     "perfect_money_account_payload": PerfectMoneyAccountPayload.from_proto,
     "swish_account_payload": SwishAccountPayload.from_proto,
     "hal_cash_account_payload": HalCashAccountPayload.from_proto,
