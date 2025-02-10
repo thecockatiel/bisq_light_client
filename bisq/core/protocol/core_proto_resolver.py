@@ -11,11 +11,13 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import Pe
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
+from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPayload
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
+from bisq.core.payment.payload.instant_crypto_currency_account_payload import InstantCryptoCurrencyPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
@@ -29,9 +31,11 @@ from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
 from bisq.core.payment.payload.strike_account_payload import StrikeAccountPayload
+from bisq.core.payment.payload.swift_account_payload import SwiftAccountPayload
 from bisq.core.payment.payload.tikkie_account_payload import TikkieAccountPayload
 from bisq.core.payment.payload.transferwise_usd_account_payload import TransferwiseUsdAccountPayload
 from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
+from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
 from bisq.core.payment.payload.western_union_account_payload import WesternUnionAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
@@ -89,18 +93,18 @@ payment_account_payload_cases = {
     # "paysera_account_payload": PayseraAccountPayload.from_proto,
     # "paxum_account_payload": PaxumAccountPayload.from_proto,
     "amazon_gift_card_account_payload": AmazonGiftCardAccountPayload.from_proto,
-    # "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
+    "instant_crypto_currency_account_payload": InstantCryptoCurrencyPayload.from_proto,
     # "capitual_account_payload": CapitualAccountPayload.from_proto,
     # "cel_pay_account_payload": CelPayAccountPayload.from_proto,
     # "monese_account_payload": MoneseAccountPayload.from_proto,
     # "verse_account_payload": VerseAccountPayload.from_proto,
-    # "swift_account_payload": SwiftAccountPayload.from_proto,
-    # "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
+    "swift_account_payload": SwiftAccountPayload.from_proto,
+    "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
     
     # Cannot be deleted as it would break old trade history entries
     # "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
     # "cash_app_account_payload": CashAppAccountPayload.from_proto,
-    # "venmo_account_payload": VenmoAccountPayload.from_proto,
+    "venmo_account_payload": VenmoAccountPayload.from_proto,
 }
 
 persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetworkPayload], PersistableNetworkPayload]] = {
