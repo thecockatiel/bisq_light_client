@@ -14,6 +14,7 @@ from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAcc
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
+from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
 from bisq.core.payment.payload.national_bank_account_payload import NationalBankAccountPayload
 from bisq.core.payment.payload.neft_account_payload import NeftAccountPayload
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
@@ -116,7 +117,7 @@ country_based_payment_account_payload_cases = {
     # "tikkie_account_payload": TikkieAccountPayload.from_proto,
     # "strike_account_payload": StrikeAccountPayload.from_proto,
     # "transferwise_usd_account_payload": TransferwiseUsdAccountPayload.from_proto,
-    # "mercado_pago_account_payload": MercadoPagoAccountPayload.from_proto,
+    "mercado_pago_account_payload": MercadoPagoAccountPayload.from_proto,
     "ifsc_based_account_payload": _handle_ifsc_based_account_payload,
 }
 
