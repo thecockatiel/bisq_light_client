@@ -10,7 +10,10 @@ import pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.core.locale.country import Country
 
-class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderName):
+
+class SepaInstantAccountPayload(
+    CountryBasedPaymentAccountPayload, PayloadWithHolderName
+):
 
     def __init__(
         self,
@@ -26,9 +29,13 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
         exclude_from_json_data_map: Union[dict[str, str]] = None,
     ):
         if accepted_country_codes is None and accepted_countries is None:
-            raise ValueError("Either accepted_country_codes or accepted_countries must be set")
+            raise ValueError(
+                "Either accepted_country_codes or accepted_countries must be set"
+            )
         if accepted_countries is not None:
-            accepted_country_codes = sorted(list(set(country.code for country in accepted_countries)))
+            accepted_country_codes = sorted(
+                list(set(country.code for country in accepted_countries))
+            )
         super().__init__(
             payment_method_name,
             id,
@@ -36,35 +43,49 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name
+        self._holder_name = holder_name
         self.iban = iban
         self.bic = bic
-        
+
         # Don't use a set here as we need a deterministic ordering, otherwise the contract hash does not match
         self.accepted_country_codes = accepted_country_codes
         self.persisted_accepted_country_codes: list[str] = accepted_country_codes.copy()
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         sepa_instant_payload = protobuf.SepaInstantAccountPayload(
             holder_name=self.holder_name,
             iban=self.iban,
             bic=self.bic,
-            accepted_country_codes=self.accepted_country_codes
+            accepted_country_codes=self.accepted_country_codes,
         )
-        
-        country_based_payload = self.get_payment_account_payload_builder().country_based_payment_account_payload
-        country_based_payload.sepa_instant_account_payload.CopyFrom(sepa_instant_payload)
-        
+
+        country_based_payload = (
+            self.get_payment_account_payload_builder().country_based_payment_account_payload
+        )
+        country_based_payload.sepa_instant_account_payload.CopyFrom(
+            sepa_instant_payload
+        )
+
         payload = self.get_payment_account_payload_builder()
         payload.country_based_payment_account_payload.CopyFrom(country_based_payload)
-        
+
         return payload
 
     @staticmethod
-    def from_proto(proto: protobuf.PaymentAccountPayload) -> "SepaInstantAccountPayload":
+    def from_proto(
+        proto: protobuf.PaymentAccountPayload,
+    ) -> "SepaInstantAccountPayload":
         country_based_payload = proto.country_based_payment_account_payload
         sepa_instant_payload = country_based_payload.sepa_instant_account_payload
-        
+
         return SepaInstantAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
@@ -74,9 +95,9 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
             bic=sepa_instant_payload.bic,
             accepted_country_codes=list(sepa_instant_payload.accepted_country_codes),
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data)
+            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
         )
-        
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -102,26 +123,27 @@ class SepaInstantAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHo
         owner = Res.get_with_col("payment.account.owner")
         country = Res.get_with_col("payment.bank.country")
         return (
-                f"{method} - {owner}: {self.holder_name}, "
-                f"IBAN: {self.iban}, BIC: {self.bic}, "
-                f"{country}: {self.country_code}"
-            )
+            f"{method} - {owner}: {self.holder_name}, "
+            f"IBAN: {self.iban}, BIC: {self.bic}, "
+            f"{country}: {self.country_code}"
+        )
 
     def get_payment_details_for_trade_popup(self) -> str:
         owner = Res.get_with_col("payment.account.owner")
         country = Res.get_with_col("payment.bank.country")
-        return (f"{owner}: {self.holder_name}\n"
-                f"IBAN: {self.iban}\n"
-                f"BIC: {self.bic}\n"
-                f"{country}: {get_name_by_code(self.country_code)}")
+        return (
+            f"{owner}: {self.holder_name}\n"
+            f"IBAN: {self.iban}\n"
+            f"BIC: {self.bic}\n"
+            f"{country}: {get_name_by_code(self.country_code)}"
+        )
 
     def get_age_witness_input_data(self) -> bytes:
         # We don't add holder_name because we don't want to break age validation if the user recreates an account with
         # slight changes in holder name (e.g. add or remove middle name)
-        witness_bytes = self.iban.encode('utf-8') + self.bic.encode('utf-8')
+        witness_bytes = self.iban.encode("utf-8") + self.bic.encode("utf-8")
         return self.get_age_witness_input_data_using_bytes(witness_bytes)
 
     @property
     def owner_id(self) -> str:
         return self.holder_name
-

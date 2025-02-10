@@ -26,10 +26,18 @@ class MoneyGramAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
         self.country_code = country_code or ""
         self.state = state or ""
         self.email = email
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         money_gram_account_payload = protobuf.MoneyGramAccountPayload(

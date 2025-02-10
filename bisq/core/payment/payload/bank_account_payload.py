@@ -34,7 +34,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
         self.bank_name = bank_name or ""
         self.branch_id = branch_id or ""
         self.account_nr = account_nr or ""
@@ -42,6 +42,14 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         self.holder_tax_id = holder_tax_id or ""
         self.bank_id = bank_id or ""
         self.national_account_id = national_account_id or ""
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def get_payment_account_payload_builder(self):
         builder = protobuf.BankAccountPayload(

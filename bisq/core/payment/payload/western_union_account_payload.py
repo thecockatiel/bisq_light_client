@@ -9,7 +9,9 @@ from bisq.core.payment.payload.payload_with_holder_name import PayloadWithHolder
 import pb_pb2 as protobuf
 
 
-class WesternUnionAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderName):
+class WesternUnionAccountPayload(
+    CountryBasedPaymentAccountPayload, PayloadWithHolderName
+):
 
     def __init__(
         self,
@@ -30,10 +32,18 @@ class WesternUnionAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithH
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
         self.city = city or ""
         self.state = state or ""
         self.email = email or ""
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         wu_payload = protobuf.WesternUnionAccountPayload(

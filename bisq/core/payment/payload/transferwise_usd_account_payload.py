@@ -27,8 +27,16 @@ class TransferwiseUsdAccountPayload(CountryBasedPaymentAccountPayload):
             exclude_from_json_data_map,
         )
         self.email = email or ""
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
         self.beneficiary_address = beneficiary_address or ""
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         transferwise_payload = protobuf.TransferwiseUsdAccountPayload(

@@ -21,7 +21,15 @@ class VenmoAccountPayload(PaymentAccountPayload):
             payment_method_id, id, max_trade_period, exclude_from_json_data_map
         )
         self.venmo_user_name = venmo_user_name or ""
-        self.holder_name = holder_name or ""
+        self._holder_name = holder_name or ""
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def to_proto_message(self):
         venmo_payload = protobuf.VenmoAccountPayload(

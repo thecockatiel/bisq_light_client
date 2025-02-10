@@ -32,9 +32,17 @@ class IfscBasedAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHold
             max_trade_period,
             exclude_from_json_data_map,
         )
-        self.holder_name = holder_name
+        self._holder_name = holder_name
         self.account_nr = account_nr
         self.ifsc = ifsc
+
+    @property
+    def holder_name(self):
+        return self._holder_name
+
+    @holder_name.setter
+    def holder_name(self, value: str):
+        self._holder_name = value
 
     def get_payment_account_payload_builder(self):
         builder = protobuf.IfscBasedAccountPayload(
