@@ -11,6 +11,7 @@ from bisq.core.network.p2p.storage.payload.persistable_network_payload import Pe
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.advanced_cash_account_payload import AdvancedCashAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
+from bisq.core.payment.payload.australia_payid_account_payload import AustraliaPayidAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
 from bisq.core.payment.payload.bsq_swap_account_payload import BsqSwapAccountPayload
 from bisq.core.payment.payload.capitual_account_payload import CapitualAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     # "faster_payments_account_payload": FasterPaymentsAccountPayload.from_proto,
     # "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
     # "japan_bank_account_payload": JapanBankAccountPayload.from_proto,
-    # "australia_payid_payload": AustraliaPayidAccountPayload.from_proto,
+    "australia_payid_payload": AustraliaPayidAccountPayload.from_proto,
     "uphold_account_payload": UpholdAccountPayload.from_proto,
     "money_beam_account_payload": MoneyBeamAccountPayload.from_proto,
     "money_gram_account_payload": MoneyGramAccountPayload.from_proto,
