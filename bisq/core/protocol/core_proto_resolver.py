@@ -63,6 +63,7 @@ from bisq.core.payment.payload.upi_account_payload import UpiAccountPayload
 from bisq.core.payment.payload.us_postal_money_order_account_payload import USPostalMoneyOrderAccountPayload
 from bisq.core.payment.payload.venmo_account_payload import VenmoAccountPayload
 from bisq.core.payment.payload.verse_account_payload import VerseAccountPayload
+from bisq.core.payment.payload.we_chat_pay_account_payload import WeChatPayAccountPayload
 from bisq.core.payment.payload.western_union_account_payload import WesternUnionAccountPayload
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
@@ -95,7 +96,7 @@ def _handle_ifsc_based_account_payload(proto: "protobuf.PaymentAccountPayload"):
 
 payment_account_payload_cases = {
     # "ali_pay_account_payload": AliPayAccountPayload.from_proto,
-    # "we_chat_pay_account_payload": WeChatPayAccountPayload.from_proto,
+    "we_chat_pay_account_payload": WeChatPayAccountPayload.from_proto,
     "chase_quick_pay_account_payload": ChaseQuickPayAccountPayload.from_proto,
     "clear_xchange_account_payload": ClearXchangeAccountPayload.from_proto,
     "country_based_payment_account_payload": _handle_country_based_payment_account_payload,
