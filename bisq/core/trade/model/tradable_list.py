@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, TypeVar
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.core.offer.open_offer import OpenOffer
 from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.core.trade.model.bisq_v1.buyer_as_maker_trade import BuyerAsMakerTrade
@@ -54,7 +55,7 @@ class TradableList(PersistableListAsObservable[T]):
             elif message_type == "bsq_swap_seller_as_taker_trade":
                 tradable_list.append(BsqSwapSellerAsTakerTrade.from_proto(tradable.bsq_swap_seller_as_taker_trade))
             else:
-                raise RuntimeError(f"Unknown messageCase. tradable.WhichOneof('message') = {message_type}")
+                raise ProtobufferException(f"Unknown messageCase. tradable.WhichOneof('message') = {message_type}")
         
         return TradableList(tradable_list)
 
