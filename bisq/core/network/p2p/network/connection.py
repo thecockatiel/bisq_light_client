@@ -623,7 +623,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             return False
 
         supported_capabilities = network_envelope.supported_capabilities
-        if not supported_capabilities or supported_capabilities.is_empty():
+        if supported_capabilities is None or supported_capabilities.is_empty():
             return False
 
         if self.capabilities == supported_capabilities:
