@@ -74,6 +74,8 @@ class Config:
 
     MAX_SEQUENCE_NUMBER_MAP_SIZE_BEFORE_PURGE = 1000
 
+    BASE_CURRENCY_NETWORK_VALUE = BaseCurrencyNetwork.BTC_MAINNET
+
     def __init__(
         self,
         default_app_name: Optional[str] = None,
@@ -299,6 +301,9 @@ class Config:
 
         self.wallet_dir = btc_network_dir.joinpath("electrum_wallet")
         self.wallet_dir.mkdir(parents=True, exist_ok=True)
+
+        # Assign values to special-case static fields
+        Config.BASE_CURRENCY_NETWORK_VALUE = self.base_currency_network
 
     @property
     def network_parameters(self):
