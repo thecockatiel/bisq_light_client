@@ -2,7 +2,7 @@ from typing import Optional
 from bisq.common.version import Version
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.governance.proposal.issuance_proposal import IssuanceProposal
-from bisq.core.dao.governance.proposal.proposal import Proposal
+from bisq.core.dao.state.model.governance.proposal import Proposal
 from bisq.core.dao.governance.proposal.proposal_type import ProposalType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
