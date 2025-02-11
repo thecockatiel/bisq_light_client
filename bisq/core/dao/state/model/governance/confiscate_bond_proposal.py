@@ -4,7 +4,6 @@ from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.state.model.governance.proposal import Proposal
 from bisq.core.dao.governance.proposal.proposal_type import ProposalType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
-from bisq.core.dao.state.model.governance.role import Role
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 from utils.time import get_time_ms
 import pb_pb2 as protobuf
