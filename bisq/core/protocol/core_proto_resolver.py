@@ -8,6 +8,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.dao.governance.blindvote.storage.blind_vote_payload import BlindVotePayload
+from bisq.core.dao.governance.proposal.storage.appendonly.proposal_payload import ProposalPayload
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.advanced_cash_account_payload import AdvancedCashAccountPayload
@@ -140,8 +141,8 @@ payment_account_payload_cases = {
 persistable_network_payload_cases: dict[str, Callable[[protobuf.PersistableNetworkPayload], PersistableNetworkPayload]] = {
     "account_age_witness": lambda proto: AccountAgeWitness.from_proto(proto.account_age_witness),
     "trade_statistics2": lambda proto: TradeStatistics2.from_proto(proto.trade_statistics2),
-    # "proposal_payload": lambda proto: ProposalPayload.from_proto,
-    "blind_vote_payload": lambda proto: BlindVotePayload.from_proto,
+    "proposal_payload": lambda proto: ProposalPayload.from_proto(proto.proposal_payload),
+    "blind_vote_payload": lambda proto: BlindVotePayload.from_proto(proto.blind_vote_payload),
     "signed_witness": lambda proto: SignedWitness.from_proto(proto.signed_witness),
     "trade_statistics3": lambda proto: TradeStatistics3.from_proto(proto.trade_statistics3),
 }
