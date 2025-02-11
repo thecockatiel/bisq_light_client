@@ -24,6 +24,7 @@ from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.hal_cash_account_payload import HalCashAccountPayload
 from bisq.core.payment.payload.imps_account_payload import ImpsAccountPayload
 from bisq.core.payment.payload.instant_crypto_currency_account_payload import InstantCryptoCurrencyPayload
+from bisq.core.payment.payload.interac_e_transfer_account_payload import InteracETransferAccountPayload
 from bisq.core.payment.payload.japan_bank_account_payload import JapanBankAccountPayload
 from bisq.core.payment.payload.mercado_pago_account_payload import MercadoPagoAccountPayload
 from bisq.core.payment.payload.monese_account_payload import MoneseAccountPayload
@@ -96,7 +97,7 @@ payment_account_payload_cases = {
     "country_based_payment_account_payload": _handle_country_based_payment_account_payload,
     # "crypto_currency_account_payload": CryptoCurrencyAccountPayload.from_proto,
     # "faster_payments_account_payload": FasterPaymentsAccountPayload.from_proto,
-    # "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
+    "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
     "japan_bank_account_payload": JapanBankAccountPayload.from_proto,
     "australia_payid_payload": AustraliaPayidAccountPayload.from_proto,
     "uphold_account_payload": UpholdAccountPayload.from_proto,
