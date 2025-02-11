@@ -10,6 +10,7 @@ from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
 from bisq.core.payment.payload.ach_transfer_account_payload import AchTransferAccountPayload
 from bisq.core.payment.payload.advanced_cash_account_payload import AdvancedCashAccountPayload
+from bisq.core.payment.payload.ali_pay_account_payload import AliPayAccountPayload
 from bisq.core.payment.payload.amazon_gift_card_account_payload import AmazonGiftCardAccountPayload
 from bisq.core.payment.payload.australia_payid_account_payload import AustraliaPayidAccountPayload
 from bisq.core.payment.payload.bizum_account_payload import BizumAccountPayload
@@ -95,7 +96,7 @@ def _handle_ifsc_based_account_payload(proto: "protobuf.PaymentAccountPayload"):
         raise ProtobufferException("Unknown proto message case (PB.PaymentAccountPayload.CountryBasedPaymentAccountPayload.IfscBasedPaymentAccount). messageCase=" + proto.country_based_payment_account_payload.ifsc_based_account_payload.WhichOneof("message"))
 
 payment_account_payload_cases = {
-    # "ali_pay_account_payload": AliPayAccountPayload.from_proto,
+    "ali_pay_account_payload": AliPayAccountPayload.from_proto,
     "we_chat_pay_account_payload": WeChatPayAccountPayload.from_proto,
     "chase_quick_pay_account_payload": ChaseQuickPayAccountPayload.from_proto,
     "clear_xchange_account_payload": ClearXchangeAccountPayload.from_proto,
