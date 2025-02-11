@@ -1,6 +1,7 @@
 from abc import ABC
 from functools import total_ordering
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.protocol.protobuffer_exception import ProtobufferException
 import pb_pb2 as protobuf
 
 @total_ordering
@@ -38,7 +39,7 @@ class TradeCurrency(PersistablePayload, ABC):
         elif proto.HasField('crypto_currency'):
             return CryptoCurrency.from_proto(proto)
         else:
-            raise RuntimeError(f"Unknown message case: {proto.WhichOneof('message')}")
+            raise ProtobufferException(f"Unknown message case: {proto.WhichOneof('message')}")
     
     def get_trade_currency_builder(self):
         return protobuf.TradeCurrency(code=self.code, name=self.name)
