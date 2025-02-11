@@ -19,6 +19,9 @@ from bisq.core.payment.payload.cash_app_account_payload import CashAppAccountPay
 from bisq.core.payment.payload.cash_by_mail_account_payload import CashByMailAccountPayload
 from bisq.core.payment.payload.cash_deposit_account_payload import CashDepositAccountPayload
 from bisq.core.payment.payload.cel_pay_account_payload import CelPayAccountPayload
+from bisq.core.payment.payload.chase_quick_pay_account_payload import ChaseQuickPayAccountPayload
+from bisq.core.payment.payload.clear_xchange_account_payload import ClearXchangeAccountPayload
+from bisq.core.payment.payload.crypto_currency_account_payload import CryptoCurrencyAccountPayload
 from bisq.core.payment.payload.domestic_wire_transfer_account_payload import DomesticWireTransferAccountPayload
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
 from bisq.core.payment.payload.faster_payments_account_payload import FasterPaymentsAccountPayload
@@ -93,10 +96,10 @@ def _handle_ifsc_based_account_payload(proto: "protobuf.PaymentAccountPayload"):
 payment_account_payload_cases = {
     # "ali_pay_account_payload": AliPayAccountPayload.from_proto,
     # "we_chat_pay_account_payload": WeChatPayAccountPayload.from_proto,
-    # "chase_quick_pay_account_payload": ChaseQuickPayAccountPayload.from_proto,
-    # "clear_xchange_account_payload": ClearXchangeAccountPayload.from_proto,
+    "chase_quick_pay_account_payload": ChaseQuickPayAccountPayload.from_proto,
+    "clear_xchange_account_payload": ClearXchangeAccountPayload.from_proto,
     "country_based_payment_account_payload": _handle_country_based_payment_account_payload,
-    # "crypto_currency_account_payload": CryptoCurrencyAccountPayload.from_proto,
+    "crypto_currency_account_payload": CryptoCurrencyAccountPayload.from_proto,
     "faster_payments_account_payload": FasterPaymentsAccountPayload.from_proto,
     "interac_e_transfer_account_payload": InteracETransferAccountPayload.from_proto,
     "japan_bank_account_payload": JapanBankAccountPayload.from_proto,
