@@ -4,6 +4,7 @@ from bisq.core.dao.state.model.dao_state import DaoState
 from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 from bisq.core.dao.dao_setup_service import DaoSetupService
+from bisq.core.dao.state.model.blockchain.tx_type import TxType
 
 if TYPE_CHECKING:
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
@@ -72,6 +73,9 @@ class DaoStateService(DaoSetupService):
         return None
 
     def get_tx(self, tx_id: str):
+        return None
+    
+    def get_optional_tx_type(self, tx_id: str) -> Optional["TxType"]:
         return None
 
     def get_param_change_list(self, param: "Param"):
