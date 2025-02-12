@@ -7,6 +7,7 @@ from bisq.core.account.sign.signed_witness_store import SignedWitnessStore
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.btc.model.address_entry_list import AddressEntryList
 from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import BurningManAccountingStore
+from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
@@ -62,7 +63,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     "mailbox_message_list": lambda p, resolver: MailboxMessageList.from_proto(p.mailbox_message_list, resolver.network_proto_resolver),
     "ignored_mailbox_map": lambda p, resolver: IgnoredMailboxMap.from_proto(p.ignored_mailbox_map),
     "removed_payloads_map": lambda p, resolver: RemovedPayloadsMap.from_proto(p.removed_payloads_map),
-    # "bsq_block_store": lambda p, resolver: BsqBlockStore.from_proto(p),
+    "bsq_block_store": lambda p, resolver: BsqBlockStore.from_proto(p.bsq_block_store),
     "burning_man_accounting_store": lambda p, resolver: BurningManAccountingStore.from_proto(p.burning_man_accounting_store),
 }
 
