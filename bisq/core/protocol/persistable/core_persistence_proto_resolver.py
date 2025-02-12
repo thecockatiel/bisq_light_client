@@ -8,6 +8,7 @@ from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnes
 from bisq.core.btc.model.address_entry_list import AddressEntryList
 from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import BurningManAccountingStore
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
+from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import UnconfirmedBsqChangeOutputList
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
@@ -57,7 +58,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     # "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p),
     # "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p),
     # "my_proof_of_burn_list": lambda p, resolver: MyProofOfBurnList.from_proto(p),
-    # "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p),
+    "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p.unconfirmed_bsq_change_output_list),
     "signed_witness_store": lambda p, resolver: SignedWitnessStore.from_proto(p.signed_witness_store),
     # "trade_statistics3_store": lambda p, resolver: TradeStatistics3Store.from_proto(p),
     "mailbox_message_list": lambda p, resolver: MailboxMessageList.from_proto(p.mailbox_message_list, resolver.network_proto_resolver),
