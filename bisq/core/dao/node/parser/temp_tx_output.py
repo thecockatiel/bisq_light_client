@@ -59,7 +59,7 @@ class TempTxOutput(BaseTxOutput):
     def __str__(self) -> str:
         return (
             f"TempTxOutput{{\n"
-            f"    tx_output_type={self.tx_output_type},\n"
+            f"    tx_output_type={self.tx_output_type.name},\n"
             f"    lock_time={self.lock_time},\n"
             f"    unlock_block_height={self.unlock_block_height}\n"
             f"}} {super().__str__()}"
