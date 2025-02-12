@@ -50,3 +50,29 @@ class BaseTx(ImmutableDaoStateModel, ABC):
             f"     tx_inputs={self.tx_inputs}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        if self is value:
+            return True
+        if not isinstance(value, BaseTx):
+            return False
+        return (
+            self.tx_version == value.tx_version
+            and self.id == value.id
+            and self.block_height == value.block_height
+            and self.block_hash == value.block_hash
+            and self.time == value.time
+            and self.tx_inputs == value.tx_inputs
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.tx_version,
+                self.id,
+                self.block_height,
+                self.block_hash,
+                self.time,
+                self.tx_inputs,
+            )
+        )
