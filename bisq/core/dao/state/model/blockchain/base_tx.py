@@ -20,14 +20,14 @@ class BaseTx(ImmutableDaoStateModel, ABC):
         block_height: int,
         block_hash: str,
         time: int,
-        tx_inputs: list[TxInput],
+        tx_inputs: tuple[TxInput],
     ):
         self.tx_version = tx_version
         self.id = id
         self.block_height = block_height
         self.block_hash = block_hash
         self.time = time
-        self.tx_inputs = tuple(tx_inputs)
+        self.tx_inputs = tx_inputs
 
     def get_base_tx_builder(self):
         return protobuf.BaseTx(
