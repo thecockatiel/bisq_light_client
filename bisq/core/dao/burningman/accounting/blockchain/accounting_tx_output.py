@@ -64,3 +64,11 @@ class AccountingTxOutput(NetworkPayload):
             f"                    name='{self.name}'\n"
             f"}}"
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, AccountingTxOutput):
+            return False
+        return self.value == other.value and self.name == other.name
+
+    def __hash__(self):
+        return hash((self.value, self.name))

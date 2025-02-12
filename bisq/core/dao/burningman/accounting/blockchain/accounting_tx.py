@@ -60,3 +60,15 @@ class AccountingTx(NetworkPayload):
             f"               truncatedTxId={self.truncated_tx_id.hex()}\n"
             f"          }}"
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, AccountingTx):
+            return False
+        return (
+            self.type == other.type
+            and self.outputs == other.outputs
+            and self.truncated_tx_id == other.truncated_tx_id
+        )
+
+    def __hash__(self):
+        return hash((self.type, tuple(self.outputs), self.truncated_tx_id))
