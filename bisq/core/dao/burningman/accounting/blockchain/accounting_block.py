@@ -47,7 +47,7 @@ class AccountingBlock(NetworkPayload):
         )
 
     @staticmethod
-    def from_proto_message(proto: protobuf.AccountingBlock) -> "AccountingBlock":
+    def from_proto(proto: protobuf.AccountingBlock) -> "AccountingBlock":
         txs = [AccountingTx.from_proto(tx) for tx in proto.txs]
         return AccountingBlock(
             height=proto.height,
