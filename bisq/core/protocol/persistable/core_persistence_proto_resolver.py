@@ -10,6 +10,7 @@ from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store im
 from bisq.core.dao.governance.bond.reputation.my_reputation_list import MyReputationList
 from bisq.core.dao.governance.proofofburn.my_proof_of_burn_list import MyProofOfBurnList
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
+from bisq.core.dao.state.storage.dao_state_store import DaoStateStore
 from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import UnconfirmedBsqChangeOutputList
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
@@ -57,7 +58,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     # "ballot_list": lambda p, resolver: BallotList.from_proto(p),
     # "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p),
     # "my_blind_vote_list": lambda p, resolver: MyBlindVoteList.from_proto(p),
-    # "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p),
+    "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p.dao_state_store),
     "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p.my_reputation_list),
     "my_proof_of_burn_list": lambda p, resolver: MyProofOfBurnList.from_proto(p.my_proof_of_burn_list),
     "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p.unconfirmed_bsq_change_output_list),
