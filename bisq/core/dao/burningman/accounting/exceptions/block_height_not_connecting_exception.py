@@ -1,0 +1,2 @@
+class BlockHeightNotConnectingException(Exception):
+    pass
