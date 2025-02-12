@@ -71,3 +71,26 @@ class AccountingBlock(NetworkPayload):
             f"    txs={self.txs}\n"
             f"}}"
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, AccountingBlock):
+            return False
+        return (
+            self.height == other.height
+            and self.time_in_sec == other.time_in_sec
+            and self.truncated_hash == other.truncated_hash
+            and self.truncated_previous_block_hash
+            == other.truncated_previous_block_hash
+            and self.txs == other.txs
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.height,
+                self.time_in_sec,
+                self.truncated_hash,
+                self.truncated_previous_block_hash,
+                tuple(self.txs),
+            )
+        )
