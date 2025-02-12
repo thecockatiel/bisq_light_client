@@ -8,6 +8,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from bisq.core.network.p2p.persistence.store_service import StoreService
 
 if TYPE_CHECKING:
+    from bisq.common.persistence.persistence_manager import PersistenceManager
     from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 
 T = TypeVar(
@@ -20,7 +21,7 @@ R = TypeVar(
 class MapStoreService(Generic[T, R], StoreService[T], ABC):
     """Handles persisted data which is stored in a map."""
     
-    def __init__(self, storage_dir: Path, persistence_manager: T):
+    def __init__(self, storage_dir: Path, persistence_manager: "PersistenceManager[T]"):
         super().__init__(storage_dir, persistence_manager)
     
     # NOTE: Maybe TODO: I'm aware its not called map in python.
