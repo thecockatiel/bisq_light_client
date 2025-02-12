@@ -60,3 +60,23 @@ class TxInput(PersistablePayload, ImmutableDaoStateModel):
             f"                    pubKey={self.pub_key}\n"
             "               }"
         )
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not isinstance(other, TxInput):
+            return False
+        return (
+            self.connected_tx_output_tx_id == other.connected_tx_output_tx_id
+            and self.connected_tx_output_index == other.connected_tx_output_index
+            and self.pub_key == other.pub_key
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.connected_tx_output_tx_id,
+                self.connected_tx_output_index,
+                self.pub_key,
+            )
+        )
