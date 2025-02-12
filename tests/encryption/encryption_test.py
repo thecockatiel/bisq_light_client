@@ -43,6 +43,11 @@ class TestEncryption(unittest.TestCase):
         decrypted_secret_key = Encryption.decrypt_secret_key(encrypted_secret_key, private_key)
         self.assertEqual(len(encrypted_secret_key.hex()), len(self.encrypted_secret_key_using_pub_key_hex))
         self.assertEqual(decrypted_secret_key.hex(), self.secret_key_hex)
+
+    def test_aes_encrypt_decrypt_from_java_encoded_secret_key(self):
+        key = bytes.fromhex("56189c952bdde1cc5c65d4e713b855ef")
+        decrypted_msg = Encryption.decrypt(bytes.fromhex("bee28106ebbcc0a4a59d8056b29f6af4"), key)
+        self.assertEqual(decrypted_msg, bytes([1,2,3])) 
     
     def test_hmac(self):
         secret_key = bytes.fromhex(self.secret_key_hex)
