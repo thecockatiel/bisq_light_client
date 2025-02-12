@@ -1,0 +1,2 @@
+class BlockHashNotConnectingException(Exception):
+    pass
