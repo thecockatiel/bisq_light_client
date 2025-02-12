@@ -73,3 +73,31 @@ class BaseTxOutput(ImmutableDaoStateModel, ABC):
             f"     blockHeight={self.block_height}\n"
             f"}}"
         )
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if not isinstance(other, BaseTxOutput):
+            return False
+        return (
+            self.index == other.index
+            and self.value == other.value
+            and self.tx_id == other.tx_id
+            and self.pub_key_script == other.pub_key_script
+            and self.address == other.address
+            and self.op_return_data == other.op_return_data
+            and self.block_height == other.block_height
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.index,
+                self.value,
+                self.tx_id,
+                self.pub_key_script,
+                self.address,
+                self.op_return_data,
+                self.block_height,
+            )
+        )
