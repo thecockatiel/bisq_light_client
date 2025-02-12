@@ -7,6 +7,7 @@ from bisq.core.account.sign.signed_witness_store import SignedWitnessStore
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.btc.model.address_entry_list import AddressEntryList
 from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import BurningManAccountingStore
+from bisq.core.dao.governance.bond.reputation.my_reputation_list import MyReputationList
 from bisq.core.dao.governance.proofofburn.my_proof_of_burn_list import MyProofOfBurnList
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
 from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import UnconfirmedBsqChangeOutputList
@@ -57,7 +58,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     # "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p),
     # "my_blind_vote_list": lambda p, resolver: MyBlindVoteList.from_proto(p),
     # "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p),
-    # "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p),
+    "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p.my_reputation_list),
     "my_proof_of_burn_list": lambda p, resolver: MyProofOfBurnList.from_proto(p.my_proof_of_burn_list),
     "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p.unconfirmed_bsq_change_output_list),
     "signed_witness_store": lambda p, resolver: SignedWitnessStore.from_proto(p.signed_witness_store),
