@@ -53,7 +53,8 @@ class DisputeResult(NetworkPayload):
         self.payout_adjustment_percent = payout_adjustment_percent
         self.payout_suggestion = payout_suggestion
 
-    def from_proto(self, proto: protobuf.DisputeResult):
+    @staticmethod
+    def from_proto(proto: protobuf.DisputeResult):
         from bisq.core.support.messages.chat_messsage import ChatMessage
         return DisputeResult(
             trade_id=proto.trade_id,

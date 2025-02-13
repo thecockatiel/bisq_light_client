@@ -22,7 +22,7 @@ class ParamChange(PersistablePayload, ImmutableDaoStateModel):
         )
 
     @staticmethod
-    def from_proto(self, proto: protobuf.ParamChange):
+    def from_proto(proto: protobuf.ParamChange):
         return ParamChange(
             param_name=proto.param_name,
             value=proto.param_value,
