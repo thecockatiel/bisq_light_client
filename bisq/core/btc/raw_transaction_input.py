@@ -28,7 +28,7 @@ class RawTransactionInput(NetworkPayload, PersistablePayload):
         )
     
     @staticmethod
-    def from_proto(self, proto: protobuf.RawTransactionInput):
+    def from_proto(proto: protobuf.RawTransactionInput):
         return RawTransactionInput(
             index=proto.index,
             parent_transaction=proto.parent_transaction,
