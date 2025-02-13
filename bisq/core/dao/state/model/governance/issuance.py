@@ -26,6 +26,26 @@ class Issuance(PersistablePayload, NetworkPayload, ImmutableDaoStateModel):
         self._pub_key = pub_key
         self._issuance_type = issuance_type
 
+    @property
+    def tx_id(self) -> str:
+        return self._tx_id
+
+    @property
+    def chain_height(self) -> int:
+        return self._chain_height
+
+    @property
+    def amount(self) -> int:
+        return self._amount
+
+    @property
+    def pub_key(self) -> Optional[str]:
+        return self._pub_key
+
+    @property
+    def issuance_type(self) -> IssuanceType:
+        return self._issuance_type
+
     def to_proto_message(self) -> protobuf.Issuance:
         builder = protobuf.Issuance(
             tx_id=self._tx_id,
