@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Union
+from typing import Optional, Union
 
 
 class ParamValidationException(Exception):
@@ -13,7 +13,7 @@ class ParamValidationException(Exception):
     def __init__(
         self,
         message_or_exception: Union[str, Exception],
-        param_error: "ParamValidationException.ERROR",
+        param_error: Optional["ParamValidationException.ERROR"] = None,
         *args,
     ):
         super().__init__(message_or_exception, *args)
