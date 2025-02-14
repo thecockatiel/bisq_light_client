@@ -136,7 +136,8 @@ class DaoStateService(DaoSetupService):
         self._assert_dao_state_change()
         self.cycles.append(cycle)
 
-    def get_current_cycle(self) -> Optional["Cycle"]:
+    @property
+    def current_cycle(self) -> Optional["Cycle"]:
         return self.cycles[-1] if self.cycles else None
 
     def get_cycle(self, height: int) -> Optional["Cycle"]:
@@ -623,7 +624,7 @@ class DaoStateService(DaoSetupService):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def is_rejected_issuance_output(self, tx_output_key: "TxOutputKey") -> bool:
-        current_cycle = self.get_current_cycle()
+        current_cycle = self.current_cycle
         if current_cycle:
             return any(
                 tx_output.get_key() == tx_output_key
