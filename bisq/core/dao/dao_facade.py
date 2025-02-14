@@ -18,7 +18,7 @@ class DaoFacade(DaoSetupService):
 
     def get_param_value(self, param: Param, block_height: int = None) -> str:
         if block_height is None:
-            block_height = self.dao_state_service.get_chain_height()
+            block_height = self.dao_state_service.chain_height
 
         return self.dao_state_service.get_param_value(param, block_height)
 
@@ -64,7 +64,7 @@ class DaoFacade(DaoSetupService):
         self.dao_state_service.remove_dao_state_listener(listener)
 
     def get_chain_height(self):
-        return self.dao_state_service.get_chain_height()
+        return self.dao_state_service.chain_height
 
     @property
     def is_parse_block_chain_complete(self):

@@ -72,7 +72,7 @@ class MempoolService:
             can = (
                 can
                 and offer_payload.block_height_at_offer_creation
-                < self.dao_state_service.get_chain_height()
+                < self.dao_state_service.chain_height
             )
         return can
 
