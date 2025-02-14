@@ -45,6 +45,17 @@ def integer_to_byte_array(int_value: int, num_bytes: int) -> bytes:
         int_value = int_unsigned_right_shift(int_value, 8)
     return bytes(bytes_)
 
+def byte_array_to_integer(bytes_: bytes) -> int:
+    result = 0
+    for byte in bytes_:
+        result = (result << 8) | (byte & 0xFF)
+    # Mask to 32-bit signed integer range
+    result = result & 0xFFFFFFFF
+    # Convert to signed integer if necessary
+    if result >= 0x80000000:
+        result -= 0x100000000
+    return result
+
 def copy_right_aligned(src: bytes, new_length: int) -> bytes:
     dest = bytearray(new_length)
     src_pos = max(len(src) - new_length, 0)
