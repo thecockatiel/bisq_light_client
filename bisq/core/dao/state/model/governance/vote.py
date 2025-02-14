@@ -18,3 +18,9 @@ class Vote(
     @staticmethod
     def from_proto(proto: protobuf.Vote):
         return Vote(proto.accepted)
+
+    def __eq__(self, value):
+        return isinstance(value, Vote) and self.accepted == value.accepted
+
+    def __hash__(self):
+        return hash(self.accepted)

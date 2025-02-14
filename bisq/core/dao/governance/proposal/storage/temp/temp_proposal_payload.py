@@ -74,3 +74,21 @@ class TempProposalPayload(
 
     def get_ttl(self):
         return TempProposalPayload.TTL_MS
+
+    def __eq__(self, value):
+        if not isinstance(value, TempProposalPayload):
+            return False
+        return (
+            self.proposal == value.proposal
+            and self.owner_pub_key_encoded == value.owner_pub_key_encoded
+            and self.extra_data_map == value.extra_data_map
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.proposal,
+                self.owner_pub_key_encoded,
+                tuple(self.extra_data_map.items()),
+            )
+        )
