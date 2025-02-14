@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 
 
 class ProposalValidator(ConsensusCritical):
+    """Changes here can potentially break consensus!"""
 
     def __init__(
         self, dao_state_service: "DaoStateService", period_service: "PeriodService"
