@@ -82,3 +82,27 @@ class BlindVote(PersistablePayload, NetworkPayload, ConsensusCritical):
             f"     extraDataMap={self.extra_data_map}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, BlindVote):
+            return False
+        return (
+            self.encrypted_votes == value.encrypted_votes
+            and self.tx_id == value.tx_id
+            and self.stake == value.stake
+            and self.encrypted_merit_list == value.encrypted_merit_list
+            and self.date == value.date
+            and self.extra_data_map == value.extra_data_map
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self.encrypted_votes,
+                self.tx_id,
+                self.stake,
+                self.encrypted_merit_list,
+                self.date,
+                tuple(self.extra_data_map.items()),
+            )
+        )

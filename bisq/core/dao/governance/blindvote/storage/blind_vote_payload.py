@@ -16,7 +16,7 @@ class BlindVotePayload(PersistableNetworkPayload, ConsensusCritical):
     Data size: 185 bytes
     """
 
-    def __init__(self, blind_vote: BlindVote, hash: Optional[bytes] = None):
+    def __init__(self, blind_vote: "BlindVote", hash: Optional[bytes] = None):
         self.blind_vote = blind_vote
         if hash is None:
             hash = get_ripemd160_hash(blind_vote.serialize_for_hash())
@@ -62,3 +62,11 @@ class BlindVotePayload(PersistableNetworkPayload, ConsensusCritical):
             f"     hash={bytes_as_hex_string(self.hash)}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, BlindVotePayload):
+            return False
+        return self.blind_vote == value.blind_vote and self.hash == value.hash
+
+    def __hash__(self):
+        return hash((self.blind_vote, self.hash))
