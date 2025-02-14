@@ -13,6 +13,7 @@ from bisq.core.dao.state.model.governance.compensation_proposal import (
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
+    from bisq.core.dao.state.model.governance.proposal import Proposal
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
@@ -25,7 +26,7 @@ class CompensationValidator(ProposalValidator, ConsensusCritical):
     ):
         super().__init__(dao_state_service, period_service)
 
-    def validate_data_fields(self, proposal: CompensationProposal) -> None:
+    def validate_data_fields(self, proposal: "Proposal") -> None:
         try:
             super().validate_data_fields(proposal)
 
