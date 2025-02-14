@@ -85,3 +85,18 @@ class DecryptedBallotsWithMerits(PersistablePayload, ImmutableDaoStateModel):
             f"     merit_list={self.merit_list}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, DecryptedBallotsWithMerits):
+            return False
+        return (
+            self.hash_of_blind_vote_list == value.hash_of_blind_vote_list
+            and self.blind_vote_tx_id == value.blind_vote_tx_id
+            and self.vote_reveal_tx_id == value.vote_reveal_tx_id
+            and self.stake == value.stake
+            and self.ballot_list == value.ballot_list
+            and self.merit_list == value.merit_list
+        )
+
+    def __hash__(self):
+        return None

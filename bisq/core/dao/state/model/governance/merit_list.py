@@ -29,3 +29,9 @@ class MeritList(Proto, ConsensusCritical, ImmutableDaoStateModel):
     def get_merit_list_from_bytes(byte_data: bytes) -> "MeritList":
         proto = protobuf.MeritList.FromString(byte_data)
         return MeritList.from_proto(proto)
+
+    def __eq__(self, value):
+        return isinstance(value, MeritList) and self._list == value._list
+
+    def __hash__(self):
+        return None

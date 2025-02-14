@@ -47,3 +47,13 @@ class Merit(
             f"     signature={bytes_as_hex_string(self.signature)}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, Merit)
+            and self.issuance == value.issuance
+            and self.signature == value.signature
+        )
+
+    def __hash__(self):
+        return hash((self.issuance, self.signature))

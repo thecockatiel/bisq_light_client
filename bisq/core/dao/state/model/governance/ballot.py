@@ -51,3 +51,11 @@ class Ballot(PersistablePayload, ConsensusCritical, ImmutableDaoStateModel):
             f"     vote={self.vote}\n"
             "}"
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, Ballot):
+            return False
+        return self.proposal == value.proposal and self.vote == value.vote
+
+    def __hash__(self):
+        return hash((self.proposal, self.vote))

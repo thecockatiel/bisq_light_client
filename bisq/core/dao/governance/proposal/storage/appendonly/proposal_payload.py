@@ -59,3 +59,11 @@ class ProposalPayload(PersistableNetworkPayload, ConsensusCritical):
             f"    hash={bytes_as_hex_string(self.hash)}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        if not isinstance(value, ProposalPayload):
+            return False
+        return self.proposal == value.proposal and self.hash == value.hash
+
+    def __hash__(self):
+        return hash((self.proposal, self.hash))
