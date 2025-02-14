@@ -286,9 +286,10 @@ class ObservableList(list[T]):
                 retained.append(e)
             else:
                 removed.append(e)
-        super().clear()
-        super().extend(retained)
-        self._notify(ObservableChangeEvent(None, removed))
+        if removed:
+            super().clear()
+            super().extend(retained)
+            self._notify(ObservableChangeEvent(None, removed))
 
 def raise_required() -> None:
     raise ValueError("This field is required and cannot be unset")
