@@ -228,12 +228,10 @@ class DaoState(PersistablePayload):
         return self._blocks[-1]
 
     def add_block(self, block: "Block"):
+        # The block added here does not have any tx, 
+        # so we do not need to update the tx_cache or tx_outputs_by_tx_output_type
         self._blocks.append(block)
         self.blocks_by_height[block.height] = block
-        # TODO: do we need to call _add_to_tx_outputs_by_tx_output_type_map here ?
-        # for tx in block._txs:
-        #     self._add_to_tx_outputs_by_tx_output_type_map(tx)
-        #     self.tx_cache[tx.id] = tx
 
     def add_blocks(self, new_blocks: list["Block"]):
         for block in new_blocks:
