@@ -278,5 +278,17 @@ class ObservableList(list[T]):
         super().__delitem__(index)
         self._notify(ObservableChangeEvent(None, [element]))
 
+    def retain_all(self, elements: Iterable[T]) -> None:
+        removed = []
+        retained = []
+        for e in self:
+            if e in elements:
+                retained.append(e)
+            else:
+                removed.append(e)
+        super().clear()
+        super().extend(retained)
+        self._notify(ObservableChangeEvent(None, removed))
+
 def raise_required() -> None:
     raise ValueError("This field is required and cannot be unset")
