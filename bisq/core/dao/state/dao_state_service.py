@@ -121,7 +121,8 @@ class DaoStateService(DaoSetupService):
     # // ChainHeight
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_chain_height(self) -> int:
+    @property
+    def chain_height(self) -> int:
         return self.dao_state.chain_height
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -808,7 +809,7 @@ class DaoStateService(DaoSetupService):
         )
         unlock_block_height = self.get_unlock_block_height(unlock_tx_output.tx_id)
         return unlock_block_height is not None and BondConsensus.is_lock_time_over(
-            unlock_block_height, self.get_chain_height()
+            unlock_block_height, self.chain_height
         )
 
     # We don't care here about the unspent state

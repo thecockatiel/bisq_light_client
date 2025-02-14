@@ -37,7 +37,7 @@ class TradeLimits(DaoStateListener):
         with self._lock:
             limit = self._cached_max_trade_limit
             if limit is None:
-                self._cached_max_trade_limit = limit = self.dao_state_service.get_param_value_as_coin(Param.MAX_TRADE_LIMIT, self.dao_state_service.get_chain_height())
+                self._cached_max_trade_limit = limit = self.dao_state_service.get_param_value_as_coin(Param.MAX_TRADE_LIMIT, self.dao_state_service.chain_height)
         return limit
 
     # We possibly rounded value for the first month gets multiplied by 4 to get the trade limit after the account

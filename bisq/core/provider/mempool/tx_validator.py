@@ -32,7 +32,7 @@ class TxValidator:
         self.fee_payment_block_height = (
             fee_payment_block_height or 0
         )  # applicable to maker and taker fees
-        self.chain_height = dao_state_service.get_chain_height()
+        self.chain_height = dao_state_service.chain_height
         self.filter_manager = filter_manager
         self.json_txt = ""
         self.status = FeeValidationStatus.NOT_CHECKED_YET
@@ -367,7 +367,7 @@ class TxValidator:
         if tx_block_height > 0:
             return tx_block_height
 
-        return self.dao_state_service.get_chain_height()
+        return self.dao_state_service.chain_height
 
     def _calculate_fee(self, amount: Coin, fee_rate_per_btc: Coin, min_fee_param: Param) -> Coin:
         amount_value = amount.value if amount else 0

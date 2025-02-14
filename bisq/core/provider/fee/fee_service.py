@@ -36,7 +36,7 @@ class FeeService:
         from_filter = FeeService.get_filter_from_param_as_coin(param)
         if from_filter > Coin.ZERO():
             return from_filter
-        return (FeeService.dao_state_service.get_param_value_as_coin(param, FeeService.dao_state_service.get_chain_height()) 
+        return (FeeService.dao_state_service.get_param_value_as_coin(param, FeeService.dao_state_service.chain_height) 
                 if FeeService.dao_state_service is not None 
                 else Coin.ZERO())
 
