@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class ProposalValidator(ConsensusCritical):
+class ProposalValidator(ConsensusCritical, ABC):
     """Changes here can potentially break consensus!"""
 
     def __init__(
