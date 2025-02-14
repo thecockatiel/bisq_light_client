@@ -1,5 +1,5 @@
+from bisq.common.config.config import Config
 from bitcoinj.base.coin import Coin
-from global_container import GLOBAL_CONTAINER
 
 class Restrictions:
     MIN_TRADE_AMOUNT: "Coin" = None
@@ -16,7 +16,7 @@ class Restrictions:
     @staticmethod
     def get_min_non_dust_output():
         if Restrictions.min_non_dust_output is None:
-            Restrictions.min_non_dust_output = GLOBAL_CONTAINER.value.config.base_currency_network.parameters.get_min_non_dust_output()
+            Restrictions.min_non_dust_output = Config.BASE_CURRENCY_NETWORK_VALUE.parameters.get_min_non_dust_output()
         return Restrictions.min_non_dust_output
 
     @staticmethod
