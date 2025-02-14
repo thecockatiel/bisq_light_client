@@ -24,14 +24,14 @@ class BondConsensus:
     ) -> bytes:
         # PushData of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
         # require by btcd-cli4j, avoid opReturns with 4 bytes or less
-        with BytesIO() as outputStream:
-            outputStream.write(bytes([OpReturnType.LOCKUP.type]))
-            outputStream.write(Version.LOCKUP)
-            outputStream.write(bytes([lockup_reason.id]))
+        with BytesIO() as output_stream:
+            output_stream.write(bytes([OpReturnType.LOCKUP.type]))
+            output_stream.write(Version.LOCKUP)
+            output_stream.write(bytes([lockup_reason.id]))
             bytes_ = integer_to_byte_array(lock_time, 2)
-            outputStream.write(bytes_)
-            outputStream.write(hash_value)
-            return outputStream.getvalue()
+            output_stream.write(bytes_)
+            output_stream.write(hash_value)
+            return output_stream.getvalue()
 
     @staticmethod
     def has_op_return_data_valid_length(op_return_data: bytes) -> bool:
