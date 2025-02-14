@@ -26,7 +26,7 @@ class PeriodService:
     def chain_height(self) -> int:
         return self.dao_state_service.chain_height
 
-    def get_optional_tx(self, tx_id: str) -> Optional[Tx]:
+    def get_optional_tx(self, tx_id: str) -> Optional["Tx"]:
         return self.dao_state_service.get_tx(tx_id)
 
     def get_current_phase(self) -> DaoPhase.Phase:
