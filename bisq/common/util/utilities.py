@@ -6,6 +6,8 @@ from utils.dir import user_data_dir
 import random
 import string
 
+from utils.java_compat import int_unsigned_right_shift
+
 def get_sys_info():
     return f"System info: os.name={platform.system()}; os.version={platform.version()}; os.arch={platform.machine()}; platform={platform.platform()}"
 
@@ -35,6 +37,13 @@ def get_random_prefix(min_length: int, max_length: int) -> str:
     case_choices = [str.upper, str.lower, lambda x: x]
     case_transformer = random.choice(case_choices)
     return case_transformer(result)
+
+def integer_to_byte_array(int_value: int, num_bytes: int) -> bytes:
+    bytes_ = bytearray(num_bytes)
+    for i in range(num_bytes - 1, -1, -1):
+        bytes_[i] = int_value & 0xFF
+        int_value = int_unsigned_right_shift(int_value, 8)
+    return bytes(bytes_)
 
 def copy_right_aligned(src: bytes, new_length: int) -> bytes:
     dest = bytearray(new_length)
