@@ -17,6 +17,9 @@ class TxBroadcastException(Exception):
         self.tx_id = tx_id
 
     def __str__(self):
+        return str(self.args[0])
+
+    def __repr__(self):
         return (
             f"TxBroadcastException{{\n    tx_id='{self.tx_id}'\n}} {super().__str__()}"
         )
