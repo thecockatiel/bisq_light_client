@@ -8,8 +8,14 @@ from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnes
 from bisq.core.btc.model.address_entry_list import AddressEntryList
 from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import BurningManAccountingStore
 from bisq.core.dao.governance.blindvote.my_blind_vote_list import MyBlindVoteList
+from bisq.core.dao.governance.blindvote.storage.blind_vote_store import BlindVoteStore
 from bisq.core.dao.governance.bond.reputation.my_reputation_list import MyReputationList
+from bisq.core.dao.governance.myvote.my_vote_list import MyVoteList
 from bisq.core.dao.governance.proofofburn.my_proof_of_burn_list import MyProofOfBurnList
+from bisq.core.dao.governance.proposal.my_proposal_list import MyProposalList
+from bisq.core.dao.governance.proposal.storage.appendonly.proposal_store import ProposalStore
+from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_store import TempProposalStore
+from bisq.core.dao.state.model.governance.ballot_list import BallotList
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
 from bisq.core.dao.state.storage.dao_state_store import DaoStateStore
 from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import UnconfirmedBsqChangeOutputList
@@ -52,12 +58,12 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     "payment_account_list": lambda p, resolver: PaymentAccountList.from_proto(p.payment_account_list, resolver),
     "account_age_witness_store": lambda p, resolver: AccountAgeWitnessStore.from_proto(p.account_age_witness_store),
     # "trade_statistics2_store": lambda p, resolver: TradeStatistics2Store.from_proto(p),
-    # "blind_vote_store": lambda p, resolver: BlindVoteStore.from_proto(p),
-    # "proposal_store": lambda p, resolver: ProposalStore.from_proto(p),
-    # "temp_proposal_store": lambda p, resolver: TempProposalStore.from_proto(p, resolver.network_proto_resolver),
-    # "my_proposal_list": lambda p, resolver: MyProposalList.from_proto(p),
-    # "ballot_list": lambda p, resolver: BallotList.from_proto(p),
-    # "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p),
+    "blind_vote_store": lambda p, resolver: BlindVoteStore.from_proto(p.blind_vote_store),
+    "proposal_store": lambda p, resolver: ProposalStore.from_proto(p.proposal_store),
+    "temp_proposal_store": lambda p, resolver: TempProposalStore.from_proto(p.temp_proposal_store, resolver.network_proto_resolver),
+    "my_proposal_list": lambda p, resolver: MyProposalList.from_proto(p.my_proposal_list),
+    "ballot_list": lambda p, resolver: BallotList.from_proto(p.ballot_list),
+    "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p.my_vote_list),
     "my_blind_vote_list": lambda p, resolver: MyBlindVoteList.from_proto(p.my_blind_vote_list),
     "dao_state_store": lambda p, resolver: DaoStateStore.from_proto(p.dao_state_store),
     "my_reputation_list": lambda p, resolver: MyReputationList.from_proto(p.my_reputation_list),
