@@ -118,14 +118,14 @@ class CycleService(DaoStateListener, DaoSetupService):
         previous_cycle = self._get_cycle(previous_block_height, cycles)
         return previous_cycle and previous_cycle.height_of_last_block + 1 == height
 
-    def _get_phase_with_default_duration(self, phase: DaoPhase.Phase) -> DaoPhase:
+    def _get_phase_with_default_duration(self, phase: "DaoPhase.Phase") -> "DaoPhase":
         # We will always have a default value defined
         param = next(
             param for param in Param if self._is_param_matching_phase(param, phase)
         )
         return DaoPhase(phase, int(param.default_value))
 
-    def _is_param_matching_phase(self, param: Param, phase: DaoPhase.Phase) -> bool:
+    def _is_param_matching_phase(self, param: "Param", phase: "DaoPhase.Phase") -> bool:
         return (
             param.name.startswith("PHASE_")
             and param.name.replace("PHASE_", "") == phase.name
