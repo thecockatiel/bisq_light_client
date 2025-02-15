@@ -241,3 +241,10 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.send_funds_for_multiple_addresses Not implemented yet"
         )
+
+    def complete_prepared_blind_vote_tx(
+        self, prepared_tx: "Transaction", op_return_data: bytes
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_blind_vote_tx Not implemented yet"
+        )
