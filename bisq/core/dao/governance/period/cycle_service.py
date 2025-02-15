@@ -49,10 +49,7 @@ class CycleService(DaoStateListener, DaoSetupService):
         self.dao_state_service.add_cycle(self._get_first_cycle())
 
     def get_cycle_index(self, cycle: "Cycle") -> int:
-        try:
-            return self.dao_state_service.cycles.index(cycle)
-        except:
-            return -1
+        return self.dao_state_service.cycles.index(cycle)
 
     def is_tx_in_cycle(self, cycle: "Cycle", tx_id: str) -> bool:
         tx = self.dao_state_service.get_tx(tx_id)
