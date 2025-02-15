@@ -1,6 +1,6 @@
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional
-from bisq.common.crypto.sig import Sig
+from typing import TYPE_CHECKING, Optional, Union
+from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
@@ -34,11 +34,22 @@ class TempProposalPayload(
     def __init__(
         self,
         proposal: "Proposal",
-        owner_pub_key_encoded: bytes,
+        owner_pub_key_or_its_bytes: Union[bytes, "DSA.DsaKey"],
         extra_data_map: Optional[dict[str, str]] = None,
     ):
         self.proposal = proposal
-        self.owner_pub_key_encoded = owner_pub_key_encoded
+        if isinstance(owner_pub_key_or_its_bytes, bytes):
+            self.owner_pub_key_encoded = owner_pub_key_or_its_bytes  # bytes
+            # Used just for caching. Don't persist.
+            self.owner_pub_key = Sig.get_public_key_from_bytes(
+                owner_pub_key_or_its_bytes
+            )  # transient
+        else:
+            self.owner_pub_key_encoded = Sig.get_public_key_bytes(
+                owner_pub_key_or_its_bytes  # key
+            )
+            # Used just for caching. Don't persist.
+            self.owner_pub_key = owner_pub_key_or_its_bytes  # transient
 
         # Should be only used in emergency case if we need to add data but do not want to break backward compatibility
         # at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
@@ -46,11 +57,6 @@ class TempProposalPayload(
         self.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(
             extra_data_map
         )
-
-        #  Used just for caching. Don't persist.
-        self.owner_pub_key = Sig.get_public_key_from_bytes(
-            owner_pub_key_encoded
-        )  # transient
 
     def to_proto_message(self):
         return protobuf.StoragePayload(
