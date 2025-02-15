@@ -8,6 +8,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
     )
@@ -203,3 +204,6 @@ class WalletService(ABC):
 
     def get_transactions(self, include_dead: bool) -> set["Transaction"]:
         raise RuntimeError("WalletService.get_transactions Not implemented yet")
+
+    def find_key_from_pub_key(self, pub_key: bytes) -> "DeterministicKey":
+        raise RuntimeError("WalletService.find_key_from_pub_key Not implemented yet")
