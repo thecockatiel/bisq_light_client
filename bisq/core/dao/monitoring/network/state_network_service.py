@@ -4,9 +4,6 @@ from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
-from bisq.core.dao.monitoring.network.request_state_hashes_handler_listener import (
-    RequestStateHashesHandlerListener,
-)
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.concurrency import ThreadSafeSet
 
@@ -41,7 +38,7 @@ _Han = TypeVar("Han", bound="RequestStateHashesHandler")
 _StH = TypeVar("StH", bound="StateHash")
 
 
-class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageListener):
+class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener, ABC):
 
     class Listener(Generic[_Msg, _Req, _StH], ABC):
 
@@ -132,7 +129,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
     def get_request_state_hashes_handler(
         self,
         node_address: "NodeAddress",
-        listener: "RequestStateHashesHandlerListener[_Res]",
+        listener: "RequestStateHashesHandler.Listener[_Res]",
     ) -> _Han:
         pass
 
@@ -248,7 +245,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
     def request_hashes_from_seed_node(
         self, from_height: int, node_address: "NodeAddress"
     ) -> None:
-        class Listener(RequestStateHashesHandlerListener[_Res]):
+        class Listener(RequestStateHashesHandler.Listener[_Res]):
             def on_complete(
                 self_,
                 get_state_hashes_response: _Res,
