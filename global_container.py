@@ -2078,9 +2078,14 @@ class GlobalContainer:
     _dao_state = None
     _dao_state_service = None
     _dao_state_snapshot_service = None
+    _dao_state_storage_service = None
+    _dao_state_monitoring_service = None
+    _dao_state_network_service = None
     _unconfirmed_bsq_change_output_list_service = None
 
     _vote_result_service = None
+
+    _bsq_blocks_storage_service = None
 
     @property
     def dao_setup(self):
@@ -2147,10 +2152,72 @@ class GlobalContainer:
             )
 
             GlobalContainer._dao_state_snapshot_service = DaoStateSnapshotService(
-                # TODO
+                self.dao_state_service,
+                self.genesis_tx_info,
+                self.dao_state_storage_service,
+                self.dao_state_monitoring_service,
+                self.wallets_setup,
+                self.bsq_wallet_service,
+                self.preferences,
+                self.config,
             )
 
         return GlobalContainer._dao_state_snapshot_service
+
+    @property
+    def dao_state_storage_service(self):
+        if GlobalContainer._dao_state_storage_service is None:
+            from bisq.core.dao.state.storage.dao_state_storage_service import (
+                DaoStateStorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._dao_state_storage_service = DaoStateStorageService(
+                self.resource_data_store_service,
+                self.bsq_blocks_storage_service,
+                self.config.storage_dir,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._dao_state_storage_service
+
+    @property
+    def dao_state_monitoring_service(self):
+        if GlobalContainer._dao_state_monitoring_service is None:
+            from bisq.core.dao.monitoring.dao_state_monitoring_service import (
+                DaoStateMonitoringService,
+            )
+
+            GlobalContainer._dao_state_monitoring_service = DaoStateMonitoringService(
+                self.dao_state_service,
+                self.dao_state_network_service,
+                self.genesis_tx_info,
+                self.seed_node_repository,
+                self.preferences,
+                self.config.storage_dir,
+                self.config.ignore_dev_msg,
+            )
+
+        return GlobalContainer._dao_state_monitoring_service
+
+    @property
+    def dao_state_network_service(self):
+        if GlobalContainer._dao_state_network_service is None:
+            from bisq.core.dao.monitoring.network.dao_state_network_service import (
+                DaoStateNetworkService,
+            )
+
+            GlobalContainer._dao_state_network_service = DaoStateNetworkService(
+                self.network_node,
+                self.peer_manager,
+                self.broadcaster,
+            )
+
+        return GlobalContainer._dao_state_network_service
 
     @property
     def unconfirmed_bsq_change_output_list_service(self):
@@ -2184,6 +2251,21 @@ class GlobalContainer:
             )
 
         return GlobalContainer._vote_result_service
+
+    @property
+    def bsq_blocks_storage_service(self):
+        if GlobalContainer._bsq_blocks_storage_service is None:
+            from bisq.core.dao.state.storage.bsq_block_storage_service import (
+                BsqBlocksStorageService,
+            )
+
+            GlobalContainer._bsq_blocks_storage_service = BsqBlocksStorageService(
+                self.genesis_tx_info,
+                self.persistence_proto_resolver,
+                self.config.storage_dir,
+            )
+
+        return GlobalContainer._bsq_blocks_storage_service
 
     ############################################################################### Alert module
     _alert_manager = None
