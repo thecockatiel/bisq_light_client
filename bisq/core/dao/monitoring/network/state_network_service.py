@@ -7,9 +7,6 @@ from bisq.common.user_thread import UserThread
 from bisq.core.dao.monitoring.network.request_state_hashes_handler_listener import (
     RequestStateHashesHandlerListener,
 )
-from bisq.core.dao.monitoring.network.state_network_service_listener import (
-    StateNetworkServiceListener,
-)
 from bisq.core.dao.monitoring.network.state_network_service_response_listener import (
     StateNetworkServiceResponseListener,
 )
@@ -49,6 +46,26 @@ _StH = TypeVar("StH", bound="StateHash")
 
 class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageListener):
 
+    class Listener(Generic[_Msg, _Req, _StH], ABC):
+
+        @abstractmethod
+        def on_new_state_hash_message(
+            self, new_state_hash_message: _Msg, connection: "Connection"
+        ) -> None:
+            pass
+
+        @abstractmethod
+        def on_get_state_hash_request(
+            self, connection: "Connection", get_state_hash_request: _Req
+        ) -> None:
+            pass
+
+        @abstractmethod
+        def on_peers_state_hashes(
+            self, state_hashes: list[_StH], peers_node_address: Optional["NodeAddress"]
+        ) -> None:
+            pass
+
     def __init__(
         self,
         network_node: "NetworkNode",
@@ -59,7 +76,9 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
         self._peer_manager = peer_manager
         self._broadcaster = broadcaster
         self._request_state_hash_handler_map: dict["NodeAddress", _Han] = {}
-        self._listeners = ThreadSafeSet[StateNetworkServiceListener[_Msg, _Req, _StH]]()
+        self._listeners = ThreadSafeSet[
+            "StateNetworkService.Listener[_Msg, _Req, _StH]"
+        ]()
         self._message_listener_added = False
         self._response_listeners = ThreadSafeSet[StateNetworkServiceResponseListener]()
 
@@ -210,7 +229,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def add_listener(
-        self, listener: StateNetworkServiceListener[_Msg, _Req, _StH]
+        self, listener: "StateNetworkService.Listener[_Msg, _Req, _StH]"
     ) -> None:
         self._listeners.add(listener)
 
