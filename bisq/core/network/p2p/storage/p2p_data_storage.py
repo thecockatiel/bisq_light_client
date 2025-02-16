@@ -99,7 +99,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.persistence.append_only_data_store_service import (
         AppendOnlyDataStoreService,
     )
-    from bisq.core.network.p2p.persistence.resource_data_store_service import (
+    from bisq.core.network.p2p.storage.persistence.resource_data_store_service import (
         ResourceDataStoreService,
     )
     from bisq.core.network.p2p.persistence.removed_payloads_service import (

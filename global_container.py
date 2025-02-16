@@ -1802,7 +1802,7 @@ class GlobalContainer:
     @property
     def resource_data_store_service(self):
         if GlobalContainer._resource_data_store_service is None:
-            from bisq.core.network.p2p.persistence.resource_data_store_service import (
+            from bisq.core.network.p2p.storage.persistence.resource_data_store_service import (
                 ResourceDataStoreService,
             )
 
