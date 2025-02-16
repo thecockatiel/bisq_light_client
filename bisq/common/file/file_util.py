@@ -4,7 +4,7 @@ import platform
 import shutil
 from datetime import datetime
 import tempfile
-from typing import Optional
+from typing import Optional, Union
 
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.common.setup.log_setup import get_logger
@@ -166,12 +166,15 @@ def create_temp_file(prefix: Optional[str] = None, suffix: Optional[str] = None,
     os.close(fd)
     return Path(path)
 
-def resource_to_file(resource_path: str, destination_path: Path):
+def resource_to_file(resource_path: Union[str, Path], destination_path: Path):
     # we dont have resources like java does, so we just copy the file from our resources directory in the root of the project
     from_path = get_resources_path().joinpath(resource_path)
     if not from_path.exists():
         raise ResourceNotFoundException(str(from_path))
     return shutil.copy(from_path, destination_path)
+
+def list_resource_directory(dir_name: str):
+    return os.listdir(get_resources_path().joinpath(dir_name))
 
 def get_usable_space(path: Path) -> int:
     try:
