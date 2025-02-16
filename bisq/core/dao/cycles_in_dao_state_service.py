@@ -67,9 +67,9 @@ class CyclesInDaoStateService:
         cycle = self.find_cycle_at_height(chain_height)
         if cycle:
             target_index = self.get_index_for_cycle(cycle) - num_past_cycles
-            # TODO: should be >= 0 according to https://github.com/bisq-network/bisq/issues/7396#issuecomment-2661444781
-            # but needs testing. so we leave it be for now
-            if target_index > 0:
+            # NOTE: differs from original java code
+            # see: https://github.com/bisq-network/bisq/issues/7396#issuecomment-2661444781
+            if target_index >= 0:
                 return self.get_cycle_at_index(target_index).height_of_first_block
         return self._dao_state_service.get_genesis_block_height()
 
