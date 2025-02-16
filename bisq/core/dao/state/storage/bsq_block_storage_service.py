@@ -1,0 +1,128 @@
+from pathlib import Path
+from typing import TYPE_CHECKING
+from bisq.common.file.file_util import list_resource_directory, resource_to_file
+from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
+import pb_pb2 as protobuf
+from bisq.common.setup.log_setup import get_logger
+from utils.time import get_time_ms
+from bisq.core.dao.state.storage.blocks_persistence import BlocksPersistence
+
+
+if TYPE_CHECKING:
+    from bisq.core.dao.state.model.blockchain.block import Block
+    from bisq.common.protocol.persistable.persistence_proto_resolver import (
+        PersistenceProtoResolver,
+    )
+    from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
+
+logger = get_logger(__name__)
+
+
+class BsqBlocksStorageService:
+    NAME = "BsqBlocks"
+
+    def __init__(
+        self,
+        genesis_tx_info: "GenesisTxInfo",
+        persistence_proto_resolver: "PersistenceProtoResolver",
+        db_storage_dir: Path,
+    ):
+        self._genesis_block_height = genesis_tx_info.genesis_block_height
+        self._storage_dir = db_storage_dir.joinpath(BsqBlocksStorageService.NAME)
+        self._blocks_persistence = BlocksPersistence(
+            self._storage_dir, BsqBlocksStorageService.NAME, persistence_proto_resolver
+        )
+        self.chain_height_of_persisted_blocks = 0
+
+    def persist_blocks(self, blocks: list["Block"]):
+        ts = get_time_ms()
+        protobuf_blocks = [block.to_proto_message() for block in blocks]
+        self._blocks_persistence.write_blocks(protobuf_blocks)
+
+        if blocks:
+            self.chain_height_of_persisted_blocks = max(
+                self.chain_height_of_persisted_blocks,
+                self._get_height_of_last_full_bucket(blocks),
+            )
+        logger.info(
+            f"Persist (serialize+write) {len(blocks)} blocks took {get_time_ms() - ts} ms"
+        )
+
+    def read_blocks(self, chain_height: int) -> list["Block"]:
+        ts = get_time_ms()
+        blocks = []
+        protobuf_blocks = self._blocks_persistence.read_blocks(
+            self._genesis_block_height, chain_height
+        )
+        for protobuf_block in protobuf_blocks:
+            blocks.append(Block.from_proto(protobuf_block))
+        logger.info(
+            f"Reading and deserializing {len(blocks)} blocks took {get_time_ms() - ts} ms"
+        )
+        if blocks:
+            self.chain_height_of_persisted_blocks = (
+                self._get_height_of_last_full_bucket(blocks)
+            )
+        return blocks
+
+    def migrate_blocks(
+        self, protobuf_blocks: list[protobuf.BaseBlock]
+    ) -> list["Block"]:
+        ts = get_time_ms()
+        self._blocks_persistence.write_blocks(protobuf_blocks)
+        blocks = [
+            Block.from_proto(protobuf_block) for protobuf_block in protobuf_blocks
+        ]
+        if blocks:
+            self.chain_height_of_persisted_blocks = (
+                self._get_height_of_last_full_bucket(blocks)
+            )
+        logger.info(
+            f"Migrating blocks (write+deserialization) from DaoStateStore took {get_time_ms() - ts} ms"
+        )
+        return blocks
+
+    def copy_from_resources(self, post_fix: str):
+        ts = get_time_ms()
+        dir_name = BsqBlocksStorageService.NAME
+        resource_dir = dir_name + post_fix
+
+        if self._storage_dir.exists():
+            logger.info(f"No resource directory was copied. {dir_name} exists already.")
+            return
+
+        try:
+            file_names = list_resource_directory(resource_dir)
+            if not file_names:
+                logger.info(f"No files in directory. {resource_dir}")
+                return
+
+            self._storage_dir.mkdir(parents=True, exist_ok=True)
+
+            for file_name in file_names:
+                destination_file = self._storage_dir.joinpath(file_name)
+                resource_to_file(
+                    Path(resource_dir).joinpath(file_name), destination_file
+                )
+
+            logger.info(
+                f"Copying {len(file_names)} resource files took {get_time_ms() - ts} ms"
+            )
+        except ResourceNotFoundException:
+            logger.info(f"Directory {resource_dir} in resources does not exist.")
+        except Exception as e:
+            logger.error("", exc_info=e)
+
+    def _get_height_of_last_full_bucket(self, blocks: list["Block"]) -> int:
+        bucket_index = blocks[-1].height // BlocksPersistence.BUCKET_SIZE
+        return bucket_index * BlocksPersistence.BUCKET_SIZE
+
+    def remove_blocks_directory(self):
+        self._blocks_persistence.remove_blocks_directory()
+
+    # We recreate the directory so that we don't fill the blocks after restart from resources
+    # In copyFromResources we only check for the directory not the files inside.
+    def remove_blocks_in_directory(self):
+        self._blocks_persistence.remove_blocks_directory()
+        if not self._storage_dir.exists():
+            self._storage_dir.mkdir(parents=True, exist_ok=True)
