@@ -7,9 +7,6 @@ from bisq.common.user_thread import UserThread
 from bisq.core.dao.monitoring.network.request_state_hashes_handler_listener import (
     RequestStateHashesHandlerListener,
 )
-from bisq.core.dao.monitoring.network.state_network_service_response_listener import (
-    StateNetworkServiceResponseListener,
-)
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.concurrency import ThreadSafeSet
 
@@ -66,6 +63,15 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
         ) -> None:
             pass
 
+    class ResponseListener(ABC):
+        @abstractmethod
+        def on_success(self, serialized_size: int) -> None:
+            pass
+
+        @abstractmethod
+        def on_fault(self) -> None:
+            pass
+
     def __init__(
         self,
         network_node: "NetworkNode",
@@ -80,7 +86,9 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
             "StateNetworkService.Listener[_Msg, _Req, _StH]"
         ]()
         self._message_listener_added = False
-        self._response_listeners = ThreadSafeSet[StateNetworkServiceResponseListener]()
+        self._response_listeners = ThreadSafeSet[
+            "StateNetworkService.ResponseListener"
+        ]()
 
     @property
     def request_state_hash_handler_map(self):
@@ -220,7 +228,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], ABC, MessageLis
         self._request_state_hash_handler_map.clear()
 
     def add_response_listener(
-        self, response_listener: StateNetworkServiceResponseListener
+        self, response_listener: "StateNetworkService.ResponseListener"
     ) -> None:
         self._response_listeners.add(response_listener)
 
