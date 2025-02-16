@@ -73,6 +73,51 @@ def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
                 elif file_to_delete.is_dir():
                     prune_backup(file_to_delete, num_max_backup_files)
 
+def delete_directory(dir_path: Path, exclude: Optional[Path] = None, ignore_locked_files: bool = True) -> None:
+    exclude_file_found = False
+    if dir_path.is_dir():
+        for item in dir_path.iterdir():
+            exclude_file_found_local = exclude is not None and item.resolve() == exclude.resolve()
+            exclude_file_found |= exclude_file_found_local
+            if not exclude_file_found_local:
+                delete_directory(item, exclude, ignore_locked_files)
+    # Finally delete main file/dir if exclude file was not found in directory
+    if not exclude_file_found and not (exclude is not None and dir_path.resolve() == exclude.resolve()):
+        try:
+            delete_file_if_exists(dir_path, ignore_locked_files)
+        except Exception as e:
+            logger.error(f"Could not delete file. Error={str(e)}")
+            raise IOError(e)
+
+def delete_file_if_exists(file: Path, ignore_locked_files = True) -> None:
+    try:
+        if platform.system().lower() == "windows":
+            file = file.resolve()
+
+        if file.exists() and not file.unlink(missing_ok=True):
+            if ignore_locked_files:
+                # We check if file is locked. On Windows all open files are locked by the OS
+                if is_file_locked(file):
+                    logger.info(f"Failed to delete locked file: {file.absolute()}")
+            else:
+                message = f"Failed to delete file: {file.absolute()}"
+                raise IOError(message)
+    except Exception as e:
+        logger.error(str(e), exc_info=e)
+        if isinstance(e, IOError):
+            raise e
+        raise IOError(e)
+
+def is_file_locked(file: Path) -> bool:
+    try:
+        if file.exists():
+            with open(file, 'a'):
+                return False
+        else:
+            return False
+    except:
+        return True
+
 def does_file_contain_keyword(file_path: Path, keyword: str) -> bool:
     try:
         with open(file_path, 'r') as file:
