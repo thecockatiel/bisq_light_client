@@ -96,7 +96,7 @@ class DaoStateMonitoringService(
         self._checkpoint_failed = False
         self._num_calls = 0
         self._accumulated_duration = 0
-        self._create_snapshot_handler: Optional[Callable[[], None]] = None
+        self.create_snapshot_handler: Optional[Callable[[], None]] = None
         self._dao_state_block_by_height = dict[int, "DaoStateBlock"]()
 
         self.seed_node_addresses = {
@@ -176,10 +176,10 @@ class DaoStateMonitoringService(
         self._process_peers_dao_state_hashes(state_hashes, peers_node_address)
         for listener in self._listeners:
             listener.on_dao_state_hashes_changed()
-        if handler := self._create_snapshot_handler:
+        if handler := self.create_snapshot_handler:
             # As we get called multiple times from hashes of diff. seed nodes we want to avoid to
             # call our handler multiple times.
-            self._create_snapshot_handler = None
+            self.create_snapshot_handler = None
             handler()
 
     def on_get_state_hash_request(
