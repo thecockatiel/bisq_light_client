@@ -32,7 +32,11 @@ class BsqBlocksStorageService:
         self._blocks_persistence = BlocksPersistence(
             self._storage_dir, BsqBlocksStorageService.NAME, persistence_proto_resolver
         )
-        self.chain_height_of_persisted_blocks = 0
+        self._chain_height_of_persisted_blocks = 0
+    
+    @property
+    def chain_height_of_persisted_blocks(self) -> int:
+        return self._chain_height_of_persisted_blocks
 
     def persist_blocks(self, blocks: list["Block"]):
         ts = get_time_ms()
@@ -40,8 +44,8 @@ class BsqBlocksStorageService:
         self._blocks_persistence.write_blocks(protobuf_blocks)
 
         if blocks:
-            self.chain_height_of_persisted_blocks = max(
-                self.chain_height_of_persisted_blocks,
+            self._chain_height_of_persisted_blocks = max(
+                self._chain_height_of_persisted_blocks,
                 self._get_height_of_last_full_bucket(blocks),
             )
         logger.info(
@@ -60,7 +64,7 @@ class BsqBlocksStorageService:
             f"Reading and deserializing {len(blocks)} blocks took {get_time_ms() - ts} ms"
         )
         if blocks:
-            self.chain_height_of_persisted_blocks = (
+            self._chain_height_of_persisted_blocks = (
                 self._get_height_of_last_full_bucket(blocks)
             )
         return blocks
@@ -74,7 +78,7 @@ class BsqBlocksStorageService:
             Block.from_proto(protobuf_block) for protobuf_block in protobuf_blocks
         ]
         if blocks:
-            self.chain_height_of_persisted_blocks = (
+            self._chain_height_of_persisted_blocks = (
                 self._get_height_of_last_full_bucket(blocks)
             )
         logger.info(
