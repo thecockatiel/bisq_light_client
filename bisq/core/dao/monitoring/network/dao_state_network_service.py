@@ -1,8 +1,5 @@
 from typing import TYPE_CHECKING
 
-from bisq.core.dao.monitoring.network.request_state_hashes_handler_listener import (
-    RequestStateHashesHandlerListener,
-)
 from bisq.core.dao.monitoring.network.state_network_service import StateNetworkService
 from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_request import (
     GetDaoStateHashesRequest,
@@ -19,10 +16,8 @@ from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_response imp
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 
 if TYPE_CHECKING:
+    from bisq.core.dao.monitoring.network.request_state_hashes_handler import RequestStateHashesHandler
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.network.p2p.network.network_node import NetworkNode
-    from bisq.core.network.p2p.peers.broadcaster import Broadcaster
-    from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.dao.monitoring.model.dao_state_hash import DaoStateHash
 
 
@@ -68,7 +63,7 @@ class DaoStateNetworkService(
     def get_request_state_hashes_handler(
         self,
         node_address: "NodeAddress",
-        listener: "RequestStateHashesHandlerListener[GetDaoStateHashesResponse]",
+        listener: "RequestStateHashesHandler.Listener[GetDaoStateHashesResponse]",
     ):
         return RequestDaoStateHashesHandler(
             self._network_node, self._peer_manager, node_address, listener

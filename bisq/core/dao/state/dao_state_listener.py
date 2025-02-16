@@ -1,10 +1,11 @@
+from abc import ABC
 from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
 
-class DaoStateListener:
+class DaoStateListener(ABC):
     def on_new_block_height(self, block_height: int):
         pass
 

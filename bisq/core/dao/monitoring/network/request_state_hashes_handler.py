@@ -6,9 +6,6 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
-from bisq.core.dao.monitoring.network.request_state_hashes_handler_listener import (
-    RequestStateHashesHandlerListener,
-)
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.random import next_random_int
@@ -35,12 +32,23 @@ _Res = TypeVar("Res", bound="GetStateHashesResponse")
 class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
     TIMEOUT_SEC = 180
 
+    class Listener(Generic[_Res], ABC):
+        @abstractmethod
+        def on_complete(
+            self, get_state_hashes_response: _Res, peers_node_address: Optional["NodeAddress"]
+        ) -> None:
+            pass
+
+        @abstractmethod
+        def on_fault(self, error_message: str, connection: Optional["Connection"]) -> None:
+            pass
+
     def __init__(
         self,
         network_node: "NetworkNode",
         peer_manager: "PeerManager",
         node_address: "NodeAddress",
-        listener: RequestStateHashesHandlerListener[_Res],
+        listener: "RequestStateHashesHandler.Listener[_Res]",
     ):
         self._network_node = network_node
         self._peer_manager = peer_manager
