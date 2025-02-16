@@ -782,6 +782,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def is_notify_on_pre_release(self) -> bool:
         return self.pref_payload.notify_on_pre_release
     
+    def is_use_full_mode_dao_monitor(self) -> bool:
+        return self.pref_payload.use_full_mode_dao_monitor
+    
     def get_user_has_raised_trade_limit(self):
         return self.pref_payload.user_has_raised_trade_limit
     
