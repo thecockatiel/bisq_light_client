@@ -111,7 +111,7 @@ class DaoStateService(DaoSetupService):
     def get_clone(self) -> "DaoState":
         return self.dao_state.get_clone()
 
-    def get_bsq_state_clone_excluding_blocks(self) -> "DaoState":
+    def get_bsq_state_clone_excluding_blocks(self):
         return DaoState.get_bsq_state_clone_excluding_blocks(self.dao_state)
 
     def get_serialized_state_for_hash_chain(self) -> bytes:
