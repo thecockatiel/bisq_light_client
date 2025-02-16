@@ -51,7 +51,6 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
         bsq_wallet_service: "BsqWalletService",
         preferences: "Preferences",
         config: "Config",
-        storage_dir: Path,
     ):
         self._dao_state_service = dao_state_service
         self._genesis_tx_info = genesis_tx_info
@@ -61,7 +60,7 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
         self._bsq_wallet_service = bsq_wallet_service
         self._preferences = preferences
         self._config = config
-        self._storage_dir = storage_dir
+        self._storage_dir = config.storage_dir
 
         self._dao_state_candidate: Optional[protobuf.DaoState] = None
         self._hash_chain_candidate: list["DaoStateHash"] = []
