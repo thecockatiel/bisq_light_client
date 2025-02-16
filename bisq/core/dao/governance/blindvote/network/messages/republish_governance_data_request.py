@@ -26,7 +26,7 @@ class RepublishGovernanceDataRequest(
         return RepublishGovernanceDataRequest(message_version=message_version)
 
     def get_required_capabilities(self):
-        return Capabilities(Capability.DAO_FULL_NODE)
+        return Capabilities([Capability.DAO_FULL_NODE])
 
     def __str__(self):
         return f"RepublishGovernanceDataRequest{{\n}} {super().__str__()}"
