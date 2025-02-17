@@ -22,10 +22,20 @@ logger = get_logger(__name__)
 # TODO
 class BtcWalletService(WalletService, DaoStateListener):
 
-
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Proposal txs
     # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def complete_prepared_reimbursement_request_tx(
+        self,
+        issuance_amount: Coin,
+        issuance_address: "Address",
+        fee_tx: "Transaction",
+        op_return_data: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_compensation_request_tx Not implemented yet"
+        )
 
     def complete_prepared_compensation_request_tx(
         self,
@@ -38,8 +48,12 @@ class BtcWalletService(WalletService, DaoStateListener):
             "BtcWalletService.complete_prepared_compensation_request_tx Not implemented yet"
         )
 
-    def complete_prepared_burn_bsq_tx(self, prepared_burn_fee_tx: "Transaction", op_return_data: bytes) -> "Transaction":
-        raise RuntimeError("BtcWalletService.complete_prepared_burn_bsq_tx Not implemented yet")
+    def complete_prepared_burn_bsq_tx(
+        self, prepared_burn_fee_tx: "Transaction", op_return_data: bytes
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_burn_bsq_tx Not implemented yet"
+        )
 
     # // BISQ issue #4039: Prevent dust outputs from being created.
     # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
