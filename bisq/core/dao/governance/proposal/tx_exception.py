@@ -1,0 +1,2 @@
+class TxException(Exception):
+    pass
