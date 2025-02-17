@@ -2431,6 +2431,42 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._republish_governance_data_handler
 
     @property
+    def my_reputation_list_service(self):
+        if GlobalContainer._my_reputation_list_service is None:
+            from bisq.core.dao.governance.bond.reputation.my_reputation_list_service import (
+                MyReputationListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._my_reputation_list_service = MyReputationListService(
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._my_reputation_list_service
+
+    @property
+    def my_proof_of_burn_list_service(self):
+        if GlobalContainer._my_proof_of_burn_list_service is None:
+            from bisq.core.dao.governance.proofofburn.my_proof_of_burn_service import (
+                MyProofOfBurnListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._my_proof_of_burn_list_service = MyProofOfBurnListService(
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._my_proof_of_burn_list_service
+
+    @property
     def bsq_blocks_storage_service(self):
         if GlobalContainer._bsq_blocks_storage_service is None:
             from bisq.core.dao.state.storage.bsq_block_storage_service import (

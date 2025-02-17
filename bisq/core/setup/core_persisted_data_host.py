@@ -26,12 +26,11 @@ class CorePersistedDataHost:
         persisted_data_hosts.append(global_container.mailbox_message_service)
         persisted_data_hosts.append(global_container.ignored_mailbox_service)
         persisted_data_hosts.append(global_container.removed_payloads_service)
-        # TODO
-        # persisted_data_hosts.append(global_container.ballot_list_service)
-        # persisted_data_hosts.append(global_container.my_blind_vote_list_service)
-        # persisted_data_hosts.append(global_container.my_vote_list_service)
-        # persisted_data_hosts.append(global_container.my_proposal_list_service)
-        # persisted_data_hosts.append(global_container.my_reputation_list_service)
-        # persisted_data_hosts.append(global_container.my_proof_of_burn_list_service)
+        persisted_data_hosts.append(global_container.ballot_list_service)
+        persisted_data_hosts.append(global_container.my_blind_vote_list_service)
+        persisted_data_hosts.append(global_container.my_vote_list_service)
+        persisted_data_hosts.append(global_container.my_proposal_list_service)
+        persisted_data_hosts.append(global_container.my_reputation_list_service)
+        persisted_data_hosts.append(global_container.my_proof_of_burn_list_service)
         persisted_data_hosts.append(global_container.unconfirmed_bsq_change_output_list_service)
         return persisted_data_hosts
