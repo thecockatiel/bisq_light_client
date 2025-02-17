@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 
 class CompensationProposalFactory(BaseProposalFactory["CompensationProposal"]):
+    """Creates the CompensationProposal and the transaction."""
 
     def __init__(
         self,
