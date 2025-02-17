@@ -114,15 +114,6 @@ def configure_logging(log_file: Path, log_level="INFO"):
         bisq_logger.addHandler(file_handler)
 
     bisq_logger.setLevel(log_level)
-    for handler in bisq_logger.handlers:
-        handler.setLevel(log_level)
-
-    # Update child loggers' levels
-    for name, logger in logging.Logger.manager.loggerDict.items():
-        if name.startswith("bisq_light.") and isinstance(logger, logging.Logger):
-            logger.setLevel(log_level)
-            # update child loggers with root handlers
-            logger.handlers = bisq_logger.handlers.copy()
 
     if log_file:
         bisq_logger.info(f"Log file at: {log_file}")
@@ -136,6 +127,3 @@ def set_custom_log_level(level):
     if isinstance(level, str):
         level = getattr(logging, level.upper(), DEFAULT_LOG_LEVEL)
     bisq_logger.setLevel(level)
-    for name, logger in logging.Logger.manager.loggerDict.items():
-        if name.startswith("bisq_light.") and isinstance(logger, logging.Logger):
-            logger.setLevel(level)
