@@ -174,6 +174,9 @@ def resource_to_file(resource_path: Union[str, Path], destination_path: Path):
     return shutil.copy(from_path, destination_path)
 
 def list_resource_directory(dir_name: str):
+    path = get_resources_path().joinpath(dir_name)
+    if not path.exists():
+        return []
     return os.listdir(get_resources_path().joinpath(dir_name))
 
 def get_usable_space(path: Path) -> int:

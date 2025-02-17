@@ -7,7 +7,6 @@ from bisq.core.dao.governance.blindvote.vote_with_proposal_tx_id_list import (
 from bisq.core.dao.governance.voteresult.vote_result_exception import (
     VoteResultException,
 )
-from bisq.core.dao.governance.voteresult.vote_result_service import HashWithStake
 from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
@@ -15,6 +14,7 @@ from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
+    from bisq.core.dao.governance.voteresult.vote_result_service import HashWithStake
     from bisq.core.dao.state.model.blockchain.tx import Tx
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.state.dao_state_service import DaoStateService
