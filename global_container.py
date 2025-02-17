@@ -5,33 +5,25 @@ from typing import Optional
 from utils.data import SimpleProperty
 from utils.di import DependencyProvider
 
+from bisq.common.config.config import Config
+from utils.dir import user_data_dir
 
-class GlobalContainer:
+instances = {
+    # To prevent infinite tmp dir creation
+    "_config": Config("bisq_light_client", user_data_dir())
+}
+
+
+class DynamicAttributesMeta(type):
+    def __getattr__(cls, name):
+        return instances.get(name, None)
+
+    def __setattr__(cls, name, value):
+        instances[name] = value
+
+
+class GlobalContainer(metaclass=DynamicAttributesMeta):
     ###############################################################################
-    _core_context = None
-    _core_api = None
-
-    _core_dispute_agents_service = None
-    _core_help_service = None
-    _core_offers_service = None
-    _core_payment_accounts_service = None
-    _core_price_service = None
-    _core_trades_service = None
-    _core_wallets_service = None
-
-    _grpc_server = None
-    _grpc_exception_handler = None
-    _grpc_dispute_agents_service = None
-    _grpc_help_service = None
-    _grpc_offers_service = None
-    _grpc_payment_accounts_service = None
-    _grpc_price_service = None
-    _grpc_shutdown_service = None
-    _grpc_version_service = None
-    _grpc_trades_service = None
-    _grpc_wallets_service = None
-    _grpc_dev_commands_service = None
-
     @property
     def core_context(self):
         if GlobalContainer._core_context is None:
@@ -311,64 +303,6 @@ class GlobalContainer:
         return GlobalContainer._grpc_dev_commands_service
 
     ############################################################################### (not listed in ModuleForAppWithP2p)
-    _config = None
-    _bisq_setup = None
-    _domain_initialisation = None
-    _p2p_network_setup = None
-    _provider = None
-    _corrupted_storage_file_handler = None
-    _btc_formatter = None
-    _bsq_formatter = None
-    _removed_payloads_service = None
-    _mempool_service = None
-    _wallet_app_setup = None
-    _trade_limits = None
-
-    _arbitrator_manager = None
-    _arbitrator_service = None
-    _arbitration_manager = None
-    _mediation_manager = None
-    _mediator_manager = None
-    _mediator_service = None
-    _refund_manager = None
-    _refund_agent_manager = None
-    _refund_agent_service = None
-    _arbitration_dispute_list_service = None
-    _mediation_dispute_list_service = None
-    _refund_dispute_list_service = None
-
-    _trader_chat_manager = None
-    _mailbox_message_service = None
-    _ignored_mailbox_service = None
-    _bsq_swap_trade_manager = None
-    _trade_statistics_manager = None
-    _trade_util = None
-    _wallets_manager = None
-    _btc_fee_receiver_service = None
-    _dump_delayed_payout_tx = None
-    _create_offer_service = None
-    _offer_util = None
-    _cleanup_mailbox_messages_service = None
-    _xmr_tx_proof_service = None
-
-    _mobile_message_encryption = None
-    _mobile_notification_validator = None
-    _mobile_model = None
-    _mobile_notification_service = None
-
-    _my_offer_taken_events = None
-    _trade_events = None
-    _dispute_msg_events = None
-
-    _price_alert = None
-    _market_alerts = None
-
-    _trigger_price_service = None
-
-    _open_bsq_swap_offer_service = None
-    _local_bitcoin_node = None
-    _app_startup_state = None
-
     @property
     def config(self):
         if GlobalContainer._config is None:
@@ -1186,19 +1120,6 @@ class GlobalContainer:
         return GlobalContainer._app_startup_state
 
     ############################################################################### ModuleForAppWithP2p
-    _key_storage = None
-    _key_ring = None
-    _user = None
-    _clock_watcher = None
-    _network_proto_resolver = None
-    _persistence_proto_resolver = None
-    _preferences = None
-    _bridge_address_provider = None
-    _tor_setup = None
-
-    _seed_node_repository = None
-    _ban_filter = None
-
     @property
     def key_storage(self):
         if GlobalContainer._key_storage is None:
@@ -1375,18 +1296,6 @@ class GlobalContainer:
         return GlobalContainer._burning_man_presentation_service
 
     ###############################################################################
-    _trade_manager = None
-    _closed_tradable_manager = None
-    _closed_tradable_formatter = None
-    _failed_trades_manager = None
-    _take_offer_model = None
-    _bsq_swap_take_offer_model = None
-    _account_age_witness_service = None
-    _account_age_witness_storage_service = None
-    _signed_witness_service = None
-    _signed_witness_storage_service = None
-    _referral_id_service = None
-
     @property
     def trade_manager(self):
         if GlobalContainer._trade_manager is None:
@@ -1603,8 +1512,6 @@ class GlobalContainer:
         return GlobalContainer._referral_id_service
 
     ############################################################################### EncryptionServiceModule
-    _encryption_service = None
-
     @property
     def encryption_service(self):
         if GlobalContainer._encryption_service is None:
@@ -1616,10 +1523,6 @@ class GlobalContainer:
         return GlobalContainer._encryption_service
 
     ############################################################################### OfferModule
-    _open_offer_manager = None
-    _offer_book_service = None
-    _offer_filter_service = None
-
     @property
     def open_offer_manager(self):
         if GlobalContainer._open_offer_manager is None:
@@ -1685,22 +1588,6 @@ class GlobalContainer:
         return GlobalContainer._offer_filter_service
 
     ############################################################################### P2PModule
-    _clock = None
-    _p2p_service = None
-    _peer_manager = None
-    _p2p_data_storage = None
-    _append_only_data_store_service = None
-    _protected_data_store_service = None
-    _resource_data_store_service = None
-    _request_data_manager = None
-    _peer_exchange_manager = None
-    _keep_alive_manager = None
-    _broadcaster = None
-    _network_node_provider = None
-    _network_node = None
-    _socks5_proxy_provider = None
-    _http_client = None
-
     @property
     def clock(self):
         if GlobalContainer._clock is None:
@@ -1915,18 +1802,6 @@ class GlobalContainer:
         return GlobalContainer._http_client
 
     ############################################################################### TODO: BitcoinModule
-    _address_entry_list = None
-    _wallets_setup = None
-    _btc_wallet_service = None
-    _bsq_wallet_service = None
-    _bsq_transfer_service = None
-    _trade_wallet_service = None
-    _providers_repository = None
-    _balances = None
-    _price_feed_service = None
-    _fee_service = None
-    _tx_fee_estimation_service = None
-
     @property
     def address_entry_list(self):
         if GlobalContainer._address_entry_list is None:
@@ -2071,22 +1946,6 @@ class GlobalContainer:
         return GlobalContainer._tx_fee_estimation_service
 
     ############################################################################### TODO: Daomodule
-    _dao_setup = None
-    _dao_facade = None
-
-    _genesis_tx_info = None
-    _dao_state = None
-    _dao_state_service = None
-    _dao_state_snapshot_service = None
-    _dao_state_storage_service = None
-    _dao_state_monitoring_service = None
-    _dao_state_network_service = None
-    _unconfirmed_bsq_change_output_list_service = None
-
-    _vote_result_service = None
-
-    _bsq_blocks_storage_service = None
-
     @property
     def dao_setup(self):
         if GlobalContainer._dao_setup is None:
@@ -2240,6 +2099,226 @@ class GlobalContainer:
         return GlobalContainer._unconfirmed_bsq_change_output_list_service
 
     @property
+    def period_service(self):
+        if GlobalContainer._period_service is None:
+            from bisq.core.dao.governance.period.period_service import PeriodService
+
+            GlobalContainer._period_service = PeriodService(self.dao_state_service)
+        return GlobalContainer._period_service
+
+    @property
+    def my_proposal_list_service(self):
+        if GlobalContainer._my_proposal_list_service is None:
+            from bisq.core.dao.governance.proposal.my_proposal_list_service import (
+                MyProposalListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._my_proposal_list_service = MyProposalListService(
+                self.p2p_service,
+                self.dao_state_service,
+                self.period_service,
+                self.wallets_manager,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+                self.pub_key_ring,
+            )
+
+        return GlobalContainer._my_proposal_list_service
+
+    @property
+    def proposal_service(self):
+        if GlobalContainer._proposal_service is None:
+            from bisq.core.dao.governance.proposal.proposal_service import (
+                ProposalService,
+            )
+
+            GlobalContainer._proposal_service = ProposalService(
+                self.p2p_service,
+                self.period_service,
+                self.proposal_storage_service,
+                self.temp_proposal_storage_service,
+                self.append_only_data_store_service,
+                self.protected_data_store_service,
+                self.dao_state_service,
+                self.proposal_validator_provider,
+            )
+
+        return GlobalContainer._proposal_service
+
+    @property
+    def proposal_list_presentation(self):
+        if GlobalContainer._proposal_list_presentation is None:
+            from bisq.core.dao.governance.proposal.proposal_list_presentation import (
+                ProposalListPresentation,
+            )
+
+            GlobalContainer._proposal_list_presentation = ProposalListPresentation(
+                self.proposal_service,
+                self.dao_state_service,
+                self.my_proposal_list_service,
+                self.bsq_wallet_service,
+                self.proposal_validator_provider,
+            )
+
+        return GlobalContainer._proposal_list_presentation
+
+    @property
+    def proposal_storage_service(self):
+        if GlobalContainer._proposal_storage_service is None:
+            from bisq.core.dao.governance.proposal.storage.appendonly.proposal_storage_service import (
+                ProposalStorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._proposal_storage_service = ProposalStorageService(
+                self.config.storage_dir,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._proposal_storage_service
+
+    @property
+    def temp_proposal_storage_service(self):
+        if GlobalContainer._temp_proposal_storage_service is None:
+            from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_storage_service import (
+                TempProposalStorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._temp_proposal_storage_service = TempProposalStorageService(
+                self.config.storage_dir,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._temp_proposal_storage_service
+
+    @property
+    def proposal_validator_provider(self):
+        if GlobalContainer._proposal_validator_provider is None:
+            from bisq.core.dao.governance.proposal.proposal_validator_provider import (
+                ProposalValidatorProvider,
+            )
+            from bisq.core.dao.governance.proposal.compensation.compensation_validator import (
+                CompensationValidator,
+            )
+            from bisq.core.dao.governance.proposal.confiscatebond.confiscate_bond_validator import (
+                ConfiscateBondValidator,
+            )
+            from bisq.core.dao.governance.proposal.generic.generic_proposal_validator import (
+                GenericProposalValidator,
+            )
+            from bisq.core.dao.governance.proposal.param.change_param_validator import (
+                ChangeParamValidator,
+            )
+            from bisq.core.dao.governance.proposal.reimbursement.reimbursement_validator import (
+                ReimbursementValidator,
+            )
+            from bisq.core.dao.governance.proposal.remove_asset.remove_asset_validator import (
+                RemoveAssetValidator,
+            )
+            from bisq.core.dao.governance.proposal.role.role_validator import (
+                RoleValidator,
+            )
+
+            GlobalContainer._proposal_validator_provider = ProposalValidatorProvider(
+                CompensationValidator(self.dao_state_service, self.period_service),
+                ConfiscateBondValidator(self.dao_state_service, self.period_service),
+                GenericProposalValidator(self.dao_state_service, self.period_service),
+                ChangeParamValidator(
+                    self.dao_state_service, self.period_service, self.bsq_formatter
+                ),
+                ReimbursementValidator(self.dao_state_service, self.period_service),
+                RemoveAssetValidator(self.dao_state_service, self.period_service),
+                RoleValidator(self.dao_state_service, self.period_service),
+            )
+
+        return GlobalContainer._proposal_validator_provider
+
+    @property
+    def ballot_list_service(self):
+        if GlobalContainer._ballot_list_service is None:
+            from bisq.core.dao.governance.ballot.ballot_list_service import (
+                BallotListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._ballot_list_service = BallotListService(
+                self.proposal_service,
+                self.period_service,
+                self.proposal_validator_provider,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._ballot_list_service
+
+    @property
+    def blind_vote_list_service(self):
+        if GlobalContainer._blind_vote_list_service is None:
+            from bisq.core.dao.governance.blindvote.blind_vote_list_service import (
+                BlindVoteListService,
+            )
+
+            GlobalContainer._blind_vote_list_service = BlindVoteListService(
+                self.dao_state_service,
+                self.p2p_service,
+                self.period_service,
+                self.blind_vote_storage_service,
+                self.append_only_data_store_service,
+                self.blind_vote_validator,
+            )
+
+        return GlobalContainer._blind_vote_list_service
+
+    @property
+    def blind_vote_storage_service(self):
+        if GlobalContainer._blind_vote_storage_service is None:
+            from bisq.core.dao.governance.blindvote.storage.blind_vote_storage_service import (
+                BlindVoteStorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._blind_vote_storage_service = BlindVoteStorageService(
+                self.config.storage_dir,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._blind_vote_storage_service
+
+    @property
+    def blind_vote_validator(self):
+        if GlobalContainer._blind_vote_validator is None:
+            from bisq.core.dao.governance.blindvote.blind_vote_validator import (
+                BlindVoteValidator,
+            )
+
+            GlobalContainer._blind_vote_validator = BlindVoteValidator(
+                self.dao_state_service,
+                self.period_service,
+            )
+
+        return GlobalContainer._blind_vote_validator
+
+    @property
     def vote_result_service(self):
         if GlobalContainer._vote_result_service is None:
             from bisq.core.dao.governance.voteresult.vote_result_service import (
@@ -2247,10 +2326,63 @@ class GlobalContainer:
             )
 
             GlobalContainer._vote_result_service = VoteResultService(
-                # TODO
+                self.proposal_list_presentation,
+                self.dao_state_service,
+                self.period_service,
+                self.ballot_list_service,
+                self.blind_vote_list_service,
+                self.issuance_service,
+                self.missing_data_request_service,
             )
 
         return GlobalContainer._vote_result_service
+
+    @property
+    def missing_data_request_service(self):
+        if GlobalContainer._missing_data_request_service is None:
+            from bisq.core.dao.governance.voteresult.missing_data_request_service import (
+                MissingDataRequestService,
+            )
+
+            GlobalContainer._missing_data_request_service = MissingDataRequestService(
+                self.republish_governance_data_handler,
+                self.blind_vote_list_service,
+                self.proposal_service,
+                self.p2p_service,
+            )
+
+        return GlobalContainer._missing_data_request_service
+
+    @property
+    def issuance_service(self):
+        if GlobalContainer._issuance_service is None:
+            from bisq.core.dao.governance.voteresult.issuance.issuance_service import (
+                IssuanceService,
+            )
+
+            GlobalContainer._issuance_service = IssuanceService(
+                self.dao_state_service,
+                self.period_service,
+            )
+
+        return GlobalContainer._issuance_service
+
+    @property
+    def republish_governance_data_handler(self):
+        if GlobalContainer._republish_governance_data_handler is None:
+            from bisq.core.dao.governance.blindvote.network.republish_governance_data_handler import (
+                RepublishGovernanceDataHandler,
+            )
+
+            GlobalContainer._republish_governance_data_handler = (
+                RepublishGovernanceDataHandler(
+                    self.network_node,
+                    self.peer_manager,
+                    self.seed_node_repository,
+                )
+            )
+
+        return GlobalContainer._republish_governance_data_handler
 
     @property
     def bsq_blocks_storage_service(self):
@@ -2268,9 +2400,6 @@ class GlobalContainer:
         return GlobalContainer._bsq_blocks_storage_service
 
     ############################################################################### Alert module
-    _alert_manager = None
-    _private_notification_manager = None
-
     @property
     def alert_manager(self):
         if GlobalContainer._alert_manager is None:
@@ -2303,8 +2432,6 @@ class GlobalContainer:
         return GlobalContainer._private_notification_manager
 
     ############################################################################### Filter module
-    _filter_manager = None
-
     @property
     def filter_manager(self):
         if GlobalContainer._filter_manager is None:
@@ -2323,8 +2450,6 @@ class GlobalContainer:
         return GlobalContainer._filter_manager
 
     ###############################################################################
-    _pub_key_ring = None
-
     @property
     def pub_key_ring(self):
         if GlobalContainer._pub_key_ring is None:
@@ -2337,10 +2462,6 @@ GLOBAL_CONTAINER = SimpleProperty[Optional[GlobalContainer]]()
 # TODO: init with None for catching bugs later.
 # this is done for convenience during dev
 GLOBAL_CONTAINER.value = GlobalContainer()
-from bisq.common.config.config import Config
-from utils.dir import user_data_dir
-
-GLOBAL_CONTAINER.value._config = Config("bisq_light_client", user_data_dir())
 
 
 def set_global_container(container: GlobalContainer):
