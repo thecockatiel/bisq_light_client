@@ -182,7 +182,5 @@ class BisqHeadlessApp(HeadlessApp):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def handle_uncaught_exception(self, exception: Exception, do_shutdown: bool):
-        if not self.__shutdown_requested:
-            logger.error(exception)
-            if do_shutdown:
-                self.stop()
+        if not self.__shutdown_requested and do_shutdown:
+            self.stop()
