@@ -99,3 +99,17 @@ class BsqWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BsqWalletService.get_prepared_blind_vote_tx Not implemented yet"
         )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Burn fee txs
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_prepared_proposal_tx(self, fee: Coin) -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_proposal_tx Not implemented yet"
+        )
+
+    def get_prepared_issuance_tx(self, fee: Coin) -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_issuance_tx Not implemented yet"
+        )
