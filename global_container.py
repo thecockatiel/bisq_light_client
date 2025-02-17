@@ -2268,6 +2268,25 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._ballot_list_service
 
     @property
+    def my_vote_list_service(self):
+        if GlobalContainer._my_vote_list_service is None:
+            from bisq.core.dao.governance.myvote.my_vote_list_service import (
+                MyVoteListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._my_vote_list_service = MyVoteListService(
+                self.dao_state_service,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+            )
+
+        return GlobalContainer._my_vote_list_service
+
+    @property
     def blind_vote_list_service(self):
         if GlobalContainer._blind_vote_list_service is None:
             from bisq.core.dao.governance.blindvote.blind_vote_list_service import (
@@ -2317,6 +2336,33 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._blind_vote_validator
+
+    @property
+    def my_blind_vote_list_service(self):
+        if GlobalContainer._my_blind_vote_list_service is None:
+            from bisq.core.dao.governance.blindvote.my_blind_vote_list_service import (
+                MyBlindVoteListService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._my_blind_vote_list_service = MyBlindVoteListService(
+                self.p2p_service,
+                self.dao_state_service,
+                self.period_service,
+                self.wallets_manager,
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.ballot_list_service,
+                self.my_vote_list_service,
+                self.my_proposal_list_service,
+            )
+
+        return GlobalContainer._my_blind_vote_list_service
 
     @property
     def vote_result_service(self):
