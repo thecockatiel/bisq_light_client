@@ -134,7 +134,7 @@ class ProposalListPresentation(
         self.all_proposals.clear()
         self.all_proposals.extend(proposals_set)
 
-        self.active_or_my_unconfirmed_proposals.filter = (
+        self.active_or_my_unconfirmed_proposals.set_filter(
             lambda proposal: self.validator_provider.get_validator(
                 proposal
             ).is_valid_and_confirmed(proposal)

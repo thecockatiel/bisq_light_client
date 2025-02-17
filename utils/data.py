@@ -219,7 +219,7 @@ class ObservableMap(dict[K, V]):
 
 
 class ObservableList(list[T]):
-    def __init__(self, *args):
+    def __init__(self, *args: Iterable[T]):
         super().__init__(*args)
         self._listeners: Set[Callable[[ObservableChangeEvent[T]], None]] = set()
     
@@ -301,11 +301,10 @@ class FilteredList(Generic[T]):
         self._source.add_listener(self._on_change)
 
     @property
-    def filter(self):
+    def filter(self) -> Callable[[T], bool]:
         return self._filter
-    
-    @filter.setter
-    def filter(self, new_filter: Callable[[T], bool]):
+
+    def set_filter(self, new_filter: Callable[[T], bool]) -> None:
         self._filter = new_filter
         new_filtered = [e for e in self._source if new_filter(e)]
         added = [e for e in new_filtered if e not in self._filtered]
@@ -322,7 +321,7 @@ class FilteredList(Generic[T]):
         if e.added_elements:
             added = []
             for a in e.added_elements:
-                if self.filter(a):
+                if self._filter(a):
                     self._filtered.append(a)
                     added.append(a)
         else: 
