@@ -59,22 +59,25 @@ class CommonSetup:
 
     @staticmethod
     def setup_uncaught_exception_handler(uncaught_exception_handler: UncaughtExceptionHandler):
+        original_excepthook = sys.excepthook
         def exception_handler(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType, thread: threading.Thread = None):
-            if exc_type.__name__ in  ["CancelledError", "AsyncioCancelledError", "SystemExit"]:
+            if exc_type.__name__ == "SystemExit":
+                original_excepthook(exc_type, exc_value, exc_traceback)
+                return
+            
+            if exc_type.__name__ in  ["CancelledError", "AsyncioCancelledError"]:
                 return
             
             if isinstance(exc_value, MemoryError):
                 logger.error("OutOfMemoryError occurred. We shut down.", exc_info=(exc_type, exc_value, exc_traceback))
-                # Leave it to the handleUncaughtException to shut down or not.
-                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, False))
-
+                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, True))
             else:
                 logger.error(f"Uncaught Exception from thread {threading.current_thread().name}")
                 logger.error(f"throwableMessage= {str(exc_value)}")
                 logger.error(f"throwableClass= {exc_type.__name__}")
                 logger.error(f"Stack trace:\n{''.join(traceback.format_tb(exc_traceback))}") if exc_traceback else None
-                traceback.print_exc()
-                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, False))
+                should_exit = exc_type.__name__ == "ImportError"
+                UserThread.execute(lambda: uncaught_exception_handler.handle_uncaught_exception(exc_value, should_exit))
 
         sys.excepthook = exception_handler
         threading.excepthook = lambda args: exception_handler(args.exc_type, args.exc_value, args.exc_traceback, args.thread)

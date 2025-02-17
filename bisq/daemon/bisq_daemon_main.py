@@ -20,8 +20,12 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
     @staticmethod
     async def main():
         # entry point
-        BisqDaemonMain().execute()
-        await BisqDaemonMain.keep_running()
+        try:
+            BisqDaemonMain().execute()
+        except Exception as e:
+            print(f"Unrecoverable Error: {e}")
+        else:
+            await BisqDaemonMain.keep_running()
 
     # /////////////////////////////////////////////////////////////////////////////////////
     # // First synchronous execution tasks
@@ -32,11 +36,11 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
 
     def launch_application(self):
         self.headless_app = BisqDaemon()
+        self.headless_app.graceful_shut_down_handler = self
         UserThread.execute(self.on_application_launched)
 
     def on_application_launched(self):
         super().on_application_launched()
-        self.headless_app.graceful_shut_down_handler = self
 
     # /////////////////////////////////////////////////////////////////////////////////////
     # // We continue with a series of synchronous execution tasks
