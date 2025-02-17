@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.dao.governance.param.param import Param
 
@@ -24,11 +24,11 @@ class ProposalConsensus:
 
     @staticmethod
     def get_op_return_data(
-        hash_of_payload: bytes, op_return_type: int, version: int
+        hash_of_payload: bytes, op_return_type: int, version: Union[int, bytes]
     ) -> bytes:
         with BytesIO() as output_stream:
             output_stream.write(bytes([op_return_type]))
-            output_stream.write(bytes([version]))
+            output_stream.write(bytes([version]) if isinstance(version, int) else version)
             output_stream.write(hash_of_payload)
             return output_stream.getvalue()
 
