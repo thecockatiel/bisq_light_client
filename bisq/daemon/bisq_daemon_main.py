@@ -70,10 +70,12 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
             try:
                 BisqDaemonMain._keep_running_future = as_future(Deferred())
                 await BisqDaemonMain._keep_running_future
-            except:
-                # ignore interruptions
-                pass
+            except Exception as e:
+                if isinstance(e, asyncio.CancelledError):
+                    return
+                # ignore other interruptions
     
+    @staticmethod
     def stop_keep_running():
         if BisqDaemonMain._keep_running_future:
             BisqDaemonMain._keep_running_future.cancel()
