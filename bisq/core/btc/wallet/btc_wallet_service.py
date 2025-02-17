@@ -11,6 +11,7 @@ from bitcoinj.base.coin import Coin
 from utils.aio import FutureCallback
 
 if TYPE_CHECKING:
+    from bitcoinj.core.address import Address
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.core.transaction import Transaction
@@ -20,6 +21,22 @@ logger = get_logger(__name__)
 
 # TODO
 class BtcWalletService(WalletService, DaoStateListener):
+
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Proposal txs
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def complete_prepared_compensation_request_tx(
+        self,
+        issuance_amount: Coin,
+        issuance_address: "Address",
+        fee_tx: "Transaction",
+        op_return_data: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_compensation_request_tx Not implemented yet"
+        )
 
     def complete_prepared_burn_bsq_tx(self, prepared_burn_fee_tx: "Transaction", op_return_data: bytes) -> "Transaction":
         raise RuntimeError("BtcWalletService.complete_prepared_burn_bsq_tx Not implemented yet")
