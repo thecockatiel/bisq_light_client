@@ -66,19 +66,13 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
         if self._grpc_server:
             self._grpc_server.shut_down()
 
-
     _keep_running_future: "asyncio.Future" = None
+
     @staticmethod
     async def keep_running():
-        while True:
-            try:
-                BisqDaemonMain._keep_running_future = as_future(Deferred())
-                await BisqDaemonMain._keep_running_future
-            except Exception as e:
-                if isinstance(e, asyncio.CancelledError):
-                    return
-                # ignore other interruptions
-    
+        BisqDaemonMain._keep_running_future = as_future(Deferred())
+        await BisqDaemonMain._keep_running_future
+
     @staticmethod
     def stop_keep_running():
         if BisqDaemonMain._keep_running_future:
