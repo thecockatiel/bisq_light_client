@@ -6,7 +6,7 @@ from bisq.core.dao.governance.proposal.my_proposal_list_service_listener import 
 )
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
-from utils.data import ObservableList
+from utils.data import FilteredList, ObservableList
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
@@ -49,7 +49,9 @@ class ProposalListPresentation(
         my_proposal_list_service.add_listener(self)
 
         self.all_proposals = ObservableList["Proposal"]()
-        self.active_or_my_unconfirmed_proposals: Iterable["Proposal"] = []
+        self.active_or_my_unconfirmed_proposals = FilteredList["Proposal"](
+            self.all_proposals
+        )
 
         self.proposal_list_change_listener = lambda e: self._update_lists()
 
@@ -132,10 +134,9 @@ class ProposalListPresentation(
         self.all_proposals.clear()
         self.all_proposals.extend(proposals_set)
 
-        self.active_or_my_unconfirmed_proposals = filter(
+        self.active_or_my_unconfirmed_proposals.filter = (
             lambda proposal: self.validator_provider.get_validator(
                 proposal
             ).is_valid_and_confirmed(proposal)
-            or proposal in my_unconfirmed_proposals,
-            self.all_proposals,
+            or proposal in my_unconfirmed_proposals
         )
