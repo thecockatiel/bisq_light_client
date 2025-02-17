@@ -71,7 +71,7 @@ class DelayedPayoutTxReceiverService:
         self.current_chain_height = 0
 
         self.dao_state_service.add_dao_state_listener(self)
-        last_block = self.dao_state_service.get_last_block()
+        last_block = self.dao_state_service.last_block
         if last_block:
             self.apply_block(last_block)
 
