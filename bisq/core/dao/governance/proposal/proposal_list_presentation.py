@@ -49,7 +49,7 @@ class ProposalListPresentation(
         my_proposal_list_service.add_listener(self)
 
         self.all_proposals = ObservableList["Proposal"]()
-        self.active_or_my_unconfirmed_proposals = Iterable["Proposal"]()
+        self.active_or_my_unconfirmed_proposals: Iterable["Proposal"] = []
 
         self.proposal_list_change_listener = lambda e: self._update_lists()
 
