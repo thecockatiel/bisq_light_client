@@ -115,7 +115,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
             current_thread().name = "copyBsqBlocksFromResources"
             self._bsq_blocks_storage_service.copy_from_resources(post_fix)
 
-            super().read_from_resources(
+            super(DaoStateStorageService, self).read_from_resources(
                 post_fix, lambda: self._executor_service.submit(inner_task)
             )
 
