@@ -291,5 +291,77 @@ class ObservableList(list[T]):
             super().extend(retained)
             self._notify(ObservableChangeEvent(None, removed))
 
+class FilteredList(Generic[T]):
+
+    def __init__(self, source: ObservableList[T], filter: Callable[[T], bool] = lambda e: True):
+        self._source = source
+        self._filter = filter
+        self._filtered = [e for e in source if filter(e)]
+        self._listeners: set[Callable[[ObservableChangeEvent[T]], None]] = set()
+        self._source.add_listener(self._on_change)
+
+    @property
+    def filter(self):
+        return self._filter
+    
+    @filter.setter
+    def filter(self, new_filter: Callable[[T], bool]):
+        self._filter = new_filter
+        new_filtered = [e for e in self._source if new_filter(e)]
+        added = [e for e in new_filtered if e not in self._filtered]
+        removed = [e for e in self._filtered if e not in new_filtered]
+        if not added:
+            added = None
+        if not removed:
+            removed = None
+        self._filtered = new_filtered
+        if added or removed:
+            self._notify(ObservableChangeEvent(added, removed))
+
+    def _on_change(self, e: ObservableChangeEvent[T]):
+        if e.added_elements:
+            added = []
+            for a in e.added_elements:
+                if self.filter(a):
+                    self._filtered.append(a)
+                    added.append(a)
+        else: 
+            added = None
+        if e.removed_elements:
+            removed = []
+            for r in e.removed_elements:
+                if r in self._filtered:
+                    self._filtered.remove(r)
+                    removed.append(r)
+        else: 
+            removed = None
+        if added or removed:
+            self._notify(ObservableChangeEvent(added, removed))
+        
+    def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
+        self._listeners.add(listener)
+        
+    def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
+        self._listeners.discard(listener)
+        
+    def remove_all_listeners(self):
+        self._listeners.clear()
+        
+    def _notify(self, e: ObservableChangeEvent[T]):
+        for listener in self._listeners.copy():
+            listener(e)
+        
+    def __iter__(self):
+        return iter(self._filtered)
+    
+    def __getitem__(self, index: int):
+        return self._filtered[index]
+    
+    def __len__(self):
+        return len(self._filtered)
+    
+    def __contains__(self, element: T):
+        return element in self._filtered
+
 def raise_required() -> None:
     raise ValueError("This field is required and cannot be unset")
