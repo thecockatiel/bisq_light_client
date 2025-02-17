@@ -43,7 +43,7 @@ class TestFilteredList(unittest.TestCase):
 
     def test_changing_filter(self):
         # Change filter to select odd numbers
-        self.filtered_list.filter = lambda x: x % 2 != 0
+        self.filtered_list.set_filter(lambda x: x % 2 != 0)
         # Expect initial odd numbers from the source: 1, 3, 5
         self.assertEqual(list(self.filtered_list), [1, 3, 5])
         # Append an odd number and even number, check filtered list updates accordingly
@@ -63,7 +63,7 @@ class TestFilteredList(unittest.TestCase):
         # Change filter from even to odd:
         # Initial filtered list: [2, 4]
         # New filtered list: [1, 3, 5]
-        self.filtered_list.filter = lambda x: x % 2 != 0
+        self.filtered_list.set_filter(lambda x: x % 2 != 0)
         # Verify event: expect added elements [1, 3, 5], removed [2, 4]
         self.assertEqual(len(events), 1)
         added, removed = events[0]
