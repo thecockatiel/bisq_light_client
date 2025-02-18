@@ -22,28 +22,30 @@ class ScriptPattern:
         if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_P2PKH):
             return True
         return False
-        
+
     @staticmethod
     def is_p2sh(script: "Script") -> bool:
         if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_P2SH):
             return True
         return False
-        
+
     @staticmethod
     def is_p2wpkh(script: "Script") -> bool:
         if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_P2WPKH):
             return True
         return False
-    
+
     @staticmethod
     def is_p2wsh(script: "Script") -> bool:
         if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_P2WSH):
             return True
         return False
-    
+
     @staticmethod
     def is_witness_v0(script: "Script") -> bool:
-        if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_WITNESS_V0):
+        if match_script_against_template(
+            script.decoded, SCRIPTPUBKEY_TEMPLATE_WITNESS_V0
+        ):
             return True
         return False
 
@@ -56,7 +58,10 @@ class ScriptPattern:
         # Must end in OP_CHECKMULTISIG[VERIFY].
         if not is_opcode(chunk[0]):
             return False
-        if not (chunk[0] == opcodes.OP_CHECKMULTISIG or chunk[0] == opcodes.OP_CHECKMULTISIGVERIFY):
+        if not (
+            chunk[0] == opcodes.OP_CHECKMULTISIG
+            or chunk[0] == opcodes.OP_CHECKMULTISIGVERIFY
+        ):
             return False
         try:
             # Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
@@ -74,5 +79,11 @@ class ScriptPattern:
                 return False
         except:
             return False  # Not an OP_N opcode.
-        
+
         return True
+
+    @staticmethod
+    def is_op_return(script: "Script"):
+        """Returns whether this script is using OP_RETURN to store arbitrary data."""
+        chunks = script.decoded
+        return len(chunks) > 0 and chunks[0][0] == opcodes.OP_RETURN
