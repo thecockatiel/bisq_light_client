@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bitcoinj.base.coin import Coin
@@ -89,6 +89,15 @@ class BsqWalletService(WalletService, DaoStateListener):
     def get_spendable_bsq_transaction_outputs(self) -> list["TransactionOutput"]:
         raise RuntimeError(
             "BsqWalletService.get_spendable_bsq_transaction_outputs Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // BSQ TransactionOutputs and Transactions
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_pending_wallet_transactions_stream(self) -> Iterable["Transaction"]:
+        raise RuntimeError(
+            "BsqWalletService.get_pending_wallet_transactions_stream Not implemented yet"
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
