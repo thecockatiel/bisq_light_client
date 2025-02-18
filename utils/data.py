@@ -278,6 +278,12 @@ class ObservableList(list[T]):
         super().__delitem__(index)
         self._notify(ObservableChangeEvent(None, [element]))
 
+    def set_all(self, elements: Iterable[T]) -> None:
+        removed = list(self)
+        super().clear()
+        super().extend(elements)
+        self._notify(ObservableChangeEvent(elements, removed))
+
     def retain_all(self, elements: Iterable[T]) -> None:
         removed = []
         retained = []
