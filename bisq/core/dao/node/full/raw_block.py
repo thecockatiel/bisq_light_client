@@ -28,6 +28,10 @@ class RawBlock(BaseBlock, NetworkPayload):
         super().__init__(height, time, hash, previous_block_hash)
         self._raw_txs = raw_txs
 
+    @property
+    def raw_txs(self):
+        return self._raw_txs
+
     @staticmethod
     def from_block(block: "Block") -> "RawBlock":
         txs = tuple(RawTx.from_tx(tx) for tx in block.get_txs())
