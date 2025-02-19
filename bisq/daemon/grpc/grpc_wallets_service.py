@@ -51,6 +51,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 class GrpcWalletsService(WalletsServicer):
 
     def __init__(self, core_api: "CoreApi", exception_handler: "GrpcExceptionHandler"):
@@ -66,7 +67,7 @@ class GrpcWalletsService(WalletsServicer):
     def GetDaoStatus(self, request: "GetDaoStatusRequest", context: "ServicerContext"):
         try:
             return GetDaoStatusReply(
-                is_dao_state_ready_and_in_sync=self.core_api.is_dao_state_ready_and_in_sync()
+                is_dao_state_ready_and_in_sync=self.core_api.is_dao_state_ready_and_in_sync
             )
         except Exception as e:
             self.exception_handler.handle_exception(logger, e, context)

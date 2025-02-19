@@ -113,8 +113,9 @@ class CoreWalletsService:
         else:
             return "mainnet"
 
+    @property
     def is_dao_state_ready_and_in_sync(self) -> bool:
-        return self.dao_facade.is_dao_state_ready_and_in_sync()
+        return self.dao_facade.is_dao_state_ready_and_in_sync
 
     def get_balances(self, currency_code: str) -> BalancesInfo:
         self._verify_wallet_currency_code_is_valid(currency_code)
