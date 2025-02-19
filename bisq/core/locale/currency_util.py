@@ -263,7 +263,10 @@ def get_currency_name_by_code(currency_code: str) -> str:
             return fiat_currency.name
         logger.debug(f"No currency name available {currency_code}")
         return currency_code
-    
+
+def get_currency_name_and_code(currency_code: str):
+    return get_currency_name_by_code(currency_code) + " (" + currency_code + ")"
+
 def asset_matches_network(asset: "Asset", base_currency_network: "BaseCurrencyNetwork") -> bool:
     # coin here is from bisq coin, not bitcoinj.
     return not isinstance(asset, Coin) or asset.network.name == base_currency_network.network
