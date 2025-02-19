@@ -6,7 +6,7 @@ from bisq.core.dao.governance.bond.reputation.bonded_reputation import BondedRep
 if TYPE_CHECKING:
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
     from bisq.core.dao.state.dao_state_service import DaoStateService
-    from bisq.core.dao.governance.bond.role.bonded_role_repository import (
+    from bisq.core.dao.governance.bond.role.bonded_roles_repository import (
         BondedRolesRepository,
     )
     from bisq.core.dao.governance.bond.reputation.reputation import Reputation
