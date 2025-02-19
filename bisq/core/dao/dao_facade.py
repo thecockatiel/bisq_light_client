@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.bond.reputation.my_bonded_reputation_repository import (
         MyBondedReputationRepository,
     )
-    from bisq.core.dao.governance.bond.role.bonded_role_repository import (
+    from bisq.core.dao.governance.bond.role.bonded_roles_repository import (
         BondedRolesRepository,
     )
     from bisq.core.dao.governance.proposal.compensation.compensation_proposal_factory import (
