@@ -58,8 +58,8 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
                 logger.error(
                     f"{error_msg} \nbuyersDelayedPayoutTx={buyers_delayed_payout_tx}, \nfinalDelayedPayoutTx={final_delayed_payout_tx}, "
                     f"\nBtcWalletService.chainHeight={self.process_model.btc_wallet_service.get_best_chain_height()}, "
-                    f"\nDaoState.chainHeight={self.process_model.dao_facade.get_chain_height()}, "
-                    f"\nisDaoStateIsInSync={self.process_model.dao_facade.is_dao_state_ready_and_in_sync()}"
+                    f"\nDaoState.chainHeight={self.process_model.dao_facade.chain_height}, "
+                    f"\nisDaoStateIsInSync={self.process_model.dao_facade.is_dao_state_ready_and_in_sync}"
                 )
                 raise IllegalArgumentException(error_msg)
 

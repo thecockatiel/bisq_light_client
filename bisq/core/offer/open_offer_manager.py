@@ -813,7 +813,7 @@ class OpenOfferManager(
             return
 
         # Don't allow trade start if DAO is not fully synced
-        if not self.dao_facade.is_dao_state_ready_and_in_sync():
+        if not self.dao_facade.is_dao_state_ready_and_in_sync:
             error_message = (
                 "We got a handle_offer_availability_request but our DAO is not synced."
             )

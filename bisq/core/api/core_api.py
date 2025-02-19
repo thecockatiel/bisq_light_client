@@ -329,8 +329,9 @@ class CoreApi:
     def get_network_name(self) -> str:
         return self.wallets_service.get_network_name()
 
+    @property
     def is_dao_state_ready_and_in_sync(self):
-        return self.wallets_service.is_dao_state_ready_and_in_sync()
+        return self.wallets_service.is_dao_state_ready_and_in_sync
 
     def get_balances(self, currency_code: str) -> "BalancesInfo":
         return self.wallets_service.get_balances(currency_code)
@@ -410,5 +411,7 @@ class CoreApi:
         self, node_address: "NodeAddress", envelope: "NetworkEnvelope"
     ):
         if not self.config.use_dev_commands:
-            raise IllegalStateException("send_network_envelope is only available when useDevCommands is true")
+            raise IllegalStateException(
+                "send_network_envelope is only available when useDevCommands is true"
+            )
         return self.network_node.send_message(node_address, envelope)
