@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.core.dao.state.model.blockchain.base_tx import BaseTx
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
+from bisq.core.dao.node.parser.temp_tx_output import TempTxOutput
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.tx_input import TxInput
     from bisq.core.dao.node.full.raw_tx import RawTx
-    from bisq.core.dao.node.parser.temp_tx_output import TempTxOutput
 
 
 class TempTx(BaseTx):
@@ -32,6 +32,23 @@ class TempTx(BaseTx):
         # Mutable data:
         self.tx_type = tx_type
         self.burnt_bsq = burnt_bsq
+
+    @staticmethod
+    def from_raw_tx(raw_tx: "RawTx") -> "TempTx":
+        return TempTx(
+            raw_tx.tx_version,
+            raw_tx.id,
+            raw_tx.block_height,
+            raw_tx.block_hash,
+            raw_tx.time,
+            raw_tx.tx_inputs,
+            tuple(
+                TempTxOutput.from_raw_tx_output(output)
+                for output in raw_tx.raw_tx_outputs
+            ),
+            None,
+            0,
+        )
 
     def __str__(self):
         return (
