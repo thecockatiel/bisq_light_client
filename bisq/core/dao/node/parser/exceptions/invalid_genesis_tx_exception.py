@@ -1,0 +1,2 @@
+class InvalidGenesisTxException(RuntimeError):
+    pass

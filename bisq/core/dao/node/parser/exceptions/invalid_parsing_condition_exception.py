@@ -1,0 +1,2 @@
+class InvalidParsingConditionException(RuntimeError):
+    pass
