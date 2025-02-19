@@ -55,6 +55,27 @@ class BtcWalletService(WalletService, DaoStateListener):
             "BtcWalletService.complete_prepared_burn_bsq_tx Not implemented yet"
         )
 
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Add fee input to prepared BSQ send tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def complete_prepared_send_bsq_tx(
+        self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_send_bsq_tx Not implemented yet"
+        )
+
+    def complete_prepared_bsq_tx(
+        self,
+        prepared_bsq_tx: "Transaction",
+        op_return_data: Optional[bytes],
+        tx_fee_per_vbyte: Coin = None,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "BtcWalletService.complete_prepared_bsq_tx Not implemented yet"
+        )
+
     # // BISQ issue #4039: Prevent dust outputs from being created.
     # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
     # // add up the dust, log the details, and return the cumulative dust amount.
@@ -212,13 +233,6 @@ class BtcWalletService(WalletService, DaoStateListener):
             if entry.context == AddressEntryContext.MULTI_SIG
             or entry.context == AddressEntryContext.TRADE_PAYOUT
         ]
-
-    def complete_prepared_send_bsq_tx(
-        self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None
-    ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_send_bsq_tx Not implemented yet"
-        )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Find inputs and change

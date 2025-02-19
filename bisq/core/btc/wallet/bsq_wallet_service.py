@@ -6,6 +6,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_output import TransactionOutput
@@ -95,6 +96,11 @@ class BsqWalletService(WalletService, DaoStateListener):
     # // BSQ TransactionOutputs and Transactions
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def get_cloned_wallet_transactions(self) -> list["Transaction"]:
+        raise RuntimeError(
+            "BsqWalletService.get_cloned_wallet_transactions Not implemented yet"
+        )
+
     def get_pending_wallet_transactions_stream(self) -> Iterable["Transaction"]:
         raise RuntimeError(
             "BsqWalletService.get_pending_wallet_transactions_stream Not implemented yet"
@@ -121,4 +127,22 @@ class BsqWalletService(WalletService, DaoStateListener):
     def get_prepared_issuance_tx(self, fee: Coin) -> "Transaction":
         raise RuntimeError(
             "BsqWalletService.get_prepared_issuance_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Lockup bond tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_prepared_lockup_tx(self, lockup_amount: "Coin") -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_lockup_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Unlock bond tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_prepared_unlock_tx(self, lockup_tx_output: "TxOutput") -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_unlock_tx Not implemented yet"
         )
