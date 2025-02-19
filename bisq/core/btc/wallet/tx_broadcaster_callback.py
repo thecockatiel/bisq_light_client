@@ -46,4 +46,4 @@ class TxBroadcasterCallback(ABC):
             logger.error(
                 f"TxBroadcaster.onTimeout: Tx is null. exception={repr(exception)}"
             )
-            self.on
+            self.on_failure(tx)
