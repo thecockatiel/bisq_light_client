@@ -1963,8 +1963,31 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             from bisq.core.dao.dao_facade import DaoFacade
 
             GlobalContainer._dao_facade = DaoFacade(
-                self.config,
+                self.my_proposal_list_service,
+                self.proposal_list_presentation,
+                self.proposal_service,
+                self.ballot_list_service,
+                self.ballot_list_presentation,
                 self.dao_state_service,
+                self.dao_state_monitoring_service,
+                self.period_service,
+                self.cycle_service,
+                self.my_blind_vote_list_service,
+                self.my_vote_list_service,
+                self.compensation_proposal_factory,
+                self.reimbursement_proposal_factory,
+                self.change_param_proposal_factory,
+                self.confiscate_bond_proposal_factory,
+                self.role_proposal_factory,
+                self.generic_proposal_factory,
+                self.remove_asset_proposal_factory,
+                self.bonded_roles_repository,
+                self.bonded_reputation_repository,
+                self.my_bonded_reputation_repository,
+                self.lockup_tx_service,
+                self.unlock_tx_service,
+                self.dao_state_storage_service,
+                self.config,
             )
 
         return GlobalContainer._dao_facade
@@ -2099,6 +2122,17 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._unconfirmed_bsq_change_output_list_service
 
     @property
+    def cycle_service(self):
+        if GlobalContainer._cycle_service is None:
+            from bisq.core.dao.governance.period.cycle_service import CycleService
+
+            GlobalContainer._cycle_service = CycleService(
+                self.dao_state_service,
+                self.genesis_tx_info,
+            )
+        return GlobalContainer._cycle_service
+
+    @property
     def period_service(self):
         if GlobalContainer._period_service is None:
             from bisq.core.dao.governance.period.period_service import PeriodService
@@ -2210,41 +2244,243 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             from bisq.core.dao.governance.proposal.proposal_validator_provider import (
                 ProposalValidatorProvider,
             )
+
+            GlobalContainer._proposal_validator_provider = ProposalValidatorProvider(
+                self.compensation_validator,
+                self.confiscate_bond_validator,
+                self.generic_proposal_validator,
+                self.change_param_validator,
+                self.reimbursement_validator,
+                self.remove_asset_validator,
+                self.role_validator,
+            )
+
+        return GlobalContainer._proposal_validator_provider
+
+    @property
+    def compensation_validator(self):
+        if GlobalContainer._compensation_validator is None:
             from bisq.core.dao.governance.proposal.compensation.compensation_validator import (
                 CompensationValidator,
             )
-            from bisq.core.dao.governance.proposal.confiscatebond.confiscate_bond_validator import (
-                ConfiscateBondValidator,
+
+            GlobalContainer._compensation_validator = CompensationValidator(
+                self.dao_state_service, self.period_service
             )
-            from bisq.core.dao.governance.proposal.generic.generic_proposal_validator import (
-                GenericProposalValidator,
+
+        return GlobalContainer._compensation_validator
+
+    @property
+    def compensation_proposal_factory(self):
+        if GlobalContainer._compensation_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.compensation.compensation_proposal_factory import (
+                CompensationProposalFactory,
             )
-            from bisq.core.dao.governance.proposal.param.change_param_validator import (
-                ChangeParamValidator,
+
+            GlobalContainer._compensation_proposal_factory = (
+                CompensationProposalFactory(
+                    self.bsq_wallet_service,
+                    self.btc_wallet_service,
+                    self.dao_state_service,
+                    self.compensation_validator,
+                )
             )
+
+        return GlobalContainer._compensation_proposal_factory
+
+    @property
+    def reimbursement_validator(self):
+        if GlobalContainer._reimbursement_validator is None:
             from bisq.core.dao.governance.proposal.reimbursement.reimbursement_validator import (
                 ReimbursementValidator,
             )
-            from bisq.core.dao.governance.proposal.remove_asset.remove_asset_validator import (
-                RemoveAssetValidator,
+
+            GlobalContainer._reimbursement_validator = ReimbursementValidator(
+                self.dao_state_service, self.period_service
             )
+
+        return GlobalContainer._reimbursement_validator
+
+    @property
+    def reimbursement_proposal_factory(self):
+        if GlobalContainer._reimbursement_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.reimbursement.reimbursement_proposal_factory import (
+                ReimbursementProposalFactory,
+            )
+
+            GlobalContainer._reimbursement_proposal_factory = (
+                ReimbursementProposalFactory(
+                    self.bsq_wallet_service,
+                    self.btc_wallet_service,
+                    self.dao_state_service,
+                    self.reimbursement_validator,
+                )
+            )
+
+        return GlobalContainer._reimbursement_proposal_factory
+
+    @property
+    def change_param_validator(self):
+        if GlobalContainer._change_param_validator is None:
+            from bisq.core.dao.governance.proposal.param.change_param_validator import (
+                ChangeParamValidator,
+            )
+
+            GlobalContainer._change_param_validator = ChangeParamValidator(
+                self.dao_state_service, self.period_service, self.bsq_formatter
+            )
+
+        return GlobalContainer._change_param_validator
+
+    @property
+    def change_param_proposal_factory(self):
+        if GlobalContainer._change_param_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.param.change_param_proposal_factory import (
+                ChangeParamProposalFactory,
+            )
+
+            GlobalContainer._change_param_proposal_factory = ChangeParamProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.change_param_validator,
+            )
+
+        return GlobalContainer._change_param_proposal_factory
+
+    @property
+    def role_validator(self):
+        if GlobalContainer._role_validator is None:
             from bisq.core.dao.governance.proposal.role.role_validator import (
                 RoleValidator,
             )
 
-            GlobalContainer._proposal_validator_provider = ProposalValidatorProvider(
-                CompensationValidator(self.dao_state_service, self.period_service),
-                ConfiscateBondValidator(self.dao_state_service, self.period_service),
-                GenericProposalValidator(self.dao_state_service, self.period_service),
-                ChangeParamValidator(
-                    self.dao_state_service, self.period_service, self.bsq_formatter
-                ),
-                ReimbursementValidator(self.dao_state_service, self.period_service),
-                RemoveAssetValidator(self.dao_state_service, self.period_service),
-                RoleValidator(self.dao_state_service, self.period_service),
+            GlobalContainer._role_validator = RoleValidator(
+                self.dao_state_service, self.period_service
             )
 
-        return GlobalContainer._proposal_validator_provider
+        return GlobalContainer._role_validator
+
+    @property
+    def role_proposal_factory(self):
+        if GlobalContainer._role_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.role.role_proposal_factory import (
+                RoleProposalFactory,
+            )
+
+            GlobalContainer._role_proposal_factory = RoleProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.role_validator,
+            )
+
+        return GlobalContainer._role_proposal_factory
+
+    @property
+    def confiscate_bond_validator(self):
+        if GlobalContainer._confiscate_bond_validator is None:
+            from bisq.core.dao.governance.proposal.confiscatebond.confiscate_bond_validator import (
+                ConfiscateBondValidator,
+            )
+
+            GlobalContainer._confiscate_bond_validator = ConfiscateBondValidator(
+                self.dao_state_service, self.period_service
+            )
+
+        return GlobalContainer._confiscate_bond_validator
+
+    @property
+    def confiscate_bond_proposal_factory(self):
+        if GlobalContainer._confiscate_bond_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.confiscatebond.confiscate_bond_proposal_factory import (
+                ConfiscateBondProposalFactory,
+            )
+
+            GlobalContainer._confiscate_bond_proposal_factory = (
+                ConfiscateBondProposalFactory(
+                    self.bsq_wallet_service,
+                    self.btc_wallet_service,
+                    self.dao_state_service,
+                    self.confiscate_bond_validator,
+                )
+            )
+
+        return GlobalContainer._confiscate_bond_proposal_factory
+
+    @property
+    def generic_proposal_validator(self):
+        if GlobalContainer._generic_proposal_validator is None:
+            from bisq.core.dao.governance.proposal.generic.generic_proposal_validator import (
+                GenericProposalValidator,
+            )
+
+            GlobalContainer._generic_proposal_validator = GenericProposalValidator(
+                self.dao_state_service, self.period_service
+            )
+
+        return GlobalContainer._generic_proposal_validator
+
+    @property
+    def generic_proposal_factory(self):
+        if GlobalContainer._generic_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.generic.generic_proposal_factory import (
+                GenericProposalFactory,
+            )
+
+            GlobalContainer._generic_proposal_factory = GenericProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.generic_proposal_validator,
+            )
+
+        return GlobalContainer._generic_proposal_factory
+
+    @property
+    def remove_asset_validator(self):
+        if GlobalContainer._remove_asset_validator is None:
+            from bisq.core.dao.governance.proposal.remove_asset.remove_asset_validator import (
+                RemoveAssetValidator,
+            )
+
+            GlobalContainer._remove_asset_validator = RemoveAssetValidator(
+                self.dao_state_service, self.period_service
+            )
+
+        return GlobalContainer._remove_asset_validator
+
+    @property
+    def remove_asset_proposal_factory(self):
+        if GlobalContainer._remove_asset_proposal_factory is None:
+            from bisq.core.dao.governance.proposal.remove_asset.remove_asset_proposal_factory import (
+                RemoveAssetProposalFactory,
+            )
+
+            GlobalContainer._remove_asset_proposal_factory = RemoveAssetProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.remove_asset_validator,
+            )
+
+        return GlobalContainer._remove_asset_proposal_factory
+
+    @property
+    def ballot_list_presentation(self):
+        if GlobalContainer._ballot_list_presentation is None:
+            from bisq.core.dao.governance.ballot.ballot_list_presentation import (
+                BallotListPresentation,
+            )
+
+            GlobalContainer._ballot_list_presentation = BallotListPresentation(
+                self.ballot_list_service,
+                self.period_service,
+                self.dao_state_service,
+                self.proposal_validator_provider,
+            )
+
+        return GlobalContainer._ballot_list_presentation
 
     @property
     def ballot_list_service(self):
@@ -2431,6 +2667,66 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._republish_governance_data_handler
 
     @property
+    def lockup_tx_service(self):
+        if GlobalContainer._lockup_tx_service is None:
+            from bisq.core.dao.governance.bond.lockup.lockup_tx_service import (
+                LockupTxService,
+            )
+
+            GlobalContainer._lockup_tx_service = LockupTxService(
+                self.wallets_manager,
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+            )
+
+        return GlobalContainer._lockup_tx_service
+
+    @property
+    def unlock_tx_service(self):
+        if GlobalContainer._unlock_tx_service is None:
+            from bisq.core.dao.governance.bond.unlock.unlock_tx_service import (
+                UnlockTxService,
+            )
+
+            GlobalContainer._unlock_tx_service = UnlockTxService(
+                self.wallets_manager,
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+            )
+
+        return GlobalContainer._unlock_tx_service
+
+    @property
+    def bonded_roles_repository(self):
+        if GlobalContainer._bonded_roles_repository is None:
+            from bisq.core.dao.governance.bond.role.bonded_roles_repository import (
+                BondedRolesRepository,
+            )
+
+            GlobalContainer._bonded_roles_repository = BondedRolesRepository(
+                self.dao_state_service,
+                self.bsq_wallet_service,
+            )
+
+        return GlobalContainer._bonded_roles_repository
+
+    @property
+    def bonded_reputation_repository(self):
+        if GlobalContainer._bonded_reputation_repository is None:
+            from bisq.core.dao.governance.bond.reputation.bonded_reputation_repository import (
+                BondedReputationRepository,
+            )
+
+            GlobalContainer._bonded_reputation_repository = BondedReputationRepository(
+                self.dao_state_service,
+                self.bsq_wallet_service,
+                self.bonded_roles_repository,
+            )
+
+        return GlobalContainer._bonded_reputation_repository
+
+    @property
     def my_reputation_list_service(self):
         if GlobalContainer._my_reputation_list_service is None:
             from bisq.core.dao.governance.bond.reputation.my_reputation_list_service import (
@@ -2447,6 +2743,23 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._my_reputation_list_service
+
+    @property
+    def my_bonded_reputation_repository(self):
+        if GlobalContainer._my_bonded_reputation_repository is None:
+            from bisq.core.dao.governance.bond.reputation.my_bonded_reputation_repository import (
+                MyBondedReputationRepository,
+            )
+
+            GlobalContainer._my_bonded_reputation_repository = (
+                MyBondedReputationRepository(
+                    self.dao_state_service,
+                    self.bsq_wallet_service,
+                    self.my_reputation_list_service,
+                )
+            )
+
+        return GlobalContainer._my_bonded_reputation_repository
 
     @property
     def my_proof_of_burn_list_service(self):
