@@ -182,3 +182,10 @@ class InventoryItem(Enum):
         obj = object.__new__(cls)
         obj._value_ = value
         return obj
+
+    @classmethod
+    def from_key(cls, key: str):
+        for item in cls:
+            if item.key == key:
+                return item
+        raise ValueError(f"Unknown key: {key}")
