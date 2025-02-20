@@ -823,6 +823,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     
     def is_tac_accepted_v120(self):
         return self.pref_payload.tac_accepted_v120
+    
+    def get_bsq_average_trim_threshold(self):
+        return self.pref_payload.bsq_average_trim_threshold
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
