@@ -11,7 +11,7 @@ def _is_python_pb_impl_required_check():
     original = protobuf.GetInventoryResponse(
         inventory={"1": "1", "2": "2", "3": "3"}
     ).SerializeToString()
-    for i in range(10):
+    for i in range(20):
         # we need to test it 10 times quickly, because it is non deterministic
         inv = dict(protobuf.GetInventoryResponse.FromString(original).inventory)
         test = protobuf.GetInventoryResponse(inventory=inv).SerializeToString()
