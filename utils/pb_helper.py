@@ -31,3 +31,9 @@ def check_and_use_pure_python_pb_implementation(print_warning=True):
             "python"  # Prevents using cpp implementation of protobuf, and thus prevents the random dictionary order issue
         )
 
+        if is_python_pb_impl_required():
+            raise AssertionError(
+                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION change did not work. \n"
+                "This is a fatal error. \n"
+                "Exiting now..."
+            )
