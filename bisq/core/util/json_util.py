@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any
 
 # TODO: check against java implementation
 class JsonUtil:
@@ -9,7 +9,7 @@ class JsonUtil:
         return json.dumps(obj_dict, indent=2, separators=(",", ": "))
     
     @staticmethod
-    def recursively_resolve_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
+    def recursively_resolve_dict(obj: dict[str, Any]) -> Any:
         if obj is None:
             return obj
         resolved_dict = {}
@@ -17,6 +17,8 @@ class JsonUtil:
             obj_dict = obj 
         elif hasattr(obj, "get_json_dict"):
             obj_dict = obj.get_json_dict()
+            if not isinstance(obj_dict, dict):
+                return obj_dict
         else:
             obj_dict = obj.__dict__
         for key, value in obj_dict.items():
