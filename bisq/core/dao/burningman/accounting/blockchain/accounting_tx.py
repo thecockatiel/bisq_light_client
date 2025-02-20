@@ -16,7 +16,7 @@ class AccountingTx(NetworkPayload):
     def __init__(
         self,
         type: AccountingTxType,
-        outputs: list["AccountingTxOutput"],
+        outputs: tuple["AccountingTxOutput"],
         tx_id_or_truncated_bytes: Union[str, bytes],
     ):
         self.type = type
@@ -48,7 +48,7 @@ class AccountingTx(NetworkPayload):
     def from_proto(proto: "protobuf.AccountingTx"):
         return AccountingTx(
             AccountingTxType(proto.type),
-            [AccountingTxOutput.from_proto(output) for output in proto.outputs],
+            tuple(AccountingTxOutput.from_proto(output) for output in proto.outputs),
             proto.truncated_tx_id,
         )
 
@@ -71,4 +71,4 @@ class AccountingTx(NetworkPayload):
         )
 
     def __hash__(self):
-        return hash((self.type, tuple(self.outputs), self.truncated_tx_id))
+        return hash((self.type, self.outputs, self.truncated_tx_id))
