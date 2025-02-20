@@ -1290,6 +1290,10 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._burning_man_presentation_service = (
                 BurningManPresentationService(
+                    self.dao_state_service,
+                    self.cycles_in_dao_state_service,
+                    self.my_proposal_list_service,
+                    self.bsq_wallet_service,
                     self.burning_man_service,
                 )
             )
@@ -2131,6 +2135,19 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
                 self.genesis_tx_info,
             )
         return GlobalContainer._cycle_service
+
+    @property
+    def cycles_in_dao_state_service(self):
+        if GlobalContainer._cycles_in_dao_state_service is None:
+            from bisq.core.dao.cycles_in_dao_state_service import (
+                CyclesInDaoStateService,
+            )
+
+            GlobalContainer._cycles_in_dao_state_service = CyclesInDaoStateService(
+                self.dao_state_service,
+                self.cycle_service,
+            )
+        return GlobalContainer._cycles_in_dao_state_service
 
     @property
     def period_service(self):
