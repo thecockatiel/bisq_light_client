@@ -101,7 +101,7 @@ class MonetaryFormat:
         self.rounding_mode = rounding_mode
         
         # Initialize codes array
-        if codes is "NOT_SET":
+        if codes == "NOT_SET":
             self.codes = [None] * (self.MAX_DECIMALS + 1)
             self.codes[0] = self.SYMBOL_BTC if use_symbol else self.CODE_BTC
             self.codes[3] = self.SYMBOL_MBTC if use_symbol else self.CODE_MBTC
