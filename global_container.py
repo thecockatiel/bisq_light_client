@@ -1282,6 +1282,18 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._burning_man_service
 
     @property
+    def burn_target_service(self):
+        if GlobalContainer._burn_target_service is None:
+            from bisq.core.dao.burningman.burn_target_service import BurnTargetService
+
+            GlobalContainer._burn_target_service = BurnTargetService(
+                self.dao_state_service,
+                self.cycles_in_dao_state_service,
+                self.proposal_service,
+            )
+        return GlobalContainer._burn_target_service
+
+    @property
     def burning_man_presentation_service(self):
         if GlobalContainer._burning_man_presentation_service is None:
             from bisq.core.dao.burningman.burning_man_presentation_service import (
@@ -1295,6 +1307,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
                     self.my_proposal_list_service,
                     self.bsq_wallet_service,
                     self.burning_man_service,
+                    self.burn_target_service,
                 )
             )
         return GlobalContainer._burning_man_presentation_service
