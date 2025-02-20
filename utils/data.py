@@ -189,6 +189,8 @@ class ObservableMap(dict[K, V]):
             listener(e)
             
     def __setitem__(self, key: K, value: V) -> None:
+        if key in self and self[key] == value:
+            return
         super().__setitem__(key, value)
         self._notify(ObservableChangeEvent([(key, value)]))
         
