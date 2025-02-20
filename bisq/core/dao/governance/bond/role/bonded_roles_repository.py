@@ -44,13 +44,13 @@ class BondedRolesRepository(BondRepository["BondedRole", "Role"]):
     # // Protected
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def _create_bond(self, role: "Role") -> "BondedRole":
+    def create_bond(self, role: "Role") -> "BondedRole":
         return BondedRole(role)
 
-    def _get_bonded_asset_stream(self):
+    def get_bonded_asset_stream(self):
         return (proposal.role for proposal in self._get_bonded_role_proposal_stream())
 
-    def _update_bond(
+    def update_bond(
         self, bond: "BondedRole", bonded_asset: "Role", lockup_tx_output: "TxOutput"
     ) -> None:
         # Lets see if we have a lock up tx.
