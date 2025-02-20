@@ -48,7 +48,7 @@ class CyclesInDaoStateService:
         )
         if (
             first_block_of_past_cycle
-            == self._dao_state_service.get_genesis_block_height()
+            == self._dao_state_service.genesis_block_height
         ):
             return first_block_of_past_cycle
         return first_block_of_past_cycle + self.get_offset_from_first_block_in_cycle(
@@ -71,7 +71,7 @@ class CyclesInDaoStateService:
             # see: https://github.com/bisq-network/bisq/issues/7396#issuecomment-2661444781
             if target_index >= 0:
                 return self.get_cycle_at_index(target_index).height_of_first_block
-        return self._dao_state_service.get_genesis_block_height()
+        return self._dao_state_service.genesis_block_height
 
     def get_cycle_at_index(self, index: int) -> "Cycle":
         check_argument(index >= 0, "Index must be >= 0")

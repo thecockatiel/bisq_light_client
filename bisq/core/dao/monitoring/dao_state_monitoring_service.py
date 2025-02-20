@@ -395,7 +395,7 @@ class DaoStateMonitoringService(
             logger.debug(f"Conflict with non-seed nodes: {conflict_msg}")
 
     def _check_utxos(self, block: "Block"):
-        genesis_total_supply = self.dao_state_service.get_genesis_total_supply().value
+        genesis_total_supply = self.dao_state_service.genesis_total_supply.value
         compensation_issuance = self.dao_state_service.get_total_issued_amount(
             IssuanceType.COMPENSATION
         )

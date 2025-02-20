@@ -199,7 +199,7 @@ class DaoStateService(DaoSetupService):
         self._assert_dao_state_change()
         if (
             not self.dao_state.blocks
-            and block.height != self.get_genesis_block_height()
+            and block.height != self.genesis_block_height
         ):
             logger.warning(
                 "We don't have any blocks yet and we received a block which is not the genesis block. "
@@ -323,17 +323,20 @@ class DaoStateService(DaoSetupService):
     # // Genesis
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_genesis_tx_id(self) -> str:
+    @property
+    def genesis_tx_id(self) -> str:
         return self.genesis_tx_info.genesis_tx_id
-
-    def get_genesis_block_height(self) -> int:
+    
+    @property
+    def genesis_block_height(self) -> int:
         return self.genesis_tx_info.genesis_block_height
 
-    def get_genesis_total_supply(self) -> Coin:
+    @property
+    def genesis_total_supply(self) -> Coin:
         return Coin.value_of(self.genesis_tx_info.genesis_total_supply)
 
     def get_genesis_tx(self) -> Optional["Tx"]:
-        return self.get_tx(self.get_genesis_tx_id())
+        return self.get_tx(self.genesis_tx_id)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Tx

@@ -452,6 +452,6 @@ class TxValidator:
         # (it is hard coded in the Param enum)
         default_rate = self.dao_state_service.get_param_value_as_coin(
             default_fee_param,
-            self.dao_state_service.get_genesis_block_height()
+            self.dao_state_service.genesis_block_height
         )
         return actual_fee_value == self._calculate_fee(trade_amount, default_rate, min_fee_param)

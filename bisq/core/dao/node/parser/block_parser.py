@@ -28,9 +28,9 @@ class BlockParser:
     def __init__(self, tx_parser: "TxParser", dao_state_service: "DaoStateService"):
         self._tx_parser = tx_parser
         self._dao_state_service = dao_state_service
-        self._genesis_tx_id = dao_state_service.get_genesis_tx_id()
-        self._genesis_block_height = dao_state_service.get_genesis_block_height()
-        self._genesis_total_supply = dao_state_service.get_genesis_total_supply()
+        self._genesis_tx_id = dao_state_service.genesis_tx_id
+        self._genesis_block_height = dao_state_service.genesis_block_height
+        self._genesis_total_supply = dao_state_service.genesis_total_supply
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
