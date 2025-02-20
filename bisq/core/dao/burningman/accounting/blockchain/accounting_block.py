@@ -23,7 +23,7 @@ class AccountingBlock(NetworkPayload):
         time_in_sec: int,
         truncated_hash: bytes,
         truncated_previous_block_hash: bytes,
-        txs: list[AccountingTx],
+        txs: tuple[AccountingTx],
     ):
         self.height = height
         self.time_in_sec = time_in_sec
@@ -48,7 +48,7 @@ class AccountingBlock(NetworkPayload):
 
     @staticmethod
     def from_proto(proto: protobuf.AccountingBlock) -> "AccountingBlock":
-        txs = [AccountingTx.from_proto(tx) for tx in proto.txs]
+        txs = tuple(AccountingTx.from_proto(tx) for tx in proto.txs)
         return AccountingBlock(
             height=proto.height,
             time_in_sec=proto.time_in_sec,
@@ -91,6 +91,6 @@ class AccountingBlock(NetworkPayload):
                 self.time_in_sec,
                 self.truncated_hash,
                 self.truncated_previous_block_hash,
-                tuple(self.txs),
+                self.txs,
             )
         )
