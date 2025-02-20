@@ -549,14 +549,17 @@ class DaoFacade(DaoSetupService):
     def get_tx(self, tx_id: str):
         return self._dao_state_service.get_tx(tx_id)
 
-    def get_genesis_block_height(self) -> int:
-        return self._dao_state_service.get_genesis_block_height()
+    @property
+    def genesis_block_height(self) -> int:
+        return self._dao_state_service.genesis_block_height
 
-    def get_genesis_tx_id(self) -> str:
-        return self._dao_state_service.get_genesis_tx_id()
+    @property
+    def genesis_tx_id(self) -> str:
+        return self._dao_state_service.genesis_tx_id
 
-    def get_genesis_total_supply(self) -> Coin:
-        return self._dao_state_service.get_genesis_total_supply()
+    @property
+    def genesis_total_supply(self) -> Coin:
+        return self._dao_state_service.genesis_total_supply
 
     def get_num_issuance_transactions(self, issuance_type: IssuanceType) -> int:
         return len(self._dao_state_service.get_issuance_set_for_type(issuance_type))

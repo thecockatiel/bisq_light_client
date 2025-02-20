@@ -95,7 +95,7 @@ class DelayedPayoutTxReceiverService:
     # We do not have the latest dao state by that but can ensure maker and taker have the same block.
     def get_burning_man_selection_height(self) -> int:
         return self.get_snapshot_height(
-            self.dao_state_service.get_genesis_block_height(),
+            self.dao_state_service.genesis_block_height,
             self.current_chain_height,
             10,
         )

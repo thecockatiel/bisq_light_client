@@ -51,8 +51,8 @@ class BsqNode(DaoSetupService, ABC):
         self._p2p_service = p2p_service
         self._export_json_files_service = export_json_files_service
 
-        self._genesis_tx_id = dao_state_service.get_genesis_tx_id()
-        self._genesis_block_height = dao_state_service.get_genesis_block_height()
+        self._genesis_tx_id = dao_state_service.genesis_tx_id
+        self._genesis_block_height = dao_state_service.genesis_block_height
 
         class Listener(P2PServiceListener):
             def on_tor_node_ready(self):
@@ -191,7 +191,7 @@ class BsqNode(DaoSetupService, ABC):
                     logger.warning(
                         "We received a block with a future block height but we had it already added to our pendingBlocks."
                     )
-            elif raw_block.height >= self._dao_state_service.get_genesis_block_height():
+            elif raw_block.height >= self._dao_state_service.genesis_block_height:
                 # rawBlock is not expected next height but either same height as chainHead or in the past
                 # We received an older block. We compare if we have it in our chain.
                 existing_block = self._dao_state_service.get_block_at_height(
