@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
@@ -84,7 +85,7 @@ class BurnTargetService:
         return reimbursements
 
     def get_burn_target(
-        self, chain_height: int, burning_man_candidates: set["BurningManCandidate"]
+        self, chain_height: int, burning_man_candidates: Collection["BurningManCandidate"]
     ) -> int:
         # Reimbursements are taken into account at result vote block
         chain_height_of_past_cycle = (
@@ -274,7 +275,7 @@ class BurnTargetService:
 
     def _get_burned_amount_from_burning_men(
         self,
-        burning_man_candidates: set["BurningManCandidate"],
+        burning_man_candidates: Collection["BurningManCandidate"],
         chain_height: int,
         from_block: int,
     ) -> int:
@@ -286,7 +287,7 @@ class BurnTargetService:
         )
 
     def get_accumulated_decayed_burned_amount(
-        self, burning_man_candidates: set["BurningManCandidate"], chain_height: int
+        self, burning_man_candidates: Collection["BurningManCandidate"], chain_height: int
     ) -> int:
         from_block = self._cycles_in_dao_state_service.get_chain_height_of_past_cycle(
             chain_height, BurnTargetService.NUM_CYCLES_BURN_TARGET
@@ -297,7 +298,7 @@ class BurnTargetService:
 
     def _get_accumulated_decayed_burned_amount(
         self,
-        burning_man_candidates: set["BurningManCandidate"],
+        burning_man_candidates: Collection["BurningManCandidate"],
         chain_height: int,
         from_block: int,
     ) -> int:
