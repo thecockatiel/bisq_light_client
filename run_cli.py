@@ -2,10 +2,6 @@
 # -*- mode: python -*-
 import sys
 
-from utils.pb_helper import check_and_use_pure_python_pb_implementation
-
-check_and_use_pure_python_pb_implementation(False)
-
 MIN_PYTHON_VERSION = "3.9.0"
 _min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
 
