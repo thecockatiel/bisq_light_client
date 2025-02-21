@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 class StatefulAsset:
 
     def __init__(self, asset: "Asset"):
-        self._asset = asset
+        self.asset = asset
         self.asset_state = AssetState.UNDEFINED
-        self._fee_payments: list["FeePayment"] = []
+        self.fee_payments: list["FeePayment"] = []
         self.trade_volume: int = 0
         self.look_back_period_in_days: int = 0
 
@@ -22,14 +22,14 @@ class StatefulAsset:
 
     @property
     def ticker_symbol(self) -> str:
-        return self._asset.get_ticker_symbol()
+        return self.asset.get_ticker_symbol()
 
     @property
     def last_fee_payment(self) -> Optional["FeePayment"]:
-        return self._fee_payments[-1] if self._fee_payments else None
+        return self.fee_payments[-1] if self.fee_payments else None
 
     def get_total_fees_paid(self) -> int:
-        return sum(fee_payment.fee for fee_payment in self._fee_payments)
+        return sum(fee_payment.fee for fee_payment in self.fee_payments)
 
     def get_fee_of_trial_period(self) -> int:
         last_fee_payment = self.last_fee_payment
@@ -52,9 +52,9 @@ class StatefulAsset:
     def __str__(self) -> str:
         return (
             f"StatefulAsset{{\n"
-            f"    asset={self._asset},\n"
+            f"    asset={self.asset},\n"
             f"    assetState={self.asset_state},\n"
-            f"    feePayments={self._fee_payments},\n"
+            f"    feePayments={self.fee_payments},\n"
             f"    tradeVolume={self.trade_volume},\n"
             f"    lookBackPeriodInDays={self.look_back_period_in_days}\n"
             f"}}"
