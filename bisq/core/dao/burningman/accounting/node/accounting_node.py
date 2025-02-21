@@ -1,14 +1,22 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
+from bisq.common.app.dev_env import DevEnv
+from bisq.common.crypto.encryption import ECPrivkey, Encryption
+from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
+from utils.time import get_time_ms
+
 
 if TYPE_CHECKING:
+    from bisq.core.dao.burningman.accounting.blockchain.accounting_block import (
+        AccountingBlock,
+    )
     from bisq.core.dao.burningman.accounting.node.full.accounting_block_parser import (
         AccountingBlockParser,
     )
@@ -143,3 +151,63 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
             logger.warning(
                 f"We tried {self._try_reorg_counter} times to request blocks again after a reorg signal but it is still failing.",
             )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Oracle verification
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    def get_sha256_hash(block: "AccountingBlock") -> bytes:
+        return get_sha256_hash(block.serialize_for_hash())
+
+    @staticmethod
+    def get_sha256_hash_for_collection(
+        blocks: Collection["AccountingBlock"],
+    ) -> Optional[bytes]:
+        ts = get_time_ms()
+        try:
+            output_stream = bytearray()
+            for accounting_block in blocks:
+                output_stream.extend(accounting_block.serialize_for_hash())
+            hash_value = get_sha256_hash(output_stream)
+            logger.info(
+                f"get_sha256_hash_for_collection for {len(blocks)} blocks took {get_time_ms() - ts} ms",
+            )
+            return hash_value
+        except Exception as e:
+            logger.error(
+                "Error while calculating SHA256 hash for collection of blocks",
+                exc_info=e,
+            )
+            return None
+
+    @staticmethod
+    def get_signature(sha256hash: bytes, priv_key: ECPrivkey) -> bytes:
+        # TODO: check if works same as java
+        return priv_key.sign(sha256hash)
+
+    @staticmethod
+    def is_valid_pub_key_and_signature(
+        sha256_hash: bytes, pub_key: str, signature: bytes, use_dev_privilege_keys: bool
+    ) -> bool:
+        # TODO: check if works same as java
+        if pub_key not in AccountingNode.get_permitted_pub_keys(use_dev_privilege_keys):
+            logger.warning(f"PubKey is not in supported key set. pubKey={pub_key}")
+            return False
+
+        try:
+            ec_pub_key = Encryption.get_ec_public_key_from_bytes(bytes.fromhex(pub_key))
+            return ec_pub_key.verify_message_hash(signature, sha256_hash)
+        except Exception as e:
+            logger.warning("Signature verification failed.")
+            return False
+
+    @staticmethod
+    def is_permitted_pub_key(use_dev_privilege_keys: bool, pub_key: str) -> bool:
+        return pub_key in AccountingNode.get_permitted_pub_keys(use_dev_privilege_keys)
+
+    @staticmethod
+    def get_permitted_pub_keys(use_dev_privilege_keys: bool) -> set[str]:
+        if use_dev_privilege_keys:
+            return {DevEnv.DEV_PRIVILEGE_PUB_KEY}
+        return AccountingNode.PERMITTED_PUB_KEYS
