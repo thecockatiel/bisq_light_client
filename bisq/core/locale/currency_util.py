@@ -25,13 +25,6 @@ logger = get_logger(__name__)
 
 # TODO: not complete
 
-
-def _asset_to_crypto_currency(asset: Asset):
-    return CryptoCurrency(
-        asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
-    )
-
-
 crypto_currency_map = {
     asset.get_ticker_symbol(): _asset_to_crypto_currency(asset)
     for asset in AssetRegistry.registered_assets
@@ -161,6 +154,26 @@ def get_main_fiat_currencies() -> list["TradeCurrency"]:
     return currencies
 
 
+def get_sorted_asset_stream():
+    return sorted(
+        filter(
+            lambda asset: (
+                asset_is_not_base_currency(asset)
+                and _is_not_bsq_or_bsq_trading_activated(
+                    asset,
+                    Config.BASE_CURRENCY_NETWORK_VALUE,
+                    DevEnv.is_dao_trading_activated(),
+                )
+                and asset_matches_network_if_mainnet(
+                    asset, Config.BASE_CURRENCY_NETWORK_VALUE
+                )
+            ),
+            AssetRegistry.registered_assets,
+        ),
+        key=lambda asset: asset.get_name(),
+    )
+
+
 def get_main_crypto_currencies() -> list["CryptoCurrency"]:
     result = list["CryptoCurrency"]()
     result.append(CryptoCurrency("XRC", "XRhodium"))
@@ -217,6 +230,7 @@ def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
 def get_fiat_currency(currency_code: str) -> Optional["FiatCurrency"]:
     return CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.get(currency_code, None)
 
+
 def get_trade_currency(currency_code: str) -> Optional["TradeCurrency"]:
     fiat_currency = get_fiat_currency(currency_code)
     if fiat_currency and is_fiat_currency(currency_code):
@@ -228,6 +242,7 @@ def get_trade_currency(currency_code: str) -> Optional["TradeCurrency"]:
 
     return None
 
+
 def get_trade_currencies(currency_codes: list[str]) -> Optional[list["TradeCurrency"]]:
     trade_currencies = []
     for code in currency_codes:
@@ -237,13 +252,19 @@ def get_trade_currencies(currency_codes: list[str]) -> Optional[list["TradeCurre
         trade_currencies.append(trade_currency)
     return trade_currencies if trade_currencies else None
 
-def get_trade_currencies_in_list(currency_codes: list[str], valid_currencies: list["TradeCurrency"]) -> Optional[list["TradeCurrency"]]:
+
+def get_trade_currencies_in_list(
+    currency_codes: list[str], valid_currencies: list["TradeCurrency"]
+) -> Optional[list["TradeCurrency"]]:
     trade_currencies = get_trade_currencies(currency_codes)
     if trade_currencies:
         for trade_currency in trade_currencies:
             if trade_currency not in valid_currencies:
-                raise IllegalArgumentException(f"{trade_currency.code} is not a member of valid currencies list")
+                raise IllegalArgumentException(
+                    f"{trade_currency.code} is not a member of valid currencies list"
+                )
     return trade_currencies
+
 
 def get_currency_name_by_code(currency_code: str) -> str:
     if is_crypto_currency(currency_code):
@@ -264,17 +285,77 @@ def get_currency_name_by_code(currency_code: str) -> str:
         logger.debug(f"No currency name available {currency_code}")
         return currency_code
 
+
 def get_currency_name_and_code(currency_code: str):
     return get_currency_name_by_code(currency_code) + " (" + currency_code + ")"
 
-def asset_matches_network(asset: "Asset", base_currency_network: "BaseCurrencyNetwork") -> bool:
-    # coin here is from bisq coin, not bitcoinj.
-    return not isinstance(asset, Coin) or asset.network.name == base_currency_network.network
 
-def find_asset(currency_code_or_ticker: str, base_currency_network: "BaseCurrencyNetwork" = None, dao_trading_activated: bool = None) -> Optional["Asset"]:
-    if currency_code_or_ticker == "BSQ" and base_currency_network and base_currency_network.is_mainnet() and not dao_trading_activated:
+def asset_is_not_base_currency(asset: Asset) -> bool:
+    return not asset_matches_currency_code(asset, BASE_CURRENCY_CODE.get())
+
+
+# java TODO We handle assets of other types (Token, ERC20) as matching the network which is not correct.
+# We should add support for network property in those tokens as well.
+def asset_matches_network(
+    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    # coin here is from bisq coin, not bitcoinj.
+    return (
+        not isinstance(asset, Coin)
+        or asset.network.name == base_currency_network.network
+    )
+
+
+# We only check for coins not other types of assets (java TODO network check should be supported for all assets)
+def asset_matches_network_if_mainnet(
+    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    return not isinstance(asset, Coin) or coin_matches_network_if_mainnet(
+        asset, base_currency_network
+    )
+
+
+# We want all coins available also in testnet or regtest for testing purpose
+def coin_matches_network_if_mainnet(
+    coin: Coin, base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    matches_network = asset_matches_network(coin, base_currency_network)
+    return not base_currency_network.is_mainnet() or matches_network
+
+
+def _asset_to_crypto_currency(asset: Asset):
+    return CryptoCurrency(
+        asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
+    )
+
+
+def _is_not_bsq_or_bsq_trading_activated(
+    asset: Asset,
+    base_currency_network: "BaseCurrencyNetwork",
+    dao_trading_activated: bool,
+) -> bool:
+    return not isinstance(asset, CryptoCurrency) or (
+        dao_trading_activated and asset_matches_network(asset, base_currency_network)
+    )
+
+
+def asset_matches_currency_code(asset: Asset, currency_code: str) -> bool:
+    return currency_code == asset.get_ticker_symbol()
+
+
+def find_asset(
+    currency_code_or_ticker: str,
+    base_currency_network: "BaseCurrencyNetwork" = None,
+    dao_trading_activated: bool = None,
+) -> Optional["Asset"]:
+    if (
+        currency_code_or_ticker == "BSQ"
+        and base_currency_network
+        and base_currency_network.is_mainnet()
+        and not dao_trading_activated
+    ):
         return None
-    
+
     if base_currency_network is None or not base_currency_network.is_mainnet():
         # In testnet or regtest we want to show all coins as well. Most coins have only Mainnet defined so we deliver that
         assets = filter(
@@ -284,17 +365,25 @@ def find_asset(currency_code_or_ticker: str, base_currency_network: "BaseCurrenc
     else:
         # We check for exact match with network, e.g. BTC$TESTNET
         assets = filter(
-            lambda asset: asset.get_ticker_symbol() == currency_code_or_ticker and asset_matches_network(asset, base_currency_network),
+            lambda asset: asset.get_ticker_symbol() == currency_code_or_ticker
+            and asset_matches_network(asset, base_currency_network),
             AssetRegistry.registered_assets,
         )
-    
+
     optional_asset = next(iter(assets), None)
 
-    if optional_asset is None and base_currency_network and base_currency_network.is_mainnet():
+    if (
+        optional_asset is None
+        and base_currency_network
+        and base_currency_network.is_mainnet()
+    ):
         # If we are in mainnet we need have a mainnet asset defined.
-        raise IllegalArgumentException("We are on mainnet and we could not find an asset with network type mainnet")
+        raise IllegalArgumentException(
+            "We are on mainnet and we could not find an asset with network type mainnet"
+        )
 
     return optional_asset
+
 
 def get_currency_pair(currency_code: str) -> str:
     if is_fiat_currency(currency_code):
