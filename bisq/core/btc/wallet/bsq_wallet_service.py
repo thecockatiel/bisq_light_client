@@ -128,7 +128,12 @@ class BsqWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BsqWalletService.get_prepared_issuance_tx Not implemented yet"
         )
-    
+
+    def get_prepared_proof_of_burn_tx(self, fee: Coin) -> "Transaction":
+        raise RuntimeError(
+            "BsqWalletService.get_prepared_proof_of_burn_tx Not implemented yet"
+        )
+
     def get_prepared_burn_fee_tx_for_asset_listing(self, fee: Coin) -> "Transaction":
         raise RuntimeError(
             "BsqWalletService.get_prepared_burn_fee_tx_for_asset_listing Not implemented yet"
