@@ -1,10 +1,6 @@
 import os
-import subprocess
-import sys
 
-
-# used by is_python_pb_impl_required
-def _is_python_pb_impl_required_check():
+def is_pb_map_order_preserved():
     """must not be run on current process, otherwise defeats the point of checking"""
     import pb_pb2 as protobuf
 
@@ -16,35 +12,23 @@ def _is_python_pb_impl_required_check():
         inv = dict(protobuf.GetInventoryResponse.FromString(original).inventory)
         test = protobuf.GetInventoryResponse(inventory=inv).SerializeToString()
         if test != original:
-            return True
-    return False
-
+            return False
+    return True
 
 def is_python_pb_impl_required():
-    if "PB_HELPER_PATH" in os.environ:
-        raise RuntimeError("we are in a subprocess, this should not happen")
-    # Use the file's absolute path dynamically.
-    pb_helper_path = os.path.abspath(__file__)
-    command = [
-        sys.executable,
-        "-c",
-        (
-            "import runpy, os; "
-            "pb_file = os.environ['PB_HELPER_PATH']; "
-            "ns = runpy.run_path(pb_file, run_name='__main__'); "
-            "(ns['_is_python_pb_impl_required_check']() and os._exit(1)) or os._exit(0)"
-        ),
-    ]
-    env = os.environ.copy()
-    env["PB_HELPER_PATH"] = pb_helper_path
-    result = subprocess.run(command, env=env, stdin=subprocess.DEVNULL)
-    # if process exits with 1, it means it is required
-    return result.returncode == 1
-
+    import grpc
+    try:
+        version = grpc.__version__
+        version = version.split('.')
+        major, minor = int(version[0]), int(version[1])
+        if major > 1 or (major == 1 and minor > 48):
+            return False
+    except:
+        pass
+    return True
 
 def use_pure_python_pb_implementation():
     os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-
 
 def check_and_use_pure_python_pb_implementation(print_warning=True):
     if is_python_pb_impl_required():
@@ -61,9 +45,9 @@ def check_and_use_pure_python_pb_implementation(print_warning=True):
         use_pure_python_pb_implementation()
 
         # Now we can run the check again to make sure it worked
-        if _is_python_pb_impl_required_check():
+        if not is_pb_map_order_preserved():
             raise AssertionError(
-                "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION change did not work. \n"
+                "Protobuf map order was not preserved after check. \n"
                 "This is a fatal error. \n"
                 "Exiting now..."
             )
