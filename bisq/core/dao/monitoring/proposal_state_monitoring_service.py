@@ -297,7 +297,7 @@ class ProposalStateMonitoringService(
             self.is_in_conflict_with_non_seed_node
         )
         in_conflict_with_seed_node = AtomicBoolean(self.is_in_conflict_with_seed_node)
-        sb = []
+        conflict_msg = ""
 
         for state_block in self.proposal_state_block_chain:
             if state_block.height == proposal_state_hash.height:
@@ -319,7 +319,7 @@ class ProposalStateMonitoringService(
                         in_conflict_with_seed_node.set(True)
                     else:
                         in_conflict_with_non_seed_node.set(True)
-                    sb.append(
+                    conflict_msg = (
                         f"We received a block hash from peer {peers_node_address_as_string} "
                         f"which conflicts with our block hash.\n"
                         f"my proposalStateHash={state_block.my_state_hash}\n"
@@ -331,7 +331,6 @@ class ProposalStateMonitoringService(
         self.is_in_conflict_with_non_seed_node = in_conflict_with_non_seed_node.get()
         self.is_in_conflict_with_seed_node = in_conflict_with_seed_node.get()
 
-        conflict_msg = "\n".join(sb)
         if conflict_msg:
             if self.is_in_conflict_with_seed_node:
                 logger.warning(f"Conflict with seed nodes: {conflict_msg}")
