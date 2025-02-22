@@ -33,3 +33,13 @@ class GetStateHashesResponse(
             f"    request_nonce={self.request_nonce}\n"
             f"}} {super().__str__()}"
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, GetStateHashesResponse)
+            and value.state_hashes == self.state_hashes
+            and value.request_nonce == self.request_nonce
+        )
+
+    def __hash__(self):
+        return hash((self.state_hashes, self.request_nonce))
