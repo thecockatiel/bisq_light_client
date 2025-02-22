@@ -299,20 +299,20 @@ class ProposalStateMonitoringService(
         in_conflict_with_seed_node = AtomicBoolean(self.is_in_conflict_with_seed_node)
         sb = []
 
-        for dao_state_block in self.proposal_state_block_chain:
-            if dao_state_block.height == proposal_state_hash.height:
+        for state_block in self.proposal_state_block_chain:
+            if state_block.height == proposal_state_hash.height:
                 peers_node_address_as_string = (
                     peers_node_address.get_full_address()
                     if peers_node_address
                     else f"Unknown peer {random.randint(0, 10000)}"
                 )
-                dao_state_block.put_in_peers_map(
+                state_block.put_in_peers_map(
                     peers_node_address_as_string, proposal_state_hash
                 )
-                if not dao_state_block.my_state_hash.has_equal_hash(
+                if not state_block.my_state_hash.has_equal_hash(
                     proposal_state_hash
                 ):
-                    dao_state_block.put_in_conflict_map(
+                    state_block.put_in_conflict_map(
                         peers_node_address_as_string, proposal_state_hash
                     )
                     if peers_node_address_as_string in self._seed_node_addresses:
@@ -322,7 +322,7 @@ class ProposalStateMonitoringService(
                     sb.append(
                         f"We received a block hash from peer {peers_node_address_as_string} "
                         f"which conflicts with our block hash.\n"
-                        f"my proposalStateHash={dao_state_block.my_state_hash}\n"
+                        f"my proposalStateHash={state_block.my_state_hash}\n"
                         f"peers proposalStateHash={proposal_state_hash}"
                     )
                 changed.set(True)
