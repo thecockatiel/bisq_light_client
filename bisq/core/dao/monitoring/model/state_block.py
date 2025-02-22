@@ -42,3 +42,11 @@ class StateBlock(Generic[_T], ABC):
             f"    inConflictMap={self.in_conflict_map}\n"
             f"}}"
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, StateBlock)
+            and self.my_state_hash == value.my_state_hash
+            and self.peers_map == value.peers_map
+            and self.in_conflict_map == value.in_conflict_map
+        )
