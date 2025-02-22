@@ -27,3 +27,13 @@ class GetStateHashesRequest(
             f"    nonce={self.nonce}\n"
             f"}} {super().__str__()}"
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, GetStateHashesRequest)
+            and value.height == self.height
+            and value.nonce == self.nonce
+        )
+
+    def __hash__(self):
+        return hash((self.height, self.nonce))
