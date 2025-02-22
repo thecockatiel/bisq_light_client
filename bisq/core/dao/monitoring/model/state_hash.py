@@ -31,3 +31,11 @@ class StateHash(PersistablePayload, NetworkPayload, ABC):
             f"     hash={bytes_as_hex_string(self.hash)}\n"
             f"}}"
         )
+
+    def __eq__(self, other):
+        if not isinstance(other, StateHash):
+            return False
+        return self.height == other.height and self.hash == other.hash
+
+    def __hash__(self):
+        return hash((self.height, self.hash))
