@@ -92,7 +92,7 @@ class BsqNode(DaoSetupService, ABC):
         # parsing and the daoState. It also does not represent the latest blockHeight but the currently received
         # (not parsed) block.
         self.chain_tip_height = 0
-        self.__shutdown_in_progress = AtomicBoolean(False)
+        self._shutdown_in_progress = AtomicBoolean(False)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -110,7 +110,7 @@ class BsqNode(DaoSetupService, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def shut_down(self):
-        self.__shutdown_in_progress.set(True)
+        self._shutdown_in_progress.set(True)
         self._export_json_files_service.shut_down()
         self._dao_state_snapshot_service.shut_down()
 
@@ -146,7 +146,7 @@ class BsqNode(DaoSetupService, ABC):
         self._dao_state_snapshot_service.apply_snapshot(True)
 
     def do_parse_block(self, raw_block: "RawBlock") -> Optional["Block"]:
-        if self.__shutdown_in_progress.get():
+        if self._shutdown_in_progress.get():
             return None
 
         # We check if we have a block with that height. If so we return. We do not use the chainHeight as with genesis
