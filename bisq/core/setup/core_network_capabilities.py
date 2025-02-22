@@ -31,7 +31,7 @@ class CoreNetworkCapabilities:
 
     @staticmethod
     def maybe_apply_dao_full_mode(config: "Config"):
-        # NOTE: Replaced with noop as we don't support DAO in python implementation
+        # TODO
         pass
         # If we set dao full mode at the preferences view we add the capability there. We read the preferences a
         # bit later than we call that method so we have to add DAO_FULL_NODE Capability at preferences as well to
