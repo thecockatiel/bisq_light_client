@@ -124,7 +124,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
                 lambda: self.balance_model_by_burning_man_name.update(map)
             )
 
-        threading.Thread(target=run_async, daemon=True).start()
+        threading.Thread(target=run_async, name="BurningManAccountingService.start.run_async").start()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
