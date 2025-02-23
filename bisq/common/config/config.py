@@ -283,6 +283,12 @@ class Config:
         self.seed_node_reporting_server_url: str = (
             options["seedNodeReportingServerUrl"] or ""
         )
+        self.use_full_mode_dao_monitor: bool = (
+            options["useFullModeDaoMonitor"] or False
+        )
+        self.use_full_mode_dao_monitor_option_set_explicitly: bool = (
+            options["useFullModeDaoMonitor"] is not None
+        )
 
         # Create all appDataDir subdirectories and assign to their respective properties
         btc_network_dir = self.app_data_dir.joinpath(
@@ -967,5 +973,16 @@ class Config:
             type=str,
             metavar="<String>",
         )
-
+        parser.add_argument(
+            "--useFullModeDaoMonitor",
+            help=(
+                "If set to true full mode DAO monitor is activated. "
+                "By that at each block during parsing the dao state hash is created, "
+                "otherwise only after block parsing is complete and on new blocks."
+            ),
+            type=parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
         return parser

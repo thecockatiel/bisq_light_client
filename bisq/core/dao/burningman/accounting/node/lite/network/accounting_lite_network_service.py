@@ -51,26 +51,15 @@ class AccountingLiteNodeNetworkService(
 
     class Listener(ABC):
         @abstractmethod
-        def on_no_seed_node_available(self):
-            pass
-
-        @abstractmethod
         def on_requested_blocks_received(
             self,
             get_blocks_response: "GetAccountingBlocksResponse",
-            on_parsing_complete: Callable[[], None],
         ):
             pass
 
         @abstractmethod
         def on_new_block_received(
             self, new_block_broadcast_message: "NewAccountingBlockBroadcastMessage"
-        ):
-            pass
-
-        @abstractmethod
-        def on_fault(
-            self, error_message: str, connection: Optional["Connection"] = None
         ):
             pass
 
@@ -294,7 +283,7 @@ class AccountingLiteNodeNetworkService(
 
                     for listener in self._listeners:
                         listener.on_requested_blocks_received(
-                            get_blocks_response, lambda: None
+                            get_blocks_response
                         )
                 else:
                     logger.warning(

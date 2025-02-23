@@ -53,7 +53,7 @@ class LiteNode(BsqNode):
         lite_node_network_service: "LiteNodeNetworkService",
         bsq_wallet_service: "BsqWalletService",
         wallets_setup: "WalletsSetup",
-        export_json_files_service: ExportJsonFilesService,
+        export_json_files_service: "ExportJsonFilesService",
     ):
         super().__init__(
             block_parser,
@@ -172,10 +172,10 @@ class LiteNode(BsqNode):
             and self._p2p_network_ready
             and not self._parse_blockchain_complete
         ):
-            self._start_parse_blocks()
+            self.start_parse_blocks()
 
     # First we request the blocks from a full node
-    def _start_parse_blocks(self):
+    def start_parse_blocks(self):
         chain_height = self._dao_state_service.chain_height
         if (
             self._wallets_setup.is_download_complete
