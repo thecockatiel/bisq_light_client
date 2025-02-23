@@ -179,7 +179,7 @@ class RepublishGovernanceDataHandler:
             UserThread.run_after(self._connect_to_next_node, timedelta(seconds=60))
 
     def _handle_fault(self, node_address: "NodeAddress"):
-        self._peer_manager.handle_connection_fault(node_address)
+        self._peer_manager.handle_connection_fault(node_address=node_address)
 
     def _stop(self):
         self._stopped = True
