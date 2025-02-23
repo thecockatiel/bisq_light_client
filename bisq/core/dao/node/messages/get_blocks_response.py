@@ -28,15 +28,15 @@ class GetBlocksResponse(
             super().__init__()
         else:
             super().__init__(message_version)
-        self._blocks = blocks
-        self._request_nonce = request_nonce
+        self.blocks = blocks
+        self.request_nonce = request_nonce
 
     def to_proto_network_envelope(self):
         builder = self.get_network_envelope_builder()
         builder.get_blocks_response.CopyFrom(
             protobuf.GetBlocksResponse(
-                raw_blocks=[block.to_proto_message() for block in self._blocks],
-                request_nonce=self._request_nonce,
+                raw_blocks=[block.to_proto_message() for block in self.blocks],
+                request_nonce=self.request_nonce,
             )
         )
         logger.info(
@@ -61,8 +61,8 @@ class GetBlocksResponse(
     def __str__(self):
         return (
             f"GetBlocksResponse{{\n"
-            f"     blocks={self._blocks},\n"
-            f"     request_nonce={self._request_nonce}\n"
+            f"     blocks={self.blocks},\n"
+            f"     request_nonce={self.request_nonce}\n"
             f"}} {super().__str__()}"
         )
 
@@ -72,9 +72,9 @@ class GetBlocksResponse(
     def __eq__(self, other):
         return (
             isinstance(other, GetBlocksResponse)
-            and self._blocks == other._blocks
-            and self._request_nonce == other._request_nonce
+            and self.blocks == other.blocks
+            and self.request_nonce == other.request_nonce
         )
 
     def __hash__(self):
-        return hash((self._blocks, self._request_nonce))
+        return hash((self.blocks, self.request_nonce))

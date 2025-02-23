@@ -41,12 +41,12 @@ class GetBlocksRequest(
         if supported_capabilities is None:
             supported_capabilities = Capabilities.app
 
-        self._from_block_height = from_block_height
-        self._nonce = nonce
+        self.from_block_height = from_block_height
+        self.nonce = nonce
         # Added after version 1.0.1. Can be null if received from older clients.
-        self._sender_node_address = sender_node_address
+        self.sender_node_address = sender_node_address
         # Added after version 1.0.1. Can be null if received from older clients.
-        self._supported_capabilities = supported_capabilities
+        self.supported_capabilities = supported_capabilities
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
@@ -56,16 +56,16 @@ class GetBlocksRequest(
         builder = self.get_network_envelope_builder()
         builder.get_blocks_request.CopyFrom(
             protobuf.GetBlocksRequest(
-                from_block_height=self._from_block_height,
-                nonce=self._nonce,
+                from_block_height=self.from_block_height,
+                nonce=self.nonce,
                 sender_node_address=(
-                    self._sender_node_address.to_proto_message()
-                    if self._sender_node_address
+                    self.sender_node_address.to_proto_message()
+                    if self.sender_node_address
                     else None
                 ),
                 supported_capabilities=(
-                    Capabilities.to_int_list(self._supported_capabilities)
-                    if self._supported_capabilities
+                    Capabilities.to_int_list(self.supported_capabilities)
+                    if self.supported_capabilities
                     else None
                 ),
             )
@@ -98,27 +98,27 @@ class GetBlocksRequest(
     def __str__(self):
         return (
             f"GetBlocksRequest{{\n"
-            f"     fromBlockHeight={self._from_block_height},\n"
-            f"     nonce={self._nonce},\n"
-            f"     senderNodeAddress={self._sender_node_address},\n"
-            f"     supportedCapabilities={self._supported_capabilities}\n"
+            f"     fromBlockHeight={self.from_block_height},\n"
+            f"     nonce={self.nonce},\n"
+            f"     senderNodeAddress={self.sender_node_address},\n"
+            f"     supportedCapabilities={self.supported_capabilities}\n"
             f"}} {super().__str__()}"
         )
 
     def __eq__(self, other):
         return (
             isinstance(other, GetBlocksRequest)
-            and self._from_block_height == other._from_block_height
-            and self._nonce == other._nonce
-            and self._sender_node_address == other._sender_node_address
-            and self._supported_capabilities == other._supported_capabilities
+            and self.from_block_height == other.from_block_height
+            and self.nonce == other.nonce
+            and self.sender_node_address == other.sender_node_address
+            and self.supported_capabilities == other.supported_capabilities
         )
 
     def __hash__(self):
         return hash(
             (
-                self._from_block_height,
-                self._nonce,
-                self._sender_node_address,
+                self.from_block_height,
+                self.nonce,
+                self.sender_node_address,
             )
         )
