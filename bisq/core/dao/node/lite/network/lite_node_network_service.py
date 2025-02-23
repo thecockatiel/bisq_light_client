@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import timedelta
 import random
-from typing import TYPE_CHECKING, Collection, Optional
+from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.setup.log_setup import get_logger
