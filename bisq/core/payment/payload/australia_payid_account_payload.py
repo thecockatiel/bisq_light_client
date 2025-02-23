@@ -53,7 +53,7 @@ class AustraliaPayidAccountPayload(PaymentAccountPayload):
     def get_payment_details_for_trade_popup(self) -> str:
         return (
             f"{Res.get('payment.australia.payid')}: {self.payid}\n"
-            f"{Res.get('payment.account.owner')}: {self.bank_account_name}"
+            f"{Res.get('payment.account.owner.fullname')}: {self.bank_account_name}"
         )
 
     def get_age_witness_input_data(self) -> bytes:

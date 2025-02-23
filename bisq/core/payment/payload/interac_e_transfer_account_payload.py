@@ -73,7 +73,7 @@ class InteracETransferAccountPayload(PaymentAccountPayload, PayloadWithHolderNam
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        account_owner = Res.get_with_col("payment.account.owner")
+        account_owner = Res.get_with_col("payment.account.owner.fullname")
         email_label = Res.get("payment.email")
         secret_label = Res.get_with_col("payment.secret")
         answer_label = Res.get_with_col("payment.answer")
@@ -86,7 +86,7 @@ class InteracETransferAccountPayload(PaymentAccountPayload, PayloadWithHolderNam
 
     def get_payment_details_for_trade_popup(self) -> str:
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}\n"
             f"{Res.get_with_col('payment.email')} {self.email}\n"
             f"{Res.get_with_col('payment.secret')} {self.question}\n"
             f"{Res.get_with_col('payment.answer')} {self.answer}"

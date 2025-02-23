@@ -58,6 +58,10 @@ class BisqExecutable(
                 self._config.parser.print_help()
                 return stop_reactor_and_exit(BisqExecutable.EXIT_SUCCESS)
             configure_logging(log_file=self._config.app_data_dir.joinpath("bisq.log"), log_level=self._config.log_level)
+            if self._config.full_dao_node:
+                logger.error("Full DAO node is not supported. ignoring this option.")
+                self._config.full_dao_node = False
+                self._config.full_dao_node_option_set_explicitly = False
         except ConfigException as e:
             print(f"error: {e}", file=sys.stderr)
             return stop_reactor_and_exit(BisqExecutable.EXIT_FAILURE)

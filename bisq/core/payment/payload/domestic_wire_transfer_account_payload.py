@@ -69,7 +69,7 @@ class DomesticWireTransferAccountPayload(BankAccountPayload):
 
     def get_payment_details(self):
         payment_method = Res.get(self.payment_method_id)
-        account_owner = Res.get_with_col("payment.account.owner")
+        account_owner = Res.get_with_col("payment.account.owner.fullname")
         bank_name_label = BankUtil.get_bank_name_label(self.country_code)
         branch_id_label = BankUtil.get_branch_id_label(self.country_code)
         account_nr_label = BankUtil.get_account_nr_label(self.country_code)

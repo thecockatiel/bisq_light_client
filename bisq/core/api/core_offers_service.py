@@ -8,10 +8,16 @@ from bisq.core.api.edit_offer_validator import EditOfferValidator
 from bisq.core.api.exception.not_found_exception import NotFoundException
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
-from bisq.core.locale.currency_util import api_supports_crypto_currency, is_crypto_currency, is_fiat_currency
+from bisq.core.locale.currency_util import (
+    api_supports_crypto_currency,
+    is_crypto_currency,
+    is_fiat_currency,
+)
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.price import Price
-from bisq.core.offer.bisq_v1.mutable_offer_payload_fields import MutableOfferPayloadFields
+from bisq.core.offer.bisq_v1.mutable_offer_payload_fields import (
+    MutableOfferPayloadFields,
+)
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
@@ -182,29 +188,22 @@ class CoreOffersService:
         ]
         return sorted(filtered, key=self.price_comparator(direction, False))
 
-    def get_offers(
-        self, direction: str, currency_code: str, all: bool
-    ) -> list["Offer"]:
+    def get_offers(self, direction: str, currency_code: str) -> list["Offer"]:
         upper_case_currency_code = currency_code.upper()
         is_fiat = is_fiat_currency(upper_case_currency_code)
 
         if is_fiat:
             offers = self.offer_book_service.get_offers()
-            filtered = [
-                o
-                for o in offers
-                if not o.is_my_offer(self.key_ring)
-                and self._offer_matches_direction_and_currency(
-                    o, direction, upper_case_currency_code
-                )
-                and (
-                    all
-                    or self.offer_filter_service.can_take_offer(
-                        o, self.core_context.is_api_user
-                    ).is_valid
-                )
-            ]
-            return sorted(filtered, key=self.price_comparator(direction, True))
+            return sorted(
+                (
+                    o
+                    for o in offers
+                    if self._offer_matches_direction_and_currency(
+                        o, direction, upper_case_currency_code
+                    )
+                ),
+                key=self.price_comparator(direction, True),
+            )
         else:
             # In fiat offers, the baseCurrencyCode=BTC, counterCurrencyCode=FiatCode.
             # In altcoin offers, baseCurrencyCode=AltcoinCode, counterCurrencyCode=BTC.
@@ -212,20 +211,18 @@ class CoreOffersService:
             # then filter on the currencyCode param (the altcoin code).
             if api_supports_crypto_currency(upper_case_currency_code):
                 offers = self.offer_book_service.get_offers()
-                filtered = [
-                    o
-                    for o in offers
-                    if not o.is_my_offer(self.key_ring)
-                    and self._offer_matches_direction_and_currency(o, direction, "BTC")
-                    and o.base_currency_code.upper() == upper_case_currency_code
-                    and (
-                        all
-                        or self.offer_filter_service.can_take_offer(
-                            o, self.core_context.is_api_user
-                        ).is_valid
-                    )
-                ]
-                return sorted(filtered, key=self.price_comparator(direction, False))
+
+                return sorted(
+                    (
+                        o
+                        for o in offers
+                        if self._offer_matches_direction_and_currency(
+                            o, direction, "BTC"
+                        )
+                        and o.base_currency_code.upper() == upper_case_currency_code
+                    ),
+                    key=self.price_comparator(direction, False),
+                )
             else:
                 raise IllegalArgumentException(
                     f"api does not support the '{upper_case_currency_code}' crypto currency"
@@ -361,7 +358,9 @@ class CoreOffersService:
 
         payment_account = self.user.get_payment_account(payment_account_id)
         if payment_account is None:
-            raise IllegalArgumentException(f"payment account with id {payment_account_id} not found")
+            raise IllegalArgumentException(
+                f"payment account with id {payment_account_id} not found"
+            )
 
         upper_case_currency_code = currency_code.upper()
         offer_id = OfferUtil.get_random_offer_id()
@@ -479,7 +478,7 @@ class CoreOffersService:
             lambda: logger.info(f"EditOpenOfferPublish: offer {open_offer.get_id()}"),
             logger.error,
         )
-    
+
     def cancel_offer(self, id: str):
         open_offer = self.get_my_offer(id)
         self.open_offer_manager.remove_offer(
@@ -487,7 +486,7 @@ class CoreOffersService:
             lambda: None,
             logger.error,
         )
-    
+
     def _place_bsq_swap_offer(self, offer: "Offer", result_handler: Callable[[], None]):
         self.open_bsq_swap_offer_service.place_bsq_swap_offer(
             offer,
@@ -497,7 +496,7 @@ class CoreOffersService:
 
         if offer.error_message is not None:
             raise IllegalStateException(offer.error_message)
-        
+
     def _place_offer(
         self,
         offer: "Offer",
@@ -506,7 +505,9 @@ class CoreOffersService:
         use_savings_wallet: bool,
         result_handler: Callable[["Transaction"], None],
     ):
-        trigger_price_as_long = PriceUtil.get_market_price_as_long(trigger_price, offer.currency_code)
+        trigger_price_as_long = PriceUtil.get_market_price_as_long(
+            trigger_price, offer.currency_code
+        )
         self.open_offer_manager.place_offer(
             offer,
             buyer_security_deposit_pct,
@@ -519,7 +520,7 @@ class CoreOffersService:
 
         if offer.error_message is not None:
             raise IllegalStateException(offer.error_message)
-        
+
     def _get_merged_offer_payload(
         self,
         edit_offer_validator: "EditOfferValidator",
@@ -534,28 +535,51 @@ class CoreOffersService:
         # in OfferPayload.
         offer = open_offer.get_offer()
         currency_code = offer.currency_code
-        is_using_mkt_price_margin = edit_offer_validator.is_editing_use_mkt_price_margin_flag(offer, edit_type)
-        is_editing_fixed_price = edit_type in [grpc_pb2.EditOfferRequest.EditType.FIXED_PRICE_ONLY, grpc_pb2.EditOfferRequest.EditType.FIXED_PRICE_AND_ACTIVATION_STATE]
-        
+        is_using_mkt_price_margin = (
+            edit_offer_validator.is_editing_use_mkt_price_margin_flag(offer, edit_type)
+        )
+        is_editing_fixed_price = edit_type in [
+            grpc_pb2.EditOfferRequest.EditType.FIXED_PRICE_ONLY,
+            grpc_pb2.EditOfferRequest.EditType.FIXED_PRICE_AND_ACTIVATION_STATE,
+        ]
+
         if is_editing_fixed_price:
-            edited_fixed_price = Price.value_of(currency_code, self._price_string_to_long(edited_price, currency_code))
+            edited_fixed_price = Price.value_of(
+                currency_code, self._price_string_to_long(edited_price, currency_code)
+            )
         else:
             # When is_using_mkt_price_margin=True, (fixed) price must be set to 0 on the server.
             # The client, however, still must show the calculated price when
             # is_using_mkt_price_margin=True.
-            edited_fixed_price = Price.value_of(currency_code, 0) if is_using_mkt_price_margin else offer.get_price()
+            edited_fixed_price = (
+                Price.value_of(currency_code, 0)
+                if is_using_mkt_price_margin
+                else offer.get_price()
+            )
 
         # If is_using_mkt_price_margin=True , throw exception if new fixed-price != 0.
         # If is_using_mkt_price_margin=False, throw exception if new fixed-price == 0.
         if is_using_mkt_price_margin and edited_fixed_price.value != 0:
-            raise IllegalStateException(f"Fixed price on mkt price margin based offer {offer.id} must be set to 0 in server.")
+            raise IllegalStateException(
+                f"Fixed price on mkt price margin based offer {offer.id} must be set to 0 in server."
+            )
         elif not is_using_mkt_price_margin:
-            assert edited_fixed_price is not None, "edited_fixed_price cannot be None here"
+            assert (
+                edited_fixed_price is not None
+            ), "edited_fixed_price cannot be None here"
             if edited_fixed_price.value == 0:
-                raise IllegalStateException(f"Fixed price on fixed price offer {offer.id} cannot be 0.")
+                raise IllegalStateException(
+                    f"Fixed price on fixed price offer {offer.id} cannot be 0."
+                )
 
-        is_editing_mkt_price_margin = edit_offer_validator.is_editing_mkt_price_margin(edit_type)
-        new_market_price_margin = MathUtils.exact_multiply(edited_market_price_margin, 0.01) if is_editing_mkt_price_margin else offer.market_price_margin
+        is_editing_mkt_price_margin = edit_offer_validator.is_editing_mkt_price_margin(
+            edit_type
+        )
+        new_market_price_margin = (
+            MathUtils.exact_multiply(edited_market_price_margin, 0.01)
+            if is_editing_mkt_price_margin
+            else offer.market_price_margin
+        )
 
         assert edited_fixed_price is not None, "edited_fixed_price cannot be None here"
         mutable_offer_payload_fields = MutableOfferPayloadFields(
@@ -575,16 +599,26 @@ class CoreOffersService:
             offer.extra_data_map,
         )
         logger.info(f"Merging OfferPayload with {mutable_offer_payload_fields}")
-        return self.offer_util.get_merged_offer_payload(open_offer, mutable_offer_payload_fields)
-        
-    def _verify_payment_account_is_valid_for_new_offer(self, offer: "Offer", payment_account: "PaymentAccount"):
-        if not PaymentAccountUtil.is_payment_account_valid_for_offer(offer, payment_account):
+        return self.offer_util.get_merged_offer_payload(
+            open_offer, mutable_offer_payload_fields
+        )
+
+    def _verify_payment_account_is_valid_for_new_offer(
+        self, offer: "Offer", payment_account: "PaymentAccount"
+    ):
+        if not PaymentAccountUtil.is_payment_account_valid_for_offer(
+            offer, payment_account
+        ):
             error = f"cannot create {offer.counter_currency_code} offer with payment account {payment_account.id}"
             raise IllegalStateException(error)
 
-    def _offer_matches_direction_and_currency(self, offer: "Offer", direction: str, currency_code: str) -> bool:
+    def _offer_matches_direction_and_currency(
+        self, offer: "Offer", direction: str, currency_code: str
+    ) -> bool:
         is_direction_match = offer.direction.name.casefold() == direction.casefold()
-        is_currency_match = offer.counter_currency_code.casefold() == currency_code.casefold()
+        is_currency_match = (
+            offer.counter_currency_code.casefold() == currency_code.casefold()
+        )
         return is_direction_match and is_currency_match
 
     def open_offer_price_comparator(

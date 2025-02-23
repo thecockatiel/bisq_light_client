@@ -27,6 +27,8 @@ class DisputeAgentLookupMap:
             "6c4cim7h7t3bm4bnchbf727qrhdfrfr6lhod25wjtizm2sifpkktvwad.onion:9999"   # old
         ]:
             return "pazza83"
+        elif full_address == "5wmuzi76l4ogbdh6ahvdafzlebk4c3sp3q5njhz5h5qa5fwbalexa7id.onion:9999":
+            return "suddenwhipvapor"
         else:
             log.warning(
             f"No user name for dispute agent with address {full_address} found."

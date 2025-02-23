@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import random
 import re
 from typing import TYPE_CHECKING, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-# NOTE: Keep up to date with https://github.com/bisq-network/bisq/blob/v1.9.18/core/src/main/java/bisq/core/user/Preferences.java
+# NOTE: Keep up to date with https://github.com/bisq-network/bisq/blob/v1.9.19/core/src/main/java/bisq/core/user/Preferences.java
 # removed LocalBitcoinNode
 # replaced unsupported options with constants
 
@@ -63,6 +64,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.referral_id_from_options = config.referral_id
         self.full_dao_node_from_options = config.full_dao_node
         self.full_accounting_node_from_options = config.is_bm_full_node
+        self.use_full_mode_dao_monitor_from_options = config.use_full_mode_dao_monitor
         self.rpc_user_from_options = config.rpc_user
         self.rpc_pw_from_options = config.rpc_password
         self.block_notify_port_from_options = config.rpc_block_notification_port
@@ -198,24 +200,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.use_standby_mode_property.value = self.pref_payload.use_standby_mode
         self.css_theme_property.value = self.pref_payload.css_theme
         
-        # a list of previously-used federated explorers
-        # if user preference references any deprecated explorers we need to select a new valid explorer
-        deprecated_explorers = r"(bsq\.bisq\.cc|bsq\.vante\.me|bsq\.emzy\.de|bsq\.sqrrm\.net|bsq\.bisq\.services|bsq\.ninja).*"
-        
-        # if no valid Bitcoin block explorer is set, select the 1st valid Bitcoin block explorer
-        btc_explorers = self.get_block_chain_explorers()
-        if (not self.get_block_chain_explorer() or 
-            len(self.get_block_chain_explorer().name) == 0 or 
-            re.match(deprecated_explorers, self.get_block_chain_explorer().name)):
-            self.set_block_chain_explorer(btc_explorers[0])
-        
-        # if no valid BSQ block explorer is set, randomly select a valid BSQ block explorer
-        bsq_explorers = self.get_bsq_block_chain_explorers()
-        if (not self.pref_payload.bsq_block_chain_explorer or 
-            len(self.pref_payload.bsq_block_chain_explorer.name) == 0 or 
-            re.match(deprecated_explorers, self.pref_payload.bsq_block_chain_explorer.name)):
-            import random
-            self.pref_payload.bsq_block_chain_explorer = random.choice(bsq_explorers)
+        self._clear_retired_nodes()
         
         # Set trade currencies
         self.trade_currencies_as_observable.extend(self.pref_payload.fiat_currencies)
@@ -249,19 +234,50 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             self.set_use_market_notifications(True)
             self.set_use_price_notifications(True)
         
-        # Set default auto confirm settings if empty
-        if not self.pref_payload.auto_confirm_settings_list:
-            default_xmr_tx_proof_services = self.get_default_xmr_tx_proof_services()
-            xmr_auto_confirm_settings = AutoConfirmSettings.get_default(default_xmr_tx_proof_services, "XMR")
-            if xmr_auto_confirm_settings:
-                self.pref_payload.auto_confirm_settings_list.append(xmr_auto_confirm_settings)
-        
         # We set the capability in CoreNetworkCapabilities if the program argument is set.
         # If we have set it in the preferences view we handle it here.
         CoreNetworkCapabilities.maybe_apply_dao_full_mode(self.config)
         
         self.initial_read_done = True
         self.request_persistence()
+
+    def _clear_retired_nodes(self):
+        # a list of previously-used federated explorers    
+        # if user preference references any deprecated explorers we need to select a new valid explorer
+        deprecated_explorers = re.compile(r"(bsq.bisq.cc|bsq.vante.me|bsq.emzy.de|bsq.sqrrm.net|bsq.bisq.services|bsq.ninja|bisq.mempool.emzy.de).*")
+
+        # if no valid Bitcoin block explorer is set, select the 1st valid Bitcoin block explorer
+        btc_explorers = self.get_block_chain_explorers()
+        if (self.get_block_chain_explorer() is None or
+                not self.get_block_chain_explorer().name or
+                deprecated_explorers.match(self.get_block_chain_explorer().name)):
+            self.set_block_chain_explorer(btc_explorers[0])
+
+        # if no valid BSQ block explorer is set, randomly select a valid BSQ block explorer
+        bsq_explorers = self.get_bsq_block_chain_explorers()
+        if (self.get_bsq_block_chain_explorer() is None or
+                not self.get_bsq_block_chain_explorer().name or
+                deprecated_explorers.match(self.get_bsq_block_chain_explorer().name)):
+            self.set_bsq_blockchain_explorer(random.choice(bsq_explorers))
+
+        # Remove retired XMR AutoConfirm addresses
+        retired_addresses = [
+            "monero3bec7m26vx6si6qo7q7imlaoz45ot5m2b5z2ppgoooo6jx2rqd",
+            "devinxmrwu4jrfq2zmq5kqjpxb44hx7i7didebkwrtvmvygj4uuop2ad"
+        ]
+        # TODO: java sanity check later
+        do_apply_defaults = any(
+            any(retired_address in address for address in auto_confirm_settings.service_addresses)
+            for auto_confirm_settings in self.pref_payload.auto_confirm_settings_list
+            for retired_address in retired_addresses
+        )
+        if do_apply_defaults:
+            self.pref_payload.auto_confirm_settings_list.clear()
+            default_xmr_tx_proof_services = self.get_default_xmr_tx_proof_services()
+            xmr_auto_confirm_settings = AutoConfirmSettings.get_default(default_xmr_tx_proof_services, "XMR")
+            if xmr_auto_confirm_settings:
+                self.pref_payload.auto_confirm_settings_list.append(xmr_auto_confirm_settings)
+            self.persistence_manager.force_persist_now()
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -628,8 +644,10 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.request_persistence()
         
     def set_use_full_mode_dao_monitor(self, value: bool) -> None:
-        self.pref_payload.use_full_mode_dao_monitor = value
-        self.request_persistence()
+        # We only persist if we have not set the program argument
+        if not self.config.use_full_mode_dao_monitor_option_set_explicitly:
+            self.pref_payload.use_full_mode_dao_monitor = value
+            self.request_persistence()
         
     def set_use_bitcoin_uris_in_qr_codes(self, value: bool) -> None:
         self.pref_payload.use_bitcoin_uris_in_qr_codes = value 
@@ -779,11 +797,14 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def is_full_bm_accounting_node(self) -> bool:
         return self.pref_payload.is_full_bm_accounting_node
     
+    def is_use_full_mode_dao_monitor(self) -> bool:
+        if self.config.use_full_mode_dao_monitor_option_set_explicitly:
+            return self.use_full_mode_dao_monitor_from_options
+        else:
+            return self.pref_payload.use_full_mode_dao_monitor
+    
     def is_notify_on_pre_release(self) -> bool:
         return self.pref_payload.notify_on_pre_release
-    
-    def is_use_full_mode_dao_monitor(self) -> bool:
-        return self.pref_payload.use_full_mode_dao_monitor
     
     def get_user_has_raised_trade_limit(self):
         return self.pref_payload.user_has_raised_trade_limit

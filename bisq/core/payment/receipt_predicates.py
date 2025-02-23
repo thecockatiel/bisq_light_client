@@ -51,6 +51,9 @@ class ReceiptPredicates:
         )
         return isinstance(account, BankAccount) and is_same_or_specific_bank
 
+    def contains_case_insensitive(self, val: str, lst: list[str]) -> bool:
+        return any(x.casefold() == val.casefold() for x in lst)
+
     def is_matching_bank_id(self, offer: "Offer", account: "PaymentAccount") -> bool:
         accepted_banks_for_offer = offer.accepted_bank_ids
         if accepted_banks_for_offer is None:
@@ -65,19 +68,20 @@ class ReceiptPredicates:
             # check if we have a matching bank
             offer_side_matches_bank = (
                 account_bank_id is not None
-                and account_bank_id in accepted_banks_for_offer
+                and self.contains_case_insensitive(
+                    account_bank_id, accepted_banks_for_offer
+                )
             )
             accepted_banks_for_account = account.accepted_banks
-            payment_account_side_matches_bank = (
-                offer.bank_id in accepted_banks_for_account
+            payment_account_side_matches_bank = self.contains_case_insensitive(
+                offer.bank_id, accepted_banks_for_account
             )
 
             return offer_side_matches_bank and payment_account_side_matches_bank
         else:
             # national or same bank
-            return (
-                account_bank_id is not None
-                and account_bank_id in accepted_banks_for_offer
+            return account_bank_id is not None and self.contains_case_insensitive(
+                account_bank_id, accepted_banks_for_offer
             )
 
     def is_matching_country_codes(

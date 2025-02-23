@@ -70,12 +70,12 @@ class UpholdAccountPayload(PaymentAccountPayload):
         if not self.account_owner:
             return (
                 f"{Res.get('payment.account')}: {self.account_id}\n"
-                f"{Res.get('payment.account.owner')}: N/A"
+                f"{Res.get('payment.account.owner.fullname')}: N/A"
             )
         else:
             return (
                 f"{Res.get('payment.account')}: {self.account_id}\n"
-                f"{Res.get('payment.account.owner')}: {self.account_owner}"
+                f"{Res.get('payment.account.owner.fullname')}: {self.account_owner}"
             )
 
     def get_age_witness_input_data(self) -> bytes:

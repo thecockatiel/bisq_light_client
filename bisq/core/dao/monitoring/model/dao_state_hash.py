@@ -5,7 +5,7 @@ import pb_pb2 as protobuf
 class DaoStateHash(StateHash):
     def __init__(self, height: int, hash: bytes, is_self_created: bool):
         super().__init__(height, hash)
-        # If we have built the hash by ourself opposed to that we got delivered the hash from seed nodes or resources
+        # If we have built the hash by ourselves opposed to that we got delivered the hash from seed nodes or resources
         self.is_self_created = is_self_created
 
     def to_proto_message(self) -> protobuf.DaoStateHash:

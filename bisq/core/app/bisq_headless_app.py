@@ -149,8 +149,8 @@ class BisqHeadlessApp(HeadlessApp):
         bisq_setup.down_grade_prevention_handler = lambda last_version: logger.info(
             f"Downgrade from version {last_version} to version {Version.VERSION} is not supported"
         )
-        bisq_setup.dao_requires_restart_handler = lambda: (
-            logger.info(
+        bisq_setup.resync_dao_state_from_resources_handler = lambda: (
+            logger.warning(
                 "There was a problem with synchronizing the DAO state. A restart of the application is required to fix the issue."
             ),
             self.__graceful_shut_down_handler.graceful_shut_down(lambda: None),

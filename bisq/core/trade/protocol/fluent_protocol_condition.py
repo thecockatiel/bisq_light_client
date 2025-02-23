@@ -67,9 +67,11 @@ class FluentProtocolCondition:
         return self
         
     def with_precondition(self, precondition: bool, condition_failed_handler: Optional[Callable[[], None]] = None) -> "FluentProtocolCondition":
+        """Calling this more than once discards the previous conditionFailedHandler"""
         check_argument(self.result is None, "result must be None")
         self.pre_conditions.add(precondition)
-        if condition_failed_handler is not None:
+        if condition_failed_handler is not None: 
+            logger.warning("with_precondition was called more than once. previous conditionFailedHandler will be discarded.")
             self.pre_conditions_failed_handler = condition_failed_handler
         return self
 

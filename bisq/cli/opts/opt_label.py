@@ -6,7 +6,6 @@ class OptLabel:
     OPT_AMOUNT = "amount"
     OPT_CATEGORY = "category"
     OPT_CURRENCY_CODE = "currency-code"
-    OPT_ALL = "all"
     OPT_DAYS = "days"
     OPT_DIRECTION = "direction"
     OPT_DISPUTE_AGENT_TYPE = "dispute-agent-type"

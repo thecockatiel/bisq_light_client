@@ -123,7 +123,8 @@ class CreateOfferService:
             buyer_security_deposit,
             payment_account,
             currency_code,
-            maker_fee)
+            maker_fee,
+            accepted_banks)
 
         offer_payload = OfferPayload(
             id=offer_id,

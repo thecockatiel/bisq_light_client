@@ -117,7 +117,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
 
     def get_holder_name_or_prompt_if_empty(self) -> str:
         return (
-            Res.get("payment.account.owner.ask")
+            Res.get("payment.account.owner.fullname.ask")
             if not PaymentAccountPayload.HOLDER_NAME
             else PaymentAccountPayload.HOLDER_NAME
         )

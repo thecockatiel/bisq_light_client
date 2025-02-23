@@ -26,3 +26,11 @@ class PaymentAccountFilter(NetworkPayload):
             get_method_name=proto.get_method_name,
             value=proto.value,
         )
+
+    def __repr__(self):
+        return (
+            f"PaymentAccountFilter("
+            f"payment_method_id='{self.payment_method_id}', "
+            f"get_method_name='{self.get_method_name}', "
+            f"value='[HIDDEN]')"
+        )

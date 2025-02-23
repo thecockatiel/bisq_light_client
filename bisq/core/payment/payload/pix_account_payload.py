@@ -65,7 +65,7 @@ class PixAccountPayload(CountryBasedPaymentAccountPayload):
 
     def get_payment_details_for_trade_popup(self) -> str:
         pix_key_label = Res.get_with_col("payment.pix.key")
-        owner_label = Res.get_with_col("payment.account.owner")
+        owner_label = Res.get_with_col("payment.account.owner.fullname")
         holder_name = self.get_holder_name_or_prompt_if_empty()
         return f"{pix_key_label} {self.pix_key}\n{owner_label} {holder_name}"
 

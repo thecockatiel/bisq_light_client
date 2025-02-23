@@ -290,7 +290,7 @@ class LiteNode(BsqNode):
                 self._run_delayed_batch_processing(blocks, result_handler)
             except RequiredReorgFromSnapshotException as e:
                 logger.warning(
-                    f"Interrupt batch processing because of a blockchain reorg. {e}"
+                    f"doParseBlock failed at runDelayedBatchProcessing because of a blockchain reorg. {e}"
                 )
 
         UserThread.execute(process_next_block)
@@ -308,7 +308,9 @@ class LiteNode(BsqNode):
 
         try:
             self.do_parse_block(block)
-        except RequiredReorgFromSnapshotException:
-            pass
+        except RequiredReorgFromSnapshotException as e:
+            logger.warning(
+                f"doParseBlock failed at onNewBlockReceived because of a blockchain reorg. {e}"
+            )
 
         self.maybe_export_to_json()

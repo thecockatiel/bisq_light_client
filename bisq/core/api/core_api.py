@@ -123,9 +123,9 @@ class CoreApi:
         return self.core_offers_service.get_bsq_swap_offers(direction)
 
     def get_offers(
-        self, direction: str, currency_code: str, all: bool
+        self, direction: str, currency_code: str
     ) -> "list[Offer]":
-        return self.core_offers_service.get_offers(direction, currency_code, all)
+        return self.core_offers_service.get_offers(direction, currency_code)
 
     def get_my_offers(self, direction: str, currency_code: str) -> "list[OpenOffer]":
         return self.core_offers_service.get_my_offers(direction, currency_code)

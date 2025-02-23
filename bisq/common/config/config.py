@@ -276,7 +276,7 @@ class Config:
             options["bypassMempoolValidation"] or False
         )
         self.dao_node_api_url: str = options["daoNodeApiUrl"] or "http://localhost"
-        self.dao_node_api_port: int = options["daoNodeApiPort"] or 8082
+        self.dao_node_api_port: int = options["daoNodeApiPort"] or 8081
         self.is_bm_full_node: bool = options["isBmFullNode"] or False
         self.bm_oracle_node_pub_key: str = options["bmOracleNodePubKey"] or ""
         self.bm_oracle_node_priv_key: str = options["bmOracleNodePrivKey"] or ""

@@ -16,13 +16,17 @@ class Profiler:
 
     @staticmethod
     def print_system_load():
+        logger.info(Profiler.get_system_load())
+
+    @staticmethod
+    def get_system_load():
         process = psutil.Process()
         virtual_memory = psutil.virtual_memory()
         total = virtual_memory.total
         free = virtual_memory.available
         used = process.memory_info().rss
 
-        logger.info(
+        return (
             f"Total memory: {readable_file_size(total)}; Used memory by process: {readable_file_size(used)}; "
             f"Free memory: {readable_file_size(free)}; Max memory: {readable_file_size(total)}; "
             f"No. of threads: {threading.active_count()}"

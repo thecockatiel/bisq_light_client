@@ -59,7 +59,7 @@ class VenmoAccountPayload(PaymentAccountPayload):
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        account_owner = Res.get_with_col("payment.account.owner")
+        account_owner = Res.get_with_col("payment.account.owner.fullname")
         venmo_user = Res.get_with_col("payment.venmo.venmoUserName")
 
         return f"{payment_method} - {account_owner} {self.holder_name}, {venmo_user} {self.venmo_user_name}"

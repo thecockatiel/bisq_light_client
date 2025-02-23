@@ -69,7 +69,7 @@ class MercadoPagoAccountPayload(CountryBasedPaymentAccountPayload):
 
     def get_payment_details_for_trade_popup(self) -> str:
         holder_id_label = Res.get("payment.mercadoPago.holderId")
-        owner_label = Res.get("payment.account.owner")
+        owner_label = Res.get("payment.account.owner.fullname")
         return (
             f"{holder_id_label}: {self.account_holder_id}\n"
             f"{owner_label}: {self.account_holder_name}"

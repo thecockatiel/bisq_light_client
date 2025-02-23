@@ -4,12 +4,14 @@ from typing import TYPE_CHECKING, Set, Collection, List, Optional
 
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
+from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bisq.core.network.p2p.storage.hash_map_changed_listener import (
     HashMapChangedListener,
 )
 from bisq.core.offer.offer_book_changed_listener import OfferBookChangedListener
+from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_for_json import OfferForJson
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
 from bisq.core.offer.offer import Offer
@@ -168,6 +170,38 @@ class OfferBookService:
         self, offer_book_changed_listener: OfferBookChangedListener
     ) -> None:
         self.offer_book_changed_listeners.add(offer_book_changed_listener)
+
+    def get_offer_for_json_list(self) -> list["OfferForJson"]:
+        offer_json_list = []
+        for offer in self.get_offers():
+            try:
+                inverse_direction = (
+                    OfferDirection.SELL
+                    if offer.direction == OfferDirection.BUY
+                    else OfferDirection.BUY
+                )
+                offer_direction = (
+                    inverse_direction
+                    if is_crypto_currency(offer.currency_code)
+                    else offer.direction
+                )
+                offer_json = OfferForJson(
+                    direction=offer_direction,
+                    currency_code=offer.currency_code,
+                    min_amount=offer.min_amount,
+                    amount=offer.amount,
+                    price=offer.get_price(),
+                    date=offer.date,
+                    id=offer.id,
+                    use_market_based_price=offer.is_use_market_based_price,
+                    market_price_margin=offer.market_price_margin,
+                    payment_method=offer.payment_method,
+                )
+                offer_json_list.append(offer_json)
+            except Exception:
+                # In case an offer was corrupted with null values we ignore it
+                continue
+        return offer_json_list
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

@@ -45,20 +45,6 @@ class DelayedPayoutTxReceiverService:
     # spike when opening arbitration.
     DPT_MIN_TX_FEE_RATE = 10
 
-    @staticmethod
-    def is_bugfix_6699_activated() -> bool:
-        return (
-            datetime.now(timezone.utc)
-            > DelayedPayoutTxReceiverService.BUGFIX_6699_ACTIVATION_DATE
-        )
-
-    @staticmethod
-    def is_proposal_412_activated() -> bool:
-        return (
-            datetime.now(timezone.utc)
-            > DelayedPayoutTxReceiverService.PROPOSAL_412_ACTIVATION_DATE
-        )
-
     ###########################################################################################
 
     def __init__(
@@ -105,19 +91,18 @@ class DelayedPayoutTxReceiverService:
         burning_man_selection_height: int,
         input_amount: int,
         trade_tx_fee: int,
-        is_bugfix_6699_activated: bool = None,
+        is_bugfix_6699_activated: bool = True,
+        is_proposal_412_activated: bool = True,
     ) -> List[tuple[int, str]]:
         check_argument(
             burning_man_selection_height >= self.MIN_SNAPSHOT_HEIGHT,
             f"Selection height must be >= {self.MIN_SNAPSHOT_HEIGHT}"
         )
-        
-        if is_bugfix_6699_activated is None:
-            is_bugfix_6699_activated = DelayedPayoutTxReceiverService.is_bugfix_6699_activated()
 
         burning_man_candidates = (
             self.burning_man_service.get_active_burning_man_candidates(
-                burning_man_selection_height
+                burning_man_selection_height,
+                not is_proposal_412_activated,
             )
         )
 
@@ -152,8 +137,8 @@ class DelayedPayoutTxReceiverService:
         spendable_amount = self.get_spendable_amount(
             len(burning_man_candidates), input_amount, tx_fee_per_vbyte
         )
-        # We only use outputs > 1000 sat or at least 2 times the cost for the output (32 bytes).
-        # If we remove outputs it will be spent as miner fee.
+        # We only use outputs >= 1000 sat or at least 2 times the cost for the output (32 bytes).
+        # If we remove outputs it will be distributed to the remaining receivers.
         min_output_amount = max(DelayedPayoutTxReceiverService.DPT_MIN_OUTPUT_AMOUNT, tx_fee_per_vbyte * 32 * 2)
         # Sanity check that max share of a non-legacy BM is 20% over MAX_BURN_SHARE (taking into account potential increase due adjustment)
         max_output_amount = round(
@@ -169,6 +154,9 @@ class DelayedPayoutTxReceiverService:
             < min_output_amount
         )
 
+        # JAVA FIXME: The small outputs should be filtered out before adjustment, not afterwards. Otherwise, outputs of
+        #  amount just under 1000 sats or 64 * fee-rate could get erroneously included and lead to significant
+        #  underpaying of the DPT (by perhaps around 5-10% per erroneously included output).
         receivers: list[tuple[int, str]] = []
         for candidate in burning_man_candidates:
             receiver_address = candidate.get_receiver_address(is_bugfix_6699_activated)

@@ -58,7 +58,7 @@ class MoneyBeamAccountPayload(PaymentAccountPayload):
 
     def get_payment_details_for_trade_popup(self) -> str:
         account_res = Res.get_with_col("payment.account")
-        owner_res = Res.get_with_col("payment.account.owner")
+        owner_res = Res.get_with_col("payment.account.owner.fullname")
         holder_name = self.get_holder_name_or_prompt_if_empty()
         return f"{account_res} {self.account_id}\n{owner_res} {holder_name}"
 

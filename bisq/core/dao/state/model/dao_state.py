@@ -257,7 +257,7 @@ class DaoState(PersistablePayload):
             f"     paramChangeList={self.param_change_list},\n"
             f"     evaluatedProposalList={self.evaluated_proposal_list},\n"
             f"     decryptedBallotsWithMeritsList={self.decrypted_ballots_with_merits_list},\n"
-            f"     txCache={self.tx_cache},\n"
-            f"     txOutputsByTxOutputType={self.tx_outputs_by_tx_output_type}\n"
+            # f"     txCache={self.tx_cache},\n"
+            # f"     txOutputsByTxOutputType={self.tx_outputs_by_tx_output_type}\n"
             f"}}"
         )

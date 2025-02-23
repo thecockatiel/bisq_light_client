@@ -1,5 +1,5 @@
 import base64
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.exclude_for_hash_aware_proto import ExcludeForHashAwareProto
@@ -297,6 +297,8 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
 
     def __str__(self):
         return (f"Filter{{\n"
+                f"     creation_date={datetime.fromtimestamp(self.creation_date/1000)},\n"
+                f"     uid='{self.uid}',\n"
                 f"     banned_offer_ids={self.banned_offer_ids},\n"
                 f"     node_addresses_banned_from_trading={self.node_addresses_banned_from_trading},\n"
                 f"     banned_auto_conf_explorers={self.banned_auto_conf_explorers},\n"
@@ -321,7 +323,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
                 f"     creation_date={self.creation_date},\n"
                 f"     banned_privileged_dev_pub_keys={self.banned_privileged_dev_pub_keys},\n"
                 f"     extra_data_map={self.extra_data_map},\n"
-                f"     owner_pub_key={self.owner_pub_key},\n"
+                f"     owner_pub_key={Sig.get_public_key_as_hex_string(self.owner_pub_key, True)},\n"
                 f"     disable_auto_conf={self.disable_auto_conf},\n"
                 f"     node_addresses_banned_from_network={self.node_addresses_banned_from_network},\n"
                 f"     disable_mempool_validation={self.disable_mempool_validation},\n"
@@ -334,6 +336,5 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
                 f"     maker_fee_bsq={self.maker_fee_bsq},\n"
                 f"     taker_fee_bsq={self.taker_fee_bsq},\n"
                 f"     added_btc_nodes={self.added_btc_nodes},\n"
-                f"     added_seed_nodes={self.added_seed_nodes},\n"
-                f"     uid='{self.uid}'\n"
+                f"     added_seed_nodes={self.added_seed_nodes}\n"
                 f"}}")

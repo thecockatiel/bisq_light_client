@@ -334,8 +334,7 @@ class CliMain:
                 opts = GetOffersOptionParser(method_args).parse()
                 direction = opts.get_direction()
                 currency_code = opts.get_currency_code()
-                all_offers = opts.get_all()
-                offers = client.get_offers(direction, currency_code, all_offers)
+                offers = client.get_offers(direction, currency_code)
                 if not offers:
                     print(f"no {direction} {currency_code} offers found")
                 else:

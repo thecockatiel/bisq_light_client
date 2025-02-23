@@ -20,15 +20,6 @@ class GetOffersOptionParser(SimpleMethodOptionParser):
             dest=OptLabel.OPT_CURRENCY_CODE,
             type=str,
         )
-        self.parser.add_argument(
-            f"--{OptLabel.OPT_ALL}",
-            help="get all offers",
-            dest=OptLabel.OPT_ALL,
-            type=parse_bool,
-            metavar="<Boolean>",
-            nargs="?",
-            const=True,
-        )
 
     def parse(self):
         super().parse()
@@ -50,6 +41,3 @@ class GetOffersOptionParser(SimpleMethodOptionParser):
 
     def get_currency_code(self) -> str:
         return self.options.get(OptLabel.OPT_CURRENCY_CODE)
-
-    def get_all(self) -> bool:
-        return self.options.get(OptLabel.OPT_ALL, False)

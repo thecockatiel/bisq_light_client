@@ -19,7 +19,7 @@ from bisq.core.provider.price.market_price import MarketPrice
 
 if TYPE_CHECKING:
     from bisq.core.provider.price_http_client import PriceHttpClient
-    from bisq.core.provider.providers_repository import ProvidersRepository
+    from bisq.core.provider.price_feed_node_address_provider import PriceFeedNodeAddressProvider
     from bisq.core.provider.price.market_price import MarketPrice
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.common.handlers.fault_handler import FaultHandler
@@ -35,16 +35,16 @@ class PriceFeedService:
         self,
         price_http_client: "PriceHttpClient",
         fee_service: "FeeService",
-        providers_repository: "ProvidersRepository",
+        price_feed_node_address_provider: "PriceFeedNodeAddressProvider",
         preferences: "Preferences",
     ):
         self.http_client = price_http_client
-        self.providers_repository = providers_repository
+        self.price_feed_node_address_provider = price_feed_node_address_provider
         self.preferences = preferences
         self.fee_service = fee_service
 
         self.cache: dict[str, "MarketPrice"] = {}
-        self.price_provider = PriceProvider(price_http_client, providers_repository.base_url)
+        self.price_provider = PriceProvider(price_http_client, price_feed_node_address_provider.base_url)
         self.price_consumer: Optional[Callable[[float], None]] = None
         self.fault_handler: Optional["FaultHandler"] = None
         self.currency_code_property: SimpleProperty[Optional[str]] = SimpleProperty(
@@ -110,10 +110,10 @@ class PriceFeedService:
 
     def request(self, repeat_requests: bool) -> None:
         if self.request_ts == 0:
-            logger.debug(f"request from provider {self.providers_repository.base_url}")
+            logger.debug(f"request from provider {self.price_feed_node_address_provider.base_url}")
         else:
             logger.debug(
-                f"request from provider {self.providers_repository.base_url} "
+                f"request from provider {self.price_feed_node_address_provider.base_url} "
                 f"{(get_time_ms() - self.request_ts) / 1000:.1f} sec. after last request"
             )
 
@@ -218,10 +218,10 @@ class PriceFeedService:
         )
 
     def set_new_price_provider(self) -> None:
-        self.providers_repository.select_next_provider_base_url()
-        if self.providers_repository.base_url:
+        self.price_feed_node_address_provider.select_next_provider_base_url()
+        if self.price_feed_node_address_provider.base_url:
             self.price_provider = PriceProvider(
-                self.http_client, self.providers_repository.base_url
+                self.http_client, self.price_feed_node_address_provider.base_url
             )
         else:
             logger.warning(

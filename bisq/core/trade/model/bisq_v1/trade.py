@@ -528,7 +528,7 @@ class Trade(TradeModel, ABC):
         if deposit_tx is not None:
             if deposit_tx.get_confidence().depth > 0:
                 trade_time = self.get_date().timestamp() * 1000  # Convert to milliseconds
-                # Use included_in_best_chain_at when available, otherwise use update_time
+                # Use tx.included_in_best_chain_at when available, otherwise use tx.update_time
                 block_time = (deposit_tx.get_included_in_best_chain_at().timestamp() * 1000 
                             if deposit_tx.get_included_in_best_chain_at() is not None 
                             else deposit_tx.get_update_time().timestamp() * 1000)

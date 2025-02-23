@@ -76,6 +76,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 # NOTE: I know that IO is blocking, but since this is setup, I think it will be fine and it will reduce the complexity of making them async
 # TODO: dependencies must be implemented before this is usable. (Wallets functionality must be present)
 class BisqSetup:
@@ -192,7 +193,9 @@ class BisqSetup:
             Callable[[list["AmazonGiftCardAccount"]], None]
         ] = None
         self.qubes_os_info_handler: Optional[Callable[[], None]] = None
-        self.dao_requires_restart_handler: Optional[Callable[[], None]] = None
+        self.resync_dao_state_from_resources_handler: Optional[Callable[[], None]] = (
+            None
+        )
         self.tor_address_upgrade_handler: Optional[Callable[[], None]] = None
         self.down_grade_prevention_handler: Optional[Callable[[str], None]] = None
         # ---------------------------
@@ -202,7 +205,7 @@ class BisqSetup:
         self.wallet_initialized = SimpleProperty(False)
         self.all_basic_services_initialized: bool = False
         self.p2p_network_and_wallet_initialized: Optional["SimpleProperty[bool]"] = None
-        self.bisq_setup_listeners= set["BisqSetupListener"]()
+        self.bisq_setup_listeners = set["BisqSetupListener"]()
 
         MemPoolSpaceTxBroadcaster.init(
             socks5_proxy_provider, preferences, local_bitcoin_node, config
@@ -451,7 +454,7 @@ class BisqSetup:
             self.vote_result_exception_handler,
             self.revolut_accounts_update_handler,
             self.amazon_gift_card_accounts_update_handler,
-            self.dao_requires_restart_handler,
+            self.resync_dao_state_from_resources_handler,
         )
 
         if self.wallets_setup.download_percentage_property.get() == 1:
@@ -540,7 +543,7 @@ class BisqSetup:
                         self.disk_space_warning_handler(message)
             except Exception as e:
                 logger.error(e)
-        
+
         run_in_thread(
             get_usable_space,
             self.config.app_data_dir,
@@ -816,6 +819,15 @@ class BisqSetup:
         if (
             self.preferences.get_bsq_block_chain_explorer().name.lower()
             == "mempool.space (@wiz)"
+            and len(self.preferences.get_block_chain_explorers()) > 0
+        ):
+            self.preferences.set_bsq_blockchain_explorer(
+                self.preferences.get_bsq_block_chain_explorers()[0]
+            )
+
+        if (
+            self.preferences.get_bsq_block_chain_explorer().name.lower()
+            == "bisq.mempool.emzy.de (@emzy)"
             and len(self.preferences.get_block_chain_explorers()) > 0
         ):
             self.preferences.set_bsq_blockchain_explorer(

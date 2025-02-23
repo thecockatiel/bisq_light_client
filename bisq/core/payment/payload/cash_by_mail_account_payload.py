@@ -59,14 +59,14 @@ class CashByMailAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
 
     def get_payment_details(self) -> str:
         return (
-            f"{Res.get(self.payment_method_id)} - {Res.get_with_col('payment.account.owner')} {self.contact}, "
+            f"{Res.get(self.payment_method_id)} - {Res.get_with_col('payment.account.owner.fullname')} {self.contact}, "
             f"{Res.get_with_col('payment.postal.address')} {self.postal_address}, "
             f"{Res.get_with_col('payment.shared.extraInfo')} {self.extra_info}"
         )
 
     def get_payment_details_for_trade_popup(self) -> str:
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.contact}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.contact}\n"
             f"{Res.get_with_col('payment.postal.address')} {self.postal_address}"
         )
 

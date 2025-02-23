@@ -252,14 +252,14 @@ class GrpcClient:
     def get_bsq_swap_offers(self, direction: str):
         return self.offers_service_request.get_bsq_swap_offers(direction)
 
-    def get_offers(self, direction: str, currency_code: str, all: bool):
-        return self.offers_service_request.get_offers(direction, currency_code, all)
+    def get_offers(self, direction: str, currency_code: str):
+        return self.offers_service_request.get_offers(direction, currency_code)
 
     def get_offers_sorted_by_date(
-        self, currency_code: str, all: bool, direction: str = None
+        self, currency_code: str, direction: str = None
     ):
         return self.offers_service_request.get_offers_sorted_by_date(
-            currency_code, all, direction
+            currency_code, direction
         )
 
     def get_bsq_swap_offers_sorted_by_date(self):

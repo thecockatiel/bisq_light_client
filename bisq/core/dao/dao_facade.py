@@ -18,6 +18,7 @@ from bisq.core.dao.governance.proposal.reimbursement.reimbursement_consensus imp
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.dao.state.model.governance.bonded_role_type import BondedRoleType
+from bisq.core.dao.governance.proposal.issuance_proposal import IssuanceProposal
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from bisq.core.dao.state.model.governance.issuance_type import IssuanceType
 from bisq.core.trade.delayed_payout_address_provider import DelayedPayoutAddressProvider
@@ -27,6 +28,7 @@ from utils.preconditions import check_argument
 
 
 if TYPE_CHECKING:
+    from bisq.core.dao.state.model.governance.cycle import Cycle
     from bisq.core.dao.state.model.governance.role_proposal import RoleProposal
     from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
     from bisq.asset.asset import Asset
@@ -644,11 +646,20 @@ class DaoFacade(DaoSetupService):
     def resync_dao_state_from_genesis(self, result_handler: Callable[[], None]):
         self._dao_state_storage_service.resync_dao_state_from_genesis(result_handler)
 
-    def resync_dao_state_from_resources(self, storage_dir: Path):
-        self._dao_state_storage_service.resync_dao_state_from_resources(storage_dir)
+    def remove_and_backup_all_dao_data(self, storage_dir: Path):
+        self._dao_state_storage_service.remove_and_backup_all_dao_data(storage_dir)
 
     def is_my_role(self, role: "Role") -> bool:
         return self._bonded_roles_repository.is_my_role(role)
+    
+    def get_issuance_for_cycle(self, cycle: "Cycle") -> int:
+        return sum(
+            ep.proposal.get_requested_bsq().value
+            for ep in self._dao_state_service.get_evaluated_proposal_list()
+            if ep.is_accepted
+            and self._cycle_service.is_tx_in_cycle(cycle, ep.proposal.tx_id)
+            and isinstance(ep.proposal, IssuanceProposal)
+        )
 
     def get_bond_by_lockup_tx_id(self, lockup_tx_id: str):
         return next(

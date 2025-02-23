@@ -119,7 +119,7 @@ class BsqNode(DaoSetupService, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_initialized(self):
-        self._dao_state_snapshot_service.apply_snapshot(False)
+        self._dao_state_snapshot_service.apply_persisted_snapshot()
 
         if self._p2p_service.is_bootstrapped:
             logger.info("onAllServicesInitialized: isBootstrapped")
@@ -141,9 +141,6 @@ class BsqNode(DaoSetupService, ABC):
         self._dao_state_service.on_parse_block_chain_complete()
 
         self.maybe_export_to_json()
-
-    def start_reorg_from_last_snapshot(self):
-        self._dao_state_snapshot_service.apply_snapshot(True)
 
     def do_parse_block(self, raw_block: "RawBlock") -> Optional["Block"]:
         if self._shutdown_in_progress.get():
@@ -224,7 +221,7 @@ class BsqNode(DaoSetupService, ABC):
             )
 
             self.pending_blocks.clear()
-            self.start_reorg_from_last_snapshot()
+            self._dao_state_snapshot_service.revert_to_last_snapshot()
             self.start_parse_blocks()
             raise RequiredReorgFromSnapshotException(raw_block)
 

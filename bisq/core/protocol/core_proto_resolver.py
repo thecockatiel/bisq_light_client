@@ -52,6 +52,7 @@ from bisq.core.payment.payload.revolute_account_payload import RevolutAccountPay
 from bisq.core.payment.payload.rtgs_account_payload import RtgsAccountPayload
 from bisq.core.payment.payload.same_bank_account_payload import SameBankAccountPayload
 from bisq.core.payment.payload.satispay_account_payload import SatispayAccountPayload
+from bisq.core.payment.payload.sbp_account_payload import SbpAccountPayload
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 from bisq.core.payment.payload.sepa_instant_account_payload import SepaInstantAccountPayload
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
@@ -131,6 +132,7 @@ payment_account_payload_cases = {
     "verse_account_payload": VerseAccountPayload.from_proto,
     "swift_account_payload": SwiftAccountPayload.from_proto,
     "bsq_swap_account_payload": BsqSwapAccountPayload.from_proto,
+    "sbp_account_payload": SbpAccountPayload.from_proto,
     
     # Cannot be deleted as it would break old trade history entries
     "o_k_pay_account_payload": OKPayAccountPayload.from_proto,
