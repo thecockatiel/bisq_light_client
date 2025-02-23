@@ -25,6 +25,12 @@ logger = get_logger(__name__)
 
 # TODO: not complete
 
+
+def _asset_to_crypto_currency(asset: Asset):
+    return CryptoCurrency(
+        asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
+    )
+
 crypto_currency_map = {
     asset.get_ticker_symbol(): _asset_to_crypto_currency(asset)
     for asset in AssetRegistry.registered_assets
@@ -321,12 +327,6 @@ def coin_matches_network_if_mainnet(
 ) -> bool:
     matches_network = asset_matches_network(coin, base_currency_network)
     return not base_currency_network.is_mainnet() or matches_network
-
-
-def _asset_to_crypto_currency(asset: Asset):
-    return CryptoCurrency(
-        asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
-    )
 
 
 def _is_not_bsq_or_bsq_trading_activated(
