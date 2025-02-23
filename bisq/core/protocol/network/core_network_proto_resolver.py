@@ -4,56 +4,139 @@ from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_payload import TempProposalPayload
+from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_request import GetBlindVoteStateHashesRequest
+from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_response import GetBlindVoteStateHashesResponse
+from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_request import GetDaoStateHashesRequest
+from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_response import GetDaoStateHashesResponse
+from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_request import GetProposalStateHashesRequest
+from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_response import GetProposalStateHashesResponse
+from bisq.core.dao.monitoring.network.messages.new_blind_vote_state_hash_message import NewBlindVoteStateHashMessage
+from bisq.core.dao.monitoring.network.messages.new_dao_state_hash_message import NewDaoStateHashMessage
+from bisq.core.dao.monitoring.network.messages.new_proposal_state_hash_message import NewProposalStateHashMessage
+from bisq.core.dao.node.messages.get_blocks_request import GetBlocksRequest
+from bisq.core.dao.node.messages.get_blocks_response import GetBlocksResponse
+from bisq.core.dao.node.messages.new_block_broadcast_message import (
+    NewBlockBroadcastMessage,
+)
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
 from bisq.core.network.p2p.close_connection_message import CloseConnectionMessage
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
-from bisq.core.network.p2p.inventory.messages.get_inventory_request import GetInventoryRequest
-from bisq.core.network.p2p.inventory.messages.get_inventory_response import GetInventoryResponse
+from bisq.core.network.p2p.inventory.messages.get_inventory_request import (
+    GetInventoryRequest,
+)
+from bisq.core.network.p2p.inventory.messages.get_inventory_response import (
+    GetInventoryResponse,
+)
 from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
-from bisq.core.network.p2p.peers.getdata.messages.get_data_response import GetDataResponse
-from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
-from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
+from bisq.core.network.p2p.peers.getdata.messages.get_data_response import (
+    GetDataResponse,
+)
+from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import (
+    GetUpdatedDataRequest,
+)
+from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import (
+    PreliminaryGetDataRequest,
+)
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
-from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_request import GetPeersRequest
-from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import GetPeersResponse
-from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
+from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_request import (
+    GetPeersRequest,
+)
+from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import (
+    GetPeersResponse,
+)
+from bisq.core.network.p2p.prefixed_sealed_and_signed_message import (
+    PrefixedSealedAndSignedMessage,
+)
 from bisq.core.network.p2p.storage.messages.add_data_message import AddDataMessage
-from bisq.core.network.p2p.storage.messages.add_persistable_network_payload_message import AddPersistableNetworkPayloadMessage
-from bisq.core.network.p2p.storage.messages.refresh_offer_message import RefreshOfferMessage
+from bisq.core.network.p2p.storage.messages.add_persistable_network_payload_message import (
+    AddPersistableNetworkPayloadMessage,
+)
+from bisq.core.network.p2p.storage.messages.refresh_offer_message import (
+    RefreshOfferMessage,
+)
 from bisq.core.network.p2p.storage.messages.remove_data_message import RemoveDataMessage
-from bisq.core.network.p2p.storage.messages.remove_mailbox_data_message import RemoveMailboxDataMessage
-from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import MailboxStoragePayload
-from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
-from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
-from bisq.core.offer.availability.messages.offer_availability_request import OfferAvailabilityRequest
-from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
+from bisq.core.network.p2p.storage.messages.remove_mailbox_data_message import (
+    RemoveMailboxDataMessage,
+)
+from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import (
+    MailboxStoragePayload,
+)
+from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import (
+    ProtectedMailboxStorageEntry,
+)
+from bisq.core.network.p2p.storage.payload.protected_storage_entry import (
+    ProtectedStorageEntry,
+)
+from bisq.core.offer.availability.messages.offer_availability_request import (
+    OfferAvailabilityRequest,
+)
+from bisq.core.offer.availability.messages.offer_availability_response import (
+    OfferAvailabilityResponse,
+)
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
 from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
-from bisq.core.support.dispute.arbitration.messages.peer_published_dispute_payout_tx_message import PeerPublishedDisputePayoutTxMessage
+from bisq.core.support.dispute.arbitration.messages.peer_published_dispute_payout_tx_message import (
+    PeerPublishedDisputePayoutTxMessage,
+)
 from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
-from bisq.core.support.dispute.messages.dispute_result_message import DisputeResultMessage
-from bisq.core.support.dispute.messages.open_new_dispute_message import OpenNewDisputeMessage
-from bisq.core.support.dispute.messages.peer_opened_dispute_message import PeerOpenedDisputeMessage
+from bisq.core.support.dispute.messages.dispute_result_message import (
+    DisputeResultMessage,
+)
+from bisq.core.support.dispute.messages.open_new_dispute_message import (
+    OpenNewDisputeMessage,
+)
+from bisq.core.support.dispute.messages.peer_opened_dispute_message import (
+    PeerOpenedDisputeMessage,
+)
 from bisq.core.support.messages.chat_messsage import ChatMessage
 from bisq.core.support.refund.refundagent.refund_agent import RefundAgent
-from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import CounterCurrencyTransferStartedMessage
-from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_request import DelayedPayoutTxSignatureRequest
-from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_response import DelayedPayoutTxSignatureResponse
-from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_message import DepositTxAndDelayedPayoutTxMessage
-from bisq.core.trade.protocol.bisq_v1.messages.deposit_tx_message import DepositTxMessage
-from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_request import InputsForDepositTxRequest
-from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response import InputsForDepositTxResponse
-from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import MediatedPayoutTxPublishedMessage
-from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
-from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import PayoutTxPublishedMessage
-from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import PeerPublishedDelayedPayoutTxMessage
-from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import RefreshTradeStateRequest
-from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import ShareBuyerPaymentAccountMessage
+from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import (
+    CounterCurrencyTransferStartedMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_request import (
+    DelayedPayoutTxSignatureRequest,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_response import (
+    DelayedPayoutTxSignatureResponse,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_message import (
+    DepositTxAndDelayedPayoutTxMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.deposit_tx_message import (
+    DepositTxMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_request import (
+    InputsForDepositTxRequest,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response import (
+    InputsForDepositTxResponse,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import (
+    MediatedPayoutTxPublishedMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import (
+    MediatedPayoutTxSignatureMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import (
+    PayoutTxPublishedMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.peer_published_delayed_payout_tx_message import (
+    PeerPublishedDelayedPayoutTxMessage,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.refresh_trade_state_request import (
+    RefreshTradeStateRequest,
+)
+from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import (
+    ShareBuyerPaymentAccountMessage,
+)
 from bisq.core.filter.filter import Filter
-from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import TraderSignedWitnessMessage
+from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import (
+    TraderSignedWitnessMessage,
+)
 from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import pb_pb2 as protobuf
@@ -64,6 +147,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+# fmt: off
 proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreNetworkProtoResolver", int], 'NetworkEnvelope']]  = {
     "preliminary_get_data_request": lambda proto, resolver, message_version: PreliminaryGetDataRequest.from_proto(proto.preliminary_get_data_request, message_version),
     "get_data_response": lambda proto, resolver, message_version: GetDataResponse.from_proto(proto.get_data_response, resolver, message_version),
@@ -119,24 +203,24 @@ proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreN
     
     "private_notification_message": lambda proto, resolver, message_version: PrivateNotificationMessage.from_proto(proto.private_notification_message, message_version),
     
-    # "get_blocks_request": lambda proto, resolver, message_version: GetBlocksRequest.from_proto(proto.get_blocks_request, message_version),
-    # "get_blocks_response": lambda proto, resolver, message_version: GetBlocksResponse.from_proto(proto.get_blocks_response, message_version),
-    # "new_block_broadcast_message": lambda proto, resolver, message_version: NewBlockBroadcastMessage.from_proto(proto.new_block_broadcast_message, message_version),
+    "get_blocks_request": lambda proto, resolver, message_version: GetBlocksRequest.from_proto(proto.get_blocks_request, message_version),
+    "get_blocks_response": lambda proto, resolver, message_version: GetBlocksResponse.from_proto(proto.get_blocks_response, message_version),
+    "new_block_broadcast_message": lambda proto, resolver, message_version: NewBlockBroadcastMessage.from_proto(proto.new_block_broadcast_message, message_version),
     "add_persistable_network_payload_message": lambda proto, resolver, message_version: AddPersistableNetworkPayloadMessage.from_proto(proto.add_persistable_network_payload_message, resolver, message_version),
     "ack_message": lambda proto, resolver, message_version: AckMessage.from_proto(proto.ack_message, message_version),
     # "republish_governance_data_request": lambda proto, resolver, message_version: RepublishGovernanceDataRequest.from_proto(proto.republish_governance_data_request, message_version),
     
-    # "new_dao_state_hash_message": lambda proto, resolver, message_version: NewDaoStateHashMessage.from_proto(proto.new_dao_state_hash_message, message_version),
-    # "get_dao_state_hashes_request": lambda proto, resolver, message_version: GetDaoStateHashesRequest.from_proto(proto.get_dao_state_hashes_request, message_version),
-    # "get_dao_state_hashes_response": lambda proto, resolver, message_version: GetDaoStateHashesResponse.from_proto(proto.get_dao_state_hashes_response, message_version),
+    "new_dao_state_hash_message": lambda proto, resolver, message_version: NewDaoStateHashMessage.from_proto(proto.new_dao_state_hash_message, message_version),
+    "get_dao_state_hashes_request": lambda proto, resolver, message_version: GetDaoStateHashesRequest.from_proto(proto.get_dao_state_hashes_request, message_version),
+    "get_dao_state_hashes_response": lambda proto, resolver, message_version: GetDaoStateHashesResponse.from_proto(proto.get_dao_state_hashes_response, message_version),
     
-    # "new_proposal_state_hash_message": lambda proto, resolver, message_version: NewProposalStateHashMessage.from_proto(proto.new_proposal_state_hash_message, message_version),
-    # "get_proposal_state_hashes_request": lambda proto, resolver, message_version: GetProposalStateHashesRequest.from_proto(proto.get_proposal_state_hashes_request, message_version),
-    # "get_proposal_state_hashes_response": lambda proto, resolver, message_version: GetProposalStateHashesResponse.from_proto(proto.get_proposal_state_hashes_response, message_version),
+    "new_proposal_state_hash_message": lambda proto, resolver, message_version: NewProposalStateHashMessage.from_proto(proto.new_proposal_state_hash_message, message_version),
+    "get_proposal_state_hashes_request": lambda proto, resolver, message_version: GetProposalStateHashesRequest.from_proto(proto.get_proposal_state_hashes_request, message_version),
+    "get_proposal_state_hashes_response": lambda proto, resolver, message_version: GetProposalStateHashesResponse.from_proto(proto.get_proposal_state_hashes_response, message_version),
     
-    # "new_blind_vote_state_hash_message": lambda proto, resolver, message_version: NewBlindVoteStateHashMessage.from_proto(proto.new_blind_vote_state_hash_message, message_version),
-    # "get_blind_vote_state_hashes_request": lambda proto, resolver, message_version: GetBlindVoteStateHashesRequest.from_proto(proto.get_blind_vote_state_hashes_request, message_version),
-    # "get_blind_vote_state_hashes_response": lambda proto, resolver, message_version: GetBlindVoteStateHashesResponse.from_proto(proto.get_blind_vote_state_hashes_response, message_version),
+    "new_blind_vote_state_hash_message": lambda proto, resolver, message_version: NewBlindVoteStateHashMessage.from_proto(proto.new_blind_vote_state_hash_message, message_version),
+    "get_blind_vote_state_hashes_request": lambda proto, resolver, message_version: GetBlindVoteStateHashesRequest.from_proto(proto.get_blind_vote_state_hashes_request, message_version),
+    "get_blind_vote_state_hashes_response": lambda proto, resolver, message_version: GetBlindVoteStateHashesResponse.from_proto(proto.get_blind_vote_state_hashes_response, message_version),
     
     "bundle_of_envelopes": lambda proto, resolver, message_version: BundleOfEnvelopes.from_proto(proto.bundle_of_envelopes, resolver, message_version),
     
@@ -162,43 +246,60 @@ proto_storage_payload_map: dict[str, Callable[[protobuf.StoragePayload], 'Networ
     "mailbox_storage_payload": lambda proto: MailboxStoragePayload.from_proto(proto.mailbox_storage_payload),
     "offer_payload": lambda proto: OfferPayload.from_proto(proto.offer_payload),
     "bsq_swap_offer_payload": lambda proto: BsqSwapOfferPayload.from_proto(proto.bsq_swap_offer_payload),
-    # "temp_proposal_payload": lambda proto: TempProposalPayload.from_proto(proto.temp_proposal_payload),
+    "temp_proposal_payload": lambda proto: TempProposalPayload.from_proto(proto.temp_proposal_payload),
 }
+# fmt: on
+
 
 # Singleton?
 class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
     def __init__(self, clock: Clock):
         self.clock = clock
-        
+
     def get_clock(self):
         return self.clock
 
-    def from_proto(self, proto: Union['protobuf.NetworkEnvelope', 'protobuf.StorageEntryWrapper', 'protobuf.StoragePayload']) -> Union['NetworkPayload', 'NetworkEnvelope']:
+    def from_proto(
+        self,
+        proto: Union[
+            "protobuf.NetworkEnvelope",
+            "protobuf.StorageEntryWrapper",
+            "protobuf.StoragePayload",
+        ],
+    ) -> Union["NetworkPayload", "NetworkEnvelope"]:
         """
         DAO related stuff and BTC node related stuff are not implemented.
         """
         if proto is None:
             logger.error("CoreNetworkProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
-        
+
         if isinstance(proto, protobuf.NetworkEnvelope):
             message_version = proto.message_version
             message_type = proto.WhichOneof("message")
             if message_type in proto_network_envelope_map:
-                return proto_network_envelope_map[message_type](proto, self, message_version)
+                return proto_network_envelope_map[message_type](
+                    proto, self, message_version
+                )
             else:
-                raise ProtobufferException(f"Unknown proto message case (PB.NetworkEnvelope). messageCase={message_type}; proto raw data={proto}")
+                raise ProtobufferException(
+                    f"Unknown proto message case (PB.NetworkEnvelope). messageCase={message_type}; proto raw data={proto}"
+                )
         elif isinstance(proto, protobuf.StorageEntryWrapper):
             message_type = proto.WhichOneof("message")
             if message_type in proto_storage_entry_wrapper_map:
                 return proto_storage_entry_wrapper_map[message_type](proto, self)
             else:
-                raise ProtobufferException(f"Unknown proto message case(PB.StorageEntryWrapper). messageCase={message_type}; proto raw data={proto}")
+                raise ProtobufferException(
+                    f"Unknown proto message case(PB.StorageEntryWrapper). messageCase={message_type}; proto raw data={proto}"
+                )
         elif isinstance(proto, protobuf.StoragePayload):
             message_type = proto.WhichOneof("message")
             if message_type in proto_storage_payload_map:
                 return proto_storage_payload_map[message_type](proto)
             else:
-                raise ProtobufferException(f"Unknown proto message case (PB.StoragePayload). messageCase={message_type}; proto raw data={proto}")
+                raise ProtobufferException(
+                    f"Unknown proto message case (PB.StoragePayload). messageCase={message_type}; proto raw data={proto}"
+                )
         else:
             return super().from_proto(proto)
