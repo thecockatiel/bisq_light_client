@@ -8,6 +8,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bitcoinj.core.listeners.new_best_block_listener import NewBestBlockListener
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
@@ -192,12 +193,6 @@ class WalletService(ABC):
     def get_best_chain_height(self) -> int:
         raise RuntimeError("WalletService.get_best_chain_height Not implemented yet")
 
-    def add_change_event_listener(self, listener: "WalletChangeEventListener"):
-        self.wallet.add_change_event_listener(listener)
-
-    def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
-        self.wallet.remove_change_event_listener(listener)
-
     def shut_down(self):
         # TODO
         pass
@@ -207,3 +202,19 @@ class WalletService(ABC):
 
     def find_key_from_pub_key(self, pub_key: bytes) -> "DeterministicKey":
         raise RuntimeError("WalletService.find_key_from_pub_key Not implemented yet")
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Wallet delegates to avoid direct access to wallet outside the service class
+    # ///////////////////////////////////////////////////////////////////////////////////////////   
+
+    def add_change_event_listener(self, listener: "WalletChangeEventListener"):
+        self.wallet.add_change_event_listener(listener)
+
+    def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
+        self.wallet.remove_change_event_listener(listener)
+
+    def add_new_best_block_listener(self, listener: "NewBestBlockListener"):
+        pass
+
+    def remove_new_best_block_listener(self, listener: "NewBestBlockListener"):
+        pass
