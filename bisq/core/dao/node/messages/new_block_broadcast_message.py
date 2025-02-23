@@ -28,7 +28,7 @@ class NewBlockBroadcastMessage(BroadcastMessage):
 
     def to_proto_network_envelope(self):
         builder = self.get_network_envelope_builder()
-        builder.new_block_broadcast_message.CopyFrom(self.block.to_proto_message())
+        builder.new_block_broadcast_message.CopyFrom(self.to_proto_message())
         return builder
 
     @staticmethod
