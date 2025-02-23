@@ -10,10 +10,8 @@ from bisq.core.network.p2p.storage.payload.process_once_persistable_network_payl
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
     ProtectedStoragePayload,
 )
+from bisq.core.dao.state.model.governance.proposal import Proposal
 import pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.dao.state.model.governance.proposal import Proposal
 
 
 class TempProposalPayload(
@@ -67,7 +65,7 @@ class TempProposalPayload(
             )
         )
 
-    @classmethod
+    @staticmethod
     def from_proto(proto: protobuf.TempProposalPayload) -> "TempProposalPayload":
         return TempProposalPayload(
             proposal=Proposal.from_proto(proto.proposal),

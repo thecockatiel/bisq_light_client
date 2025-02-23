@@ -387,7 +387,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         )
 
         return {
-            datetime.fromtimestamp(int(timestamp) / 1000): Price("BSQ", int(price))
+            datetime.fromtimestamp(int(timestamp) / 1000): Price.value_of("BSQ", int(price))
             for timestamp, price in (
                 entry.split("=") for entry in historical.split(", ")
             )

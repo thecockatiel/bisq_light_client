@@ -25,7 +25,7 @@ class TxParser:
     """Verifies if a given transaction is a BSQ transaction."""
 
     def __init__(
-        self, period_service: PeriodService, dao_state_service: DaoStateService
+        self, period_service: "PeriodService", dao_state_service: "DaoStateService"
     ):
         self._period_service = period_service
         self._dao_state_service = dao_state_service
