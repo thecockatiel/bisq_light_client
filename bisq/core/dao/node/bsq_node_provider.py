@@ -36,7 +36,7 @@ class BsqNodeProvider:
 
         if should_use_full_node:
             logger.error(
-                "Using full node is not supported yet. falling back to lite node"
+                "Using bsq full node is not supported yet. falling back to lite node"
             )
             # TODO
             # self.bsq_node = bsq_full_node
