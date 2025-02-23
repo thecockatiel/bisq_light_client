@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.dao.node.parser.temp_tx import TempTx
 from bisq.core.dao.state.model.blockchain.base_tx import BaseTx
@@ -23,7 +23,7 @@ class Tx(BaseTx, PersistablePayload, ImmutableDaoStateModel):
         block_hash: str,
         time: int,
         tx_inputs: tuple[TxInput],
-        tx_outputs: tuple[TxOutput],
+        tx_outputs: Union[tuple[TxOutput],tuple[TxOutput,TxOutput,TxOutput,TxOutput]],
         tx_type: Optional[TxType],
         burnt_bsq: int,
     ):
