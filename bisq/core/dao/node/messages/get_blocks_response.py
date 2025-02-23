@@ -68,3 +68,13 @@ class GetBlocksResponse(
 
     def associated_request(self):
         return GetBlocksRequest
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, GetBlocksResponse)
+            and self._blocks == other._blocks
+            and self._request_nonce == other._request_nonce
+        )
+
+    def __hash__(self):
+        return hash((self._blocks, self._request_nonce))

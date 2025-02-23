@@ -104,3 +104,21 @@ class GetBlocksRequest(
             f"     supportedCapabilities={self._supported_capabilities}\n"
             f"}} {super().__str__()}"
         )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, GetBlocksRequest)
+            and self._from_block_height == other._from_block_height
+            and self._nonce == other._nonce
+            and self._sender_node_address == other._sender_node_address
+            and self._supported_capabilities == other._supported_capabilities
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                self._from_block_height,
+                self._nonce,
+                self._sender_node_address,
+            )
+        )
