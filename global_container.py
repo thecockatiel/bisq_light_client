@@ -1312,6 +1312,45 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
         return GlobalContainer._burning_man_presentation_service
 
+    @property
+    def burning_man_accounting_service(self):
+        if GlobalContainer._burning_man_accounting_service is None:
+            from bisq.core.dao.burningman.burning_man_accounting_service import (
+                BurningManAccountingService,
+            )
+
+            GlobalContainer._burning_man_accounting_service = (
+                BurningManAccountingService(
+                    self.dao_state_service,
+                    self.burning_man_accounting_store_service,
+                    self.burning_man_presentation_service,
+                    self.trade_statistics_manager,
+                    self.preferences,
+                )
+            )
+        return GlobalContainer._burning_man_accounting_service
+
+    @property
+    def burning_man_accounting_store_service(self):
+        if GlobalContainer._burning_man_accounting_store_service is None:
+            from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store_service import (
+                BurningManAccountingStoreService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._burning_man_accounting_store_service = (
+                BurningManAccountingStoreService(
+                    self.resource_data_store_service,
+                    self.config.storage_dir,
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    ),
+                )
+            )
+        return GlobalContainer._burning_man_accounting_store_service
+
     ###############################################################################
     @property
     def trade_manager(self):
@@ -1969,7 +2008,32 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             from bisq.core.dao.dao_setup import DaoSetup
 
             GlobalContainer._dao_setup = DaoSetup(
-                # TODO
+                self.bsq_node_provider,
+                self.accounting_node_provider,
+                self.dao_state_service,
+                self.cycle_service,
+                self.ballot_list_service,
+                self.proposal_service,
+                self.proposal_list_presentation,
+                self.blind_vote_list_service,
+                self.my_blind_vote_list_service,
+                self.vote_reveal_service,
+                self.vote_result_service,
+                self.missing_data_request_service,
+                self.bonded_reputation_repository,
+                self.bonded_roles_repository,
+                self.my_reputation_list_service,
+                self.my_bonded_reputation_repository,
+                self.asset_service,
+                self.proof_of_burn_service,
+                self.dao_facade,
+                self.export_json_files_service,
+                self.dao_kill_switch,
+                self.dao_state_monitoring_service,
+                self.proposal_state_monitoring_service,
+                self.blind_vote_state_monitoring_service,
+                self.dao_state_snapshot_service,
+                self.burning_man_accounting_service,
             )
 
         return GlobalContainer._dao_setup
@@ -2008,6 +2072,165 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._dao_facade
+
+    @property
+    def dao_kill_switch(self):
+        if GlobalContainer._dao_kill_switch is None:
+            from bisq.core.dao.dao_kill_switch import DaoKillSwitch
+
+            GlobalContainer._dao_kill_switch = DaoKillSwitch(self.filter_manager)
+
+        return GlobalContainer._dao_kill_switch
+
+    @property
+    def block_parser(self):
+        if GlobalContainer._block_parser is None:
+            from bisq.core.dao.node.parser.block_parser import BlockParser
+
+            GlobalContainer._block_parser = BlockParser(
+                self.tx_parser,
+                self.dao_state_service,
+            )
+
+        return GlobalContainer._block_parser
+
+    @property
+    def lite_node_network_service(self):
+        if GlobalContainer._lite_node_network_service is None:
+            from bisq.core.dao.node.lite.network.lite_node_network_service import (
+                LiteNodeNetworkService,
+            )
+
+            GlobalContainer._lite_node_network_service = LiteNodeNetworkService(
+                self.network_node,
+                self.peer_manager,
+                self.broadcaster,
+                self.seed_node_repository,
+            )
+
+        return GlobalContainer._lite_node_network_service
+
+    @property
+    def bsq_lite_node(self):
+        if GlobalContainer._bsq_lite_node is None:
+            from bisq.core.dao.node.lite.lite_node import LiteNode
+
+            GlobalContainer._bsq_lite_node = LiteNode(
+                self.block_parser,
+                self.dao_state_service,
+                self.dao_state_snapshot_service,
+                self.p2p_service,
+                self.lite_node_network_service,
+                self.bsq_wallet_service,
+                self.wallets_setup,
+                self.export_json_files_service,
+            )
+
+        return GlobalContainer._bsq_lite_node
+
+    @property
+    def bsq_full_node(self):
+        if GlobalContainer._bsq_full_node is None:
+            from bisq.core.dao.node.full.full_node import FullNode
+
+            GlobalContainer._bsq_full_node = FullNode(
+                # NOTE: not going to implement for now
+            )
+
+        return GlobalContainer._bsq_full_node
+
+    @property
+    def bsq_node_provider(self):
+        if GlobalContainer._bsq_node_provider is None:
+            from bisq.core.dao.node.bsq_node_provider import BsqNodeProvider
+
+            GlobalContainer._bsq_node_provider = BsqNodeProvider(
+                self.bsq_lite_node,
+                self.bsq_full_node,
+                self.preferences,
+            )
+
+        return GlobalContainer._bsq_node_provider
+
+    @property
+    def accounting_block_parser(self):
+        if GlobalContainer._accounting_block_parser is None:
+            from bisq.core.dao.node.parser.tx_parser import TxParser
+
+            GlobalContainer._accounting_block_parser = TxParser(
+                self.period_service,
+                self.dao_state_service,
+            )
+
+        return GlobalContainer._accounting_block_parser
+
+    @property
+    def accounting_lite_node_network_service(self):
+        if GlobalContainer._accounting_lite_node_network_service is None:
+            from bisq.core.dao.burningman.accounting.node.lite.network.accounting_lite_network_service import (
+                AccountingLiteNodeNetworkService,
+            )
+
+            GlobalContainer._accounting_lite_node_network_service = (
+                AccountingLiteNodeNetworkService(
+                    self.network_node,
+                    self.peer_manager,
+                    self.broadcaster,
+                    self.seed_node_repository,
+                )
+            )
+
+        return GlobalContainer._accounting_lite_node_network_service
+
+    @property
+    def accounting_lite_node(self):
+        if GlobalContainer._accounting_lite_node is None:
+            from bisq.core.dao.burningman.accounting.node.lite.accounting_lite_node import (
+                AccountingLiteNode,
+            )
+
+            GlobalContainer._accounting_lite_node = AccountingLiteNode(
+                self.p2p_service,
+                self.dao_state_service,
+                self.burning_man_accounting_service,
+                self.accounting_block_parser,
+                self.wallets_setup,
+                self.bsq_wallet_service,
+                self.accounting_lite_node_network_service,
+                self.preferences,
+                self.config.use_dev_privilege_keys,
+            )
+
+        return GlobalContainer._accounting_lite_node
+
+    @property
+    def accounting_full_node(self):
+        if GlobalContainer._accounting_full_node is None:
+            from bisq.core.dao.burningman.accounting.node.full.accounting_full_node import (
+                AccountingFullNode,
+            )
+
+            GlobalContainer._accounting_full_node = AccountingFullNode(
+                # NOTE: not going to implement for now
+            )
+
+        return GlobalContainer._accounting_full_node
+
+    @property
+    def accounting_node_provider(self):
+        if GlobalContainer._accounting_node_provider is None:
+            from bisq.core.dao.burningman.accounting.node.accounting_node_provider import (
+                AccountingNodeProvider,
+            )
+
+            GlobalContainer._accounting_node_provider = AccountingNodeProvider(
+                self.accounting_lite_node,
+                self.accounting_full_node,
+                self.config.is_bm_full_node,
+                self.preferences,
+            )
+
+        return GlobalContainer._accounting_node_provider
 
     @property
     def genesis_tx_info(self):
@@ -2119,6 +2342,80 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._dao_state_network_service
 
     @property
+    def proposal_state_monitoring_service(self):
+        if GlobalContainer._proposal_state_monitoring_service is None:
+            from bisq.core.dao.monitoring.proposal_state_monitoring_service import (
+                ProposalStateMonitoringService,
+            )
+
+            GlobalContainer._proposal_state_monitoring_service = (
+                ProposalStateMonitoringService(
+                    self.dao_state_service,
+                    self.proposal_state_network_service,
+                    self.genesis_tx_info,
+                    self.period_service,
+                    self.proposal_service,
+                    self.seed_node_repository,
+                )
+            )
+
+        return GlobalContainer._proposal_state_monitoring_service
+
+    @property
+    def proposal_state_network_service(self):
+        if GlobalContainer._proposal_state_network_service is None:
+            from bisq.core.dao.monitoring.network.proposal_state_network_service import (
+                ProposalStateNetworkService,
+            )
+
+            GlobalContainer._proposal_state_network_service = (
+                ProposalStateNetworkService(
+                    self.network_node,
+                    self.peer_manager,
+                    self.broadcaster,
+                )
+            )
+
+        return GlobalContainer._proposal_state_network_service
+
+    @property
+    def blind_vote_state_monitoring_service(self):
+        if GlobalContainer._blind_vote_state_monitoring_service is None:
+            from bisq.core.dao.monitoring.blind_vote_state_monitoring_service import (
+                BlindVoteStateMonitoringService,
+            )
+
+            GlobalContainer._blind_vote_state_monitoring_service = (
+                BlindVoteStateMonitoringService(
+                    self.dao_state_service,
+                    self.blind_vote_state_network_service,
+                    self.genesis_tx_info,
+                    self.period_service,
+                    self.blind_vote_list_service,
+                    self.seed_node_repository,
+                )
+            )
+
+        return GlobalContainer._blind_vote_state_monitoring_service
+
+    @property
+    def blind_vote_state_network_service(self):
+        if GlobalContainer._blind_vote_state_network_service is None:
+            from bisq.core.dao.monitoring.network.blind_vote_state_network_service import (
+                BlindVoteStateNetworkService,
+            )
+
+            GlobalContainer._blind_vote_state_network_service = (
+                BlindVoteStateNetworkService(
+                    self.network_node,
+                    self.peer_manager,
+                    self.broadcaster,
+                )
+            )
+
+        return GlobalContainer._blind_vote_state_network_service
+
+    @property
     def unconfirmed_bsq_change_output_list_service(self):
         if GlobalContainer._unconfirmed_bsq_change_output_list_service is None:
             from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import (
@@ -2137,6 +2434,20 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._unconfirmed_bsq_change_output_list_service
+
+    @property
+    def export_json_files_service(self):
+        if GlobalContainer._export_json_files_service is None:
+            from bisq.core.dao.node.explorer.export_json_file_manager import (
+                ExportJsonFilesService,
+            )
+
+            GlobalContainer._export_json_files_service = ExportJsonFilesService(
+                self.dao_state_service,
+                self.config.storage_dir,
+                self.config.dump_blockchain_data,
+            )
+        return GlobalContainer._export_json_files_service
 
     @property
     def cycle_service(self):
@@ -2192,6 +2503,18 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._my_proposal_list_service
+
+    @property
+    def tx_parser(self):
+        if GlobalContainer._tx_parser is None:
+            from bisq.core.dao.node.parser.tx_parser import TxParser
+
+            GlobalContainer._tx_parser = TxParser(
+                self.period_service,
+                self.dao_state_service,
+            )
+
+        return GlobalContainer._tx_parser
 
     @property
     def proposal_service(self):
@@ -2631,6 +2954,25 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._my_blind_vote_list_service
 
     @property
+    def vote_reveal_service(self):
+        if GlobalContainer._vote_reveal_service is None:
+            from bisq.core.dao.governance.votereveal.vote_reveal_service import (
+                VoteRevealService,
+            )
+
+            GlobalContainer._vote_reveal_service = VoteRevealService(
+                self.dao_state_service,
+                self.blind_vote_list_service,
+                self.period_service,
+                self.my_vote_list_service,
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_manager,
+            )
+
+        return GlobalContainer._vote_reveal_service
+
+    @property
     def vote_result_service(self):
         if GlobalContainer._vote_result_service is None:
             from bisq.core.dao.governance.voteresult.vote_result_service import (
@@ -2790,6 +3132,39 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._my_bonded_reputation_repository
+
+    @property
+    def asset_service(self):
+        if GlobalContainer._asset_service is None:
+            from bisq.core.dao.governance.asset.asset_service import AssetService
+
+            GlobalContainer._asset_service = AssetService(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_manager,
+                self.trade_statistics_manager,
+                self.dao_state_service,
+                self.bsq_formatter,
+            )
+
+        return GlobalContainer._asset_service
+
+    @property
+    def proof_of_burn_service(self):
+        if GlobalContainer._proof_of_burn_service is None:
+            from bisq.core.dao.governance.proofofburn.proof_of_burn_service import (
+                ProofOfBurnService,
+            )
+
+            GlobalContainer._proof_of_burn_service = ProofOfBurnService(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.wallets_manager,
+                self.my_proof_of_burn_list_service,
+                self.dao_state_service,
+            )
+
+        return GlobalContainer._proof_of_burn_service
 
     @property
     def my_proof_of_burn_list_service(self):
