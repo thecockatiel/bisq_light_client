@@ -19,16 +19,16 @@ class NewBlockBroadcastMessage(BroadcastMessage):
             super().__init__()
         else:
             super().__init__(message_version)
-        self._block = block
+        self.block = block
 
     def to_proto_message(self):
         return protobuf.NewBlockBroadcastMessage(
-            raw_block=self._block.to_proto_message()
+            raw_block=self.block.to_proto_message()
         )
 
     def to_proto_network_envelope(self):
         builder = self.get_network_envelope_builder()
-        builder.new_block_broadcast_message.CopyFrom(self._block.to_proto_message())
+        builder.new_block_broadcast_message.CopyFrom(self.block.to_proto_message())
         return builder
 
     @staticmethod
