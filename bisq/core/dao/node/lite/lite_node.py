@@ -145,7 +145,7 @@ class LiteNode(BsqNode):
                 on_parsing_complete: Callable[[], None],
             ):
                 self._on_requested_blocks_received(
-                    get_blocks_response.blocks.copy(), on_parsing_complete
+                    list(get_blocks_response.blocks), on_parsing_complete
                 )
 
             def on_new_block_received(

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Iterable, Optional
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.direct_message import DirectMessage
@@ -20,7 +20,7 @@ class GetBlocksResponse(
 
     def __init__(
         self,
-        blocks: list["RawBlock"],
+        blocks: Iterable["RawBlock"],
         request_nonce: int,
         message_version: Optional[int] = None,
     ):
@@ -28,7 +28,7 @@ class GetBlocksResponse(
             super().__init__()
         else:
             super().__init__(message_version)
-        self.blocks = blocks
+        self.blocks = tuple(blocks) if not isinstance(blocks, tuple) else blocks
         self.request_nonce = request_nonce
 
     def to_proto_network_envelope(self):
@@ -48,7 +48,7 @@ class GetBlocksResponse(
     def from_proto(
         proto: protobuf.GetBlocksResponse, message_version: int
     ) -> "GetBlocksResponse":
-        blocks_list = [RawBlock.from_proto(pb) for pb in proto.raw_blocks]
+        blocks_list = tuple(RawBlock.from_proto(pb) for pb in proto.raw_blocks)
         logger.info(
             f"\n\n<< Received a GetBlocksResponse with {len(blocks_list)} blocks and {proto.ByteSize() / 1000.0} kB size\n"
         )
