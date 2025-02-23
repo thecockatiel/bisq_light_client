@@ -40,3 +40,13 @@ class NewBlockBroadcastMessage(BroadcastMessage):
             block=RawBlock.from_proto(proto.raw_block),
             message_version=message_version,
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, NewBlockBroadcastMessage)
+            and self.block == value.block
+            and self.message_version == value.message_version
+        )
+
+    def __hash__(self):
+        return hash((self.block, self.message_version))
