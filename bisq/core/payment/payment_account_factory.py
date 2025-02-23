@@ -71,6 +71,7 @@ _account_map = {
     # PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
+    # PaymentMethod.SBP_ID: lambda: SbpAccount(),
     
     # Cannot be deleted as it would break old trade history entries
     # PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),

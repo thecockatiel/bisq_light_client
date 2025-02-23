@@ -63,7 +63,7 @@ class PopmoneyAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        owner = Res.get_with_col("payment.account.owner") + " " + self.holder_name
+        owner = Res.get_with_col("payment.account.owner.fullname") + " " + self.holder_name
         acc = Res.get_with_col("payment.popmoney.accountId") + " " + self.account_id
         return f"{payment_method} - {owner}, {acc}"
 

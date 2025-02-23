@@ -170,7 +170,7 @@ class DomainInitialisation:
         vote_result_exception_handler: Callable = None,
         revolut_accounts_update_handler: Callable = None,
         amazon_gift_card_accounts_update_handler: Callable = None,
-        dao_requires_restart_handler: Callable[[], None] = None,
+        resync_dao_state_from_resources_handler: Callable[[], None] = None,
     ):
 
         self.clock_watcher.start()
@@ -230,8 +230,8 @@ class DomainInitialisation:
 
         self.dao_setup.on_all_services_initialized(on_dao_error, on_dao_warn)
 
-        self.dao_state_snapshot_service.dao_requires_restart_handler = (
-            dao_requires_restart_handler
+        self.dao_state_snapshot_service.resync_dao_state_from_resources_handler = (
+            resync_dao_state_from_resources_handler
         )
 
         self.trade_statistics_manager.on_all_services_initialized()

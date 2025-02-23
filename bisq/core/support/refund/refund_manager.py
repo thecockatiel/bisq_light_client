@@ -352,12 +352,17 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             dispute.get_trade_date()
             > DelayedPayoutTxReceiverService.BUGFIX_6699_ACTIVATION_DATE
         )
+        was_proposal_412_activated_at_trade_date = (
+            dispute.get_trade_date()
+            > DelayedPayoutTxReceiverService.PROPOSAL_412_ACTIVATION_DATE
+        )
         delayed_payout_tx_receivers = (
             self.delayed_payout_tx_receiver_service.get_receivers(
                 selection_height,
                 input_amount,
                 dispute.trade_tx_fee,
                 was_bugfix_6699_activated_at_trade_date,
+                was_proposal_412_activated_at_trade_date,
             )
         )
         logger.info(

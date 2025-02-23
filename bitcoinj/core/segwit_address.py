@@ -1,4 +1,5 @@
 from typing import Optional, Union
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.core.address import Address
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.network_parameters import NetworkParameters
@@ -7,6 +8,7 @@ from bitcoinj.script.script_type import ScriptType
 from electrum_min.segwit_addr import Encoding, bech32_decode, convertbits, encode_segwit_address
 from bisq.common.crypto.encryption import Encryption, ECPubkey, ECPrivkey
 from bitcoinj.core.networks import NETWORKS
+from utils.preconditions import check_state
 
 
 # NOTE: doesn't cover all methods and properties of the original class, but it should be enough
@@ -50,13 +52,13 @@ class SegwitAddress(Address):
     def output_script_type(self):
         """Get the type of output script that will be used for sending to the address. This is either ScriptType.P2WPKH or ScriptType.P2WSH."""
         version = self.witness_version
-        assert version == 0
+        check_state(version == 0)
         program_length = len(self.witness_program)
         if program_length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH:
             return ScriptType.P2WPKH
         if program_length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH:
             return ScriptType.P2WSH
-        raise RuntimeError("Cannot happen.")
+        raise IllegalStateException("Cannot happen.")
     
     def __str__(self):
         return self.to_bech32()

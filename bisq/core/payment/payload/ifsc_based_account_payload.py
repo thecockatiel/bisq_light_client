@@ -65,7 +65,7 @@ class IfscBasedAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHold
         )
 
     def get_payment_details_for_trade_popup(self) -> str:
-        owner_label = Res.get_with_col("payment.account.owner")
+        owner_label = Res.get_with_col("payment.account.owner.fullname")
         account_nr_label = BankUtil.get_account_nr_label(self.country_code)
         bank_id_label = BankUtil.get_bank_id_label(self.country_code)
         country_name = get_name_by_code(self.country_code)

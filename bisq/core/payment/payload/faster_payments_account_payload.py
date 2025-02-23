@@ -58,7 +58,7 @@ class FasterPaymentsAccountPayload(PaymentAccountPayload):
     def get_payment_details_for_trade_popup(self) -> str:
         return (
             (
-                f"{Res.get('payment.account.owner')}: {self.holder_name}\n"
+                f"{Res.get('payment.account.owner.fullname')}: {self.holder_name}\n"
                 if self.holder_name
                 else ""
             )

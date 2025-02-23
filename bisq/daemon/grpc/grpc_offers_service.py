@@ -134,7 +134,7 @@ class GrpcOffersService(OffersServicer):
     def GetOffers(self, request: "GetOffersRequest", context: "ServicerContext"):
         try:
             offers = self.core_api.get_offers(
-                request.direction, request.currency_code, request.all
+                request.direction, request.currency_code
             )
             offer_infos = [OfferInfo.to_offer_info(offer) for offer in offers]
             return GetOffersReply(

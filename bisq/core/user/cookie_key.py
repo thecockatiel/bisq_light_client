@@ -11,6 +11,7 @@ class CookieKey(IntEnum):
     STAGE_H = 3
     TRADE_STAT_CHART_USE_USD = 4
     CLEAN_TOR_DIR_AT_RESTART = 5
+    DELAY_STARTUP = 6
     
     @staticmethod
     def from_proto(proto_value: str):

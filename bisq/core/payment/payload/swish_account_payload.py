@@ -63,12 +63,12 @@ class SwishAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        owner = Res.get_with_col("payment.account.owner") + " " + self.holder_name
+        owner = Res.get_with_col("payment.account.owner.fullname") + " " + self.holder_name
         mobile = Res.get_with_col("payment.mobile") + " " + self.mobile_nr
         return f"{payment_method} - {owner}, {mobile}"
 
     def get_payment_details_for_trade_popup(self) -> str:
-        owner = Res.get_with_col("payment.account.owner") + " " + self.holder_name
+        owner = Res.get_with_col("payment.account.owner.fullname") + " " + self.holder_name
         mobile = Res.get_with_col("payment.mobile") + " " + self.mobile_nr
         return f"{owner}\n{mobile}"
 

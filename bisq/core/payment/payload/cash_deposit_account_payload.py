@@ -148,7 +148,7 @@ class CashDepositAccountPayload(BankAccountPayload):
         )
 
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}\n"
             f"{email_string}"
             f"{bank_name}"
             f"{bank_id}"

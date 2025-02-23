@@ -52,6 +52,7 @@ class DaoStateService(DaoSetupService):
         self.dao_state_listeners: ThreadSafeSet["DaoStateListener"] = ThreadSafeSet()
         self.parse_block_chain_complete = False
         self.allow_dao_state_change = False
+        self._cached_tx_id_set_by_address: dict[str, set[str]] = {}
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -197,10 +198,7 @@ class DaoStateService(DaoSetupService):
     # Second we get the block added with empty txs
     def on_new_block_with_empty_txs(self, block: "Block") -> None:
         self._assert_dao_state_change()
-        if (
-            not self.dao_state.blocks
-            and block.height != self.genesis_block_height
-        ):
+        if not self.dao_state.blocks and block.height != self.genesis_block_height:
             logger.warning(
                 "We don't have any blocks yet and we received a block which is not the genesis block. "
                 "We ignore that block as the first block needs to be the genesis block. "
@@ -257,6 +255,9 @@ class DaoStateService(DaoSetupService):
         self.allow_dao_state_change = False
         for listener in self.dao_state_listeners:
             listener.on_dao_state_changed(block)
+
+        if block._txs:
+            self._cached_tx_id_set_by_address.clear()
 
     #  Called after parsing of all pending blocks is completed
     def on_parse_block_chain_complete(self) -> None:
@@ -326,7 +327,7 @@ class DaoStateService(DaoSetupService):
     @property
     def genesis_tx_id(self) -> str:
         return self.genesis_tx_info.genesis_tx_id
-    
+
     @property
     def genesis_block_height(self) -> int:
         return self.genesis_tx_info.genesis_block_height
@@ -447,6 +448,9 @@ class DaoStateService(DaoSetupService):
 
     def get_unspent_tx_output_map(self):
         return self.dao_state.unspent_tx_output_map
+
+    def get_spent_info_map(self):
+        return self.dao_state.spent_info_map
 
     def add_unspent_tx_output(self, tx_output: "TxOutput") -> None:
         self._assert_dao_state_change()
@@ -973,6 +977,41 @@ class DaoStateService(DaoSetupService):
 
     def get_spent_info(self, tx_output: "TxOutput") -> Optional["SpentInfo"]:
         return self.dao_state.spent_info_map.get(tx_output.get_key(), None)
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Addresses
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_tx_id_set_by_address(self) -> dict[str, set[str]]:
+        # We clear it at each new (non-empty) block, so it gets recreated
+        if self._cached_tx_id_set_by_address:
+            return self._cached_tx_id_set_by_address
+
+        tx_id_by_connected_tx_output_key: dict["TxOutputKey", str] = {}
+        # Add tx ids and addresses from tx outputs
+        for tx in self.get_unordered_tx_stream():
+            for tx_output in tx.tx_outputs:
+                if self.is_bsq_tx_output_type(tx_output) and tx_output.address:
+                    address = tx_output.address
+                    tx_id_set = self._cached_tx_id_set_by_address.get(address, set())
+                    tx_id_set.add(tx.id)
+                    self._cached_tx_id_set_by_address[address] = tx_id_set
+                    for tx_input in tx.tx_inputs:
+                        tx_id_by_connected_tx_output_key[
+                            tx_input.get_connected_tx_output_key()
+                        ] = tx.id
+
+        # Add tx ids and addresses from connected outputs (inputs)
+        for tx_output in self.get_unordered_tx_output_stream():
+            if self.is_bsq_tx_output_type(tx_output) and tx_output.address:
+                tx_id = tx_id_by_connected_tx_output_key.get(tx_output.get_key())
+                if tx_id:
+                    address = tx_output.address
+                    tx_id_set = self._cached_tx_id_set_by_address.get(address, set())
+                    tx_id_set.add(tx_id)
+                    self._cached_tx_id_set_by_address[address] = tx_id_set
+
+        return self._cached_tx_id_set_by_address
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Vote result data

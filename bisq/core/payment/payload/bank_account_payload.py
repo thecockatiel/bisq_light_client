@@ -129,7 +129,7 @@ class BankAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         )
 
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}\n"
             f"{bank_name}"
             f"{bank_id}"
             f"{branch_id}"

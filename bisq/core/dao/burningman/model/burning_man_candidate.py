@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.date_util import DateUtil
+from bisq.core.util.validation.btc_address_validator import BtcAddressValidator
 
 if TYPE_CHECKING:
     from bisq.core.dao.burningman.model.burn_output_model import BurnOutputModel
@@ -26,9 +27,10 @@ class BurningManCandidate:
         )
 
         self.receiver_address: Optional[str] = None
+        self.receiver_address_valid: Optional[bool] = None  # EqualsAndHashCode.Exclude
 
         # For deploying a bugfix with mostRecentAddress we need to maintain the old version to avoid breaking the
-        # trade protocol. We use the legacyMostRecentAddress until the activation date where we
+        # trade protocol. We use the legacy mostRecentAddress until the activation date where we
         # enforce the version by the filter to ensure users have updated.
         # See: https://github.com/bisq-network/bisq/issues/6699
         self.most_recent_address: Optional[str] = None  # exclude from equal and hash
@@ -47,18 +49,8 @@ class BurningManCandidate:
         self.round_capped: Optional[int] = None
 
     def get_receiver_address(
-        self, is_bugfix_6699_activated: bool = None
+        self, is_bugfix_6699_activated: bool = True
     ) -> Optional[str]:
-        if is_bugfix_6699_activated is None:
-            # TODO: we can probably replace it by True since It's been long since activation
-            from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import (
-                DelayedPayoutTxReceiverService,
-            )
-
-            is_bugfix_6699_activated = (
-                DelayedPayoutTxReceiverService.is_bugfix_6699_activated()
-            )
-
         if is_bugfix_6699_activated:
             return self.receiver_address
         else:
@@ -89,26 +81,30 @@ class BurningManCandidate:
             compensation_model.decayed_amount
         )
         self.accumulated_compensation_amount += compensation_model.amount
+        self.receiver_address_valid = None
 
         has_any_custom_address = any(
             model.is_custom_address for model in self.compensation_models
         )
         if has_any_custom_address:
-            # If any custom address was defined, we only consider custom addresses and sort them to take the
-            # most recent one.
-            self.receiver_address = max(
-                (
-                    model
-                    for model in self.compensation_models
-                    if model.is_custom_address
-                ),
-                key=lambda model: model.height,
-            ).address
+            # most recent one. If more than one compensation request from a candidate somehow got accepted in
+            # the same cycle, break the tie by choosing the lexicographically smallest custom address.
+            highest = None
+            for model in self.compensation_models:
+                if model.is_custom_address:
+                    if highest is None or model.height > highest.height:
+                        highest = model
+                    elif model.height == highest.height:
+                        if model.address < highest.address:
+                            highest = model
+            self.receiver_address = highest.address if highest is not None else None
         else:
             # If no custom addresses ever have been defined, we take the change address of the compensation request
-            # and use the earliest address. This helps to avoid change of address with every new comp. request.
+            # and use the earliest address (similarly taking the lexicographically smallest in the unlikely case of
+            # a tie). This helps to avoid change of address with every new comp. request.
             self.receiver_address = min(
-                self.compensation_models, key=lambda model: model.height
+                self.compensation_models,
+                key=lambda model: (model.height, model.address),
             ).address
 
         # For backward compatibility reasons we need to maintain the old buggy version.
@@ -116,6 +112,16 @@ class BurningManCandidate:
         self.most_recent_address = max(
             self.compensation_models, key=lambda model: model.height
         ).address
+
+    def is_receiver_address_valid(self) -> bool:
+        # Since address parsing is a little slow (due to use of exception control flow in bitcoinj), cache the
+        # result of the validation check and clear the cache for every compensation model added to the candidate.
+        if self.receiver_address_valid is None:
+            validator = BtcAddressValidator()
+            self.receiver_address_valid = validator.validate(
+                self.receiver_address
+            ).is_valid
+        return self.receiver_address_valid
 
     def get_all_addresses(self) -> set[str]:
         return {model.address for model in self.compensation_models}
@@ -196,9 +202,18 @@ class BurningManCandidate:
 
     def get_max_boosted_compensation_share(self) -> float:
         from bisq.core.dao.burningman.burning_man_service import BurningManService
-        return min(
-            BurningManService.MAX_BURN_SHARE,
-            self.compensation_share * BurningManService.ISSUANCE_BOOST_FACTOR,
+        
+        # Set the burn cap to zero if the receiver address is missing or invalid (which can never
+        # happen by accident, due to checks in the UI). This is preferable to simply excluding such
+        # receivers from the active burning men, as it minimises the chance of funds going to the LBM,
+        # or DPT outputs failing to pass a sanity check after redistributing the receiver's share.
+        return (
+            min(
+                BurningManService.MAX_BURN_SHARE,
+                self.compensation_share * BurningManService.ISSUANCE_BOOST_FACTOR,
+            )
+            if self.is_receiver_address_valid()
+            else 0.0
         )
 
     def __str__(self) -> str:
@@ -209,6 +224,7 @@ class BurningManCandidate:
             f"    accumulated_decayed_compensation_amount={self.accumulated_decayed_compensation_amount},\n"
             f"    compensation_share={self.compensation_share},\n"
             f"    receiver_address={self.receiver_address},\n"
+            f"    receiver_address_valid={self.is_receiver_address_valid()},\n"
             f"    most_recent_address={self.most_recent_address},\n"
             f"    burn_output_models={self.burn_output_models},\n"
             f"    accumulated_burn_amount={self.accumulated_burn_amount},\n"

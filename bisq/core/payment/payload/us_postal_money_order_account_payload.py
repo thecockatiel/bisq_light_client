@@ -65,13 +65,13 @@ class USPostalMoneyOrderAccountPayload(PaymentAccountPayload, PayloadWithHolderN
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        owner = Res.get_with_col("payment.account.owner")
+        owner = Res.get_with_col("payment.account.owner.fullname")
         postal_address = Res.get_with_col("payment.postal.address")
         return f"{payment_method} - {owner} {self.holder_name}, {postal_address} {self.postal_address}"
 
     def get_payment_details_for_trade_popup(self) -> str:
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}\n"
             f"{Res.get_with_col('payment.postal.address')} {self.postal_address}"
         )
 

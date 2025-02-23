@@ -25,15 +25,15 @@ class BsqBlocksStorageService:
         self,
         genesis_tx_info: "GenesisTxInfo",
         persistence_proto_resolver: "PersistenceProtoResolver",
-        db_storage_dir: Path,
+        storage_dir: Path,
     ):
         self._genesis_block_height = genesis_tx_info.genesis_block_height
-        self._storage_dir = db_storage_dir.joinpath(BsqBlocksStorageService.NAME)
+        self._blocks_dir = storage_dir.joinpath(BsqBlocksStorageService.NAME)
         self._blocks_persistence = BlocksPersistence(
-            self._storage_dir, BsqBlocksStorageService.NAME, persistence_proto_resolver
+            self._blocks_dir, BsqBlocksStorageService.NAME, persistence_proto_resolver
         )
         self._chain_height_of_persisted_blocks = 0
-    
+
     @property
     def chain_height_of_persisted_blocks(self) -> int:
         return self._chain_height_of_persisted_blocks
@@ -91,7 +91,7 @@ class BsqBlocksStorageService:
         dir_name = BsqBlocksStorageService.NAME
         resource_dir = dir_name + post_fix
 
-        if self._storage_dir.exists():
+        if self._blocks_dir.exists():
             logger.info(f"No resource directory was copied. {dir_name} exists already.")
             return
 
@@ -101,10 +101,10 @@ class BsqBlocksStorageService:
                 logger.info(f"No files in directory. {resource_dir}")
                 return
 
-            self._storage_dir.mkdir(parents=True, exist_ok=True)
+            self._blocks_dir.mkdir(parents=True, exist_ok=True)
 
             for file_name in file_names:
-                destination_file = self._storage_dir.joinpath(file_name)
+                destination_file = self._blocks_dir.joinpath(file_name)
                 resource_to_file(
                     Path(resource_dir).joinpath(file_name), destination_file
                 )
@@ -124,9 +124,6 @@ class BsqBlocksStorageService:
     def remove_blocks_directory(self):
         self._blocks_persistence.remove_blocks_directory()
 
-    # We recreate the directory so that we don't fill the blocks after restart from resources
-    # In copyFromResources we only check for the directory not the files inside.
-    def remove_blocks_in_directory(self):
-        self._blocks_persistence.remove_blocks_directory()
-        if not self._storage_dir.exists():
-            self._storage_dir.mkdir(parents=True, exist_ok=True)
+    def make_blocks_directory(self):
+        if not self._blocks_dir.exists():
+            self._blocks_dir.mkdir(parents=True, exist_ok=True)

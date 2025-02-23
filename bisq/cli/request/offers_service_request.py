@@ -196,10 +196,10 @@ class OffersServiceRequest:
         return response.bsq_swap_offers
 
     def get_offers(
-        self, direction: str, currency_code: str, all: bool
+        self, direction: str, currency_code: str
     ) -> list["grpc_pb2.OfferInfo"]:
         request = grpc_pb2.GetOffersRequest(
-            direction=direction, currency_code=currency_code, all=all
+            direction=direction, currency_code=currency_code
         )
         response: grpc_pb2.GetOffersReply = self.grpc_stubs.offers_service.GetOffers(
             request
@@ -207,15 +207,15 @@ class OffersServiceRequest:
         return response.offers
 
     def get_offers_sorted_by_date(
-        self, currency_code: str, all: bool, direction: str = None
+        self, currency_code: str, direction: str = None
     ) -> list["grpc_pb2.OfferInfo"]:
         if direction is None:
             offers = []
-            offers.extend(self.get_offers("BUY", currency_code, all))
-            offers.extend(self.get_offers("SELL", currency_code, all))
+            offers.extend(self.get_offers("BUY", currency_code))
+            offers.extend(self.get_offers("SELL", currency_code))
             return offers if not offers else self.sort_offers_by_date(offers)
         else:
-            offers = self.get_offers(direction, currency_code, all)
+            offers = self.get_offers(direction, currency_code)
             return offers if not offers else self.sort_offers_by_date(offers)
 
     def get_bsq_swap_offers_sorted_by_date(self) -> list["grpc_pb2.OfferInfo"]:

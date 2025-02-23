@@ -3,6 +3,7 @@ from datetime import timedelta
 from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption
 from bisq.common.crypto.hash import get_ripemd160_hash
 from bisq.common.crypto.sig import Sig
+from bisq.core.offer.offer_restrictions import OfferRestrictions
 from utils.time import get_time_ms
 from typing import TYPE_CHECKING, Collection, Optional, Union
 from bisq.common.setup.log_setup import get_logger
@@ -30,7 +31,7 @@ logger = get_logger(__name__)
 class SignedWitnessService:
     SIGNER_AGE_DAYS = 30
     SIGNER_AGE_MS = int(timedelta(days=SIGNER_AGE_DAYS).total_seconds() * 1000)
-    MINIMUM_TRADE_AMOUNT_FOR_SIGNING = Coin.parse_coin("0.0025")
+    MINIMUM_TRADE_AMOUNT_FOR_SIGNING = OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.divide(4)
 
     def __init__(self, key_ring: 'KeyRing',
                  p2p_service: 'P2PService',
@@ -205,7 +206,7 @@ class SignedWitnessService:
                 return err
             
             account_age_witness_hash = account_age_witness.get_hash()
-            signature_base64 = base64.b64encode(ec_key.sign_message(account_age_witness_hash))
+            signature_base64 = base64.b64encode(ec_key.sign_message(account_age_witness_hash, True))
             signed_witness = SignedWitness(
                 SignedWitnessVerificationMethod.ARBITRATOR,
                 account_age_witness_hash=account_age_witness.get_hash(),
@@ -216,7 +217,7 @@ class SignedWitnessService:
                 trade_amount=trade_amount.value,
             )
             self.publish_signed_witness(signed_witness)
-            logger.info(f"Arbitrator signed witness {str(signed_witness)}")
+            logger.info(f"Arbitrator signed witness {signed_witness}")
             return ""
         else:
             # Any peer can sign with DSA key
@@ -239,7 +240,7 @@ class SignedWitnessService:
                 trade_amount=trade_amount.value,
             )
             self.publish_signed_witness(signed_witness)
-            logger.info(f"Trader signed witness {str(signed_witness)}")
+            logger.info(f"Trader signed witness {signed_witness}")
             return signed_witness
     
     # Arbitrators sign with EC key

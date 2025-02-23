@@ -65,13 +65,13 @@ class ClearXchangeAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
     def get_payment_details(self) -> str:
         return (
             f"{Res.get(self.payment_method_id)} - "
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}, "
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}, "
             f"{Res.get_with_col('payment.emailOrMobile')} {self.email_or_mobile_nr}"
         )
 
     def get_payment_details_for_trade_popup(self) -> str:
         return (
-            f"{Res.get_with_col('payment.account.owner')} {self.holder_name}\n"
+            f"{Res.get_with_col('payment.account.owner.fullname')} {self.holder_name}\n"
             f"{Res.get_with_col('payment.emailOrMobile')} {self.email_or_mobile_nr}"
         )
 

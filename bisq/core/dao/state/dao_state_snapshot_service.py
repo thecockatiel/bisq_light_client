@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
+import threading
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.governance.param.param import Param
@@ -9,6 +10,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.trade.delayed_payout_address_provider import DelayedPayoutAddressProvider
 import pb_pb2 as protobuf
+from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -26,6 +28,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
     from bisq.core.user.preferences import Preferences
+import os
 
 logger = get_logger(__name__)
 
@@ -33,7 +36,7 @@ logger = get_logger(__name__)
 class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
     """
     Manages periodical snapshots of the DaoState.
-    At startup we apply a snapshot if available.
+    At startup, we apply a snapshot if available.
     At each trigger height we persist the latest snapshot candidate and set the current daoState as new candidate.
     The trigger height is determined by the SNAPSHOT_GRID. The latest persisted snapshot is min. the height of
     SNAPSHOT_GRID old not less than 2 times the SNAPSHOT_GRID old.
@@ -60,17 +63,22 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
         self._bsq_wallet_service = bsq_wallet_service
         self._preferences = preferences
         self._config = config
-        self._storage_dir = config.storage_dir
+        self._full_dao_node = config.full_dao_node
 
         self._dao_state_candidate: Optional[protobuf.DaoState] = None
         self._hash_chain_candidate: list["DaoStateHash"] = []
         self._blocks_candidate: list["Block"] = []
         self._snapshot_height: int = 0
-        self._chain_height_of_last_apply_snapshot: int = 0
-        self.dao_requires_restart_handler: Optional[Callable[[], None]] = None
-        self._dao_requires_restart_handler_attempts: int = 0
-        self._ready_for_persisting: bool = True
-        self._is_parse_block_chain_complete: bool = False
+        self._chain_height_of_last_applied_snapshot = 0
+        self.resync_dao_state_from_resources_handler: Optional[Callable[[], None]] = (
+            None
+        )
+        self._dao_requires_restart_handler_attempts = AtomicInt(0)
+        self._persisting_block_in_progress = AtomicBoolean(False)
+        self._is_parse_block_chain_complete = AtomicBoolean(False)
+        self._heights_of_last_applied_snapshots = list[int]()
+        self._lock = threading.Lock()
+        self._snapshpt_lock = threading.Lock()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -113,21 +121,24 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
     # NOTE: we removed GcUtil calls in python for now
     def on_dao_state_changed(self, block: "Block"):
         # If we have isUseDaoMonitor activated we apply the hash and snapshots at each new block during initial parsing.
-        # Otherwise we do it only after the initial blockchain parsing is completed to not delay the parsing.
+        # Otherwise, we do it only after the initial blockchain parsing is completed to not delay the parsing.
         # In that case we get the missing hashes from the seed nodes. At any new block we do the hash calculation
-        # ourself and therefore get back confidence that our DAO state is in sync with the network.
+        # ourselves and therefore get back confidence that our DAO state is in sync with the network.
         if (
             self._preferences.is_use_full_mode_dao_monitor()
-            or self._is_parse_block_chain_complete
+            or self._is_parse_block_chain_complete.get()
         ):
             # We need to execute first the daoStateMonitoringService.createHashFromBlock to get the hash created
             self._dao_state_monitoring_service.create_hash_from_block(block)
             self.maybe_create_snapshot(block)
+        elif self._full_dao_node:
+            # If we run as full DAO node we want to create a snapshot at each trigger block.
+            self.maybe_create_snapshot(block)
 
     def on_parse_block_chain_complete(self):
-        self._is_parse_block_chain_complete = True
+        self._is_parse_block_chain_complete.set(True)
 
-        # In case we have dao monitoring deactivated we create the snapshot after we are completed with parsing
+        # In case we have dao monitoring deactivated we create the snapshot after we are completed with parsing,
         # and we got called back from daoStateMonitoringService once the hashes are created from peers data.
         if not self._preferences.is_use_full_mode_dao_monitor():
             # We register a callback handler once the daoStateMonitoringService has received the missing hashes from
@@ -167,47 +178,52 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
 
     # We need to process during batch processing as well to write snapshots during that process.
     def maybe_create_snapshot(self, block: "Block"):
+        # We protect to get called while we are not completed with persisting the daoState. This can take about
+        # 20 seconds, and it is not expected that we get triggered another snapshot event in that period, but this
+        # check guards that we would skip such calls.
+        if self._persisting_block_in_progress.get():
+            if self._preferences.is_use_full_mode_dao_monitor():
+                # In case we don't use isUseFullModeDaoMonitor we might get called here too often as the parsing is much
+                # faster than the persistence, and we likely create only 1 snapshot during initial parsing, so
+                # we log only if isUseFullModeDaoMonitor is true as then parsing is likely slower, and we would
+                # expect that we do a snapshot at each trigger block.
+                logger.info(
+                    "We try to persist a daoState but the previous call has not completed yet. "
+                    "We ignore that call and skip that snapshot. "
+                    "Snapshot will be created at next snapshot height again. This is not to be expected with live "
+                    "blockchain data."
+                )
+            return
+
         chain_height = block.height
+        if not self._is_snapshot_height(chain_height):
+            return
 
-        # Either we don't have a snapshot candidate yet, or if we have one the height at that snapshot candidate must be
-        # different to our current height.
-        no_snapshot_candidate_or_different_height = (
-            self._dao_state_candidate is None or self._snapshot_height != chain_height
-        )
-        if (
-            self._is_snapshot_height(chain_height)
-            and self._dao_state_service.blocks
-            and self._is_valid_height(
-                self._dao_state_service.block_height_of_last_block
-            )
-            and no_snapshot_candidate_or_different_height
+        if self._is_height_below_genesis_height(
+            self._dao_state_service.block_height_of_last_block
         ):
+            return
 
-            # We protect to get called while we are not completed with persisting the daoState. This can take about
-            # 20 seconds and it is not expected that we get triggered another snapshot event in that period, but this
-            # check guards that we would skip such calls..
-            if not self._ready_for_persisting:
-                if self._preferences.is_use_full_mode_dao_monitor():
-                    # In case we dont use isUseFullModeDaoMonitor we might called here too often as the parsing is much
-                    # faster than the persistence and we likely create only 1 snapshot during initial parsing, so
-                    # we log only if isUseFullModeDaoMonitor is true as then parsing is likely slower and we would
-                    # expect that we do a snapshot at each trigger block.
-                    logger.info(
-                        "We try to persist a daoState but the previous call has not completed yet. "
-                        "We ignore that call and skip that snapshot. "
-                        "Snapshot will be created at next snapshot height again. This is not to be expected with live "
-                        "blockchain data."
-                    )
-                return
+        if not self._dao_state_service.blocks:
+            logger.error(
+                "No snapshot to be created as blocks are empty. This should never happen."
+            )
+            return
 
-            if self._dao_state_candidate is not None:
-                self._persist()
-            else:
-                self._create_snapshot()
+        if self._dao_state_candidate and self._snapshot_height == chain_height:
+            logger.error(
+                f"snapshotHeight is same as chainHeight. This should never happen. chainHeight={chain_height}",
+            )
+            return
+
+        if self._dao_state_candidate:
+            self._persist()
+        else:
+            self._create_snapshot()
 
     def _persist(self):
         ts = get_time_ms()
-        self._ready_for_persisting = False
+        self._persisting_block_in_progress.set(True)
         self._dao_state_storage_service.request_persistence(
             self._dao_state_candidate,
             self._blocks_candidate,
@@ -217,7 +233,7 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
                     f"Serializing daoStateCandidate for writing to Disc at chainHeight {self._snapshot_height} took {get_time_ms() - ts} ms."
                 ),
                 self._create_snapshot(),
-                setattr(self, "_ready_for_persisting", True),
+                self._persisting_block_in_progress.set(False),
             ),
         )
 
@@ -237,98 +253,112 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
             f"Cloned new daoStateCandidate at height {self._snapshot_height} took {get_time_ms() - ts} ms."
         )
 
-    def apply_snapshot(self, from_reorg: bool):
-        persisted_bsq_state = (
-            self._dao_state_storage_service.get_persisted_bsq_state()
-        )  # TODO: sanity check: its never null
-        persisted_dao_state_hash_chain = (
-            self._dao_state_storage_service.get_persisted_dao_state_hash_chain()
-        )
-        if persisted_bsq_state:
-            chain_height_of_persisted = persisted_bsq_state.chain_height
-            if persisted_bsq_state.blocks:
-                height_of_last_block = persisted_bsq_state.last_block.height
-                if height_of_last_block != chain_height_of_persisted:
-                    logger.warning(
-                        "chain_height_of_persisted must be same as height_of_last_block"
-                    )
-                    self._resync_dao_state_from_resources()
-                    return
-                if self._is_valid_height(height_of_last_block):
-                    if (
-                        self._chain_height_of_last_apply_snapshot
-                        != chain_height_of_persisted
-                    ):
-                        self._chain_height_of_last_apply_snapshot = (
-                            chain_height_of_persisted
-                        )
-                        self._dao_state_service.apply_snapshot(persisted_bsq_state)
-                        self._dao_state_monitoring_service.apply_snapshot(
-                            persisted_dao_state_hash_chain
-                        )
-                        self._dao_state_storage_service.release_memory()
-                    else:
-                        # The reorg might have been caused by the previous parsing which might contains a range of
-                        # blocks.
-                        logger.warning(
-                            f"We applied already a snapshot with chain_height {self._chain_height_of_last_apply_snapshot}. "
-                            "We remove all dao store files and shutdown. After a restart resource files will "
-                            "be applied if available."
-                        )
-                        self._resync_dao_state_from_resources()
-            elif from_reorg:
+    def apply_persisted_snapshot(self):
+        self._apply_snapshot(True)
+
+    def revert_to_last_snapshot(self):
+        self._apply_snapshot(False)
+
+    def _apply_snapshot(self, from_initialize: bool):
+        with self._snapshpt_lock:
+            persisted_bsq_state = self._dao_state_storage_service.get_persisted_bsq_state()
+            # TODO: sanity check: its never null
+            if not persisted_bsq_state:
                 logger.info(
-                    "We got a reorg and we want to apply the snapshot but it is empty. "
-                    "That is expected in the first blocks until the first snapshot has been created. "
-                    "We remove all dao store files and shutdown. "
-                    "After a restart resource files will be applied if available."
+                    "Try to apply snapshot but no stored snapshot available. That is expected at first blocks."
+                )
+                return
+            
+            chain_height_of_persisted_dao_state = persisted_bsq_state.chain_height
+            num_same_applied_snapshots = self._heights_of_last_applied_snapshots.count(chain_height_of_persisted_dao_state)
+            if num_same_applied_snapshots >= 3:
+                logger.warning(
+                    "We got called applySnapshot the 3rd time with the same snapshot height. "
+                    "We abort and call resyncDaoStateFromResources."
                 )
                 self._resync_dao_state_from_resources()
-            else:
-                logger.info(
-                    "No Bsq blocks in DaoState. Expected if no data are provided yet from resources or persisted data."
+                return
+            self._heights_of_last_applied_snapshots.append(chain_height_of_persisted_dao_state)
+
+            if not persisted_bsq_state.blocks:
+                if from_initialize:
+                    logger.info(
+                        "No Bsq blocks in DaoState. Expected if no data are provided yet from resources or persisted data."
+                    )
+                else:
+                    logger.info(
+                        "We got a reorg or error and we want to apply the snapshot but it is empty. "
+                        "That is expected in the first blocks until the first snapshot has been created. "
+                        "We remove all dao store files and shutdown. "
+                        "After a restart resource files will be applied if available."
+                    )
+                    self._resync_dao_state_from_resources()
+                return
+            
+            if not self._dao_state_storage_service.is_chain_height_matching_last_block_height():
+                self._resync_dao_state_from_resources()
+                return
+
+            if self._is_height_below_genesis_height(chain_height_of_persisted_dao_state):
+                return
+            
+            if self._chain_height_of_last_applied_snapshot == chain_height_of_persisted_dao_state:
+                # The reorg might have been caused by the previous parsing which might contains a range of
+                # blocks.
+                logger.warning(
+                    f"We applied already a snapshot with chainHeight {self._chain_height_of_last_applied_snapshot}. "
+                    "We remove all dao store files and shutdown. After a restart resource files will "
+                    "be applied if available."
                 )
-        else:
-            logger.info(
-                "Try to apply snapshot but no stored snapshot available. That is expected at first blocks."
-            )
+                self._resync_dao_state_from_resources()
+                return
+
+            self._chain_height_of_last_applied_snapshot = chain_height_of_persisted_dao_state
+            self._dao_state_service.apply_snapshot(persisted_bsq_state)
+            persisted_dao_state_hash_chain = self._dao_state_storage_service.get_persisted_dao_state_hash_chain()
+            self._dao_state_monitoring_service.apply_snapshot(persisted_dao_state_hash_chain)
+            self._dao_state_storage_service.release_memory()
+            
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def _is_valid_height(self, height_of_last_block: int) -> bool:
-        return height_of_last_block >= self._genesis_tx_info.genesis_block_height
+    def _is_height_below_genesis_height(self, height: int) -> bool:
+        is_height_below_genesis_height = (
+            height < self._genesis_tx_info.genesis_block_height
+        )
+        if is_height_below_genesis_height:
+            logger.error(
+                f"height is below genesis height. This should never happen. height={height}"
+            )
+        return is_height_below_genesis_height
 
     def _resync_dao_state_from_resources(self):
         logger.info("resync_dao_state_from_resources called")
-        self._dao_requires_restart_handler_attempts += 1
-        if (
-            self.dao_requires_restart_handler is None
-            and self._dao_requires_restart_handler_attempts <= 3
-        ):
-            logger.warning(
-                "dao_requires_restart_handler has not been initialized yet, will try again in 10 seconds"
-            )
-            UserThread.run_after(
-                self._resync_dao_state_from_resources,
-                timedelta(seconds=10),  # a delay for the app to init
-            )
-            return
-        try:
-            self._dao_state_storage_service.resync_dao_state_from_resources(
-                self._storage_dir
-            )
-            # the restart handler informs the user of the need to restart bisq (in desktop mode)
-            if self.dao_requires_restart_handler is None:
-                logger.error(
-                    "dao_requires_restart_handler COULD NOT be called as it has not been initialized yet"
+        if self.resync_dao_state_from_resources_handler is None:
+            if self._dao_requires_restart_handler_attempts.add_and_get(1) <= 3:
+                logger.warning(
+                    "resync_dao_state_from_resources_handler has not been initialized yet, will try again in 10 seconds"
                 )
+                UserThread.run_after(
+                    self._resync_dao_state_from_resources,
+                    timedelta(seconds=10),  # a delay for the app to init
+                )
+                return
             else:
-                logger.info("calling dao_requires_restart_handler...")
-                self.dao_requires_restart_handler()
-        except Exception as e:
-            logger.error(f"Error at resync_dao_state_from_resources: {e}")
+                logger.warning(
+                    "No resync_dao_state_from_resources_handler has been set. Shutting down non-gracefully with a failure code on exit."
+                )
+                os._exit(1)
+
+        with self._lock:
+            try:
+                self._dao_state_storage_service.remove_and_backup_all_dao_data()
+                # the restart handler informs the user of the need to restart bisq (in desktop mode)
+                self.resync_dao_state_from_resources_handler()
+            except Exception as e:
+                logger.error(f"Error at resync_dao_state_from_resources: {e}")
 
     def _get_snapshot_height(self, genesis_height: int, height: int, grid: int) -> int:
         return round(max(genesis_height + 3 * grid, height) / grid) * grid - grid

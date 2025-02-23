@@ -1,4 +1,4 @@
-# tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.18/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
+# tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.19/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
 
 # TODO: fix class initializers when implemented for those who are still not done
 from typing import Optional
@@ -1934,11 +1934,11 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._trade_wallet_service
 
     @property
-    def providers_repository(self):
+    def price_feed_node_address_provider(self):
         if GlobalContainer._providers_repository is None:
-            from bisq.core.provider.providers_repository import ProvidersRepository
+            from bisq.core.provider.price_feed_node_address_provider import PriceFeedNodeAddressProvider
 
-            GlobalContainer._providers_repository = ProvidersRepository(
+            GlobalContainer._providers_repository = PriceFeedNodeAddressProvider(
                 self.config,
                 self.config.providers,
                 self.config.use_localhost_for_p2p,
@@ -1971,7 +1971,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             GlobalContainer._price_feed_service = PriceFeedService(
                 PriceHttpClient(None, self.socks5_proxy_provider),
                 self.fee_service,
-                self.providers_repository,
+                self.price_feed_node_address_provider,
                 self.preferences,
             )
 
@@ -2316,6 +2316,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._dao_state_monitoring_service = DaoStateMonitoringService(
                 self.dao_state_service,
+                self.dao_state_storage_service,
                 self.dao_state_network_service,
                 self.genesis_tx_info,
                 self.seed_node_repository,
@@ -3242,7 +3243,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
                 self.key_ring,
                 self.user,
                 self.config,
-                self.providers_repository,
+                self.price_feed_node_address_provider,
                 self.ban_filter,
                 self.config.ignore_dev_msg,
                 self.config.use_dev_privilege_keys,

@@ -3,6 +3,8 @@ import uuid
 from bisq.common.capabilities import Capabilities
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.core.payment.same_bank_account import SameBankAccount
+from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from utils.preconditions import check_argument
 from bisq.common.util.utilities import get_random_prefix
 from bisq.common.version import Version
@@ -321,7 +323,8 @@ class OfferUtil:
     def validate_offer_data(self, buyer_security_deposit: float,
                           payment_account: 'PaymentAccount',
                           currency_code: str,
-                          maker_fee: Coin) -> None:
+                          maker_fee: Coin,
+                          accepted_banks: list[str]) -> None:
         """
         Validates the offer data before creating an offer.
         
@@ -344,6 +347,9 @@ class OfferUtil:
                    f"securityDeposit must not exceed {max_deposit}")
         check_argument(buyer_security_deposit >= min_deposit, 
                    f"securityDeposit must not be less than {min_deposit}")
+        if isinstance(payment_account, (SameBankAccount, SpecificBanksAccount)):
+            # TODO: java sanity check
+            check_argument(accepted_banks and None not in accepted_banks, "acceptedBanks must not be null for SAME_BANK or SPECIFIC_BANKS accounts")
 
     def validate_basic_offer_data(self, payment_method: 'PaymentMethod', currency_code: str) -> None:
         """

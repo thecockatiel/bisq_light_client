@@ -5,8 +5,6 @@ BTC_MAIN_NET_EXPLORERS = [
     BlockChainExplorer("mempool.space Tor V3", "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/tx/", "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/address/"),
     BlockChainExplorer("mempool.emzy.de (@emzy)", "https://mempool.emzy.de/tx/", "https://mempool.emzy.de/address/"),
     BlockChainExplorer("mempool.emzy.de Tor V3", "http://mempool4t6mypeemozyterviq3i5de4kpoua65r3qkn5i3kknu5l2cad.onion/tx/", "http://mempool4t6mypeemozyterviq3i5de4kpoua65r3qkn5i3kknu5l2cad.onion/address/"),
-    BlockChainExplorer("mempool.bisq.services (@devinbileck)", "https://mempool.bisq.services/tx/", "https://mempool.bisq.services/address/"),
-    BlockChainExplorer("mempool.bisq.services Tor V3", "http://mempoolcutehjtynu4k4rd746acmssvj2vz4jbz4setb72clbpx2dfqd.onion/tx/", "http://mempoolcutehjtynu4k4rd746acmssvj2vz4jbz4setb72clbpx2dfqd.onion/address/"),
     BlockChainExplorer("mempool Tor V3 (@runbtc)", "http://runbtcx3wfygbq2wdde6qzjnpyrqn3gvbks7t5jdymmunxttdvvttpyd.onion/tx/", "http://runbtcx3wfygbq2wdde6qzjnpyrqn3gvbks7t5jdymmunxttdvvttpyd.onion/address/"),
     BlockChainExplorer("Blockstream.info", "https://blockstream.info/tx/", "https://blockstream.info/address/"),
     BlockChainExplorer("Blockstream.info Tor V3", "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/tx/", "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/address/"),
@@ -40,29 +38,26 @@ BTC_DAO_TEST_NET_EXPLORERS = [
 ]
 
 BSQ_MAIN_NET_EXPLORERS = [
-    BlockChainExplorer("bisq.mempool.emzy.de (@emzy)", "https://bisq.mempool.emzy.de/tx/", "https://bisq.mempool.emzy.de/address/"),
-    BlockChainExplorer("mempool.bisq.services (@devinbileck)", "https://mempool.bisq.services/bisq/tx/", "https://mempool.bisq.services/bisq/address/")
+    BlockChainExplorer("mempool.bisq.services (@devinbileck)", "https://mempool.bisq.services/tx/", "https://mempool.bisq.services/address/")
 ]
 
 XMR_TX_PROOF_SERVICES_CLEAR_NET = [
-    "xmrblocks.bisq.services"  # @devinbileck
+    "xmrchain.net"
 ]
 
 XMR_TX_PROOF_SERVICES = [
-    "devinxmrwu4jrfq2zmq5kqjpxb44hx7i7didebkwrtvmvygj4uuop2ad.onion",  # @devinbileck
-    "xmrexplrthytnunr4jasr3vnjc6jo5idsyxzv74a7ep7dy7lwcv2eoyd.onion"   # @runbtc
+    "xmrexplrthytnunr4jasr3vnjc6jo5idsyxzv74a7ep7dy7lwcv2eoyd.onion",     # @runbtc
+    "nklwsomtuok6dhqqecp3a26xzgokfgmeuaplcdkaxehncg57yzarvbad.onion"      # @suddenwhipvapor
 ]
 
 TX_BROADCAST_SERVICES_CLEAR_NET = [
     "https://mempool.space/api/tx",         # @wiz
-    "https://mempool.emzy.de/api/tx",       # @emzy
-    "https://mempool.bisq.services/api/tx"  # @devinbileck
+    "https://mempool.emzy.de/api/tx"        # @emzy
 ]
 
 TX_BROADCAST_SERVICES = [
     "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api/tx",     # @wiz
     "http://mempool4t6mypeemozyterviq3i5de4kpoua65r3qkn5i3kknu5l2cad.onion/api/tx",     # @emzy
-    "http://mempoolcutehjtynu4k4rd746acmssvj2vz4jbz4setb72clbpx2dfqd.onion/api/tx",     # @devinbileck
     "http://runbtcx3wfygbq2wdde6qzjnpyrqn3gvbks7t5jdymmunxttdvvttpyd.onion/api/tx"      # @runbtc
 ]
     

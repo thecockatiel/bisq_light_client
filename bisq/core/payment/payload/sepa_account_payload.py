@@ -113,7 +113,7 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
 
     def get_payment_details(self) -> str:
         method = Res.get(self.payment_method_id)
-        owner = Res.get_with_col("payment.account.owner")
+        owner = Res.get_with_col("payment.account.owner.fullname")
         country = Res.get_with_col("payment.bank.country")
         return (
             f"{method} - {owner}: {self.holder_name}, "
@@ -122,7 +122,7 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
         )
 
     def get_payment_details_for_trade_popup(self) -> str:
-        owner = Res.get_with_col("payment.account.owner")
+        owner = Res.get_with_col("payment.account.owner.fullname")
         country = Res.get_with_col("payment.bank.country")
         return (
             f"{owner}: {self.holder_name}\n"

@@ -53,14 +53,14 @@ class CycleService(DaoStateListener, DaoSetupService):
 
     def is_tx_in_cycle(self, cycle: "Cycle", tx_id: str) -> bool:
         tx = self.dao_state_service.get_tx(tx_id)
-        return tx is not None and self._is_block_height_in_cycle(tx.block_height, cycle)
+        return tx is not None and self.is_block_height_in_cycle(tx.block_height, cycle)
+
+    def is_block_height_in_cycle(self, block_height: int, cycle: "Cycle") -> bool:
+        return cycle.height_of_first_block <= block_height <= cycle.height_of_last_block
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
     # ///////////////////////////////////////////////////////////////////////////////////////////
-
-    def _is_block_height_in_cycle(self, block_height: int, cycle: "Cycle") -> bool:
-        return cycle.height_of_first_block <= block_height <= cycle.height_of_last_block
 
     def _maybe_create_new_cycle(
         self, block_height: int, cycles: list["Cycle"]

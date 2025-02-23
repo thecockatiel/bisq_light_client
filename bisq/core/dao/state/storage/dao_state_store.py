@@ -37,6 +37,6 @@ class DaoStateStore(PersistableEnvelope):
         dao_state_hash_list = [DaoStateHash.from_proto(p) for p in proto.dao_state_hash]
         return DaoStateStore(proto.dao_state, dao_state_hash_list)
 
-    def release_memory(self):
+    def clear(self):
         self.dao_state_as_proto = None
         self.dao_state_hash_chain = None

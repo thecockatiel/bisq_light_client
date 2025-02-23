@@ -55,7 +55,7 @@ class NeftAccountPayload(IfscBasedAccountPayload):
 
     def get_payment_details(self) -> str:
         payment_method = Res.get(self.payment_method_id)
-        account_owner = Res.get_with_col("payment.account.owner")
+        account_owner = Res.get_with_col("payment.account.owner.fullname")
         account_no = Res.get_with_col("payment.account.no")
         ifsc_code = Res.get_with_col("payment.ifsc")
 
