@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.node.bsq_node import BsqNode
-from bisq.core.dao.node.messages.new_block_broadcast_message import NewBlockBroadcastMessage
+from bisq.core.dao.node.messages.new_block_broadcast_message import (
+    NewBlockBroadcastMessage,
+)
 from bisq.core.dao.node.parser.exceptions.required_reorg_from_snapshot_exception import (
     RequiredReorgFromSnapshotException,
 )
@@ -13,7 +15,9 @@ from utils.data import SimplePropertyChangeEvent
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
-    from bisq.core.dao.node.lite.network.lite_node_network_service import LiteNodeNetworkService
+    from bisq.core.dao.node.lite.network.lite_node_network_service import (
+        LiteNodeNetworkService,
+    )
     from bisq.core.dao.node.messages.get_blocks_response import GetBlocksResponse
     from bisq.core.dao.node.full.raw_block import RawBlock
     from bisq.core.dao.node.explorer.export_json_file_manager import (
@@ -120,7 +124,7 @@ class LiteNode(BsqNode):
                     self._lite_node_network_service.request_blocks(dao_chain_height + 1)
 
             self._check_for_block_received_timer = UserThread.run_after(
-                lambda: check_for_block_received(wallet_block_height),
+                check_for_block_received,
                 timedelta(seconds=LiteNode.CHECK_FOR_BLOCK_RECEIVED_DELAY_SEC),
             )
 
