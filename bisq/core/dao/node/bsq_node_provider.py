@@ -1,0 +1,45 @@
+from typing import TYPE_CHECKING
+
+from bisq.common.setup.log_setup import get_logger
+from bisq.core.dao.node.full.full_node import FullNode
+from bisq.core.dao.node.lite.lite_node import LiteNode
+
+
+if TYPE_CHECKING:
+    from bisq.core.user.preferences import Preferences
+    from bisq.core.dao.node.bsq_node import BsqNode
+
+logger = get_logger(__name__)
+
+
+class BsqNodeProvider:
+
+    def __init__(
+        self,
+        bsq_lite_node: "LiteNode",
+        bsq_full_node: "FullNode",
+        preferences: "Preferences",
+    ):
+        rpc_data_set = (
+            preferences.get_rpc_user()
+            and preferences.get_rpc_pw()
+            and preferences.get_block_notify_port() > 0
+        )
+        dao_full_node = preferences.is_dao_full_node()
+        if dao_full_node and not rpc_data_set:
+            logger.warning(
+                "dao_full_node is set in preferences but RPC user and pw are missing. We reset dao_full_node in preferences to false."
+            )
+            preferences.set_dao_full_node(False)
+
+        should_use_full_node = dao_full_node and rpc_data_set
+
+        if should_use_full_node:
+            logger.error(
+                "Using full node is not supported yet. falling back to lite node"
+            )
+            # TODO
+            # self.bsq_node = bsq_full_node
+            self.bsq_node = bsq_lite_node
+        else:
+            self.bsq_node = bsq_lite_node
