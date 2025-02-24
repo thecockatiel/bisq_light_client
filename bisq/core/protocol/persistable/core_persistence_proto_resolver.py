@@ -89,6 +89,9 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
             logger.error("PersistableEnvelope.from_proto: PB.PersistableEnvelope is null")
             raise ProtobufferException("PB.PersistableEnvelope is null")
         
+        if isinstance(proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)):
+            return super().from_proto(proto)
+        
         message_type = proto.WhichOneof("message")
         if message_type in proto_map:
             return proto_map[message_type](proto, self)
