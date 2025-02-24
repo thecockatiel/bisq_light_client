@@ -48,7 +48,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     "sequence_number_map": lambda p, resolver: SequenceNumberMap.from_proto(p.sequence_number_map),
     "peer_list": lambda p, resolver: PeerList.from_proto(p.peer_list),
     "address_entry_list": lambda p, resolver: AddressEntryList.from_proto(p.address_entry_list),
-    "tradable_list": lambda p, resolver: TradableList.from_proto(p.tradable_list, resolver, resolver.btc_wallet_service_provider.get()),
+    "tradable_list": lambda p, resolver: TradableList.from_proto(p.tradable_list, resolver, resolver._btc_wallet_service_provider.get()),
     "arbitration_dispute_list": lambda p, resolver: ArbitrationDisputeList.from_proto(p.arbitration_dispute_list, resolver),
     "mediation_dispute_list": lambda p, resolver: MediationDisputeList.from_proto(p.mediation_dispute_list, resolver),
     "refund_dispute_list": lambda p, resolver: RefundDisputeList.from_proto(p.refund_dispute_list, resolver),
@@ -60,7 +60,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     # "trade_statistics2_store": lambda p, resolver: TradeStatistics2Store.from_proto(p),
     "blind_vote_store": lambda p, resolver: BlindVoteStore.from_proto(p.blind_vote_store),
     "proposal_store": lambda p, resolver: ProposalStore.from_proto(p.proposal_store),
-    "temp_proposal_store": lambda p, resolver: TempProposalStore.from_proto(p.temp_proposal_store, resolver.network_proto_resolver),
+    "temp_proposal_store": lambda p, resolver: TempProposalStore.from_proto(p.temp_proposal_store, resolver._network_proto_resolver),
     "my_proposal_list": lambda p, resolver: MyProposalList.from_proto(p.my_proposal_list),
     "ballot_list": lambda p, resolver: BallotList.from_proto(p.ballot_list),
     "my_vote_list": lambda p, resolver: MyVoteList.from_proto(p.my_vote_list),
@@ -71,7 +71,7 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     "unconfirmed_bsq_change_output_list": lambda p, resolver: UnconfirmedBsqChangeOutputList.from_proto(p.unconfirmed_bsq_change_output_list),
     "signed_witness_store": lambda p, resolver: SignedWitnessStore.from_proto(p.signed_witness_store),
     # "trade_statistics3_store": lambda p, resolver: TradeStatistics3Store.from_proto(p),
-    "mailbox_message_list": lambda p, resolver: MailboxMessageList.from_proto(p.mailbox_message_list, resolver.network_proto_resolver),
+    "mailbox_message_list": lambda p, resolver: MailboxMessageList.from_proto(p.mailbox_message_list, resolver._network_proto_resolver),
     "ignored_mailbox_map": lambda p, resolver: IgnoredMailboxMap.from_proto(p.ignored_mailbox_map),
     "removed_payloads_map": lambda p, resolver: RemovedPayloadsMap.from_proto(p.removed_payloads_map),
     "bsq_block_store": lambda p, resolver: BsqBlockStore.from_proto(p.bsq_block_store),
@@ -81,8 +81,8 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
 class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
     def __init__(self, clock: "Clock", btc_wallet_service_provider: DependencyProvider["BtcWalletService"], network_proto_resolver: "NetworkProtoResolver"):
         super().__init__(clock)
-        self.btc_wallet_service_provider = btc_wallet_service_provider
-        self.network_proto_resolver = network_proto_resolver
+        self._btc_wallet_service_provider = btc_wallet_service_provider
+        self._network_proto_resolver = network_proto_resolver
         
     def from_proto(self, proto: protobuf.PersistableEnvelope) -> "PersistableEnvelope":
         if proto is None:
@@ -91,7 +91,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
         
         message_type = proto.WhichOneof("message")
         if message_type in proto_map:
-            return proto_map[message_type](proto, self)
+            return proto_map[message_type](proto, self._network_proto_resolver)
         else:
             raise ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). "
                                        f"messageCase={message_type}; proto raw data={str(proto)}")
