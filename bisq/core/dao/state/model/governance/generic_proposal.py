@@ -81,3 +81,6 @@ class GenericProposal(Proposal, ImmutableDaoStateModel):
         if not isinstance(other, GenericProposal):
             return False
         return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
