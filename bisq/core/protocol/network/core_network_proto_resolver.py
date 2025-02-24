@@ -4,20 +4,48 @@ from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_request import GetAccountingBlocksRequest
-from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_response import GetAccountingBlocksResponse
-from bisq.core.dao.burningman.accounting.node.messages.new_accounting_block_broadcast_message import NewAccountingBlockBroadcastMessage
-from bisq.core.dao.governance.blindvote.network.messages.republish_governance_data_request import RepublishGovernanceDataRequest
-from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_payload import TempProposalPayload
-from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_request import GetBlindVoteStateHashesRequest
-from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_response import GetBlindVoteStateHashesResponse
-from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_request import GetDaoStateHashesRequest
-from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_response import GetDaoStateHashesResponse
-from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_request import GetProposalStateHashesRequest
-from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_response import GetProposalStateHashesResponse
-from bisq.core.dao.monitoring.network.messages.new_blind_vote_state_hash_message import NewBlindVoteStateHashMessage
-from bisq.core.dao.monitoring.network.messages.new_dao_state_hash_message import NewDaoStateHashMessage
-from bisq.core.dao.monitoring.network.messages.new_proposal_state_hash_message import NewProposalStateHashMessage
+from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_request import (
+    GetAccountingBlocksRequest,
+)
+from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_response import (
+    GetAccountingBlocksResponse,
+)
+from bisq.core.dao.burningman.accounting.node.messages.new_accounting_block_broadcast_message import (
+    NewAccountingBlockBroadcastMessage,
+)
+from bisq.core.dao.governance.blindvote.network.messages.republish_governance_data_request import (
+    RepublishGovernanceDataRequest,
+)
+from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_payload import (
+    TempProposalPayload,
+)
+from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_request import (
+    GetBlindVoteStateHashesRequest,
+)
+from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_response import (
+    GetBlindVoteStateHashesResponse,
+)
+from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_request import (
+    GetDaoStateHashesRequest,
+)
+from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_response import (
+    GetDaoStateHashesResponse,
+)
+from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_request import (
+    GetProposalStateHashesRequest,
+)
+from bisq.core.dao.monitoring.network.messages.get_proposal_state_hashes_response import (
+    GetProposalStateHashesResponse,
+)
+from bisq.core.dao.monitoring.network.messages.new_blind_vote_state_hash_message import (
+    NewBlindVoteStateHashMessage,
+)
+from bisq.core.dao.monitoring.network.messages.new_dao_state_hash_message import (
+    NewDaoStateHashMessage,
+)
+from bisq.core.dao.monitoring.network.messages.new_proposal_state_hash_message import (
+    NewProposalStateHashMessage,
+)
 from bisq.core.dao.node.messages.get_blocks_request import GetBlocksRequest
 from bisq.core.dao.node.messages.get_blocks_response import GetBlocksResponse
 from bisq.core.dao.node.messages.new_block_broadcast_message import (
@@ -277,8 +305,26 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
         if proto is None:
             logger.error("CoreNetworkProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
-        if isinstance(proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)):
+        if isinstance(
+            proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)
+        ):
             return super().from_proto(proto)
+        elif isinstance(proto, protobuf.StoragePayload):
+            message_type = proto.WhichOneof("message")
+            if message_type in proto_storage_payload_map:
+                return proto_storage_payload_map[message_type](proto)
+            else:
+                raise ProtobufferException(
+                    f"Unknown proto message case (PB.StoragePayload). messageCase={message_type}; proto raw data={proto}"
+                )
+        elif isinstance(proto, protobuf.StorageEntryWrapper):
+            message_type = proto.WhichOneof("message")
+            if message_type in proto_storage_entry_wrapper_map:
+                return proto_storage_entry_wrapper_map[message_type](proto, self)
+            else:
+                raise ProtobufferException(
+                    f"Unknown proto message case(PB.StorageEntryWrapper). messageCase={message_type}; proto raw data={proto}"
+                )
         elif isinstance(proto, protobuf.NetworkEnvelope):
             message_version = proto.message_version
             message_type = proto.WhichOneof("message")
@@ -289,22 +335,6 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
             else:
                 raise ProtobufferException(
                     f"Unknown proto message case (PB.NetworkEnvelope). messageCase={message_type}; proto raw data={proto}"
-                )
-        elif isinstance(proto, protobuf.StorageEntryWrapper):
-            message_type = proto.WhichOneof("message")
-            if message_type in proto_storage_entry_wrapper_map:
-                return proto_storage_entry_wrapper_map[message_type](proto, self)
-            else:
-                raise ProtobufferException(
-                    f"Unknown proto message case(PB.StorageEntryWrapper). messageCase={message_type}; proto raw data={proto}"
-                )
-        elif isinstance(proto, protobuf.StoragePayload):
-            message_type = proto.WhichOneof("message")
-            if message_type in proto_storage_payload_map:
-                return proto_storage_payload_map[message_type](proto)
-            else:
-                raise ProtobufferException(
-                    f"Unknown proto message case (PB.StoragePayload). messageCase={message_type}; proto raw data={proto}"
                 )
         else:
             raise ProtobufferException(
