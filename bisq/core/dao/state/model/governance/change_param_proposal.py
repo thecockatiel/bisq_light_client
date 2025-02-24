@@ -49,7 +49,7 @@ class ChangeParamProposal(Proposal, ImmutableDaoStateModel):
         return ChangeParamProposal(
             proto.name,
             proto.link,
-            Param.from_proto(proposal_proto.param),
+            Param.from_proto(proposal_proto),
             proposal_proto.param_value,
             proto.version,
             proto.creation_date,

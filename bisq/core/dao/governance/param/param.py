@@ -216,7 +216,7 @@ class Param(Enum):
             assert param is not None, f"param must not be None"
             return param
         except Exception as e:
-            logger.error(f"from_proto: {str(e)}")
+            logger.error(f"from_proto: {e}")
             return Param.UNDEFINED
         
     def __str__(self) -> str:
