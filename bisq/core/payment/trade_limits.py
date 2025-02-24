@@ -28,7 +28,7 @@ class TradeLimits(DaoStateListener):
     def get_max_trade_limit_from_dao_param(self) -> "Coin":
         """
         The default trade limits defined as statics in PaymentMethod are only used until the DAO
-        is fully synchronized. NOTE: TODO: python implementation does not sync DAO yet.
+        is fully synchronized.
 
         See: bisq.core.payment.payload.PaymentMethod
         Returns:
