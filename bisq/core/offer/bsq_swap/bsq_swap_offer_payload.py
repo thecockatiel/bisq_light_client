@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Set, Dict
+from typing import Optional, Set, Dict
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
@@ -7,12 +7,10 @@ from bisq.core.offer.offer_payload_base import OfferPayloadBase
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 import pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.offer.offer_direction import OfferDirection
-    from bisq.common.crypto.pub_key_ring import PubKeyRing
-    from bisq.common.crypto.proof_of_work import ProofOfWork
+from bisq.core.network.p2p.node_address import NodeAddress
+from bisq.core.offer.offer_direction import OfferDirection
+from bisq.common.crypto.pub_key_ring import PubKeyRing
+from bisq.common.crypto.proof_of_work import ProofOfWork
 
 class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequiringPayload):
 
