@@ -861,7 +861,10 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
                 BtcFeeReceiverService,
             )
 
-            GlobalContainer._btc_fee_receiver_service = BtcFeeReceiverService()
+            GlobalContainer._btc_fee_receiver_service = BtcFeeReceiverService(
+                self.dao_state_service,
+                self.burning_man_service
+            )
         return GlobalContainer._btc_fee_receiver_service
 
     @property
