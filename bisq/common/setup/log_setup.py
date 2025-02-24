@@ -75,6 +75,7 @@ stdout_handler = logging.StreamHandler()
 stdout_handler.setFormatter(formatter)
 stdout_handler.setLevel(DEFAULT_LOG_LEVEL)
 bisq_logger.addHandler(stdout_handler)
+bisq_logger.propagate = False
 
 
 def get_logger(name: str) -> logging.Logger:
