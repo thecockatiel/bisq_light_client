@@ -63,7 +63,7 @@ class LimitedRunningTor(TorMode):
         # Start server to receive validation request
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(('127.0.0.1', self.hiddenservice_target_port))
-        # server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # commented out because it was causing problems
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.listen(5)
         server.setblocking(False)
 
@@ -114,6 +114,7 @@ class LimitedRunningTor(TorMode):
                     exception = e
                     await asyncio.sleep(1)
 
+        server.shutdown()
         server.close()
         if not connected:
             msg = "Couldn't validate already running tor proxy and hidden service after retrying 3 times."
