@@ -78,6 +78,12 @@ class ReimbursementProposal(Proposal, IssuanceProposal, ImmutableDaoStateModel):
     # // Getters
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def get_bsq_address(self):
+        return self.bsq_address
+
+    def get_tx_id(self):
+        return self.tx_id
+
     def get_requested_bsq(self) -> Coin:
         return Coin.value_of(self.requested_bsq)
 
