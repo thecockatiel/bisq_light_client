@@ -91,7 +91,7 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
         
         message_type = proto.WhichOneof("message")
         if message_type in proto_map:
-            return proto_map[message_type](proto, self._network_proto_resolver)
+            return proto_map[message_type](proto, self)
         else:
             raise ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). "
                                        f"messageCase={message_type}; proto raw data={str(proto)}")
