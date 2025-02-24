@@ -63,7 +63,7 @@ class LimitedRunningTor(TorMode):
         # Start server to receive validation request
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(('127.0.0.1', self.hiddenservice_target_port))
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # commented out because it was causing problems
         server.listen(5)
         server.setblocking(False)
 
