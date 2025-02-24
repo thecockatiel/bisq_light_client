@@ -4,6 +4,10 @@ from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
+from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_request import GetAccountingBlocksRequest
+from bisq.core.dao.burningman.accounting.node.messages.get_accounting_blocks_response import GetAccountingBlocksResponse
+from bisq.core.dao.burningman.accounting.node.messages.new_accounting_block_broadcast_message import NewAccountingBlockBroadcastMessage
+from bisq.core.dao.governance.blindvote.network.messages.republish_governance_data_request import RepublishGovernanceDataRequest
 from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_payload import TempProposalPayload
 from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_request import GetBlindVoteStateHashesRequest
 from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_response import GetBlindVoteStateHashesResponse
@@ -208,7 +212,7 @@ proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreN
     "new_block_broadcast_message": lambda proto, resolver, message_version: NewBlockBroadcastMessage.from_proto(proto.new_block_broadcast_message, message_version),
     "add_persistable_network_payload_message": lambda proto, resolver, message_version: AddPersistableNetworkPayloadMessage.from_proto(proto.add_persistable_network_payload_message, resolver, message_version),
     "ack_message": lambda proto, resolver, message_version: AckMessage.from_proto(proto.ack_message, message_version),
-    # "republish_governance_data_request": lambda proto, resolver, message_version: RepublishGovernanceDataRequest.from_proto(proto.republish_governance_data_request, message_version),
+    "republish_governance_data_request": lambda proto, resolver, message_version: RepublishGovernanceDataRequest.from_proto(proto.republish_governance_data_request, message_version),
     
     "new_dao_state_hash_message": lambda proto, resolver, message_version: NewDaoStateHashMessage.from_proto(proto.new_dao_state_hash_message, message_version),
     "get_dao_state_hashes_request": lambda proto, resolver, message_version: GetDaoStateHashesRequest.from_proto(proto.get_dao_state_hashes_request, message_version),
@@ -227,9 +231,9 @@ proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreN
     "get_inventory_request": lambda proto, resolver, message_version: GetInventoryRequest.from_proto(proto.get_inventory_request, message_version),
     "get_inventory_response": lambda proto, resolver, message_version: GetInventoryResponse.from_proto(proto.get_inventory_response, message_version),
     
-    # "get_accounting_blocks_request": lambda proto, resolver, message_version: GetAccountingBlocksRequest.from_proto(proto.get_accounting_blocks_request, message_version),
-    # "get_accounting_blocks_response": lambda proto, resolver, message_version: GetAccountingBlocksResponse.from_proto(proto.get_accounting_blocks_response, message_version),
-    # "new_accounting_block_broadcast_message": lambda proto, resolver, message_version: NewAccountingBlockBroadcastMessage.from_proto(proto.new_accounting_block_broadcast_message, message_version),
+    "get_accounting_blocks_request": lambda proto, resolver, message_version: GetAccountingBlocksRequest.from_proto(proto.get_accounting_blocks_request, message_version),
+    "get_accounting_blocks_response": lambda proto, resolver, message_version: GetAccountingBlocksResponse.from_proto(proto.get_accounting_blocks_response, message_version),
+    "new_accounting_block_broadcast_message": lambda proto, resolver, message_version: NewAccountingBlockBroadcastMessage.from_proto(proto.new_accounting_block_broadcast_message, message_version),
 }
 
 proto_storage_entry_wrapper_map: dict[str, Callable[[protobuf.StorageEntryWrapper, "CoreNetworkProtoResolver", int], 'NetworkPayload']] = {
