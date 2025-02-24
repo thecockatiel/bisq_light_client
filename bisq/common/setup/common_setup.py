@@ -65,7 +65,7 @@ class CommonSetup:
                 original_excepthook(exc_type, exc_value, exc_traceback)
                 return
             
-            if exc_type.__name__ in  ["CancelledError", "AsyncioCancelledError"]:
+            if exc_type.__name__ in  ["CancelledError", "AsyncioCancelledError", "BrokenPipeError", "ConnectionResetError"]:
                 return
             
             if isinstance(exc_value, MemoryError):
