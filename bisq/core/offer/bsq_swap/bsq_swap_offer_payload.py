@@ -101,6 +101,9 @@ class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequir
 
     def get_required_capabilities(self):
         return Capabilities([Capability.BSQ_SWAP_OFFER])
+    
+    def get_proof_of_work(self):
+        return self._proof_of_work
 
     def __str__(self):
         return f"BsqSwapOfferPayload{{\n     proofOfWork={self._proof_of_work}\n}} " + super().__str__()
