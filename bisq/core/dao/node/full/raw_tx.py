@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.core.dao.state.model.blockchain.base_tx import BaseTx
 import pb_pb2 as protobuf
+from bisq.core.dao.state.model.blockchain.tx_input import TxInput
+from bisq.core.dao.node.full.raw_tx_output import RawTxOutput
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.tx import Tx
-    from bisq.core.dao.state.model.blockchain.tx_input import TxInput
-    from bisq.core.dao.node.full.raw_tx_output import RawTxOutput
 
 
 class RawTx(BaseTx, NetworkPayload):
