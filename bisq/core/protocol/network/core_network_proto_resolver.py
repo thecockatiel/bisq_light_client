@@ -277,8 +277,9 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
         if proto is None:
             logger.error("CoreNetworkProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
-
-        if isinstance(proto, protobuf.NetworkEnvelope):
+        if isinstance(proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)):
+            return super().from_proto(proto)
+        elif isinstance(proto, protobuf.NetworkEnvelope):
             message_version = proto.message_version
             message_type = proto.WhichOneof("message")
             if message_type in proto_network_envelope_map:
@@ -306,4 +307,6 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
                     f"Unknown proto message case (PB.StoragePayload). messageCase={message_type}; proto raw data={proto}"
                 )
         else:
-            return super().from_proto(proto)
+            raise ProtobufferException(
+                f"Unknown proto message case. messageCase={proto.__class__.__name__}; proto raw data={proto}"
+            )
