@@ -69,7 +69,7 @@ class TempProposalPayload(
     def from_proto(proto: protobuf.TempProposalPayload) -> "TempProposalPayload":
         return TempProposalPayload(
             proposal=Proposal.from_proto(proto.proposal),
-            owner_pub_key_encoded=proto.owner_pub_key_encoded,
+            owner_pub_key_or_its_bytes=proto.owner_pub_key_encoded,
             extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
         )
 
