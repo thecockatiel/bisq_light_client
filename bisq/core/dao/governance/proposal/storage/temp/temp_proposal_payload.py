@@ -75,6 +75,9 @@ class TempProposalPayload(
 
     def get_owner_pub_key(self):
         return self.owner_pub_key
+    
+    def get_extra_data_map(self):
+        return self.extra_data_map
 
     def get_ttl(self):
         return TempProposalPayload.TTL_MS
