@@ -103,6 +103,6 @@ class BlindVote(PersistablePayload, NetworkPayload, ConsensusCritical):
                 self.stake,
                 self.encrypted_merit_list,
                 self.date,
-                tuple(self.extra_data_map.items()),
+                tuple(self.extra_data_map.items()) if self.extra_data_map else None,
             )
         )

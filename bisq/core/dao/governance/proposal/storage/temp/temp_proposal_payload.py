@@ -96,6 +96,6 @@ class TempProposalPayload(
             (
                 self.proposal,
                 self.owner_pub_key_encoded,
-                tuple(self.extra_data_map.items()),
+                tuple(self.extra_data_map.items()) if self.extra_data_map else None,
             )
         )
