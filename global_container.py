@@ -1253,10 +1253,6 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
     ###############################################################################
 
-    _delayed_payout_tx_receiver_service = None
-    _burning_man_service = None
-    _burning_man_presentation_service = None
-
     @property
     def delayed_payout_tx_receiver_service(self):
         if GlobalContainer._delayed_payout_tx_receiver_service is None:
@@ -1278,6 +1274,8 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._burning_man_service = BurningManService(
                 self.dao_state_service,
+                self.cycles_in_dao_state_service,
+                self.proposal_service
             )
         return GlobalContainer._burning_man_service
 
