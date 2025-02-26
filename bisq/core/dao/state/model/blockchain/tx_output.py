@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.dao.state.model.blockchain.base_tx_output import BaseTxOutput
+from bisq.core.dao.state.model.blockchain.pub_key_script import PubKeyScript
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
@@ -17,7 +18,7 @@ class TxOutput(BaseTxOutput, PersistablePayload, ImmutableDaoStateModel):
         index: int,
         value: int,
         tx_id: str,
-        pub_key_script: Optional[str],
+        pub_key_script: Optional[PubKeyScript],
         address: Optional[str],
         op_return_data: Optional[bytes],
         block_height: int,
@@ -74,7 +75,7 @@ class TxOutput(BaseTxOutput, PersistablePayload, ImmutableDaoStateModel):
             proto.index,
             proto.value,
             proto.tx_id,
-            proto.pub_key_script if proto.HasField("pub_key_script") else None,
+            PubKeyScript.from_proto(proto.pub_key_script) if proto.HasField("pub_key_script") else None,
             proto.address if proto.address else None,
             proto.op_return_data if proto.op_return_data else None,
             proto.block_height,

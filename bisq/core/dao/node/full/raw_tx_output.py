@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.dao.state.model.blockchain.base_tx_output import BaseTxOutput
+from bisq.core.dao.state.model.blockchain.pub_key_script import PubKeyScript
 import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ class RawTxOutput(BaseTxOutput, NetworkPayload):
         index: int,
         value: int,
         tx_id: str,
-        pub_key_script: Optional[str],
+        pub_key_script: Optional[PubKeyScript],
         address: Optional[str],
         op_return_data: Optional[bytes],
         block_height: int,
@@ -57,7 +58,7 @@ class RawTxOutput(BaseTxOutput, NetworkPayload):
             proto.index,
             proto.value,
             proto.tx_id,
-            proto.pub_key_script if proto.HasField("pub_key_script") else None,
+            PubKeyScript.from_proto(proto.pub_key_script) if proto.HasField("pub_key_script") else None,
             proto.address if proto.address else None,
             proto.op_return_data if proto.op_return_data else None,
             proto.block_height,
