@@ -47,9 +47,13 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         self.owner_pub_key_bytes = owner_pub_key_bytes
         self.signature_as_base64 = signature_as_base64
         self.extra_data_map = extra_data_map
+        self._owner_pub_key = None
 
-        if self.owner_pub_key_bytes:
-            self.owner_pub_key = Sig.get_public_key_from_bytes(self.owner_pub_key_bytes)
+    @property
+    def owner_pub_key(self) -> "DSA.DsaKey":
+        if self._owner_pub_key is None:
+            self._owner_pub_key = Sig.get_public_key_from_bytes(self.owner_pub_key_bytes)
+        return self._owner_pub_key
 
     def to_proto_message(self) -> "protobuf.StoragePayload":
         assert (
@@ -85,7 +89,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
             is_update_info=proto.is_update_info,
             is_pre_release_info=proto.is_pre_release_info,
             version=proto.version,
-            owner_pub_key_bytes=bytes(proto.owner_pub_key_bytes),
+            owner_pub_key_bytes=proto.owner_pub_key_bytes,
             signature_as_base64=proto.signature_as_base64,
             extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
         )
@@ -100,7 +104,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         self, signature_as_base64: str, owner_pub_key: "DSA.DsaKey"
     ) -> None:
         self.signature_as_base64 = signature_as_base64
-        self.owner_pub_key = owner_pub_key
+        self._owner_pub_key = owner_pub_key
         self.owner_pub_key_bytes = Sig.get_public_key_bytes(owner_pub_key)
 
     def is_new_version(self, preferences: "Preferences") -> bool:

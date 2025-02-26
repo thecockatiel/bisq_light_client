@@ -7,6 +7,7 @@ from bisq.common.protocol.network.get_data_response_priority import GetDataRespo
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.common.util.utilities import bytes_as_hex_string
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.filter.payment_account_filter import PaymentAccountFilter
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
@@ -135,12 +136,32 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         # the ExcludeForHash annotated fields.
         self.uid = uid
         
-        if self.owner_pub_key_bytes is not None:
-            self.owner_pub_key = Sig.get_public_key_from_bytes(self.owner_pub_key_bytes)
-        elif self.owner_pub_key is not None:
-            self.owner_pub_key_bytes = Sig.get_public_key_bytes(self.owner_pub_key)
-        else:
-            raise ValueError("either owner_pub_key or owner_pub_key_bytes must be set")
+        if owner_pub_key_bytes is None and owner_pub_key is None:
+            raise IllegalArgumentException("either owner_pub_key or owner_pub_key_bytes must be set")
+        self._owner_pub_key = owner_pub_key
+        self._owner_pub_key_bytes = owner_pub_key_bytes
+
+    @property
+    def owner_pub_key(self) -> "DSA.DsaKey":
+        if self._owner_pub_key is None:
+            self._owner_pub_key = Sig.get_public_key_from_bytes(self._owner_pub_key_bytes)
+        return self._owner_pub_key
+    
+    @owner_pub_key.setter
+    def owner_pub_key(self, owner_pub_key: "DSA.DsaKey") -> None:
+        self._owner_pub_key = owner_pub_key
+        self._owner_pub_key_bytes = None
+
+    @property
+    def owner_pub_key_bytes(self) -> bytes:
+        if self._owner_pub_key_bytes is None:
+            self._owner_pub_key_bytes = Sig.get_public_key_bytes(self._owner_pub_key)
+        return self._owner_pub_key_bytes
+    
+    @owner_pub_key_bytes.setter
+    def owner_pub_key_bytes(self, owner_pub_key_bytes: bytes) -> None:
+        self._owner_pub_key_bytes = owner_pub_key_bytes
+        self._owner_pub_key = None
 
     # After we have created the signature from the filter data we clone it and apply the signature
     @staticmethod

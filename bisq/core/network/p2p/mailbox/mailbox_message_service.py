@@ -257,9 +257,9 @@ class MailboxMessageService:
                     self.add_mailbox_data(
                         MailboxStoragePayload(
                             prefixed_sealed_message,
-                            self.key_ring.signature_key_pair.public_key,
-                            receiver_storage_public_key,
-                            ttl
+                            ttl,
+                            sender_pub_key_for_add_operation=self.key_ring.signature_key_pair.public_key,
+                            owner_pub_key=receiver_storage_public_key,
                         ),
                         receiver_storage_public_key,
                         send_mailbox_message_listener

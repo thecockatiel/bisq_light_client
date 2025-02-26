@@ -1089,10 +1089,10 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             stored_entry = self.map.get(hash_of_payload)
             updated_entry = ProtectedStorageEntry(
                 protected_storage_payload=stored_entry.protected_storage_payload,
-                owner_pub_key=stored_entry.owner_pub_key,
                 sequence_number=refresh_ttl_message.sequence_number,
                 signature=refresh_ttl_message.signature,
                 clock=self.clock,
+                owner_pub_key_bytes=stored_entry.owner_pub_key_bytes,
             )
 
             # If we have seen a more recent operation for this payload, we ignore the current one
@@ -1221,10 +1221,10 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         return ProtectedStorageEntry(
             protected_storage_payload=protected_storage_payload,
-            owner_pub_key=owner_storage_pub_key.public_key,
             sequence_number=sequence_number,
             signature=signature,
             clock=self.clock,
+            owner_pub_key=owner_storage_pub_key.public_key,
         )
 
     def get_refresh_ttl_message(
@@ -1281,11 +1281,11 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         return ProtectedMailboxStorageEntry(
             mailbox_storage_payload=expirable_mailbox_storage_payload,
-            owner_pub_key=storage_signature_pub_key.public_key,
             sequence_number=sequence_number,
             signature=signature,
-            receivers_pub_key=receivers_public_key,
             clock=self.clock,
+            owner_pub_key=storage_signature_pub_key.public_key,
+            receivers_pub_key=receivers_public_key,
         )
 
     def add_hash_map_changed_listener(

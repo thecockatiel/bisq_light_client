@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional 
   
 from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 import pb_pb2 as protobuf
 from bisq.common.crypto.sig import Sig, DSA
 
@@ -14,7 +15,7 @@ class SealedAndSigned(NetworkPayload):
         super().__init__()
         
         if sig_public_key is None and sig_public_key_bytes is None:
-            raise ValueError("Either sig_public_key or sig_public_key_bytes must be provided.")
+            raise IllegalArgumentException("Either sig_public_key or sig_public_key_bytes must be provided.")
 
         self._sig_public_key = sig_public_key
         self._sig_public_key_bytes = sig_public_key_bytes
@@ -40,7 +41,7 @@ class SealedAndSigned(NetworkPayload):
             encrypted_secret_key=proto.encrypted_secret_key,
             encrypted_payload_with_hmac=proto.encrypted_payload_with_hmac,
             signature=proto.signature,
-            sig_public_key=Sig.get_public_key_from_bytes(proto.sig_public_key_bytes)
+            sig_public_key_bytes=proto.sig_public_key_bytes
         )
 
     def to_proto_message(self) -> protobuf.SealedAndSigned:
