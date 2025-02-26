@@ -7,18 +7,27 @@ from bisq.core.trade.protocol.trade_message import TradeMessage
 
 
 class BsqSwapRequest(TradeMessage, DirectMessage, ABC):
-    def __init__(self, 
-                 message_version: int,
-                 trade_id: str,
-                 uid: str,
-                 sender_node_address: NodeAddress,
-                 taker_pub_key_ring: PubKeyRing,
-                 trade_amount: int,
-                 tx_fee_per_vbyte: int,
-                 maker_fee: int,
-                 taker_fee: int,
-                 trade_date: int):
-        super().__init__(message_version=message_version, trade_id=trade_id, uid=uid)
+    def __init__(
+        self,
+        trade_id: str,
+        sender_node_address: "NodeAddress",
+        taker_pub_key_ring: "PubKeyRing",
+        trade_amount: int,
+        tx_fee_per_vbyte: int,
+        maker_fee: int,
+        taker_fee: int,
+        trade_date: int,
+        uid: str = None,
+        message_version: int = None,
+    ):
+        super_kwargs = {
+            "message_version": message_version,
+            "trade_id": trade_id,
+            "uid": uid,
+        }
+        # filter out the none values from the super to allow default values to be used
+        super_kwargs = {k: v for k, v in super_kwargs.items() if v is not None}
+        super().__init__(**super_kwargs)
         self.sender_node_address = sender_node_address
         self.taker_pub_key_ring = taker_pub_key_ring
         self.trade_amount = trade_amount
