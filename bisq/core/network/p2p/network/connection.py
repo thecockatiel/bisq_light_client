@@ -298,7 +298,15 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             else:
                 envelopes_to_process.add(network_envelope)
 
-        list(map(lambda envelope: UserThread.execute(lambda: list(map(lambda listener: listener.on_message(envelope, connection), self.message_listeners))), envelopes_to_process))
+        for envelope in envelopes_to_process:
+            UserThread.execute(
+                lambda: list(
+                    map(
+                        lambda listener: listener.on_message(envelope, connection),
+                        self.message_listeners,
+                    )
+                )
+            )
 
     ####################################
 
