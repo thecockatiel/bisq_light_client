@@ -1,24 +1,34 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.navigation_path import NavigationPath
-from bisq.common.protocol.persistable.persistence_proto_resolver import PersistenceProtoResolver
+from bisq.common.protocol.persistable.persistence_proto_resolver import (
+    PersistenceProtoResolver,
+)
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness_store import SignedWitnessStore
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.btc.model.address_entry_list import AddressEntryList
-from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import BurningManAccountingStore
+from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store import (
+    BurningManAccountingStore,
+)
 from bisq.core.dao.governance.blindvote.my_blind_vote_list import MyBlindVoteList
 from bisq.core.dao.governance.blindvote.storage.blind_vote_store import BlindVoteStore
 from bisq.core.dao.governance.bond.reputation.my_reputation_list import MyReputationList
 from bisq.core.dao.governance.myvote.my_vote_list import MyVoteList
 from bisq.core.dao.governance.proofofburn.my_proof_of_burn_list import MyProofOfBurnList
 from bisq.core.dao.governance.proposal.my_proposal_list import MyProposalList
-from bisq.core.dao.governance.proposal.storage.appendonly.proposal_store import ProposalStore
-from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_store import TempProposalStore
+from bisq.core.dao.governance.proposal.storage.appendonly.proposal_store import (
+    ProposalStore,
+)
+from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_store import (
+    TempProposalStore,
+)
 from bisq.core.dao.state.model.governance.ballot_list import BallotList
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
 from bisq.core.dao.state.storage.dao_state_store import DaoStateStore
-from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import UnconfirmedBsqChangeOutputList
+from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list import (
+    UnconfirmedBsqChangeOutputList,
+)
 from bisq.core.network.p2p.mailbox.ignored_mailbox_map import IgnoredMailboxMap
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
@@ -27,8 +37,12 @@ from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
 from bisq.core.payment.payment_account_list import PaymentAccountList
 from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.core.support.dispute.arbitration.arbitration_dispute_list import ArbitrationDisputeList
-from bisq.core.support.dispute.mediation.mediation_dispute_list import MediationDisputeList
+from bisq.core.support.dispute.arbitration.arbitration_dispute_list import (
+    ArbitrationDisputeList,
+)
+from bisq.core.support.dispute.mediation.mediation_dispute_list import (
+    MediationDisputeList,
+)
 from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
 from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.trade.statistics.trade_statistics_2_store import TradeStatistics2Store
@@ -39,7 +53,9 @@ import pb_pb2 as protobuf
 from utils.di import DependencyProvider
 
 if TYPE_CHECKING:
-    from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
+    from bisq.common.protocol.persistable.persistable_envelope import (
+        PersistableEnvelope,
+    )
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from utils.clock import Clock
@@ -82,23 +98,35 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
 }
 # fmt: on
 
+
 class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
-    def __init__(self, clock: "Clock", btc_wallet_service_provider: DependencyProvider["BtcWalletService"], network_proto_resolver: "NetworkProtoResolver"):
+    def __init__(
+        self,
+        clock: "Clock",
+        btc_wallet_service_provider: DependencyProvider["BtcWalletService"],
+        network_proto_resolver: "NetworkProtoResolver",
+    ):
         super().__init__(clock)
         self._btc_wallet_service_provider = btc_wallet_service_provider
         self._network_proto_resolver = network_proto_resolver
-        
+
     def from_proto(self, proto: protobuf.PersistableEnvelope) -> "PersistableEnvelope":
         if proto is None:
-            logger.error("PersistableEnvelope.from_proto: PB.PersistableEnvelope is null")
+            logger.error(
+                "PersistableEnvelope.from_proto: PB.PersistableEnvelope is null"
+            )
             raise ProtobufferException("PB.PersistableEnvelope is null")
-        
-        if isinstance(proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)):
+
+        if isinstance(
+            proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)
+        ):
             return super().from_proto(proto)
-        
+
         message_type = proto.WhichOneof("message")
         if message_type in proto_map:
             return proto_map[message_type](proto, self)
         else:
-            raise ProtobufferException("Unknown proto message case(PB.PersistableEnvelope). "
-                                       f"messageCase={message_type}; proto raw data={str(proto)}")
+            raise ProtobufferException(
+                "Unknown proto message case(PB.PersistableEnvelope). "
+                f"messageCase={message_type}; proto raw data={str(proto)}"
+            )
