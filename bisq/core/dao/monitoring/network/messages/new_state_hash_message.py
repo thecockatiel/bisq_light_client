@@ -31,3 +31,13 @@ class NewStateHashMessage(
             f"NewStateHashMessage{{\n     stateHash={self.state_hash}\n}} "
             + super().__str__()
         )
+
+    def __eq__(self, value):
+        return (
+            isinstance(value, NewStateHashMessage)
+            and value.state_hash == self.state_hash
+            and value.message_version == self.message_version
+        )
+
+    def __hash__(self):
+        return hash(self.state_hash, self.message_version)
