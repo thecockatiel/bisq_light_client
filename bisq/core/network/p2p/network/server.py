@@ -1,4 +1,4 @@
-from socket import socket as Socket, error as SocketError
+import socket
 import threading
 from typing import TYPE_CHECKING
 from collections.abc import Callable
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class Server(Callable[[], None]):
     def __init__(
         self,
-        server_socket: Socket,
+        server_socket: socket.socket,
         message_listener: "MessageListener",
         connection_listener: "ConnectionListener",
         network_proto_resolver: "NetworkProtoResolver",
@@ -37,6 +37,7 @@ class Server(Callable[[], None]):
         self.local_port = server_socket.getsockname()[1]
         self.connections: ThreadSafeSet["Connection"] = ThreadSafeSet()
         self.server_thread = threading.Thread(target=self)
+        self._interrupted = threading.Event()
 
     def start(self):
         self.server_thread.name = f"Server-{self.local_port}"
@@ -74,7 +75,7 @@ class Server(Callable[[], None]):
                     else:
                         connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
 
-        except SocketError as e:
+        except socket.error as e:
             if self.is_server_active():
                 logger.exception(e)
         except Exception as t:
@@ -84,14 +85,15 @@ class Server(Callable[[], None]):
     def shut_down(self):
         logger.info("Server shutdown started")
         if self.is_server_active():
-            self.server_thread.join(timeout=1.0)
+            self._interrupted.set()
             for connection in self.connections:
                 connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
 
             try:
                 if not self.server_socket._closed:
+                    self.server_socket.shutdown(socket.SHUT_RDWR)
                     self.server_socket.close()
-            except SocketError as e:
+            except socket.error as e:
                 logger.debug(f"SocketException at shutdown might be expected {str(e)}")
             except Exception as e:
                 logger.debug(f"Exception at shutdown. {str(e)}")
@@ -101,4 +103,4 @@ class Server(Callable[[], None]):
             logger.warning("stopped already called at shutdown")
 
     def is_server_active(self) -> bool:
-        return self.server_thread.is_alive() and self.server_socket and not self.server_socket._closed
+        return self.server_thread.is_alive() and not self._interrupted.is_set() and self.server_socket and not self.server_socket._closed 
