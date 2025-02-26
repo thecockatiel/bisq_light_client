@@ -15,8 +15,8 @@ class CoreNetworkCapabilities:
     def set_supported_capabilities(config: "Config"):
         Capabilities.app.add_all(
             [
-                # Capability.TRADE_STATISTICS,
-                # Capability.TRADE_STATISTICS_2,
+                Capability.TRADE_STATISTICS,
+                Capability.TRADE_STATISTICS_2,
                 Capability.ACCOUNT_AGE_WITNESS,
                 Capability.ACK_MSG,
                 Capability.PROPOSAL,
@@ -26,9 +26,9 @@ class CoreNetworkCapabilities:
                 Capability.MEDIATION,
                 Capability.SIGNED_ACCOUNT_AGE_WITNESS,
                 Capability.REFUND_AGENT,
-                # Capability.TRADE_STATISTICS_HASH_UPDATE,
+                Capability.TRADE_STATISTICS_HASH_UPDATE,
                 Capability.NO_ADDRESS_PRE_FIX,
-                # Capability.TRADE_STATISTICS_3,
+                Capability.TRADE_STATISTICS_3,
                 Capability.BSQ_SWAP_OFFER
             ]
         )
