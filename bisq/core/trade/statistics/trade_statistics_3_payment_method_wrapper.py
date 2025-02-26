@@ -66,3 +66,4 @@ class TradeStatistics3PaymentMethodWrapper(IntEnum):
     TRANSFERWISE_USD = auto()
     ACH_TRANSFER = auto()
     DOMESTIC_WIRE_TRANSFER = auto()
+    SBP = auto()
