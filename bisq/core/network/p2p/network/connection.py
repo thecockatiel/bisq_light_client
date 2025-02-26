@@ -538,15 +538,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                                  f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
                     time.sleep(20)
 
-                try:
-                    # NOTE: this is needed to not report violations for things we do not support like DAO stuff
-                    network_envelope = self.network_proto_resolver.from_proto(proto)
-                except ProtobufferException as e:
-                    if "Unknown proto message case" in str(e):
-                        logger.debug(f"Unsupported proto message. This is probably expected. original error={e}")
-                        return
-                    else:
-                        raise
+                network_envelope = self.network_proto_resolver.from_proto(proto)
                 
                 self.last_read_timestamp = now
                 logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
