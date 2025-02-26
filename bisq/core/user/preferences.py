@@ -827,6 +827,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def is_deny_api_taker(self):
         return self.pref_payload.deny_api_taker
     
+    def get_referral_id(self):
+        return self.pref_payload.referral_id
+    
     def get_phone_key_and_token(self):
         return self.pref_payload.phone_key_and_token
     
