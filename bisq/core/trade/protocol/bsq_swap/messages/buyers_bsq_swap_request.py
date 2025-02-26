@@ -19,7 +19,7 @@ class BuyersBsqSwapRequest(BsqSwapRequest, TxInputsMessage):
         maker_fee: int,
         taker_fee: int,
         trade_date: int,
-        bsq_inputs: list["RawTransactionInput"],
+        bsq_inputs: tuple["RawTransactionInput"],
         bsq_change: int,
         buyers_btc_payout_address: str,
         buyers_bsq_change_address: str,
@@ -54,7 +54,7 @@ class BuyersBsqSwapRequest(BsqSwapRequest, TxInputsMessage):
             maker_fee=self.maker_fee,
             taker_fee=self.taker_fee,
             trade_date=self.trade_date,
-            bsq_inputs=[input.to_proto_message() for input in self.bsq_inputs],
+            bsq_inputs=tuple(input.to_proto_message() for input in self.bsq_inputs),
             bsq_change=self.bsq_change,
             buyers_btc_payout_address=self.buyers_btc_payout_address,
             buyers_bsq_change_address=self.buyers_bsq_change_address,
@@ -78,10 +78,31 @@ class BuyersBsqSwapRequest(BsqSwapRequest, TxInputsMessage):
             maker_fee=proto.maker_fee,
             taker_fee=proto.taker_fee,
             trade_date=proto.trade_date,
-            bsq_inputs=[
+            bsq_inputs=(
                 RawTransactionInput.from_proto(input) for input in proto.bsq_inputs
-            ],
+            ),
             bsq_change=proto.bsq_change,
             buyers_btc_payout_address=proto.buyers_btc_payout_address,
             buyers_bsq_change_address=proto.buyers_bsq_change_address,
+        )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, BuyersBsqSwapRequest)
+            and super().__eq__(other)
+            and self.bsq_inputs == other.bsq_inputs
+            and self.bsq_change == other.bsq_change
+            and self.buyers_btc_payout_address == other.buyers_btc_payout_address
+            and self.buyers_bsq_change_address == other.buyers_bsq_change_address
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                super().__hash__(),
+                self.bsq_inputs,
+                self.bsq_change,
+                self.buyers_btc_payout_address,
+                self.buyers_bsq_change_address,
+            )
         )

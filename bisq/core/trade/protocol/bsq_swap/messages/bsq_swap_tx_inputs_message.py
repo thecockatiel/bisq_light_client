@@ -10,7 +10,7 @@ class BsqSwapTxInputsMessage(TradeMessage, TxInputsMessage):
         self,
         trade_id: str,
         sender_node_address: "NodeAddress",
-        bsq_inputs: list["RawTransactionInput"],
+        bsq_inputs: tuple["RawTransactionInput"],
         bsq_change: int,
         buyers_btc_payout_address: str,
         buyers_bsq_change_address: str,
@@ -54,10 +54,33 @@ class BsqSwapTxInputsMessage(TradeMessage, TxInputsMessage):
             trade_id=proto.trade_id,
             uid=proto.uid,
             sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
-            bsq_inputs=[
+            bsq_inputs=tuple(
                 RawTransactionInput.from_proto(input) for input in proto.bsq_inputs
-            ],
+            ),
             bsq_change=proto.bsq_change,
             buyers_btc_payout_address=proto.buyers_btc_payout_address,
             buyers_bsq_change_address=proto.buyers_bsq_change_address,
+        )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, BsqSwapTxInputsMessage)
+            and super().__eq__(other)
+            and self.sender_node_address == other.sender_node_address
+            and self.bsq_inputs == other.bsq_inputs
+            and self.bsq_change == other.bsq_change
+            and self.buyers_btc_payout_address == other.buyers_btc_payout_address
+            and self.buyers_bsq_change_address == other.buyers_bsq_change_address
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                super().__hash__(),
+                self.sender_node_address,
+                self.bsq_inputs,
+                self.bsq_change,
+                self.buyers_btc_payout_address,
+                self.buyers_bsq_change_address,
+            )
         )

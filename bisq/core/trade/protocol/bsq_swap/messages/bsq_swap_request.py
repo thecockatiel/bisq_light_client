@@ -35,3 +35,30 @@ class BsqSwapRequest(TradeMessage, DirectMessage, ABC):
         self.maker_fee = maker_fee
         self.taker_fee = taker_fee
         self.trade_date = trade_date
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, BsqSwapRequest)
+            and super().__eq__(other)
+            and self.sender_node_address == other.sender_node_address
+            and self.taker_pub_key_ring == other.taker_pub_key_ring
+            and self.trade_amount == other.trade_amount
+            and self.tx_fee_per_vbyte == other.tx_fee_per_vbyte
+            and self.maker_fee == other.maker_fee
+            and self.taker_fee == other.taker_fee
+            and self.trade_date == other.trade_date
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                super().__hash__(),
+                self.sender_node_address,
+                self.taker_pub_key_ring,
+                self.trade_amount,
+                self.tx_fee_per_vbyte,
+                self.maker_fee,
+                self.taker_fee,
+                self.trade_date,
+            )
+        )

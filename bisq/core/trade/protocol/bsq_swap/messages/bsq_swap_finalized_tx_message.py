@@ -48,3 +48,14 @@ class BsqSwapFinalizedTxMessage(TradeMessage):
             sender_node_address=NodeAddress.from_proto(proto.sender_node_address),
             tx=proto.tx,
         )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, BsqSwapFinalizedTxMessage)
+            and super().__eq__(other)
+            and self.sender_node_address == other.sender_node_address
+            and self.tx == other.tx
+        )
+
+    def __hash__(self):
+        return hash((super().__hash__(), self.sender_node_address, self.tx))

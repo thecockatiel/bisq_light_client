@@ -11,7 +11,7 @@ class BsqSwapFinalizeTxRequest(TradeMessage, DirectMessage):
         trade_id: str,
         sender_node_address: "NodeAddress",
         tx: bytes,
-        btc_inputs: list["RawTransactionInput"],
+        btc_inputs: tuple["RawTransactionInput"],
         btc_change: int,
         bsq_payout_address: str,
         btc_change_address: str,
@@ -39,7 +39,7 @@ class BsqSwapFinalizeTxRequest(TradeMessage, DirectMessage):
             trade_id=self.trade_id,
             sender_node_address=self.sender_node_address.to_proto_message(),
             tx=self.tx,
-            btc_inputs=[input.to_proto_message() for input in self.btc_inputs],
+            btc_inputs=tuple(input.to_proto_message() for input in self.btc_inputs),
             btc_change=self.btc_change,
             bsq_payout_address=self.bsq_payout_address,
             btc_change_address=self.btc_change_address,
@@ -75,4 +75,29 @@ class BsqSwapFinalizeTxRequest(TradeMessage, DirectMessage):
             f"    bsq_payout_address='{self.bsq_payout_address}',\n"
             f"    btc_change_address='{self.btc_change_address}'\n"
             f"}} {super().__str__()}"
+        )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, BsqSwapFinalizeTxRequest)
+            and super().__eq__(other)
+            and self.sender_node_address == other.sender_node_address
+            and self.tx == other.tx
+            and self.btc_inputs == other.btc_inputs
+            and self.btc_change == other.btc_change
+            and self.bsq_payout_address == other.bsq_payout_address
+            and self.btc_change_address == other.btc_change_address
+        )
+
+    def __hash__(self):
+        return hash(
+            (
+                super().__hash__(),
+                self.sender_node_address,
+                self.tx,
+                self.btc_inputs,
+                self.btc_change,
+                self.bsq_payout_address,
+                self.btc_change_address,
+            )
         )
