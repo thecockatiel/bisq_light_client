@@ -60,27 +60,13 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
         was_truncated = proto.was_truncated
         logger.info(f"\n\n<< Received a GetDataResponse with {readable_file_size(proto.ByteSize())} {' (still data missing)' if was_truncated else ' (all data received)'}\n")
         
-        data_set = set()
-        for entry in proto.data_set:
-            try:
-                data_set.add(resolver.from_proto(entry))
-            except ProtobufferException as e:
-                if "Unknown proto message case" in str(e):
-                    logger.debug(f"Unsupported proto message in GetDataResponse.data_set proto. This is probably expected. proto={type(proto).__name__}")
-                    continue
-                else:
-                    raise
+        data_set = frozenset(
+            resolver.from_proto(entry) for entry in proto.data_set
+        )
         
-        persistable_network_payload_set = set()
-        for e in proto.persistable_network_payload_items:
-            try:
-                persistable_network_payload_set.add(resolver.from_proto(e))
-            except ProtobufferException as e:
-                if "Unknown proto message case" in str(e):
-                    logger.debug(f"Unsupported proto message in GetDataResponse.persistable_network_payload_items proto. This is probably expected. proto={type(proto).__name__}")
-                    continue
-                else:
-                    raise
+        persistable_network_payload_set = frozenset(
+            resolver.from_proto(payload) for payload in proto.persistable_network_payload_items
+        )
 
         return GetDataResponse(
             message_version=message_version,
