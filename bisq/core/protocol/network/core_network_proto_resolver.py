@@ -170,6 +170,21 @@ from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message imp
     TraderSignedWitnessMessage,
 )
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_finalize_tx_request import (
+    BsqSwapFinalizeTxRequest,
+)
+from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_finalized_tx_message import (
+    BsqSwapFinalizedTxMessage,
+)
+from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_tx_inputs_message import (
+    BsqSwapTxInputsMessage,
+)
+from bisq.core.trade.protocol.bsq_swap.messages.buyers_bsq_swap_request import (
+    BuyersBsqSwapRequest,
+)
+from bisq.core.trade.protocol.bsq_swap.messages.sellers_bsq_swap_request import (
+    SellersBsqSwapRequest,
+)
 from utils.clock import Clock
 import pb_pb2 as protobuf
 
@@ -212,11 +227,11 @@ proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreN
     "deposit_tx_and_delayed_payout_tx_message": lambda proto, resolver, message_version: DepositTxAndDelayedPayoutTxMessage.from_proto(proto.deposit_tx_and_delayed_payout_tx_message, resolver, message_version),
     "share_buyer_payment_account_message": lambda proto, resolver, message_version: ShareBuyerPaymentAccountMessage.from_proto(proto.share_buyer_payment_account_message, resolver, message_version),
     
-    # "sellers_bsq_swap_request": lambda proto, resolver, message_version: SellersBsqSwapRequest.from_proto(proto.sellers_bsq_swap_request, message_version),
-    # "buyers_bsq_swap_request": lambda proto, resolver, message_version: BuyersBsqSwapRequest.from_proto(proto.buyers_bsq_swap_request, message_version),
-    # "bsq_swap_tx_inputs_message": lambda proto, resolver, message_version: BsqSwapTxInputsMessage.from_proto(proto.bsq_swap_tx_inputs_message, message_version),
-    # "bsq_swap_finalize_tx_request": lambda proto, resolver, message_version: BsqSwapFinalizeTxRequest.from_proto(proto.bsq_swap_finalize_tx_request, message_version),
-    # "bsq_swap_finalized_tx_message": lambda proto, resolver, message_version: BsqSwapFinalizedTxMessage.from_proto(proto.bsq_swap_finalized_tx_message, message_version),
+    "sellers_bsq_swap_request": lambda proto, resolver, message_version: SellersBsqSwapRequest.from_proto(proto.sellers_bsq_swap_request, message_version),
+    "buyers_bsq_swap_request": lambda proto, resolver, message_version: BuyersBsqSwapRequest.from_proto(proto.buyers_bsq_swap_request, message_version),
+    "bsq_swap_tx_inputs_message": lambda proto, resolver, message_version: BsqSwapTxInputsMessage.from_proto(proto.bsq_swap_tx_inputs_message, message_version),
+    "bsq_swap_finalize_tx_request": lambda proto, resolver, message_version: BsqSwapFinalizeTxRequest.from_proto(proto.bsq_swap_finalize_tx_request, message_version),
+    "bsq_swap_finalized_tx_message": lambda proto, resolver, message_version: BsqSwapFinalizedTxMessage.from_proto(proto.bsq_swap_finalized_tx_message, message_version),
     
     "counter_currency_transfer_started_message": lambda proto, resolver, message_version: CounterCurrencyTransferStartedMessage.from_proto(proto.counter_currency_transfer_started_message, message_version),
     
