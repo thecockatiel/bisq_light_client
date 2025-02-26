@@ -119,7 +119,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 for listener in self.listeners:
                     listener.on_awake_from_standby()
 
-        self.clock_watcher_listener = Listener(self)
+        self.clock_watcher_listener = Listener()
         self.clock_watcher.add_listener(self.clock_watcher_listener)
 
         self.print_statistics_timer = UserThread.run_periodically(
