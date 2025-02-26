@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from bisq.common.protocol.network.network_payload import NetworkPayload
+from bisq.common.version import Version
 from bisq.core.dao.state.model.blockchain.base_tx import BaseTx
 import pb_pb2 as protobuf
 from bisq.core.dao.state.model.blockchain.tx_input import TxInput
@@ -25,8 +26,11 @@ class RawTx(BaseTx, NetworkPayload):
         time: int,
         tx_inputs: tuple["TxInput"],
         raw_tx_outputs: tuple["RawTxOutput"],
+        tx_version=None,
     ):
-        super().__init__(id, block_height, block_hash, time, tx_inputs)
+        if tx_version is None:
+            tx_version = Version.BSQ_TX_VERSION
+        super().__init__(tx_version, id, block_height, block_hash, time, tx_inputs)
         self.raw_tx_outputs = raw_tx_outputs
 
     # Used when a full node sends a block over the P2P network
@@ -42,6 +46,7 @@ class RawTx(BaseTx, NetworkPayload):
             time=tx.time,
             tx_inputs=tx.tx_inputs,
             raw_tx_outputs=raw_tx_outputs,
+            tx_version=tx.tx_version,
         )
 
     def to_proto_message(self):
