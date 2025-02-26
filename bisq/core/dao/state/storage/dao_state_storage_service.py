@@ -144,6 +144,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
                     )
                 self._blocks.clear()
                 self._blocks.extend(block_list)
+            current_thread().name = "Read-BsqBlocksStore-idle"
             UserThread.execute(complete_handler)
 
         self._executor_service.submit(task)
