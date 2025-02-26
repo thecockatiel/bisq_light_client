@@ -4,9 +4,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_request import BsqSwapRequest
 from bisq.core.trade.protocol.bsq_swap.messages.tx_inputs_message import TxInputsMessage
 import pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.btc.raw_transaction_input import RawTransactionInput
+from bisq.core.btc.raw_transaction_input import RawTransactionInput
 
 
 class BuyersBsqSwapRequest(BsqSwapRequest, TxInputsMessage):
