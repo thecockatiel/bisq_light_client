@@ -5,6 +5,7 @@ from datetime import timedelta
 from typing import Optional, TYPE_CHECKING
 
 from bisq.common.capability import Capability
+from bisq.common.clock_watcher_listener import ClockWatcherListener
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.timer import Timer
@@ -63,23 +64,6 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         def on_awake_from_standby(self):
             pass
 
-    class ClockWatcherListener:
-        def __init__(self, manager: "PeerManager"):
-            self.manager = manager
-
-        def on_second_tick(self):
-            pass
-
-        def on_minute_tick(self):
-            pass
-
-        def on_awake_from_standby(self, missed_ms):
-            # We got probably stopped set to true when we got a longer interruption (e.g. lost all connections),
-            # now we get awake again, so set stopped to false.
-            self.manager.stopped = False
-            for listener in self.manager.listeners:
-                listener.on_awake_from_standby()
-
     def __init__(
         self,
         network_node: "NetworkNode",
@@ -121,7 +105,21 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         )
         self.network_node.add_connection_listener(self)
         # we check if app was idle for more then 5 sec.
-        self.clock_watcher_listener = PeerManager.ClockWatcherListener(self)
+        class Listener(ClockWatcherListener):
+            def on_second_tick(self_):
+                pass
+
+            def on_minute_tick(self_):
+                pass
+
+            def on_awake_from_standby(self_, missed_ms):
+                # We got probably stopped set to true when we got a longer interruption (e.g. lost all connections),
+                # now we get awake again, so set stopped to false.
+                self.stopped = False
+                for listener in self.listeners:
+                    listener.on_awake_from_standby()
+
+        self.clock_watcher_listener = Listener(self)
         self.clock_watcher.add_listener(self.clock_watcher_listener)
 
         self.print_statistics_timer = UserThread.run_periodically(
