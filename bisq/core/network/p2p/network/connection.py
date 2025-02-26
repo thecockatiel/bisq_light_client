@@ -1,4 +1,5 @@
 import concurrent.futures
+from datetime import timedelta
 from io import BufferedReader
 import socket as Socket
 import threading
@@ -152,7 +153,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             elapsed = now - self.last_send_timestamp
             if elapsed < self.get_send_msg_throttle_trigger():
                 logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
-                time.sleep(self.get_send_msg_throttle_sleep())
+                time.sleep(self.get_send_msg_throttle_sleep()/1000)
             self.last_send_timestamp = now
             if not self.stopped.get():
                 self.proto_output_stream.write_envelope(network_envelope)
@@ -330,15 +331,11 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     try:
                         reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
                         self.send_message(CloseConnectionMessage(reason=reason))
-
-                        self.stopped.set(True)
-
-                        time.sleep(0.2)
                     except Exception as e:
                         logger.error(e, exc_info=e)
                     finally:
                         self.stopped.set(True)
-                        UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
+                        UserThread.run_after(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler), timedelta(milliseconds=200))
                 threading.Thread(target=handle_shut_down, name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
             else:
                 self.stopped.set(True)
@@ -536,7 +533,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 if elapsed < 10:
                     logger.debug(f"We got 2 network messages received in less than 10 ms. We set the thread to sleep "
                                  f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
-                    time.sleep(20)
+                    time.sleep(0.020)
 
                 network_envelope = self.network_proto_resolver.from_proto(proto)
                 
