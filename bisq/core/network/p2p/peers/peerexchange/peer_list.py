@@ -3,9 +3,10 @@ from typing import Set, Iterable
 from google.protobuf.message import Message
 
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-import pb_pb2 as protobuf 
+import pb_pb2 as protobuf
 
 from .peer import Peer
+
 
 @dataclass
 class PeerList(PersistableEnvelope):
@@ -15,17 +16,14 @@ class PeerList(PersistableEnvelope):
         return len(self.set)
 
     def to_proto_message(self) -> Message:
-        peer_list_proto = protobuf.PeerList()
-        peer_list_proto.peer.extend([peer.to_proto_message() for peer in self.set])
-        
-        envelope_proto = protobuf.PersistableEnvelope(
-            peer_list=peer_list_proto
+        return protobuf.PersistableEnvelope(
+            peer_list=protobuf.PeerList(
+                peer=[peer.to_proto_message() for peer in self.set]
+            )
         )
-        
-        return envelope_proto
 
     @staticmethod
-    def from_proto(proto: protobuf.PeerList) -> 'PeerList':
+    def from_proto(proto: protobuf.PeerList) -> "PeerList":
         peers = {Peer.from_proto(peer_proto) for peer_proto in proto.peer}
         return PeerList(peers)
 
