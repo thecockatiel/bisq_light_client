@@ -30,7 +30,8 @@ class PeerList(PersistableEnvelope):
         return PeerList(peers)
 
     def set_all(self, collection: Iterable[Peer]) -> None:
-        self.set = set(collection)
+        self.set.clear()
+        self.set.update(collection)
 
     def __str__(self) -> str:
         return f"PeerList{{\n     set={self.set}\n}}"
