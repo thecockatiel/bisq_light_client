@@ -41,13 +41,14 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
     was_truncated: bool = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
-        get_data_response = protobuf.GetDataResponse()
-        get_data_response.data_set = [entry.to_proto_message() for entry in self.data_set]
-        get_data_response.persistable_network_payload_items = [payload.to_proto_message() for payload in self.persistable_network_payload_set]
-        get_data_response.request_nonce = self.request_nonce
-        get_data_response.is_get_updated_data_response = self.is_get_updated_data_response
-        get_data_response.was_truncated = self.was_truncated
-        get_data_response.supported_capabilities = self.supported_capabilities.to_int_list()
+        get_data_response = protobuf.GetDataResponse(
+            data_set=[entry.to_proto_message() for entry in self.data_set],
+            persistable_network_payload_items = [payload.to_proto_message() for payload in self.persistable_network_payload_set],
+            request_nonce = self.request_nonce,
+            is_get_updated_data_response = self.is_get_updated_data_response,
+            was_truncated = self.was_truncated,
+            supported_capabilities = self.supported_capabilities.to_int_list()
+        )
 
         network_envelope = self.get_network_envelope_builder()
         network_envelope.get_data_response.CopyFrom(get_data_response)
