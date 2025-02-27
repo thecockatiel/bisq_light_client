@@ -1,4 +1,7 @@
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
+from bisq.core.network.p2p.persistence.historical_data_store_service import (
+    HistoricalDataStoreService,
+)
 from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
 from bisq.core.network.p2p.storage.payload.persistable_network_payload import (
     PersistableNetworkPayload,
@@ -7,9 +10,8 @@ from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 from bisq.core.trade.statistics.trade_statistics_3_store import TradeStatistics3Store
 
 
-
 class TradeStatistics3StorageService(
-    MapStoreService["TradeStatistics3Store", "PersistableNetworkPayload"]
+    HistoricalDataStoreService["TradeStatistics3Store"]
 ):
     FILE_NAME = "TradeStatistics3Store"
 
