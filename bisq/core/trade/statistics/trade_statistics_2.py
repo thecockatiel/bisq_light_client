@@ -166,7 +166,7 @@ class TradeStatistics2(
     @staticmethod
     def from_trade(
         trade: "Trade", referral_id: Optional[str], is_tor_network_node: bool
-    ):
+    ) -> "TradeStatistics2":
         extra_data_map = dict[str, str]()
         if not referral_id:
             extra_data_map[OfferPayload.REFERRAL_ID] = referral_id

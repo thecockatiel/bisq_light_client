@@ -821,13 +821,78 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         return GlobalContainer._bsq_swap_trade_manager
 
     @property
+    def trade_statistics_2_storage_service(self):
+        if GlobalContainer._trade_statistics_2_storage_service is None:
+            from bisq.core.trade.statistics.trade_statistics_2_storage_service import (
+                TradeStatistics2StorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._trade_statistics_2_storage_service = (
+                TradeStatistics2StorageService(
+                    self.config.storage_dir,
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    ),
+                )
+            )
+        return GlobalContainer._trade_statistics_2_storage_service
+
+    @property
+    def trade_statistics_3_storage_service(self):
+        if GlobalContainer._trade_statistics_3_storage_service is None:
+            from bisq.core.trade.statistics.trade_statistics_3_storage_service import (
+                TradeStatistics3StorageService,
+            )
+            from bisq.common.persistence.persistence_manager import PersistenceManager
+
+            GlobalContainer._trade_statistics_3_storage_service = (
+                TradeStatistics3StorageService(
+                    self.config.storage_dir,
+                    PersistenceManager(
+                        self.config.storage_dir,
+                        self.persistence_proto_resolver,
+                        self.corrupted_storage_file_handler,
+                    ),
+                )
+            )
+        return GlobalContainer._trade_statistics_3_storage_service
+
+    @property
+    def trade_statistics_converter(self):
+        if GlobalContainer._trade_statistics_converter is None:
+            from bisq.core.trade.statistics.trade_statistics_converter import (
+                TradeStatisticsConverter,
+            )
+
+            GlobalContainer._trade_statistics_converter = TradeStatisticsConverter(
+                self.p2p_service,
+                self.p2p_data_storage,
+                self.trade_statistics_2_storage_service,
+                self.trade_statistics_3_storage_service,
+                self.append_only_data_store_service,
+                self.config.storage_dir,
+            )
+        return GlobalContainer._trade_statistics_converter
+
+    @property
     def trade_statistics_manager(self):
         if GlobalContainer._trade_statistics_manager is None:
             from bisq.core.trade.statistics.trade_statistics_manager import (
                 TradeStatisticsManager,
             )
 
-            GlobalContainer._trade_statistics_manager = TradeStatisticsManager()
+            GlobalContainer._trade_statistics_manager = TradeStatisticsManager(
+                self.p2p_service,
+                self.price_feed_service,
+                self.trade_statistics_3_storage_service,
+                self.append_only_data_store_service,
+                self.trade_statistics_converter,
+                self.config.storage_dir,
+                self.config.dump_statistics,
+            )
         return GlobalContainer._trade_statistics_manager
 
     @property
@@ -862,8 +927,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
             GlobalContainer._btc_fee_receiver_service = BtcFeeReceiverService(
-                self.dao_state_service,
-                self.burning_man_service
+                self.dao_state_service, self.burning_man_service
             )
         return GlobalContainer._btc_fee_receiver_service
 
@@ -1278,7 +1342,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             GlobalContainer._burning_man_service = BurningManService(
                 self.dao_state_service,
                 self.cycles_in_dao_state_service,
-                self.proposal_service
+                self.proposal_service,
             )
         return GlobalContainer._burning_man_service
 
@@ -1937,7 +2001,9 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
     @property
     def price_feed_node_address_provider(self):
         if GlobalContainer._providers_repository is None:
-            from bisq.core.provider.price_feed_node_address_provider import PriceFeedNodeAddressProvider
+            from bisq.core.provider.price_feed_node_address_provider import (
+                PriceFeedNodeAddressProvider,
+            )
 
             GlobalContainer._providers_repository = PriceFeedNodeAddressProvider(
                 self.config,
