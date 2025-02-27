@@ -14,31 +14,39 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
-    sender_node_address: 'NodeAddress' = field(default_factory=raise_required)
+    sender_node_address: "NodeAddress" = field(default_factory=raise_required)
 
     def to_proto_network_envelope(self) -> "NetworkEnvelope":
         get_updated_data_request = protobuf.GetUpdatedDataRequest(
             sender_node_address=self.sender_node_address.to_proto_message(),
             nonce=self.nonce,
-            excluded_keys=self.excluded_keys
+            excluded_keys=self.excluded_keys,
+            version=self.version,
         )
-        if self.version:
-            get_updated_data_request.version = self.version
         envelope = self.get_network_envelope_builder()
         envelope.get_updated_data_request.CopyFrom(get_updated_data_request)
-        logger.info(f"Sending a GetUpdatedDataRequest with {envelope.ByteSize() / 1000} kB and "
-                     f"{len(self.excluded_keys)} excluded key entries. Requester's version={self.version}")
+        logger.info(
+            f"Sending a GetUpdatedDataRequest with {envelope.ByteSize() / 1000} kB and "
+            f"{len(self.excluded_keys)} excluded key entries. Requester's version={self.version}"
+        )
         return envelope
 
     @staticmethod
-    def from_proto(proto: protobuf.GetUpdatedDataRequest, message_version: int) -> 'GetUpdatedDataRequest':
-        excluded_keys = ProtoUtil.byte_set_from_proto_byte_string_list(proto.excluded_keys)
+    def from_proto(
+        proto: protobuf.GetUpdatedDataRequest, message_version: int
+    ) -> "GetUpdatedDataRequest":
+        excluded_keys = ProtoUtil.byte_set_from_proto_byte_string_list(
+            proto.excluded_keys
+        )
         requesters_version = ProtoUtil.string_or_none_from_proto(proto.version)
-        logger.info(f"Received a GetUpdatedDataRequest with {proto.ByteSize() / 1000} kB and "
-                     f"{len(excluded_keys)} excluded key entries. Requester's version={requesters_version}")
-        
+        logger.info(
+            f"Received a GetUpdatedDataRequest with {proto.ByteSize() / 1000} kB and "
+            f"{len(excluded_keys)} excluded key entries. Requester's version={requesters_version}"
+        )
+
         return GetUpdatedDataRequest(
             message_version=message_version,
             nonce=proto.nonce,
