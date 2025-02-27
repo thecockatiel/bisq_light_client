@@ -81,7 +81,7 @@ class TradingPeer(TradePeer):
         trading_peer.signature = ProtoUtil.byte_array_or_none_from_proto(proto.signature)
         trading_peer.pub_key_ring = PubKeyRing.from_proto(proto.pub_key_ring) if proto.HasField("pub_key_ring") else None
         trading_peer.multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.multi_sig_pub_key)
-        trading_peer.raw_transaction_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs] if proto.HasField("raw_transaction_inputs") else None
+        trading_peer.raw_transaction_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs] if proto.raw_transaction_inputs else None
         trading_peer.change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
         trading_peer.account_age_witness_nonce = ProtoUtil.byte_array_or_none_from_proto(proto.account_age_witness_nonce)
         trading_peer.account_age_witness_signature = ProtoUtil.byte_array_or_none_from_proto(proto.account_age_witness_signature)

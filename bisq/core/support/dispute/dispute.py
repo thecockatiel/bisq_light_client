@@ -227,7 +227,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             for chat_message in proto.chat_message:
                 dispute.chat_messages.append(ChatMessage.from_payload_proto(chat_message))
                 
-        if proto.dispute_result:
+        if proto.HasField("dispute_result"):
             dispute.dispute_result_property.value = DisputeResult.from_proto(proto.dispute_result)
         
         dispute.dispute_payout_tx_id = ProtoUtil.string_or_none_from_proto(proto.dispute_payout_tx_id)

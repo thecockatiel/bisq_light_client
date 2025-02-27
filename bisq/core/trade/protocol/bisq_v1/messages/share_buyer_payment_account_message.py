@@ -36,7 +36,7 @@ class ShareBuyerPaymentAccountMessage(TradeMailboxMessage):
     ) -> "ShareBuyerPaymentAccountMessage":
         buyer_payment_account_payload = (
             core_proto_resolver.from_proto(proto.buyer_payment_account_payload)
-            if proto.buyer_payment_account_payload
+            if proto.HasField("buyer_payment_account_payload")
             else None
         )
         return ShareBuyerPaymentAccountMessage(

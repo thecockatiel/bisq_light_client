@@ -93,8 +93,8 @@ class Contract(NetworkPayload):
 
     @staticmethod
     def from_proto(proto: protobuf.Contract, core_proto_resolver: "CoreProtoResolver"):
-        maker_payment_account_payload = proto.maker_payment_account_payload and core_proto_resolver.from_proto(proto.maker_payment_account_payload)
-        taker_payment_account_payload = proto.taker_payment_account_payload and core_proto_resolver.from_proto(proto.taker_payment_account_payload)
+        maker_payment_account_payload = core_proto_resolver.from_proto(proto.maker_payment_account_payload) if proto.HasField("maker_payment_account_payload") else None
+        taker_payment_account_payload = core_proto_resolver.from_proto(proto.taker_payment_account_payload) if proto.HasField("taker_payment_account_payload") else None
         
         return Contract(
             offer_payload=OfferPayload.from_proto(proto.offer_payload),
