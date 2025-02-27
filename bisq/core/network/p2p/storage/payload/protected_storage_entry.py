@@ -87,7 +87,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
 
     # PROTO BUFFER
 
-    def to_proto_message(self) -> Message:
+    def to_proto_message(self):
         return protobuf.ProtectedStorageEntry(
             storagePayload=wrap_in_storage_payload(
                 self.protected_storage_payload.to_proto_message()
