@@ -1,5 +1,0 @@
-[submodule "bisq_resources"]
-	path = bisq_resources
-	url = https://github.com/thecockatiel/bisq.git
-	commit = 6fb689ddad817fdbb50885e0efee38232eb0d385
-	shallow = true
