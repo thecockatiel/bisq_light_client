@@ -40,4 +40,4 @@ class NewStateHashMessage(
         )
 
     def __hash__(self):
-        return hash(self.state_hash, self.message_version)
+        return hash((self.state_hash, self.message_version))
