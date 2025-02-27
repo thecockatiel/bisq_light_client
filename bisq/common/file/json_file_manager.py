@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import Optional
 from bisq.common.file.file_util import rename_file
 from bisq.common.setup.log_setup import get_logger
-from bisq.core.trade.model.tradable_list import TradableList
-from bisq.core.util.json_util import JsonUtil
 from concurrent.futures import ThreadPoolExecutor
 import tempfile
 
