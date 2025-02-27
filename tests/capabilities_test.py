@@ -28,6 +28,38 @@ class TestCapabilities(unittest.TestCase):
         self.assertTrue(self.test_capabilities.contains_all({Capability.DAO_STATE}))
         self.assertFalse(Capability.DAO_STATE in self.empty_capabilities)
 
+    def test_contains_all(self):
+        # Test with a list of Capability
+        caps = Capabilities([Capability.DAO_STATE, Capability.TRADE_STATISTICS_3])
+        self.assertTrue(caps.contains_all([Capability.DAO_STATE]))
+        self.assertTrue(caps.contains_all([Capability.TRADE_STATISTICS_3]))
+        self.assertTrue(caps.contains_all([Capability.DAO_STATE, Capability.TRADE_STATISTICS_3]))
+        self.assertFalse(caps.contains_all([Capability.MEDIATION]))
+        self.assertFalse(caps.contains_all([Capability.DAO_STATE, Capability.MEDIATION]))
+        
+        # Test with a set of Capability
+        self.assertTrue(caps.contains_all({Capability.DAO_STATE}))
+        self.assertFalse(caps.contains_all({Capability.MEDIATION}))
+        
+        # Test with another Capabilities object
+        other_caps1 = Capabilities([Capability.DAO_STATE])
+        other_caps2 = Capabilities([Capability.MEDIATION])
+        other_caps3 = Capabilities([Capability.DAO_STATE, Capability.TRADE_STATISTICS_3, Capability.MEDIATION])
+        
+        self.assertTrue(caps.contains_all(other_caps1))
+        self.assertFalse(caps.contains_all(other_caps2))
+        self.assertFalse(caps.contains_all(other_caps3))
+        
+        # Test with empty inputs
+        self.assertTrue(caps.contains_all([]))
+        self.assertTrue(caps.contains_all(Capabilities()))
+        
+        # Test with empty capabilities
+        empty_caps = Capabilities()
+        self.assertTrue(empty_caps.contains_all([]))
+        self.assertTrue(empty_caps.contains_all(Capabilities()))
+        self.assertFalse(empty_caps.contains_all([Capability.DAO_STATE]))
+
     def test_is_empty(self):
         self.assertTrue(self.empty_capabilities.is_empty())
         self.assertFalse(self.test_capabilities.is_empty())

@@ -38,7 +38,7 @@ class Capabilities:
     def is_empty(self) -> bool:
         return len(self.capabilities) == 0
 
-    def contains_all(self, required_items: Iterable[Capability]) -> bool:
+    def contains_all(self, required_items: Union[Iterable[Capability], "Capabilities"]) -> bool:
         return self.capabilities.issuperset(required_items)
 
     def __contains__(self, capability):
