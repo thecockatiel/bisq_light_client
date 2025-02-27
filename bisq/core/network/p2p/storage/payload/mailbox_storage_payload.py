@@ -100,15 +100,15 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
 
     # PROTO BUFFER
 
-    def to_proto_message(self) -> protobuf.StoragePayload:
-        payload = protobuf.MailboxStoragePayload(
-            prefixed_sealed_and_signed_message=self.prefixed_sealed_and_signed_message.to_proto_network_envelope().prefixed_sealed_and_signed_message,
-            sender_pub_key_for_add_operation_bytes=self.sender_pub_key_for_add_operation_bytes,
-            owner_pub_key_bytes=self.owner_pub_key_bytes
+    def to_proto_message(self): 
+        return protobuf.StoragePayload(
+            mailbox_storage_payload=protobuf.MailboxStoragePayload(
+                prefixed_sealed_and_signed_message=self.prefixed_sealed_and_signed_message.to_proto_network_envelope().prefixed_sealed_and_signed_message,
+                sender_pub_key_for_add_operation_bytes=self.sender_pub_key_for_add_operation_bytes,
+                owner_pub_key_bytes=self.owner_pub_key_bytes,
+                extra_data=self.extra_data_map,
+            )
         )
-        if self.extra_data_map:
-            payload.extra_data.update(self.extra_data_map)
-        return payload
 
     @staticmethod
     def from_proto(proto: protobuf.MailboxStoragePayload) -> 'MailboxStoragePayload':
