@@ -66,6 +66,10 @@ class ThreadSafeSet(Generic[T]):
             with self._read_lock:
                 return self._set == other
         return False
+    
+    def union(self, *s: Iterable[T]) -> set[T]:
+        with self._read_lock:
+            return self._set.union(*s)
 
 
 class ThreadSafeWeakSet(Generic[T]):
