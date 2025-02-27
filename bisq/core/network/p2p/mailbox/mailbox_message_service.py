@@ -167,7 +167,7 @@ class MailboxMessageService:
 
             logger.info(
                 f"Loaded {len(self.mailbox_message_list)} persisted mailbox messages with "
-                + f"{readable_file_size(total_size)}.\nPer day distribution:\n"
+                + f"{readable_file_size(total_size.get())}.\nPer day distribution:\n"
                 + '\n'.join(per_day)
             )
 

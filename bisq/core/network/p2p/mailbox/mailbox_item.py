@@ -47,7 +47,7 @@ class MailboxItem(PersistablePayload):
                 proto.decrypted_message_with_pub_key,
                 network_proto_resolver,
             )
-            if proto.decrypted_message_with_pub_key
+            if proto.HasField("decrypted_message_with_pub_key")
             else None
         )
 
