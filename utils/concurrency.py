@@ -132,6 +132,10 @@ class ThreadSafeDict(Generic[K, V]):
     def put(self, key: K, value: V):
         with self._lock:
             self._dict[key] = value
+
+    def setdefault(self, key: K, default: V) -> V:
+        with self._lock:
+            return self._dict.setdefault(key, default)
             
     def remove(self, key: K) -> V:
         with self._lock:
