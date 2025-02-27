@@ -104,6 +104,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             self.peer_list, PersistenceManagerSource.PRIVATE_LOW_PRIO
         )
         self.network_node.add_connection_listener(self)
+
         # we check if app was idle for more then 5 sec.
         class Listener(ClockWatcherListener):
             def on_second_tick(self_):
@@ -342,7 +343,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self.print_new_reported_peers(peers)
 
         # We check if the reported msg is not violating our rules
-        if len(peers) <= (self.MAX_REPORTED_PEERS + self.max_connections_absolute + 10):
+        if len(peers) <= (PeerManager.MAX_REPORTED_PEERS + self.max_connections_absolute + 10):
             self.reported_peers.update(peers)
             self.purge_reported_peers_if_exceeds()
 
@@ -374,7 +375,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         }
         peers.update(current_live_peers)
 
-        max_age = get_time_ms() - self.MAX_AGE_LIVE_PEERS
+        max_age = get_time_ms() - PeerManager.MAX_AGE_LIVE_PEERS
         self.latest_live_peers.clear()
         recent_peers = {peer for peer in peers if peer.date > max_age}
         self.latest_live_peers.update(recent_peers)
@@ -393,7 +394,10 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             # We lookup if we have already stored the supported_capabilities at the persisted or reported peers
             # and if so we use that.
             peers_node_address = connection.peers_node_address
-            check_argument(peers_node_address, "connection missing node address at _get_connected_reported_peers")  # confirmed connections should always have node address
+            check_argument(
+                peers_node_address,
+                "connection missing node address at _get_connected_reported_peers",
+            )  # confirmed connections should always have node address
 
             capabilities_not_found_in_connection = supported_capabilities.is_empty()
             if capabilities_not_found_in_connection:
@@ -416,7 +420,9 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 if candidate:
                     supported_capabilities = candidate.capabilities
 
-            peer = Peer(node_address=peers_node_address, capabilities=supported_capabilities)
+            peer = Peer(
+                node_address=peers_node_address, capabilities=supported_capabilities
+            )
 
             # If we did not find the capability from our own connection we add a listener,
             # so once we get a connection with that peer and exchange a message containing the capabilities
@@ -670,27 +676,27 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         old_peers = {
             peer
             for peer in self.reported_peers
-            if get_time_ms() - peer.date > self.MAX_AGE
+            if get_time_ms() - peer.date > PeerManager.MAX_AGE
         }
         for peer in old_peers:
             self.remove_reported_peer(peer)
 
     def purge_reported_peers_if_exceeds(self):
         size = len(self.reported_peers)
-        if size > self.MAX_REPORTED_PEERS:
+        if size > PeerManager.MAX_REPORTED_PEERS:
             logger.info(
-                f"We have already {size} reported peers which exceeds our limit of {self.MAX_REPORTED_PEERS}."
+                f"We have already {size} reported peers which exceeds our limit of {PeerManager.MAX_REPORTED_PEERS}."
                 + "We remove random peers from the reported peers list."
             )
             # we randomly remove peers
             peers_to_remove = random.sample(
-                self.reported_peers, size - self.MAX_REPORTED_PEERS
+                self.reported_peers, size - PeerManager.MAX_REPORTED_PEERS
             )
             for peer in peers_to_remove:
                 self.remove_reported_peer(peer)
         else:
             logger.trace(
-                f"No need to purge reported peers.\n\tWe don't have more then {self.MAX_REPORTED_PEERS} reported peers yet."
+                f"No need to purge reported peers.\n\tWe don't have more then {PeerManager.MAX_REPORTED_PEERS} reported peers yet."
             )
 
     def print_reported_peers(self):
@@ -742,27 +748,27 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         old_peers = {
             reported_peer
             for reported_peer in self.get_persisted_peers()
-            if get_time_ms() - reported_peer.date > self.MAX_AGE
+            if get_time_ms() - reported_peer.date > PeerManager.MAX_AGE
         }
         for peer in old_peers:
             self.remove_persisted_peer(peer)
 
     def purge_persisted_peers_if_exceeds(self):
         size = len(self.get_persisted_peers())
-        if size > self.MAX_PERSISTED_PEERS:
+        if size > PeerManager.MAX_PERSISTED_PEERS:
             logger.trace(
-                f"We have already {size} persisted peers which exceeds our limit of {self.MAX_PERSISTED_PEERS}."
+                f"We have already {size} persisted peers which exceeds our limit of {PeerManager.MAX_PERSISTED_PEERS}."
                 + "We remove random peers from the persisted peers list."
             )
             # we don't use sorting by lastActivityDate to avoid attack vectors and keep it more random
             peers_to_remove = random.sample(
-                list(self.get_persisted_peers()), size - self.MAX_PERSISTED_PEERS
+                list(self.get_persisted_peers()), size - PeerManager.MAX_PERSISTED_PEERS
             )
             for peer in peers_to_remove:
                 self.remove_persisted_peer(peer)
         else:
             logger.trace(
-                f"No need to purge persisted peers.\n\tWe don't have more then {self.MAX_PERSISTED_PEERS} persisted peers yet."
+                f"No need to purge persisted peers.\n\tWe don't have more then {PeerManager.MAX_PERSISTED_PEERS} persisted peers yet."
             )
 
     ######################################################################################
