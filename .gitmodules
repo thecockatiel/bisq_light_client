@@ -1,0 +1,5 @@
+[submodule "bisq_resources"]
+	path = bisq_resources
+	url = https://github.com/thecockatiel/bisq.git
+	branch = 1.9.19_resources
+	shallow = true
