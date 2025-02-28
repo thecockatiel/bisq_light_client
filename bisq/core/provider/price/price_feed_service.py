@@ -375,6 +375,7 @@ class PriceFeedService:
                     result["bitcoinFeeInfo"]["btcTxFee"],
                     result["bitcoinFeeInfo"]["btcMinTxFee"],
                 )
+            result_handler()
 
         def on_done(future: Future["PricenodeDto"]):
             try:
