@@ -240,7 +240,7 @@ class Offer(NetworkPayload, PersistablePayload):
     @property
     def is_currency_for_maker_fee_btc(self) -> bool:
         if self.offer_payload:
-            return self.offer_payload.is_currency_for_maker_fee_btc()
+            return self.offer_payload.is_currency_for_maker_fee_btc
         return False
 
     @property
