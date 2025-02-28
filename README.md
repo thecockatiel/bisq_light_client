@@ -6,7 +6,17 @@ a bisq client written in python intended to be fast.
 
 Minimum required python version is 3.9
 
-### 1. Install dependencies
+### 1. Clone and init submodules
+
+```bash
+# fresh clone:
+git clone --recurse-submodules https://github.com/thecockatiel/bisq_light_client.git
+
+# if you have already cloned the repo without `--recurse-submodules`:
+cd bisq_light_client && git submodule update --init --recursive
+```
+
+### 2. Install dependencies
 
 ```bash
 # in project root:
@@ -17,7 +27,7 @@ sudo apt install python3-txtorcon python3-twisted python3-tqdm python3-grpcio py
 
 It is a priority to make the project runnable without installing deps through pip. please let me know if something does not work.
 
-### 2. Generate proto files
+### 3. Generate proto files
 
 ```bash
 # generate the python files
