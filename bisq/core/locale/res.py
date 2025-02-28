@@ -1,7 +1,7 @@
 import textwrap
 from typing import TYPE_CHECKING
 from bisq.common.setup.log_setup import get_logger
-from resources import get_resources_path
+from bisq.resources import core_resource_dir
 from utils.java_compat import parse_resource_bundle
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ class Res:
         base_currency_network = config.base_currency_network
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
-        i18n_dir = get_resources_path().joinpath("i18n")
+        i18n_dir = core_resource_dir.joinpath("i18n")
         for file in i18n_dir.glob("*.properties"):
             parsed = parse_resource_bundle(file)
             if parsed:

@@ -4,7 +4,7 @@ from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
-from resources import resource_readlines
+from bisq.resources import core_resource_readlines
 
 logger = get_logger(__name__)
 
@@ -43,7 +43,7 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
     @staticmethod
     def get_seed_node_addresses_from_property_file(file_name: str) -> List[NodeAddress]:
         list = []
-        seed_node_file = resource_readlines(f"{file_name}{DefaultSeedNodeRepository.ENDING}")
+        seed_node_file = core_resource_readlines(f"{file_name}{DefaultSeedNodeRepository.ENDING}")
         if seed_node_file:
             for line in seed_node_file:
                 matcher = DefaultSeedNodeRepository.pattern.match(line)

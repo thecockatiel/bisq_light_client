@@ -3,7 +3,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.exception.not_found_exception import NotFoundException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
-from resources import resource_readlines
+from bisq.resources import core_resource_readlines
 
 logger = get_logger(__name__)
 
@@ -16,7 +16,7 @@ class CoreHelpService:
 
         resource_file = os.path.join("help", f"{method_name}-help.txt")
         try:
-            lines = resource_readlines(resource_file)
+            lines = core_resource_readlines(resource_file)
             if not lines:
                 raise IOError("File not found")
             return "".join(lines)

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TypeVar
 from collections.abc import Callable
-from bisq.common.file.file_util import resource_to_file
+from bisq.common.file.file_util import p2p_resource_to_file
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
 from bisq.common.setup.log_setup import get_logger
@@ -74,7 +74,7 @@ class StoreService(Generic[T], ABC):
         if not destination_file.exists():
             try:
                 logger.debug(f"We copy resource to file: resourceFileName={resource_file_name}, destinationFile={destination_file}")
-                resource_to_file(resource_file_name, destination_file)
+                p2p_resource_to_file(resource_file_name, destination_file)
                 return True
             except ResourceNotFoundException as e:
                 logger.debug(f"Could not find resourceFile {resource_file_name}. That is expected if none is provided yet.")

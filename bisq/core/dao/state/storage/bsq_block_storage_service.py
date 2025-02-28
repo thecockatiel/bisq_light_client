@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
-from bisq.common.file.file_util import list_resource_directory, resource_to_file
+from bisq.common.file.file_util import p2p_list_resource_directory, p2p_resource_to_file
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
 import pb_pb2 as protobuf
 from bisq.common.setup.log_setup import get_logger
@@ -96,7 +96,7 @@ class BsqBlocksStorageService:
             return
 
         try:
-            file_names = list_resource_directory(resource_dir)
+            file_names = p2p_list_resource_directory(resource_dir)
             if not file_names:
                 logger.info(f"No files in directory. {resource_dir}")
                 return
@@ -105,7 +105,7 @@ class BsqBlocksStorageService:
 
             for file_name in file_names:
                 destination_file = self._blocks_dir.joinpath(file_name)
-                resource_to_file(
+                p2p_resource_to_file(
                     Path(resource_dir).joinpath(file_name), destination_file
                 )
 
