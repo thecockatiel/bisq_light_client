@@ -394,7 +394,7 @@ class P2PService(
             peers_node_address is not None
         ), "PeerAddress must not be null at do_send_encrypted_direct_message"
         assert (
-            self._network_node.node_address_property.value is None
+            self._network_node.node_address_property.value is not None
         ), "My node address must not be null at do_send_encrypted_direct_message"
 
         if CapabilityUtils.capability_required_and_capability_not_supported(
