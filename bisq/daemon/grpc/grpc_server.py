@@ -73,6 +73,6 @@ class GrpcServer:
 
     def shut_down(self):
         logger.info("Grpc server shutdown started")
-        evt = self.server.stop(0.5)
-        evt.wait()
+        self.server.stop(0.5)
+        self.server.wait_for_termination()
         logger.info("Grpc server shutdown complete")
