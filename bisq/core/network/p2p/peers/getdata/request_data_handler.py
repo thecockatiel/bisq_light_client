@@ -117,9 +117,7 @@ class RequestDataHandler(MessageListener):
         get_data_request: "GetDataRequest",
     ):
         try:
-            connection = future.result()
-            if connection is None:
-                raise Exception("Future returned None, connection was expected")
+            future.result()
             if not self._stopped:
                 logger.trace(f"Send {get_data_request} to {node_address} succeeded.")
             else:
@@ -130,14 +128,10 @@ class RequestDataHandler(MessageListener):
         except Exception as e:
             if not self._stopped:
                 message = (
-                    "Sending getDataRequest to "
-                    + str(node_address)
-                    + " failed. That is expected if the peer is offline.\n\t"
-                    + "getDataRequest="
-                    + str(get_data_request)
-                    + "."
-                    + "\n\tException="
-                    + str(e)
+                    f"Sending getDataRequest to {node_address}failed. "
+                    f"That is expected if the peer is offline.\n\t"
+                    f"getDataRequest={get_data_request}.\n\t"
+                    f"Exception={e}"
                 )
                 self._handle_fault(
                     message,
