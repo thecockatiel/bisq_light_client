@@ -632,18 +632,18 @@ class CoreOffersService:
                 direction.strip().casefold() == OfferDirection.BUY.name.casefold()
             )
             return lambda offer: (
-                offer.get_offer().get_price()
+                -offer.get_offer().get_price()
                 if direction_is_buy
-                else -offer.get_offer().get_price()
+                else offer.get_offer().get_price()
             )
         else:
             direction_is_sell = (
                 direction.strip().casefold() == OfferDirection.SELL.name.casefold()
             )
             return lambda offer: (
-                offer.get_offer().get_price()
+                -offer.get_offer().get_price()
                 if direction_is_sell
-                else -offer.get_offer().get_price()
+                else offer.get_offer().get_price()
             )
 
     def price_comparator(
@@ -657,14 +657,14 @@ class CoreOffersService:
                 direction.strip().casefold() == OfferDirection.BUY.name.casefold()
             )
             return lambda offer: (
-                offer.get_price() if direction_is_buy else -offer.get_price()
+                -offer.get_price() if direction_is_buy else offer.get_price()
             )
         else:
             direction_is_sell = (
                 direction.strip().casefold() == OfferDirection.SELL.name.casefold()
             )
             return lambda offer: (
-                offer.get_price() if direction_is_sell else -offer.get_price()
+                -offer.get_price() if direction_is_sell else offer.get_price()
             )
 
     def _price_string_to_long(self, price_as_string: str, currency_code: str) -> int:
