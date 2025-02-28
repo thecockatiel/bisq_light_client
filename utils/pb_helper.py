@@ -16,6 +16,9 @@ def is_pb_map_order_preserved():
     return True
 
 def is_python_pb_impl_required():
+    # grpc version < 1.49.0 has a bug that causes map order to be lost during serialization
+    # after 1.49 it still happens, but it seems so rare that we can probaby tolerate it
+    # TODO: we have to check if this is really rare or not later
     import grpc
     try:
         version = grpc.__version__
