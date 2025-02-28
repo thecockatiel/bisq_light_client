@@ -3,7 +3,6 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from dataclasses import dataclass
-from copy import copy
 
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
@@ -89,7 +88,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         if not self._timer:
             self._timer = UserThread.run_after(
                 self.maybe_broadcast_bundle,
-                timedelta(milliseconds=self.BROADCAST_INTERVAL_MS),
+                timedelta(milliseconds=Broadcaster.BROADCAST_INTERVAL_MS),
             )
 
     def maybe_broadcast_bundle(self) -> None:
@@ -99,7 +98,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
             )
             self._broadcast_handlers.add(broadcast_handler)
             broadcast_handler.broadcast(
-                copy(self._broadcast_requests),
+                self._broadcast_requests.copy(),
                 self._shut_down_requested,
                 self._executor,
             )
