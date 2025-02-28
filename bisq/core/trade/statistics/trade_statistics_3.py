@@ -202,7 +202,7 @@ class TradeStatistics3(
         return len(self.hash) == 20
     
     def get_required_capabilities(self):
-        return Capabilities(Capability.TRADE_STATISTICS_3)
+        return Capabilities([Capability.TRADE_STATISTICS_3])
 
     def get_date(self):
         return self._date_obj
