@@ -207,7 +207,7 @@ class Offer(NetworkPayload, PersistablePayload):
         volume_by_amount = price.get_volume_by_amount(amount)
         if self.offer_payload_base.payment_method_id == PaymentMethod.HAL_CASH_ID:
             volume_by_amount = VolumeUtil.get_adjusted_volume_for_hal_cash(volume_by_amount)
-        elif self.is_fiat_offer():
+        elif self.is_fiat_offer:
             volume_by_amount = VolumeUtil.get_rounded_fiat_volume(volume_by_amount)
 
         return volume_by_amount
