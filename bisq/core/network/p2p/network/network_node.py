@@ -237,7 +237,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
     def print_inbound_connections(self):
         sb = f"inBoundConnections len()={len(self.inbound_connections)}\n\toutBoundConnections="
-        for connection in self.outbound_connections:
+        for connection in self.inbound_connections:
             sb += f"{connection}\n\t"
         logger.debug(sb)
 
