@@ -2037,6 +2037,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._price_feed_service = PriceFeedService(
                 PriceHttpClient(None, self.socks5_proxy_provider),
+                self.p2p_service,
                 self.fee_service,
                 self.price_feed_node_address_provider,
                 self.preferences,

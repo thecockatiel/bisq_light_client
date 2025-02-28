@@ -490,7 +490,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 trader_id=hash(self.pub_key_ring),
                 sender_is_trader=False,
                 message=message,
-                sender_node_address=self.p2p_service.get_address()
+                sender_node_address=self.p2p_service.address
             )
             chat_message.is_system_message = True
             dispute.add_and_persist_chat_message(chat_message)
@@ -504,7 +504,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
             open_new_dispute_message = OpenNewDisputeMessage(
                 dispute=dispute,
-                sender_node_address=self.p2p_service.get_address(),
+                sender_node_address=self.p2p_service.address,
                 uid=str(uuid.uuid4()),
                 support_type=self.get_support_type()
             )
@@ -647,7 +647,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             trader_id=hash(pub_key_ring),
             sender_is_trader=False,
             message=Res.get("support.systemMsg", sys_msg),
-            sender_node_address=self.p2p_service.get_address()
+            sender_node_address=self.p2p_service.address
         )
         chat_message.is_system_message = True
         dispute.add_and_persist_chat_message(chat_message)
@@ -664,7 +664,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
         peer_opened_dispute_message = PeerOpenedDisputeMessage(
             dispute=dispute,
-            sender_node_address=self.p2p_service.get_address(),
+            sender_node_address=self.p2p_service.address,
             uid=str(uuid.uuid4()),
             support_type=self.get_support_type()
         )
@@ -741,7 +741,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             trader_id=hash(dispute.trader_pub_key_ring),
             sender_is_trader=False,
             message=summary_text,
-            sender_node_address=self.p2p_service.get_address()
+            sender_node_address=self.p2p_service.address
         )
 
         dispute_result.chat_message = chat_message
@@ -755,7 +755,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
         dispute_result_message = DisputeResultMessage(
             dispute_result=dispute_result,
-            sender_node_address=self.p2p_service.get_address(),
+            sender_node_address=self.p2p_service.address,
             uid=str(uuid.uuid4()),
             support_type=self.get_support_type()
         )
@@ -892,7 +892,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 trader_id=hash(self.pub_key_ring),
                 sender_is_trader=False,
                 message=mediators_dispute_result,
-                sender_node_address=self.p2p_service.get_address()
+                sender_node_address=self.p2p_service.address
             )
             mediators_dispute_result_message.is_system_message = True
             dispute.add_and_persist_chat_message(mediators_dispute_result_message)
@@ -909,7 +909,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             trader_id=dispute.trader_id,
             sender_is_trader=True,
             message=Res.get("support.info.disputedTradeUpdate", message),
-            sender_node_address=self.p2p_service.get_address()
+            sender_node_address=self.p2p_service.address
         )
         chat_message.is_system_message = True
         self.send_chat_message(chat_message)  # inform the mediator
@@ -925,7 +925,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             trader_id=hash(self.pub_key_ring),
             sender_is_trader=False,
             message=logs_received_message,
-            sender_node_address=self.p2p_service.get_address()
+            sender_node_address=self.p2p_service.address
         )
         chat_message.is_system_message = True
         dispute.add_and_persist_chat_message(chat_message)
@@ -1002,7 +1002,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             trader_id=hash(self.pub_key_ring),
             sender_is_trader=False,
             message=price_info_text,
-            sender_node_address=self.p2p_service.get_address()
+            sender_node_address=self.p2p_service.address
         )
         price_info_message.is_system_message = True
         dispute.add_and_persist_chat_message(price_info_message)

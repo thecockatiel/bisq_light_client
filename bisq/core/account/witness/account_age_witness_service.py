@@ -137,7 +137,7 @@ class AccountAgeWitnessService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
     def on_all_services_initialized(self):
-        self.p2p_service.get_p2p_data_storage().add_append_only_data_store_listener(
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
             lambda payload: self.add_to_map(payload) if isinstance(payload, AccountAgeWitness) else None
         )
 

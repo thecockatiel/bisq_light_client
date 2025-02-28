@@ -362,7 +362,7 @@ class OfferUtil:
         Raises:
             ValueError: If any validation fails
         """
-        assert self.p2p_service.get_address() is not None, "Address must not be None"
+        assert self.p2p_service.address is not None, "Address must not be None"
         
         check_argument(not self.filter_manager.is_currency_banned(currency_code),
                    Res.get("offerbook.warning.currencyBanned"))

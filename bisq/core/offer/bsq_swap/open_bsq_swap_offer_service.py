@@ -160,7 +160,7 @@ class OpenBsqSwapOfferService:
             f"min_amount={min_amount.value}"
         )
 
-        maker_address = self.p2p_service.get_address()
+        maker_address = self.p2p_service.address
         assert maker_address is not None
         self.offer_util.validate_basic_offer_data(PaymentMethod.BSQ_SWAP, "BSQ")
 

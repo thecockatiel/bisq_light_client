@@ -152,7 +152,7 @@ class OfferBookService:
 
     def get_offers(self) -> List[Offer]:
         offers = []
-        for data in self.p2p_service.get_data_map().values():
+        for data in self.p2p_service.data_map.values():
             if isinstance(data.protected_storage_payload, OfferPayloadBase):
                 offer = Offer(data.protected_storage_payload)
                 offer.price_feed_service = self.price_feed_service

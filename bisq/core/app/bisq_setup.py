@@ -314,7 +314,7 @@ class BisqSetup:
     def _read_maps_from_resources(self, complete_handler: Callable[[], None]):
         post_fix = "_" + self.config.base_currency_network.name
         # TODO make this async ?
-        self.p2p_service.get_p2p_data_storage().read_from_resources(
+        self.p2p_service.p2p_data_storage.read_from_resources(
             post_fix, complete_handler
         )
 
@@ -633,14 +633,14 @@ class BisqSetup:
         their offers will not be reachable.
         Repeat this test hourly.
         """
-        onion_address = self.p2p_service.get_network_node().node_address_property.get()
+        onion_address = self.p2p_service.address
         if onion_address is None or "onion" not in onion_address.get_full_address():
             return
 
         if (
-            self.p2p_service.get_network_node().up_time()
+            self.p2p_service.network_node.up_time()
             > timedelta(hours=1).total_seconds() * 1000
-            and self.p2p_service.get_network_node().get_inbound_connection_count() == 0
+            and self.p2p_service.network_node.get_inbound_connection_count() == 0
         ):
             # we've been online a while and did not find any inbound connections; lets try the self-ping check
             logger.info(
@@ -734,7 +734,7 @@ class BisqSetup:
         )
 
         # check signed witness during runtime
-        self.p2p_service.get_p2p_data_storage().add_append_only_data_store_listener(
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
             lambda payload: (
                 self._maybe_trigger_display_handler(
                     key_signed_by_arbitrator,
@@ -838,7 +838,7 @@ class BisqSetup:
         # NOTE: This is probably unnecessary and can be removed at some point later
         # we implemented for completeness for now
         if self.config.base_currency_network.is_regtest() or Utils.is_v3_address(
-            self.p2p_service.get_network_node().node_address_property.get().host_name
+            self.p2p_service.address.host_name
         ):
             return
 

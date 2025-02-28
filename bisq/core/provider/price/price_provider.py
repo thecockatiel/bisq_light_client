@@ -1,15 +1,17 @@
+import json
+from typing import TYPE_CHECKING
 from bisq.core.network.http.async_http_client import AsyncHttpClient
-from bisq.core.network.p2p.p2p_service import P2PService
 from bisq.core.provider.http_client_provider import HttpClientProvider
 from bisq.common.version import Version
-import json
-
 from bisq.core.provider.price.pricenode_dto import PricenodeDto
 
+if TYPE_CHECKING:
+    from bisq.core.network.p2p.p2p_service import P2PService
 
 class PriceProvider(HttpClientProvider):
-    def __init__(self, http_client: AsyncHttpClient, base_url: str):
+    def __init__(self, http_client: AsyncHttpClient, p2p_service: "P2PService", base_url: str):
         super().__init__(http_client, base_url, False)
+        self._p2p_service = p2p_service
         self.shut_down_requested = False
 
     async def get_all(self) -> "PricenodeDto":
@@ -24,8 +26,8 @@ class PriceProvider(HttpClientProvider):
             }
 
         hs_version = ""
-        if P2PService.get_my_node_address() is not None:
-            host_name = P2PService.get_my_node_address().host_name
+        if self._p2p_service.address is not None:
+            host_name = self._p2p_service.address
             hs_version = ", HSv3" if len(host_name) > 22 else ", HSv2"
 
         user_agent = f"bisq/{Version.VERSION}{hs_version}"

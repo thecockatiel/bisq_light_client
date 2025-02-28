@@ -80,7 +80,7 @@ class BlindVoteListService(
         self._fill_list_from_append_only_data_store()
 
         # We set the listener after parsing is complete to be sure we have a consistent state for the phase check.
-        self.p2p_service.get_p2p_data_storage().add_append_only_data_store_listener(
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
             self
         )
 

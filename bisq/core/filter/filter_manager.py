@@ -112,7 +112,7 @@ class FilterManager:
         if self._ignore_dev_msg:
             return
 
-        storage_entries = self._p2p_service.get_p2p_data_storage().map.values()
+        storage_entries = self._p2p_service.p2p_data_storage.map.values()
         for entry in storage_entries:
             payload = entry.protected_storage_payload
             if isinstance(payload, Filter):

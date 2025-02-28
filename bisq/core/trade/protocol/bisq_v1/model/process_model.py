@@ -241,7 +241,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     
     @property
     def my_node_address(self):
-        return self.p2p_service.get_address()
+        return self.p2p_service.address
     
     def set_payment_started_ack_message(self, ack_message: "AckMessage"):
         message_state = MessageState.ACKNOWLEDGED if ack_message.success else MessageState.FAILED

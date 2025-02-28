@@ -107,7 +107,7 @@ class SupportManager(ABC):
         return self.p2p_service.is_bootstrapped
 
     def get_my_address(self) -> "NodeAddress":
-        return self.p2p_service.get_address() # maybe use my_node_address ?
+        return self.p2p_service.address
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API

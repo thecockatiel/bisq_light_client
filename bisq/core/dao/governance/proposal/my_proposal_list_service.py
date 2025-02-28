@@ -69,7 +69,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
         )
 
         self.dao_state_service.add_dao_state_listener(self)
-        self.p2p_service.num_connected_peers.add_listener(
+        self.p2p_service.num_connected_peers_property.add_listener(
             self.num_connected_peers_listener
         )
 
@@ -201,7 +201,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
         # of that cycle so it is 1 blind vote getting rebroadcast at each startup to my neighbors.
         min_peers = 4 if Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() else 1
         if (
-            self.p2p_service.num_connected_peers.get() >= min_peers
+            self.p2p_service.num_connected_peers >= min_peers
             and self.p2p_service.is_bootstrapped
         ) or Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest():
             for proposal in self.my_proposal_list.list:

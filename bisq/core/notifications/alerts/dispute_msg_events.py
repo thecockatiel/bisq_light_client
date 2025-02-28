@@ -82,7 +82,7 @@ class DisputeMsgEvents:
         dispute.chat_messages.add_listener(on_chat_messages_changed)
 
     def _on_chat_message(self, chat_message: "ChatMessage"):
-        if chat_message.sender_node_address == self.p2p_service.get_address():
+        if chat_message.sender_node_address == self.p2p_service.address:
             return
 
         # We only send msg in case we are not the sender

@@ -244,7 +244,7 @@ class OpenOfferManager(
     def shut_down(self, complete_handler: Optional[Callable[[], None]] = None):
         self.stopped = True
         self.dao_state_service.remove_dao_state_listener(self)
-        self.p2p_service.get_peer_manager().remove_listener(self)
+        self.p2p_service.peer_manager.remove_listener(self)
         self.p2p_service.remove_decrypted_direct_message_listener(self)
 
         self.stop_periodic_refresh_offers_timer()
@@ -355,7 +355,7 @@ class OpenOfferManager(
                 ),
             )
 
-        self.p2p_service.get_peer_manager().add_listener(self)
+        self.p2p_service.peer_manager.add_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PeerManager.Listener implementation
@@ -378,7 +378,7 @@ class OpenOfferManager(
     def on_awake_from_standby(self):
         logger.info("onAwakeFromStandby")
         self.stopped = False
-        if self.p2p_service.get_network_node().get_all_connections():
+        if self.p2p_service.network_node.get_all_connections():
             self.restart()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -981,7 +981,7 @@ class OpenOfferManager(
         offer_id = message.offer_id
         source_uid = message.uid
         ack_message = AckMessage(
-            sender_node_address=self.p2p_service.get_network_node().node_address_property.value,
+            sender_node_address=self.p2p_service.network_node.node_address_property.value,
             source_type=AckMessageSourceType.OFFER_MESSAGE,
             source_msg_class_name=message.__class__.__name__,
             source_uid=source_uid,
@@ -1043,7 +1043,7 @@ class OpenOfferManager(
                 or not OfferRestrictions.has_offer_mandatory_capability(
                     original_offer, Capability.REFUND_AGENT
                 )
-                or not original.owner_node_address == self.p2p_service.get_address()
+                or not original.owner_node_address == self.p2p_service.address
             ):
 
                 # - Capabilities changed?
@@ -1081,8 +1081,8 @@ class OpenOfferManager(
 
                 # - node address changed? (due to a faulty tor dir)
                 owner_node_address = original.owner_node_address
-                if owner_node_address != self.p2p_service.get_address():
-                    owner_node_address = self.p2p_service.get_address()
+                if owner_node_address != self.p2p_service.address:
+                    owner_node_address = self.p2p_service.address
                     logger.info(
                         f"Updated the owner nodeaddress of offer id={original_offer.id}"
                     )

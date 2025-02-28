@@ -33,7 +33,7 @@ class SendMediatedPayoutSignatureMessage(TradeTask):
             message = MediatedPayoutTxSignatureMessage(
                 tx_signature=self.process_model.mediated_payout_tx_signature,
                 trade_id=self.trade.get_id(),
-                sender_node_address=p2p_service.get_address(),
+                sender_node_address=p2p_service.address,
                 uid=str(uuid.uuid4())
             )
             

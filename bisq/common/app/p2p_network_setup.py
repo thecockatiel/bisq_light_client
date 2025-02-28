@@ -69,7 +69,7 @@ class P2PNetworkSetup:
                     
             
             
-        self.p2p_network_info_binding = combine_simple_properties(bootstrap_state, bootstrap_warning, self.p2p_service.get_num_connected_peers(), hidden_service_published, self.data_received, transform=handle_network_binding)
+        self.p2p_network_info_binding = combine_simple_properties(bootstrap_state, bootstrap_warning, self.p2p_service.num_connected_peers_property, hidden_service_published, self.data_received, transform=handle_network_binding)
         self.p2p_network_info_binding.add_listener(lambda e: self.p2p_network_info.set(e.new_value))
             
         bootstrap_state.set(Res.get("mainView.bootstrapState.connectionToTorNetwork"))
@@ -85,7 +85,7 @@ class P2PNetworkSetup:
                 if connection.connection_state.is_seed_node and close_connection_reason == CloseConnectionReason.RULE_VIOLATION:
                     logger.warning(f"RULE_VIOLATION onDisconnect closeConnectionReason={close_connection_reason}, connection={connection}")
         
-        self.p2p_service.get_network_node().add_connection_listener(CListener())
+        self.p2p_service.network_node.add_connection_listener(CListener())
         
         p2p_network_initialized = SimpleProperty(False)
         
@@ -116,7 +116,7 @@ class P2PNetworkSetup:
                 
             def on_no_seed_node_available(self_):
                 logger.warning("on_no_seed_node_available")
-                if self.p2p_service.get_num_connected_peers().get() == 0:
+                if self.p2p_service.num_connected_peers == 0:
                     bootstrap_warning.set(Res.get("mainView.bootstrapWarning.noSeedNodesAvailable"))
                 else:
                     bootstrap_warning.set(None)
@@ -126,7 +126,7 @@ class P2PNetworkSetup:
             
             def on_no_peers_available(self_):
                 logger.warning("on_no_peers_available")
-                if self.p2p_service.get_num_connected_peers().get() == 0:
+                if self.p2p_service.num_connected_peers == 0:
                     self.p2p_network_warn_msg.set(Res.get("mainView.p2pNetworkWarnMsg.noNodesAvailable"))
                     bootstrap_warning.set(Res.get("mainView.bootstrapWarning.noNodesAvailable"))
                     self.p2p_network_label_id.set("splash-error-state-msg")

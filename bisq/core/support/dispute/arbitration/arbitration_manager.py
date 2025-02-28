@@ -418,7 +418,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         message = PeerPublishedDisputePayoutTxMessage(
             transaction=transaction.serialize(),
             trade_id=dispute.trade_id,
-            sender_node_address=self.p2p_service.get_address(),
+            sender_node_address=self.p2p_service.address,
             uid=str(uuid.uuid4()),
             support_type=self.get_support_type(),
         )

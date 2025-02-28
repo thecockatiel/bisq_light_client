@@ -14,7 +14,7 @@ class ArbitratorService(DisputeAgentService[Arbitrator]):
     def get_dispute_agent_set(self, banned_dispute_agents: List[str]) -> Set["Arbitrator"]:
         return {
             data.protected_storage_payload
-            for data in self.p2p_service.get_data_map().values()
+            for data in self.p2p_service.data_map.values()
             if isinstance(data.protected_storage_payload, Arbitrator)
             and (banned_dispute_agents is None or
                  data.protected_storage_payload.node_address.get_full_address() not in banned_dispute_agents)

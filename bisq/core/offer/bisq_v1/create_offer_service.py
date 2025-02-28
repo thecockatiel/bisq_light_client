@@ -73,7 +73,7 @@ class CreateOfferService:
                      f"buyerSecurityDeposit={buyer_security_deposit}")
 
         creation_time = get_time_ms()
-        maker_address = self.p2p_service.get_address()
+        maker_address = self.p2p_service.address
         use_market_based_price_value = (use_market_based_price and 
                                       self.is_market_price_available(currency_code) and
                                       not payment_account.has_payment_method_with_id(PaymentMethod.HAL_CASH_ID))

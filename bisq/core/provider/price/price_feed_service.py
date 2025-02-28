@@ -18,6 +18,7 @@ from bisq.core.provider.price.market_price import MarketPrice
 
 
 if TYPE_CHECKING:
+    from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.provider.price_http_client import PriceHttpClient
     from bisq.core.provider.price_feed_node_address_provider import (
         PriceFeedNodeAddressProvider,
@@ -37,18 +38,22 @@ class PriceFeedService:
     def __init__(
         self,
         price_http_client: "PriceHttpClient",
+        p2p_service: "P2PService",
         fee_service: "FeeService",
         price_feed_node_address_provider: "PriceFeedNodeAddressProvider",
         preferences: "Preferences",
     ):
         self._http_client = price_http_client
+        self._p2p_service = p2p_service
         self._price_feed_node_address_provider = price_feed_node_address_provider
         self._preferences = preferences
         self._fee_service = fee_service
 
         self._cache: dict[str, "MarketPrice"] = {}
         self._price_provider = PriceProvider(
-            price_http_client, price_feed_node_address_provider.base_url
+            price_http_client,
+            self._p2p_service,
+            price_feed_node_address_provider.base_url,
         )
         self._price_consumer: Optional[Callable[[float], None]] = None
         self._fault_handler: Optional["FaultHandler"] = None
@@ -230,7 +235,9 @@ class PriceFeedService:
         self._price_feed_node_address_provider.select_next_provider_base_url()
         if self._price_feed_node_address_provider.base_url:
             self._price_provider = PriceProvider(
-                self._http_client, self._price_feed_node_address_provider.base_url
+                self._http_client,
+                self._p2p_service,
+                self._price_feed_node_address_provider.base_url,
             )
         else:
             logger.warning(

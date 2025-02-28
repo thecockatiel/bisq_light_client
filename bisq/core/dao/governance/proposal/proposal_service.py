@@ -106,7 +106,7 @@ class ProposalService(
         # Listen for tempProposals
         self.p2p_service.add_hash_set_changed_listener(self)
         # Listen for proposalPayloads
-        self.p2p_service.get_p2p_data_storage().add_append_only_data_store_listener(
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
             self
         )
 
@@ -184,7 +184,7 @@ class ProposalService(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def _fill_list_from_protected_store(self):
-        for entry in self.p2p_service.get_data_map().values():
+        for entry in self.p2p_service.data_map.values():
             self._on_protected_data_added(entry, False)
 
     def _fill_list_from_append_only_data_store(self):

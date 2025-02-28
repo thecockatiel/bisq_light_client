@@ -106,7 +106,7 @@ class BsqSwapProtocolModel(ProtocolModel["BsqSwapTradePeer"]):
     
     @property
     def my_node_address(self):
-        return self.p2p_service.get_address()   
+        return self.p2p_service.address  
     
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
