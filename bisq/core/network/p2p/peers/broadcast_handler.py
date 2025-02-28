@@ -1,6 +1,5 @@
 from datetime import timedelta
 import uuid
-from threading import Lock
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Optional
 from abc import ABC, abstractmethod
@@ -196,7 +195,9 @@ class BroadcastHandler:
             self._maybe_notify_listeners(broadcast_requests)
             self._cleanup()
 
-        self._timeout_timer = UserThread.run_after(timeout_handler, timedelta(milliseconds=timeout_delay))
+        self._timeout_timer = UserThread.run_after(
+            timeout_handler, timedelta(milliseconds=timeout_delay)
+        )
 
     def _get_broadcast_requests_for_connection(
         self, connection: "Connection", broadcast_requests: list["BroadcastRequest"]
@@ -206,8 +207,10 @@ class BroadcastHandler:
         return [
             broadcast_request
             for broadcast_request in broadcast_requests
-            if not connection.peers_node_address
-            or connection.peers_node_address != broadcast_request.sender
+            if (
+                not connection.peers_node_address
+                or connection.peers_node_address != broadcast_request.sender
+            )
             and connection.test_capability(broadcast_request.message)
         ]
 
@@ -219,7 +222,10 @@ class BroadcastHandler:
     ):
         # Can be BundleOfEnvelopes or a single BroadcastMessage
         broadcast_message = self._get_message(broadcast_requests_for_connection)
-        future = self._network_node.send_message(connection, broadcast_message, executor)
+        future = self._network_node.send_message(
+            connection, broadcast_message, executor
+        )
+        self._send_message_futures.add(future)
         future.add_done_callback(
             lambda f: self._on_send_to_peer_completed(
                 connection, broadcast_requests_for_connection, f
