@@ -19,16 +19,23 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 @dataclass(frozen=True)
 class BroadcastRequest:
-    message: 'BroadcastMessage'
-    sender: Optional['NodeAddress'] = None
-    listener: Optional['BroadcastHandler.Listener'] = None
+    message: "BroadcastMessage"
+    sender: Optional["NodeAddress"] = None
+    listener: Optional["BroadcastHandler.Listener"] = None
+
 
 class Broadcaster(BroadcastHandler.ResultHandler):
     BROADCAST_INTERVAL_MS = 2000
 
-    def __init__(self, network_node: 'NetworkNode', peer_manager: 'PeerManager', max_connections: int):
+    def __init__(
+        self,
+        network_node: "NetworkNode",
+        peer_manager: "PeerManager",
+        max_connections: int,
+    ):
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._broadcast_handlers: ThreadSafeSet["BroadcastHandler"] = ThreadSafeSet()
@@ -36,25 +43,24 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         self._timer: Optional[Timer] = None
         self._shut_down_requested = False
         self._shut_down_result_handler: Optional[Callable[[], None]] = None
-        
+
         # Create thread pool executor
         self._executor = ThreadPoolExecutor(
-            max_workers=max_connections * 4,
-            thread_name_prefix="Broadcaster"
+            max_workers=max_connections * 4, thread_name_prefix="Broadcaster"
         )
 
     def shut_down(self, result_handler: Callable[[], None]) -> None:
         logger.info("Broadcaster shutdown started")
         self._shut_down_requested = True
         self._shut_down_result_handler = result_handler
-        
+
         if not self._broadcast_requests:
             self.do_shut_down()
         else:
             # We set delay of broadcasts and timeout to very low values,
             # so we can expect that we get on_completed called very fast and trigger the do_shut_down from there.
             self.maybe_broadcast_bundle()
-        
+
         self._executor.shutdown()
 
     def flush(self) -> None:
@@ -73,18 +79,30 @@ class Broadcaster(BroadcastHandler.ResultHandler):
     # API
     ###########################################################################################
 
-    def broadcast(self, message: 'BroadcastMessage', 
-                 sender: Optional['NodeAddress'] = None,
-                 listener: Optional['BroadcastHandler.Listener'] = None):
+    def broadcast(
+        self,
+        message: "BroadcastMessage",
+        sender: Optional["NodeAddress"] = None,
+        listener: Optional["BroadcastHandler.Listener"] = None,
+    ):
         self._broadcast_requests.append(BroadcastRequest(message, sender, listener))
         if not self._timer:
-            self._timer = UserThread.run_after(self.maybe_broadcast_bundle, timedelta(milliseconds=self.BROADCAST_INTERVAL_MS))
+            self._timer = UserThread.run_after(
+                self.maybe_broadcast_bundle,
+                timedelta(milliseconds=self.BROADCAST_INTERVAL_MS),
+            )
 
     def maybe_broadcast_bundle(self) -> None:
         if self._broadcast_requests:
-            broadcast_handler = BroadcastHandler(self._network_node, self._peer_manager, self)
+            broadcast_handler = BroadcastHandler(
+                self._network_node, self._peer_manager, self
+            )
             self._broadcast_handlers.add(broadcast_handler)
-            broadcast_handler.broadcast(copy(self._broadcast_requests), self._shut_down_requested, self._executor)
+            broadcast_handler.broadcast(
+                copy(self._broadcast_requests),
+                self._shut_down_requested,
+                self._executor,
+            )
             self._broadcast_requests.clear()
 
             if self._timer:
@@ -95,7 +113,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
     # BroadcastResultHandler implementation
     ###########################################################################################
 
-    def on_completed(self, broadcast_handler: 'BroadcastHandler') -> None:
+    def on_completed(self, broadcast_handler: "BroadcastHandler") -> None:
         self._broadcast_handlers.discard(broadcast_handler)
         if self._shut_down_requested:
             self.do_shut_down()
