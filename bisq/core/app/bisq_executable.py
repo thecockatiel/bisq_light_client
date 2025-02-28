@@ -18,7 +18,7 @@ from bisq.core.setup.core_setup import CoreSetup
 from global_container import GlobalContainer, set_global_container
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import user_data_dir
-from threading import Timer
+from threading import Timer, Thread
 from bisq.common.setup.log_setup import configure_logging, get_logger
 from bisq.common.config.config import Config
 
@@ -185,7 +185,10 @@ class BisqExecutable(
 
         def timeout_handler():
             logger.warning("Graceful shutdown not completed in 10 sec. Triggering timeout handler.")
-            self.flush_and_exit(result_handler, BisqExecutable.EXIT_SUCCESS)
+            # We create another thread because:
+            # - UserThread can be blocked by a shutdown routine
+            # - Timer thread is daemon so it can die in middle of flush_and_exit
+            Thread(target=self.flush_and_exit, name="flush_and_exit", args=(result_handler, BisqExecutable.EXIT_SUCCESS)).start()
 
         # We do not use the UserThread to avoid that the timeout would not get triggered in case the UserThread
         # would get blocked by a shutdown routine.

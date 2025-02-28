@@ -60,11 +60,12 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
         self._grpc_server.start()
 
     def graceful_shut_down(self, result_handler):
-        BisqDaemonMain.stop_keep_running()
-        super().graceful_shut_down(result_handler)
-
-        if self._grpc_server:
-            self._grpc_server.shut_down()
+        def on_finished_shutdown():
+            BisqDaemonMain.stop_keep_running()
+            if self._grpc_server:
+                self._grpc_server.shut_down()
+            result_handler()
+        super().graceful_shut_down(on_finished_shutdown)
 
     _keep_running_future: "asyncio.Future" = None
 

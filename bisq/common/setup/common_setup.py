@@ -9,7 +9,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.log_setup import get_logger
-
+from utils.debug_helpers import print_active_threads
 from bisq.common.ascii_logo import show_ascii_logo
 from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from signal import signal, SIGINT, SIGTERM
@@ -29,7 +29,13 @@ logger = get_logger(__name__)
 class CommonSetup:
     @staticmethod
     def setup_sig_int_handlers(graceful_shut_down_handler: GracefulShutDownHandler):
+        shutdown_initiated = False
         def signal_handler(sig: int, frame):
+            nonlocal shutdown_initiated
+            if shutdown_initiated:
+                logger.info(f"Shutdown in progress")
+                return
+            shutdown_initiated = True
             logger.info(f"Received signal {sig}")
             UserThread.execute(lambda: graceful_shut_down_handler.graceful_shut_down(lambda: None))
 
