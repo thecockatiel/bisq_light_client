@@ -29,7 +29,7 @@ class BroadcastHandler:
         def on_completed(self, broadcast_handler: "BroadcastHandler") -> None:
             pass
 
-    class listener(ABC):
+    class Listener(ABC):
         @abstractmethod
         def on_sufficiently_broadcast(
             self, broadcast_requests: list["BroadcastRequest"]
