@@ -87,12 +87,6 @@ class Server(Callable[[], None]):
         if self.is_server_active():
             self._interrupted.set()
             try:
-                for connection in self.connections:
-                    connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
-            except:
-                pass
-
-            try:
                 self.server_socket.shutdown(socket.SHUT_RDWR)
                 self.server_socket.close()
             except socket.error as e:
@@ -100,6 +94,11 @@ class Server(Callable[[], None]):
             except Exception as e:
                 logger.debug(f"Exception at shutdown. {str(e)}")
             finally:
+                try:
+                    for connection in self.connections:
+                        connection.shut_down(CloseConnectionReason.APP_SHUT_DOWN)
+                except:
+                    pass
                 logger.debug("Server shutdown complete")
         else:
             logger.warning("stopped already called at shutdown")
