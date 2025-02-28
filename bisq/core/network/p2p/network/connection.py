@@ -184,7 +184,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             return False
 
     def update_bundle_of_envelopes(self, bundle_of_envelopes: 'BundleOfEnvelopes'):
-        for network_envelope in bundle_of_envelopes.envelopes:
+        for network_envelope in bundle_of_envelopes.envelopes.copy():
             if not self.test_capability(network_envelope=network_envelope):
                 bundle_of_envelopes.envelopes.remove(network_envelope)
 
