@@ -57,7 +57,7 @@ class Price(MonetaryWrapper):
     def get_volume_by_amount(self, amount: Coin):
         from bisq.core.monetary.volume import Volume
         if isinstance(self.monetary, Fiat):
-            return Volume(self.coin_to_fiat(ExchangeRate(self.monetary), amount))
+            return Volume(self.coin_to_fiat(ExchangeRate(fiat=self.monetary), amount))
         elif isinstance(self.monetary, Altcoin):
             return Volume(AltcoinExchangeRate(altcoin=self.monetary).coin_to_altcoin(amount))
         else:
@@ -76,7 +76,7 @@ class Price(MonetaryWrapper):
     def get_amount_by_volume(self, volume: "Volume"):
         monetary = volume.monetary
         if isinstance(monetary, Fiat) and isinstance(self.monetary, Fiat):
-            return self.fiat_to_coin(ExchangeRate(monetary), monetary.value)
+            return self.fiat_to_coin(ExchangeRate(fiat=monetary), monetary.value)
         
     @staticmethod
     def fiat_to_coin(rate: ExchangeRate, convert_fiat: Fiat) -> Coin:
