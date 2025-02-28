@@ -9,6 +9,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
+from utils.aio import FutureCallback
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeSet
 
 if TYPE_CHECKING:
@@ -226,28 +227,15 @@ class BroadcastHandler:
             connection, broadcast_message, executor
         )
         self._send_message_futures.add(future)
-        future.add_done_callback(
-            lambda f: self._on_send_to_peer_completed(
-                connection, broadcast_requests_for_connection, f
-            )
-        )
 
-    def _on_send_to_peer_completed(
-        self,
-        connection: "Connection",
-        broadcast_requests_for_connection: list["BroadcastRequest"],
-        future: Future,
-    ):
-        try:
-            future.result()  # check for success
+        def on_success(result: "Connection"):
             self._num_completed_broadcasts.increment_and_get()
-
             if self._stopped:
                 return
-
             self._maybe_notify_listeners(broadcast_requests_for_connection)
             self._check_for_completion()
-        except Exception as e:
+
+        def on_failure(e: Exception):
             logger.warning(
                 f"Broadcast to {connection.peers_node_address} failed. ",
                 exc_info=(
@@ -261,6 +249,13 @@ class BroadcastHandler:
 
             self._maybe_notify_listeners(broadcast_requests_for_connection)
             self._check_for_completion()
+
+        future.add_done_callback(
+            FutureCallback(
+                on_success,
+                on_failure,
+            )
+        )
 
     def _get_message(self, broadcast_requests: list["BroadcastRequest"]):
         if len(broadcast_requests) == 1:
@@ -297,9 +292,8 @@ class BroadcastHandler:
                 max_possible_success_cases < num_of_completed_broadcasts_target - 1
             )
             #  We did not reach resilience level and timeout prevents to reach it later
-            timeout_and_not_enough_succeeded = (
-                self._timeout_triggered.set(True)
-                and self._num_completed_broadcasts.get()
+            timeout_and_not_enough_succeeded = self._timeout_triggered.get() and (
+                self._num_completed_broadcasts.get()
                 < num_of_completed_broadcasts_target
             )
             if not_enough_succeeded_or_open or timeout_and_not_enough_succeeded:
@@ -318,10 +312,10 @@ class BroadcastHandler:
             self._cleanup()
 
     def _cleanup(self):
-        if self._stopped:
+        if self._stopped.get():
             return
 
-        self._stopped = True
+        self._stopped.set(True)
 
         if self._timeout_timer:
             self._timeout_timer.stop()
