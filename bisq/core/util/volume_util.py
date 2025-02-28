@@ -16,13 +16,13 @@ class VolumeUtil:
     @staticmethod
     def get_rounded_fiat_volume(volume_by_amount: Volume):
         # We want to get rounded to 1 unit of the fiat currency, e.g. 1 EUR.
-        return VolumeUtil.get_adjusted_fiat_volume(volume_by_amount.monetary, 1)
+        return VolumeUtil.get_adjusted_fiat_volume(volume_by_amount, 1)
     
     @staticmethod
     def get_adjusted_volume_for_hal_cash(volume_by_amount: Volume):
         # EUR has precision 4 and we want multiple of 10 so we divide by 100000 then
         # round and multiply with 10
-        return VolumeUtil.get_adjusted_fiat_volume(volume_by_amount.monetary, 10)
+        return VolumeUtil.get_adjusted_fiat_volume(volume_by_amount, 10)
 
     @staticmethod
     def get_adjusted_fiat_volume(volume_by_amount: Volume, factor: int):
