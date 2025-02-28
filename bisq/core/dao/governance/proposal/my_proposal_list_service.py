@@ -214,7 +214,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
 
             # We delay removal of listener as we call that inside listener itself.
             UserThread.execute(
-                lambda: self.p2p_service.num_connected_peers.remove_listener(
+                lambda: self.p2p_service.num_connected_peers_property.remove_listener(
                     self.num_connected_peers_listener
                 )
             )
