@@ -196,7 +196,7 @@ class BroadcastHandler:
             self._maybe_notify_listeners(broadcast_requests)
             self._cleanup()
 
-        UserThread.run_after(timeout_handler, timedelta(milliseconds=timeout_delay))
+        self._timeout_timer = UserThread.run_after(timeout_handler, timedelta(milliseconds=timeout_delay))
 
     def _get_broadcast_requests_for_connection(
         self, connection: "Connection", broadcast_requests: list["BroadcastRequest"]
