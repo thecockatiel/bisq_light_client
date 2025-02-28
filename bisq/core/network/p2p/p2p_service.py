@@ -104,9 +104,9 @@ class P2PService(
             ThreadSafeSet()
         )
         self._shut_down_result_handlers: ThreadSafeSet["Callable"] = ThreadSafeSet()
-        self.hidden_service_published_property = SimpleProperty(False)
-        self.preliminary_data_received_property = SimpleProperty(False)
-        self.num_connected_peers_property = SimpleProperty(0)
+        self._hidden_service_published_property = SimpleProperty(False)
+        self._preliminary_data_received_property = SimpleProperty(False)
+        self._num_connected_peers_property = SimpleProperty(0)
 
         self._is_bootstrapped = False
         self._keep_alive_manager = keep_alive_manager
@@ -118,7 +118,7 @@ class P2PService(
 
         #  We need to have both the initial data delivered and the hidden service published
         self._network_ready_property = combine_simple_properties(
-            self.hidden_service_published_property, self.preliminary_data_received_property, transform=all
+            self._hidden_service_published_property, self._preliminary_data_received_property, transform=all
         )
         self._network_ready_unsubscribe = self._network_ready_property.add_listener(
             lambda e: self.on_network_ready() if e.new_value else None
@@ -205,7 +205,7 @@ class P2PService(
             "Address must be set when we have the hidden service ready",
         )
 
-        self.hidden_service_published_property.set(True)
+        self._hidden_service_published_property.set(True)
 
         for listener in self._p2p_service_listeners:
             listener.on_hidden_service_published()
@@ -254,10 +254,10 @@ class P2PService(
 
     def on_preliminary_data_received(self):
         check_argument(
-            not self.preliminary_data_received_property.get(),
+            not self._preliminary_data_received_property.get(),
             "preliminary_data_received was already set before.",
         )
-        self.preliminary_data_received_property.set(True)
+        self._preliminary_data_received_property.set(True)
 
     def on_updated_data_received(self):
         for listener in self._p2p_service_listeners:
@@ -298,10 +298,10 @@ class P2PService(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_connection(self, connection: "Connection") -> None:
-        self.num_connected_peers_property.set(len(self._network_node.get_all_connections()))
+        self._num_connected_peers_property.set(len(self._network_node.get_all_connections()))
         # TODO check if still needed and why
         UserThread.run_after(
-            lambda: self.num_connected_peers_property.set(
+            lambda: self._num_connected_peers_property.set(
                 len(self._network_node.get_all_connections())
             ),
             timedelta(seconds=3),
@@ -310,10 +310,10 @@ class P2PService(
     def on_disconnect(
         self, close_connection_reason: "CloseConnectionReason", connection: "Connection"
     ) -> None:
-        self.num_connected_peers_property.set(len(self._network_node.get_all_connections()))
+        self._num_connected_peers_property.set(len(self._network_node.get_all_connections()))
         # TODO check if still needed and why
         UserThread.run_after(
-            lambda: self.num_connected_peers_property.set(
+            lambda: self._num_connected_peers_property.set(
                 len(self._network_node.get_all_connections())
             ),
             timedelta(seconds=3),
@@ -563,7 +563,11 @@ class P2PService(
 
     @property
     def num_connected_peers(self):
-        return self.num_connected_peers_property.get()
+        return self._num_connected_peers_property.get()
+
+    @property
+    def num_connected_peers_property(self):
+        return self._num_connected_peers_property
 
     @property
     def data_map(self):
