@@ -107,6 +107,9 @@ class Price(MonetaryWrapper):
             return self.get_currency_code() < other.get_currency_code()
         return self.get_value() < other.get_value()
     
+    def __neg__(self):
+        return Price(self.monetary.negate())
+    
     def is_positive(self) -> bool:
         return self.monetary.is_positive()
     

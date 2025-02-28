@@ -129,6 +129,9 @@ class Fiat(Monetary):
 
     def negate(self) -> "Fiat":
         return Fiat(self.currency_code, -self.value)
+    
+    def __neg__(self) -> "Fiat":
+        return self.negate()
 
     def to_friendly_string(self) -> str:
         """

@@ -239,6 +239,9 @@ class Coin(Monetary):
         """Returns the negation of this value."""
         return Coin.value_of(-self.value)
     
+    def __neg__(self) -> 'Coin':
+        return self.negate()
+    
     def to_friendly_string(self) -> str:
         return bitcoinj.base.utils.monetary_format.COIN_FRIENDLY_FORMAT.format(self)
     
