@@ -344,8 +344,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 if shutdown_completed.get() == num_connections:
                     logger.info("Shutdown completed with all connections closed")
                     timer.stop()
-                    self.connection_executor.shutdown(wait=False)
-                    self.send_message_executor.shutdown(wait=False)
+                    self.connection_executor.shutdown(wait=False, cancel_futures=True)
+                    self.send_message_executor.shutdown(wait=False, cancel_futures=True)
                     if shut_down_complete_handler:
                         shut_down_complete_handler()
 
