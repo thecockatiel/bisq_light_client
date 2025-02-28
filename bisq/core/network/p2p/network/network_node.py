@@ -150,9 +150,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             return outbound_connection
 
     def send_message(
-        self, peers_node_address_or_connection: Union["NodeAddress", "Connection"], network_envelope: NetworkEnvelope
+        self, peers_node_address_or_connection: Union["NodeAddress", "Connection"], network_envelope: NetworkEnvelope, executor: "ThreadPoolExecutor" = None
     ):
         assert peers_node_address_or_connection, "peers_node_address_or_connection must not be null"
+        if executor is None:
+            executor = self.send_message_executor
         
         peers_node_address = None
         if isinstance(peers_node_address_or_connection, NodeAddress):
@@ -170,7 +172,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 connection = self.get_inbound_connection(peers_node_address)
 
             if connection:
-                future = self.send_message_executor.submit(
+                future = executor.submit(
                     self._send_message_using_connection, connection, network_envelope
                 )
             else:
@@ -184,7 +186,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 )
         else:
             peers_node_address = peers_node_address_or_connection.peers_node_address
-            future = self.send_message_executor.submit(
+            future = executor.submit(
                         self._send_message_using_connection, peers_node_address_or_connection, network_envelope
                     )
         
