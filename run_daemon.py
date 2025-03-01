@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 # -*- mode: python -*-
-import sys
+from utils.common_checks import do_common_checks
+
+do_common_checks()
+
 
 from utils.pb_helper import check_and_use_pure_python_pb_implementation
 
 check_and_use_pure_python_pb_implementation()
 
-MIN_PYTHON_VERSION = "3.9.0"
-_min_python_version_tuple = tuple(map(int, (MIN_PYTHON_VERSION.split("."))))
-
-
-if sys.version_info[:3] < _min_python_version_tuple:
-    sys.exit(
-        f"Error: Bisq light client requires Python version >= {MIN_PYTHON_VERSION}..."
-    )
 
 import utils.aio  # to install reactor first
 import asyncio
