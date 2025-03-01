@@ -331,27 +331,33 @@ class ECPubkey(object):
         # check message
         return self.verify_message_hash(sig65[1:], h)
 
-    def verify_message_hash(self, sig_string: bytes, msg_hash: bytes) -> bool:
-        assert_bytes(sig_string)
-        if len(sig_string) != 64:
-            # NOTE: we fallback to cryptography module due to some signatures not being 64 bytes long
-            pubkey = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), self.get_public_key_bytes(compressed=False))
+    def verify_message_hash(
+            self,
+            sig64: bytes,
+            msg32: bytes,
+            *,
+            enforce_low_s: bool = True,  # policy/standardness rule
+        ) -> bool:
+        assert_bytes(sig64)
+        if len(sig64) != 64:
+            # This can happen if r or s are encoded as signed integers
             try:
-                pubkey.verify(sig_string, msg_hash, ec.ECDSA(Prehashed(hashes.SHA256())))
-                return True
-            except:
-                return False 
-        if not (isinstance(msg_hash, bytes) and len(msg_hash) == 32):
+                # If sig64 is actually a DER signature, try to get r and s values
+                r, s = get_r_and_s_from_der_sig(sig64)
+                # Convert r and s to a proper compact signature format
+                sig64 = sig_string_from_r_and_s(r, s)
+            except Exception:
+                return False
+        if not (isinstance(msg32, bytes) and len(msg32) == 32):
             return False
-
         sig = create_string_buffer(64)
-        ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig_string)
-        if not ret:
+        ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig64)
+        if 1 != ret:
             return False
-        ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
-
+        if not enforce_low_s:
+            ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
         pubkey = self._to_libsecp256k1_pubkey_ptr()
-        if 1 != _libsecp256k1.secp256k1_ecdsa_verify(_libsecp256k1.ctx, sig, msg_hash, pubkey):
+        if 1 != _libsecp256k1.secp256k1_ecdsa_verify(_libsecp256k1.ctx, sig, msg32, pubkey):
             return False
         return True
 
