@@ -32,23 +32,23 @@ from typing import Tuple, TYPE_CHECKING, Union, Sequence, Optional, Dict, List, 
 from functools import lru_cache, wraps
 from abc import ABC, abstractmethod
 
-from electrum_min import bitcoin, ecc, constants, bip32
-from electrum_min.bitcoin import deserialize_privkey, serialize_privkey, BaseDecodeError
-from electrum_min.transaction import Transaction, PartialTransaction, PartialTxInput, PartialTxOutput, TxInput
-from electrum_min.bip32 import (convert_bip32_strpath_to_intpath, BIP32_PRIME,
+from . import bitcoin, ecc, constants, bip32
+from .bitcoin import deserialize_privkey, serialize_privkey, BaseDecodeError
+from .transaction import Transaction, PartialTransaction, PartialTxInput, PartialTxOutput, TxInput
+from .bip32 import (convert_bip32_strpath_to_intpath, BIP32_PRIME,
                     is_xpub, is_xprv, BIP32Node, normalize_bip32_derivation,
                     convert_bip32_intpath_to_strpath, is_xkey_consistent_with_key_origin_info,
                     KeyOriginInfo)
-from electrum_min.descriptor import PubkeyProvider
-from electrum_min.ecc import string_to_number
-from electrum_min.crypto import (pw_decode, pw_encode, sha256, sha256d, PW_HASH_VERSION_LATEST,
+from .descriptor import PubkeyProvider
+from .ecc import string_to_number
+from .crypto import (pw_decode, pw_encode, sha256, sha256d, PW_HASH_VERSION_LATEST,
                      SUPPORTED_PW_HASH_VERSIONS, UnsupportedPasswordHashVersion, hash_160,
                      CiphertextFormatError)
-from electrum_min.util import (InvalidPassword, WalletFileException,
+from .util import (InvalidPassword, WalletFileException,
                    BitcoinException, bfh, inv_dict, is_hex_str)
-from electrum_min.mnemonic import Mnemonic, Wordlist, calc_seed_type, is_seed
-from electrum_min.plugin import run_hook
-from electrum_min.elogging import Logger
+from .mnemonic import Mnemonic, Wordlist, calc_seed_type, is_seed
+from .plugin import run_hook
+from .elogging import Logger
 
 if TYPE_CHECKING:
     from .gui.qt.util import TaskThread

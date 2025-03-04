@@ -23,15 +23,20 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Tuple, Optional, Union, Sequence
+import hashlib
+from typing import List, Tuple, TYPE_CHECKING, Optional, Union, Sequence
 import enum
 from enum import IntEnum, Enum
 
 from .util import bfh, BitcoinException, assert_bytes, to_bytes, inv_dict, is_hex_str, classproperty
+from . import version
 from . import segwit_addr
 from . import constants
 from . import ecc
 from .crypto import sha256d, sha256, hash_160, hmac_oneshot
+
+if TYPE_CHECKING:
+    from .network import Network
 
 
 ################################## transactions
@@ -333,17 +338,17 @@ def construct_script(items: Sequence[Union[str, int, bytes, opcodes]], values=No
     return script
 
 
-# def relayfee(network: 'Network' = None) -> int:
-#     """Returns feerate in sat/kbyte."""
-#     from .simple_config import FEERATE_DEFAULT_RELAY, FEERATE_MAX_RELAY
-#     if network and network.relay_fee is not None:
-#         fee = network.relay_fee
-#     else:
-#         fee = FEERATE_DEFAULT_RELAY
-#     # sanity safeguards, as network.relay_fee is coming from a server:
-#     fee = min(fee, FEERATE_MAX_RELAY)
-#     fee = max(fee, FEERATE_DEFAULT_RELAY)
-#     return fee
+def relayfee(network: 'Network' = None) -> int:
+    """Returns feerate in sat/kbyte."""
+    from .simple_config import FEERATE_DEFAULT_RELAY, FEERATE_MAX_RELAY
+    if network and network.relay_fee is not None:
+        fee = network.relay_fee
+    else:
+        fee = FEERATE_DEFAULT_RELAY
+    # sanity safeguards, as network.relay_fee is coming from a server:
+    fee = min(fee, FEERATE_MAX_RELAY)
+    fee = max(fee, FEERATE_DEFAULT_RELAY)
+    return fee
 
 
 # see https://github.com/bitcoin/bitcoin/blob/a62f0ed64f8bbbdfe6467ac5ce92ef5b5222d1bd/src/policy/policy.cpp#L14
@@ -355,12 +360,12 @@ DUST_LIMIT_P2WSH = 330
 DUST_LIMIT_P2WPKH = 294
 
 
-# def dust_threshold(network: 'Network' = None) -> int:
-#     """Returns the dust limit in satoshis."""
-#     # Change <= dust threshold is added to the tx fee
-#     dust_lim = 182 * 3 * relayfee(network)  # in msat
-#     # convert to sat, but round up:
-#     return (dust_lim // 1000) + (dust_lim % 1000 > 0)
+def dust_threshold(network: 'Network' = None) -> int:
+    """Returns the dust limit in satoshis."""
+    # Change <= dust threshold is added to the tx fee
+    dust_lim = 182 * 3 * relayfee(network)  # in msat
+    # convert to sat, but round up:
+    return (dust_lim // 1000) + (dust_lim % 1000 > 0)
 
 
 def hash_encode(x: bytes) -> str:
