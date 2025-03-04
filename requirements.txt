@@ -16,5 +16,6 @@ certifi>=2022.9.24
 dnspython>=2.3
 six>=1.16
 attrs>=20.1.0
+jsonpatch
 
 pypiwin32; platform_system == "Windows"
