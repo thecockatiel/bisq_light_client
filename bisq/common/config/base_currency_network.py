@@ -9,11 +9,11 @@ from bitcoinj.params.test_net3_params import TestNet3Params
 
 class BaseCurrencyNetwork(Enum):
     BTC_MAINNET = MainNetParams(), "BTC", "MAINNET", "Bitcoin"
-    BTC_TESTNET = TestNet3Params(), "BTC", "MAINNET", "Bitcoin"
-    BTC_REGTEST = RegTestParams(), "BTC", "MAINNET", "Bitcoin"
-    BTC_DAO_TESTNET = TestNet3Params(), "BTC", "MAINNET", "Bitcoin" #  server side regtest until v0.9.5
+    BTC_TESTNET = TestNet3Params(), "BTC", "TESTNET", "Bitcoin"
+    BTC_REGTEST = RegTestParams(), "BTC", "REGTEST", "Bitcoin"
+    BTC_DAO_TESTNET = RegTestParams(), "BTC", "REGTEST", "Bitcoin" #  server side regtest until v0.9.5
     BTC_DAO_BETANET = MainNetParams(), "BTC", "MAINNET", "Bitcoin" # mainnet test genesis
-    BTC_DAO_REGTEST = RegTestParams(), "BTC", "MAINNET", "Bitcoin" # server side regtest after v0.9.5, had breaking code changes so we started over again
+    BTC_DAO_REGTEST = RegTestParams(), "BTC", "REGTEST", "Bitcoin" # server side regtest after v0.9.5, had breaking code changes so we started over again
     
     def __init__(self, parameters: NetworkParameters, currency_code: str, network: str, currency_name: str):
         self.parameters = parameters
