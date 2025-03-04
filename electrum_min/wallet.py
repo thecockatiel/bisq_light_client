@@ -3280,6 +3280,9 @@ class Abstract_Wallet(ABC, Logger, EventListener):
             self.check_password(password)
         self._password_in_memory = password
 
+    def lock(self):
+        self._password_in_memory = None
+
     def get_unlocked_password(self):
         return self._password_in_memory
 
