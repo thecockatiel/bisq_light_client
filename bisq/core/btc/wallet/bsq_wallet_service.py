@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_output import TransactionOutput
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
     from bitcoinj.core.transaction import Transaction

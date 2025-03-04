@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from bisq.core.support.messages.support_message import SupportMessage
     from bisq.core.trade.model.bisq_v1.trade import Trade 
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.trade.bisq_v1.failed_trades_manager import FailedTradesManager

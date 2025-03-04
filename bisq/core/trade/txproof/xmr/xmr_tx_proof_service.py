@@ -17,7 +17,7 @@ from utils.data import ObservableChangeEvent, SimpleProperty, SimplePropertyChan
 
 if TYPE_CHECKING:
     from bisq.core.user.auto_confirm_settings import AutoConfirmSettings
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.network_parameters import NetworkParameters
     from bitcoinj.core.transaction_confidence import TransactionConfidence

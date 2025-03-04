@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
 
 
 logger = get_logger(__name__)

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from bisq.common.config.config import Config
     from bisq.core.api.core_context import CoreContext
     from bisq.core.btc.wallet.wallets_manager import WalletsManager
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
     from bisq.core.offer.open_offer_manager import OpenOfferManager

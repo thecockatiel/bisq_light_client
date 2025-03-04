@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.nodes.local_bitcoin_node import LocalBitcoinNode
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.wallets_manager import WalletsManager
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.dao.governance.voteresult.vote_result_exception import (
         VoteResultException,
     )

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from bisq.core.support.support_type import SupportType
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.common.timer import Timer
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.p2p.decrypted_message_with_pub_key import (
         DecryptedMessageWithPubKey,

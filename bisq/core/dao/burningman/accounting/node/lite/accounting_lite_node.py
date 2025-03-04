@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.common.timer import Timer
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bitcoinj.core.block import Block as BitcoinJBlock
     from bisq.core.dao.burningman.burning_man_accounting_service import (
         BurningManAccountingService,

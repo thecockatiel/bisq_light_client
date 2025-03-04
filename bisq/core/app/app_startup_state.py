@@ -3,7 +3,7 @@ from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from utils.data import SimpleProperty, combine_simple_properties
 
 if TYPE_CHECKING:
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.network.p2p.p2p_service import P2PService
 
 

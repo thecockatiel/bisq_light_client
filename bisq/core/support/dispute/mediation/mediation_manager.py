@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.dao.dao_facade import DaoFacade
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.offer.open_offer_manager import OpenOfferManager

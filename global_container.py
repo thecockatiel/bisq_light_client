@@ -1942,7 +1942,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
     @property
     def wallets_setup(self):
         if GlobalContainer._wallets_setup is None:
-            from bisq.core.btc.wallets_setup import WalletsSetup
+            from bisq.core.btc.setup.wallets_setup import WalletsSetup
 
             GlobalContainer._wallets_setup = WalletsSetup(
                 self.config,

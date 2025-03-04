@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     )
     from bisq.common.config.config import Config
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
-    from bisq.core.btc.wallets_setup import WalletsSetup
+    from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.dao.monitoring.model.dao_state_hash import DaoStateHash
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
