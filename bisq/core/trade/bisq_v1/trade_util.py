@@ -74,15 +74,17 @@ class TradeUtil:
             return None
 
         multi_sig_pub_key_string = bytes_as_hex_string(multi_sig_pub_key)
-        multi_sig_addresses = [
-            e
-            for e in self.btc_wallet_service.get_address_entry_list_as_immutable_list()
-            if e.get_key_pair().eckey.get_public_key_hex()
-            == multi_sig_pub_key_string  # TODO: Check DeterministicKey later
-        ]
-        if not multi_sig_addresses:
+         # TODO: Check later
+        multi_sig_address = next(
+            (
+                e
+                for e in self.btc_wallet_service.get_address_entry_list_as_immutable_list()
+                if e.get_key_pair().get_pub_key_as_hex() == multi_sig_pub_key_string
+            ),
+            None,
+        )
+        if not multi_sig_address:
             return None
-        multi_sig_address = multi_sig_addresses[0]
 
         # Get payout address
         payout_address = (

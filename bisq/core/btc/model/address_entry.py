@@ -41,8 +41,8 @@ class AddressEntry(PersistablePayload):
             self.pub_key = pub_key
             self.pub_key_hash = pub_key_hash
         else:
-            self.pub_key = key_pair.eckey.get_public_key_bytes()
-            self.pub_key_hash = get_sha256_ripemd160_hash(self.pub_key)
+            self.pub_key = key_pair.get_pub_key()
+            self.pub_key_hash = key_pair.get_pub_key_hash()
 
         self.offer_id = offer_id
         self.context = context
