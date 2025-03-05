@@ -5,6 +5,9 @@ from utils.data import SimpleProperty
 from utils.dir import check_dir
 
 if TYPE_CHECKING:
+    from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
+    from bisq.core.user.preferences import Preferences
+    from bisq.core.btc.model.address_entry_list import AddressEntryList
     from bisq.common.config.config import Config
     from bisq.core.btc.setup.wallet_config import WalletConfig
 
@@ -16,18 +19,30 @@ class WalletsSetup:
     PRE_SEGWIT_BTC_WALLET_BACKUP = "pre_segwit_bisq_BTC.wallet.backup"
     PRE_SEGWIT_BSQ_WALLET_BACKUP = "pre_segwit_bisq_BSQ.wallet.backup"
     STARTUP_TIMEOUT_SEC = 180
-    BSQ_WALLET_FILE_NAME = "bisq_BSQ.wallet"
     SPV_CHAIN_FILE_NAME = "bisq.spvchain"
 
-    def __init__(self, config: "Config"):
-        self.config = config
-        self.params = config.base_currency_network.parameters
+    def __init__(
+        self,
+        address_entry_list: "AddressEntryList",
+        preferences: "Preferences",
+        socks5_proxy_provider: "Socks5ProxyProvider",
+        config: "Config",
+    ): 
+        self._address_entry_list = address_entry_list
+        self._preferences = preferences
+        self._socks5_proxy_provider = socks5_proxy_provider
+        self._config = config
+
         self.num_peers_property = SimpleProperty(0)
         self.download_percentage_property = SimpleProperty(100.0 / 100.0)
         self.chain_height_property = SimpleProperty(0)
-        self.wallets_setup_failed = SimpleProperty(False)
+        self.wallets_setup_failed_property = SimpleProperty(False)
         self.wallet_config: Optional["WalletConfig"] = None
-        self.shut_down_complete = SimpleProperty(False)
+        self.shut_down_complete_property = SimpleProperty(False)
+
+    @property
+    def params(self):
+        return self._config.base_currency_network.parameters
 
     @property
     def is_download_complete(self):
@@ -43,7 +58,7 @@ class WalletsSetup:
         )
 
     def resync_spv_chain(self):
-        self.config.wallet_dir.joinpath(WalletsSetup.SPV_CHAIN_FILE_NAME).unlink(
+        self._config.wallet_dir.joinpath(WalletsSetup.SPV_CHAIN_FILE_NAME).unlink(
             missing_ok=True
         )
 
@@ -51,5 +66,14 @@ class WalletsSetup:
         return self.wallet_config
 
     def shut_down(self):
-        self.shut_down_complete.set(True)
+        self.shut_down_complete_property.set(True)
+        logger.info("wallets_setup.shut_down started")
 
+        def on_shutdown_complete():
+            logger.info("wallet_config shut down completed")
+            self.shut_down_complete_property.set(True)
+
+        if self.wallet_config:
+            self.wallet_config.shut_down(on_shutdown_complete)
+        else:
+            on_shutdown_complete()

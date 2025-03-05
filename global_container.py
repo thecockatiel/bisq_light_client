@@ -1945,6 +1945,9 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             from bisq.core.btc.setup.wallets_setup import WalletsSetup
 
             GlobalContainer._wallets_setup = WalletsSetup(
+                self.address_entry_list,
+                self.preferences,
+                self.socks5_proxy_provider,
                 self.config,
             )
 

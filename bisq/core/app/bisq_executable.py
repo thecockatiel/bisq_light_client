@@ -218,7 +218,7 @@ class BisqExecutable(
         self._injector.bsq_wallet_service.shut_down()
 
         wallets_setup = self._injector.wallets_setup
-        wallets_setup.shut_down_complete.add_listener(lambda _: self._on_wallets_setup_shutdown(result_handler))
+        wallets_setup.shut_down_complete_property.add_listener(lambda _: self._on_wallets_setup_shutdown(result_handler))
         wallets_setup.shut_down()
 
     def _on_wallets_setup_shutdown(self, result_handler: Callable[[], None]):

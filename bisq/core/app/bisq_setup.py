@@ -331,7 +331,7 @@ class BisqSetup:
         def on_startup_timeout():
             if (
                 self.p2p_network_setup.p2p_network_failed.get()
-                or self.wallets_setup.wallets_setup_failed.get()
+                or self.wallets_setup.wallets_setup_failed_property.get()
             ):
                 # Skip this timeout action if the p2p network or wallet setup failed
                 # since an error prompt will be shown containing the error message
