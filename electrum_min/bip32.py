@@ -7,12 +7,12 @@ import hashlib
 import struct
 from typing import List, Tuple, NamedTuple, Union, Iterable, Sequence, Optional
 
-from electrum_min.util import bfh, BitcoinException
-from electrum_min import constants
-from electrum_min import ecc
-from electrum_min.crypto import hash_160, hmac_oneshot
-from electrum_min.bitcoin import rev_hex, int_to_hex, EncodeBase58Check, DecodeBase58Check
-from electrum_min.elogging import get_logger
+from .util import bfh, BitcoinException
+from . import constants
+from . import ecc
+from .crypto import hash_160, hmac_oneshot
+from .bitcoin import rev_hex, int_to_hex, EncodeBase58Check, DecodeBase58Check
+from .elogging import get_logger
 
 
 _logger = get_logger(__name__)

@@ -40,25 +40,27 @@ import itertools
 import binascii
 import copy
 
-from bisq.common.setup.log_setup import get_logger
-
-from electrum_min import ecc, bitcoin, constants, segwit_addr, bip32
-from electrum_min.bip32 import BIP32Node
-from electrum_min.util import to_bytes, bfh, chunks, is_hex_str, parse_max_spend
-from electrum_min.bitcoin import (TYPE_ADDRESS, TYPE_SCRIPT, hash_160,
+from . import ecc, bitcoin, constants, segwit_addr, bip32
+from .bip32 import BIP32Node
+from .i18n import _
+from .util import profiler, to_bytes, bfh, chunks, is_hex_str, parse_max_spend
+from .bitcoin import (TYPE_ADDRESS, TYPE_SCRIPT, hash_160,
                       hash160_to_p2sh, hash160_to_p2pkh, hash_to_segwit_addr,
                       var_int, TOTAL_COIN_SUPPLY_LIMIT_IN_BTC, COIN,
                       int_to_hex, push_script, b58_address_to_hash160,
                       opcodes, add_number_to_script, base_decode,
                       base_encode, construct_witness, construct_script)
-from electrum_min.crypto import sha256d
-
-from electrum_min.util import ShortID, OldTaskGroup
-from electrum_min.descriptor import Descriptor, MissingSolutionPiece, create_dummy_descriptor_from_address
+from .crypto import sha256d
+from .elogging import get_logger
+from .util import ShortID, OldTaskGroup
+from .bitcoin import DummyAddress
+from .descriptor import Descriptor, MissingSolutionPiece, create_dummy_descriptor_from_address
+from .json_db import stored_in
 
 if TYPE_CHECKING:
-    from electrum_min.wallet import Abstract_Wallet
-    from electrum_min.network import Network
+    from .wallet import Abstract_Wallet
+    from .network import Network
+    from .simple_config import SimpleConfig
 
 
 _logger = get_logger(__name__)
@@ -2036,7 +2038,7 @@ class PartialTransaction(Transaction):
             txout.combine_with_other_txout(other_txout)
         self.invalidate_ser_cache()
 
-    def join_with_other_psbt(self, other_tx: 'PartialTransaction', *, merge_duplicates: bool) -> None:
+    def join_with_other_psbt(self, other_tx: 'PartialTransaction', *, config: 'SimpleConfig') -> None:
         """Adds inputs and outputs from other_tx into this one."""
         if not isinstance(other_tx, PartialTransaction):
             raise Exception('Can only join partial transactions.')
@@ -2053,7 +2055,7 @@ class PartialTransaction(Transaction):
         self._unknown.update(other_tx._unknown)
         # copy and add inputs and outputs
         self.add_inputs(list(other_tx.inputs()))
-        self.add_outputs(list(other_tx.outputs()), merge_duplicates=merge_duplicates)
+        self.add_outputs(list(other_tx.outputs()), merge_duplicates=config.WALLET_MERGE_DUPLICATE_OUTPUTS)
         self.remove_signatures()
         self.invalidate_ser_cache()
 
