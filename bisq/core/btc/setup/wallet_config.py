@@ -1,5 +1,6 @@
-from threading import Lock
 import utils.aio  # importing it sets up stuff
+from threading import Lock
+from electrum_min.util import EventListener, event_listener
 import asyncio
 from pathlib import Path
 from typing import Optional
@@ -13,6 +14,7 @@ from bisq.common.setup.log_setup import get_logger
 from electrum_min.daemon import Daemon
 from electrum_min.simple_config import SimpleConfig
 from bisq.common.config.config import Config
+from utils.data import SimpleProperty
 from utils.preconditions import check_state
 
 
@@ -42,6 +44,8 @@ class WalletConfig:
         self._initialized = False
         self._restore_from_seed: Optional[str] = seed
         self._lock = Lock()
+        self._current_height_property = SimpleProperty(0)
+        self._num_peers_property = SimpleProperty(0)
 
     @property
     def is_ready(self):
@@ -57,13 +61,34 @@ class WalletConfig:
         check_state(self.is_ready, "Cannot call until startup is complete")
         return self._bsq_wallet
 
-    def start_up(self, on_complete: Callable[[], None], exception_handler: Callable[[Exception], None]):
+    @property
+    def current_height_property(self):
+        return self._current_height_property
+
+    @property
+    def num_peers_property(self):
+        return self._num_peers_property
+
+    @event_listener
+    def on_event_blockchain_updated(self):
+        self._current_height_property.value = self._daemon.network.get_local_height()
+
+    @event_listener
+    def on_event_network_updated(self):
+        self._num_peers_property.value = len(self._daemon.network.get_interfaces())
+
+    def start_up(
+        self,
+        on_complete: Callable[[], None],
+        exception_handler: Callable[[Exception], None],
+    ):
         with self._lock:
             if self._initializing or self._initialized:
                 raise RuntimeError("Already starting up or already started up")
             self._initializing = True
             options = {}
             try:
+                EventListener.register_callbacks(self)
                 if self._config.base_currency_network.is_testnet():
                     options["testnet"] = True
                 elif (
@@ -74,7 +99,7 @@ class WalletConfig:
                     options["regtest"] = True
                 self._electrum_config = SimpleConfig(
                     options=options,
-                    read_user_dir_function=str(self._config.wallet_dir),
+                    read_user_dir_function=lambda: str(self._config.wallet_dir),
                 )
                 if self._config.tor_control_host:
                     self._electrum_config.NETWORK_PROXY = (
@@ -95,11 +120,12 @@ class WalletConfig:
                     self._electrum_config,
                     listen_jsonrpc=False,
                     start_network=False,
-                ) 
+                )
+
                 btc_wallet_file = self._config.wallet_dir.joinpath(
                     WalletConfig.BTC_WALLET_FILE_NAME
                 )
-    
+
                 bsq_wallet_file = self._config.wallet_dir.joinpath(
                     WalletConfig.BSQ_WALLET_FILE_NAME
                 )
@@ -132,9 +158,9 @@ class WalletConfig:
             except Exception as e:
                 exception_handler(e)
 
-
     def shut_down(self, complete_handler: Callable[[], None]):
         with self._lock:
+            EventListener.unregister_callbacks(self)
             if self._daemon is None:
                 self._initialized = False
                 complete_handler()
@@ -186,7 +212,8 @@ class WalletConfig:
                 derivation_path=WalletConfig.BSQ_SEGWIT_PATH,
                 encrypt_file=False,
                 # here, "None" is password. gets the seed from the btc wallet we created a moment ago
-                seed=self._restore_from_seed or self._btc_wallet.keystore.get_seed(None),
+                seed=self._restore_from_seed
+                or self._btc_wallet.keystore.get_seed(None),
             )
             return result["wallet"]
         else:
