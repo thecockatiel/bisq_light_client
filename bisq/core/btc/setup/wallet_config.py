@@ -1,3 +1,4 @@
+from threading import Lock
 import utils.aio  # importing it sets up stuff
 import asyncio
 from pathlib import Path
@@ -12,6 +13,7 @@ from bisq.common.setup.log_setup import get_logger
 from electrum_min.daemon import Daemon
 from electrum_min.simple_config import SimpleConfig
 from bisq.common.config.config import Config
+from utils.preconditions import check_state
 
 
 logger = get_logger(__name__)
@@ -37,82 +39,112 @@ class WalletConfig:
         self._daemon: Optional["Daemon"] = None
         self._btc_wallet: Optional["Wallet"] = None
         self._bsq_wallet: Optional["Wallet"] = None
+        self._initializing = False
+        self._initialized = False
+        self._lock = Lock()
+
+    @property
+    def is_ready(self):
+        return self._initialized
+
+    @property
+    def btc_wallet(self):
+        check_state(self.is_ready, "Cannot call until startup is complete")
+        return self._btc_wallet
+
+    @property
+    def bsq_wallet(self):
+        check_state(self.is_ready, "Cannot call until startup is complete")
+        return self._bsq_wallet
 
     def start_up(self):
-        options = {}
-        if self._config.base_currency_network.is_testnet():
-            options["testnet"] = True
-        elif (
-            self._config.base_currency_network.is_regtest()
-            or self._config.base_currency_network.is_dao_testnet()
-            or self._config.base_currency_network.is_dao_regtest()
-        ):
-            options["regtest"] = True
-        self._electrum_config = SimpleConfig(
-            options=options,
-            read_user_dir_function=str(self._config.wallet_dir),
-        )
-        if self._config.tor_control_host:
-            self._electrum_config.NETWORK_PROXY = (
-                self._config.tor_control_host + ":" + str(self._config.tor_control_port)
+        with self._lock:
+            if self._initializing or self._initialized:
+                return
+            self._initializing = True
+            options = {}
+            if self._config.base_currency_network.is_testnet():
+                options["testnet"] = True
+            elif (
+                self._config.base_currency_network.is_regtest()
+                or self._config.base_currency_network.is_dao_testnet()
+                or self._config.base_currency_network.is_dao_regtest()
+            ):
+                options["regtest"] = True
+            self._electrum_config = SimpleConfig(
+                options=options,
+                read_user_dir_function=str(self._config.wallet_dir),
             )
-        if self._config.tor_proxy_username:
-            self._electrum_config.NETWORK_PROXY_USER = self._config.tor_proxy_username
-        if self._config.tor_proxy_password:
-            self._electrum_config.NETWORK_PROXY_PASSWORD = (
-                self._config.tor_proxy_password
+            if self._config.tor_control_host:
+                self._electrum_config.NETWORK_PROXY = (
+                    self._config.tor_control_host
+                    + ":"
+                    + str(self._config.tor_control_port)
+                )
+            if self._config.tor_proxy_username:
+                self._electrum_config.NETWORK_PROXY_USER = (
+                    self._config.tor_proxy_username
+                )
+            if self._config.tor_proxy_password:
+                self._electrum_config.NETWORK_PROXY_PASSWORD = (
+                    self._config.tor_proxy_password
+                )
+
+            self._daemon = Daemon(
+                self._electrum_config,
+                listen_jsonrpc=False,
+                start_network=False,
+            )
+            btc_prefix = "_BTC"
+            btc_wallet_file = self._config.wallet_dir.joinpath(
+                self._file_prefix + btc_prefix + WalletConfig.BTC_WALLET_FILE_NAME
             )
 
-        self._daemon = Daemon(
-            self._electrum_config,
-            listen_jsonrpc=False,
-            start_network=False,
-        )
-        btc_prefix = "_BTC"
-        btc_wallet_file = self._config.wallet_dir.joinpath(
-            self._file_prefix + btc_prefix + WalletConfig.BTC_WALLET_FILE_NAME
-        )
-
-        bsq_prefix = "_BSQ"
-        bsq_wallet_file = self._config.wallet_dir.joinpath(
-            self._file_prefix + bsq_prefix + WalletConfig.BSQ_WALLET_FILE_NAME
-        )
-        # TODO: define and use password
-        self._btc_wallet = Wallet(
-            self._create_or_load_wallet(
-                # TODO: check should_replay_wallet later to see if needed
-                False,
-                btc_wallet_file,
-                False,
-            ),
-            self._daemon.network,
-        )
-        self._bsq_wallet = Wallet(
-            self._daemon.load_wallet(
-                # TODO: check should_replay_wallet later to see if needed
-                False,
-                bsq_wallet_file,
-                False,
-            ),
-            self._daemon.network,
-        )
-        self._daemon.start_network()
-        self._btc_wallet.start_network(self._daemon.network)
-        self._bsq_wallet.start_network(self._daemon.network)
+            bsq_prefix = "_BSQ"
+            bsq_wallet_file = self._config.wallet_dir.joinpath(
+                self._file_prefix + bsq_prefix + WalletConfig.BSQ_WALLET_FILE_NAME
+            )
+            # TODO: define and use password
+            self._btc_wallet = Wallet(
+                self._create_or_load_wallet(
+                    # TODO: check should_replay_wallet later to see if needed
+                    False,
+                    btc_wallet_file,
+                    False,
+                ),
+                self._daemon.network,
+            )
+            self._bsq_wallet = Wallet(
+                self._daemon.load_wallet(
+                    # TODO: check should_replay_wallet later to see if needed
+                    False,
+                    bsq_wallet_file,
+                    False,
+                ),
+                self._daemon.network,
+            )
+            self._daemon.start_network()
+            self._btc_wallet.start_network(self._daemon.network)
+            self._bsq_wallet.start_network(self._daemon.network)
+            self._initializing = False
+            self._initialized = True
 
     def shut_down(self, complete_handler: Callable[[], None]):
-        if self._daemon is None:
-            complete_handler()
-        else:
-            btc_stop_task = asyncio.create_task(self._btc_wallet.stop())
-            bsq_stop_task = asyncio.create_task(self._bsq_wallet.stop())
-
-            async def stop_wallets_and_daemon():
-                await asyncio.gather(btc_stop_task, bsq_stop_task)
-                await self._daemon.stop()
+        with self._lock:
+            if self._daemon is None:
+                self._initialized = False
                 complete_handler()
+            else:
+                btc_stop_task = asyncio.create_task(self._btc_wallet.stop())
+                bsq_stop_task = asyncio.create_task(self._bsq_wallet.stop())
 
-            asyncio.create_task(stop_wallets_and_daemon())
+                async def stop_wallets_and_daemon():
+                    await asyncio.gather(btc_stop_task, bsq_stop_task)
+                    await self._daemon.stop()
+                    self._initialized = False
+                    complete_handler()
+
+                asyncio.create_task(stop_wallets_and_daemon())
 
     def _create_or_load_wallet(
         self,
