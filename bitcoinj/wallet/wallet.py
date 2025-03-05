@@ -1,19 +1,27 @@
 from typing import TYPE_CHECKING, Optional
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.core.address import Address
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
-from electrum_min.util import EventListener, event_listener
+from electrum_min.storage import StorageEncryptionVersion
+from electrum_min.util import EventListener, InvalidPassword, event_listener
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
     from electrum_min.wallet import Abstract_Wallet
-    from bitcoinj.wallet.listeners.wallet_change_event_listener import WalletChangeEventListener
+    from bitcoinj.wallet.listeners.wallet_change_event_listener import (
+        WalletChangeEventListener,
+    )
+
 
 # TODO implement as needed
 class Wallet:
-    
-    def __init__(self, electrum_wallet: "Abstract_Wallet", network: "NetworkParameters"):
+
+    def __init__(
+        self, electrum_wallet: "Abstract_Wallet", network: "NetworkParameters"
+    ):
         self._electrum_wallet = electrum_wallet
         self._network = network
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
@@ -28,7 +36,7 @@ class Wallet:
         if not self._registered_for_callbacks:
             self._registered_for_callbacks = True
             EventListener.register_callbacks(self)
-        
+
     def unregister_electrum_callbacks(self):
         if self._registered_for_callbacks:
             self._registered_for_callbacks = False
@@ -77,7 +85,9 @@ class Wallet:
         return None
 
     def get_receiving_address(self) -> "Address":
-        return Address.from_string(self._electrum_wallet.get_receiving_address(), self._network)
+        return Address.from_string(
+            self._electrum_wallet.get_receiving_address(), self._network
+        )
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):
         self._change_listeners.add(listener)
@@ -87,3 +97,29 @@ class Wallet:
             self._change_listeners.discard(listener)
             return True
         return False
+
+    def decrypt(self, password: str):
+        """removes wallet file password"""
+        if not self.is_encrypted:
+            raise IllegalStateException("Wallet is not encrypted")
+        try:
+            self._electrum_wallet.update_password(password, None)
+        except InvalidPassword:
+            raise IllegalArgumentException("Invalid password")
+
+    def encrypt(self, password: str):
+        """adds password to wallet file"""
+        if self.is_encrypted:
+            raise IllegalStateException("Wallet is already encrypted")
+        # NOTE: this operation is io blocking, but should be fine
+        self._electrum_wallet.update_password(None, password)
+
+    def unlock(self, password: str):
+        self._electrum_wallet.unlock(password)
+
+    def lock(self):
+        self._electrum_wallet.lock()
+
+    @property
+    def is_encrypted(self):
+        return self._electrum_wallet.has_storage_encryption()
