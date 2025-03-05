@@ -27,7 +27,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
     def __init__(self, persistence_manager: Optional["PersistenceManager[AddressEntryList]"] = None, entry_set: Optional[ThreadSafeSet["AddressEntry"]] = None):
         super().__init__()
         self.wallet: Optional["Wallet"] = None
-        self.entry_set: ThreadSafeSet["AddressEntry"] = ThreadSafeSet(entry_set) or ThreadSafeSet()
+        self.entry_set: ThreadSafeSet["AddressEntry"] = ThreadSafeSet(entry_set)
         self.persistence_manager = persistence_manager
         if self.persistence_manager:
             self.persistence_manager.initialize(self, PersistenceManagerSource.PRIVATE)
