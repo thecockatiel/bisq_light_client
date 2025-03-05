@@ -1,8 +1,26 @@
 [
     {
-        "description": "Standard BIP44 legacy",
+        "description": "Standard BIP44 legacy (also Bisq non-segwit)",
         "derivation_path": "m/44'/0'/0'",
         "script_type": "p2pkh",
+        "iterate_accounts": true
+    },
+    {
+        "description": "Bisq BTC Segwit",
+        "derivation_path": "m/44'/0'/1'",
+        "script_type": "p2wpkh",
+        "iterate_accounts": true
+    },
+    {
+        "description": "Bisq BSQ Non-Segwit",
+        "derivation_path": "m/44'/142'/0'",
+        "script_type": "p2pkh",
+        "iterate_accounts": true
+    },
+    {
+        "description": "Bisq BSQ Segwit",
+        "derivation_path": "m/44'/142'/1'",
+        "script_type": "p2wpkh",
         "iterate_accounts": true
     },
     {
