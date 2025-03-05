@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 
 # TODO
-class WalletConfig:
+class WalletConfig(EventListener):
     """
     Tries to do the same thing as WalletConfig in bisq, except with electrum as it's wallet
 

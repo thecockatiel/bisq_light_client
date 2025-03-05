@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 # TODO implement as needed
-class Wallet:
+class Wallet(EventListener):
 
     def __init__(
         self, electrum_wallet: "Abstract_Wallet", network: "NetworkParameters"

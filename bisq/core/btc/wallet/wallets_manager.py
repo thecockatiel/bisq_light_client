@@ -31,20 +31,20 @@ class WalletsManager:
     def are_wallets_encrypted(self):
         return (
             self.are_wallets_available()
-            and self.btc_wallet_service.is_encrypted()
-            and self.bsq_wallet_service.is_encrypted()
+            and self.btc_wallet_service.is_encrypted
+            and self.bsq_wallet_service.is_encrypted
         )
 
     def are_wallets_available(self):
         return (
-            self.btc_wallet_service.is_wallet_ready()
-            and self.bsq_wallet_service.is_wallet_ready()
+            self.btc_wallet_service.is_wallet_ready
+            and self.bsq_wallet_service.is_wallet_ready
         )
 
-    def set_aes_key(self, aes_key: bytes):
-        self.btc_wallet_service.aes_key = aes_key
-        self.bsq_wallet_service.aes_key = aes_key
-        self.trade_wallet_service.aes_key = aes_key
+    def set_password(self, password: str):
+        self.btc_wallet_service.password = password
+        self.bsq_wallet_service.password = password
+        self.trade_wallet_service.password = password
 
     def maybe_add_segwit_keychains(self, aes_key: bytes):
         pass # no need to implement

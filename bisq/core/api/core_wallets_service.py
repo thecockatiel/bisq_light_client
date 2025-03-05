@@ -91,14 +91,14 @@ class CoreWalletsService:
         self.preferences = preferences
 
         self.lock_timer: Optional[Timer] = None
-        self.temp_aes_key: Optional[bytes] = None
+        self.temp_password: Optional[str] = None
         self.executor = ThreadPoolExecutor(
             max_workers=1, thread_name_prefix="CoreWalletsService"
         )
 
-    def get_key(self) -> bytes:
+    def get_key(self) -> str:
         self.verify_encrypted_wallet_is_unlocked()
-        return self.temp_aes_key
+        return self.temp_password
 
     def get_network_parameters(self) -> "NetworkParameters":
         return self.btc_wallet_service.params
@@ -288,7 +288,7 @@ class CoreWalletsService:
                 receiver_amount,
                 fee,
                 None,
-                self.temp_aes_key,
+                self.temp_password,
                 memo if memo else None,
                 callback,
             )
@@ -423,7 +423,7 @@ class CoreWalletsService:
 
     def verify_encrypted_wallet_is_unlocked(self) -> None:
         """Throws a RuntimeException if wallets are encrypted and locked."""
-        if self.wallets_manager.are_wallets_encrypted() and self.temp_aes_key is None:
+        if self.wallets_manager.are_wallets_encrypted() and self.temp_password is None:
             raise FailedPreconditionException("wallet is locked")
 
     def verify_wallet_and_network_is_ready(self) -> None:
@@ -459,18 +459,18 @@ class CoreWalletsService:
         Unlike the UI, a daemon cannot capture the user's wallet encryption password
         during startup. This method will set the wallet service's aesKey if necessary.
         """
-        if self.temp_aes_key is None:
+        if self.temp_password is None:
             raise IllegalStateException(
                 "cannot use None key, unlockwallet timeout may have expired"
             )
 
         if (
-            self.btc_wallet_service.aes_key is None
-            or self.bsq_wallet_service.aes_key is None
+            self.btc_wallet_service.password is None
+            or self.bsq_wallet_service.password is None
         ):
-            aes_key = self.temp_aes_key
-            self.wallets_manager.set_aes_key(aes_key)
-            self.wallets_manager.maybe_add_segwit_keychains(aes_key)
+            password = self.temp_password
+            self.wallets_manager.set_password(password)
+            self.wallets_manager.maybe_add_segwit_keychains(password)
 
     def _get_bsq_balances(self) -> "BsqBalanceInfo":
         self.verify_wallets_are_available()

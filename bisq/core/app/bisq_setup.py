@@ -111,39 +111,40 @@ class BisqSetup:
         refund_manager: "RefundManager",
         arbitration_manager: "ArbitrationManager",
     ):
-        self.domain_initialisation: "DomainInitialisation" = domain_initialisation
-        self.p2p_network_setup: "P2PNetworkSetup" = p2p_network_setup
-        self.wallet_app_setup: "WalletAppSetup" = wallet_app_setup
-        self.wallets_manager: "WalletsManager" = wallets_manager
-        self.wallets_setup: "WalletsSetup" = wallets_setup
-        self.btc_wallet_service: "BtcWalletService" = btc_wallet_service
-        self.p2p_service: "P2PService" = p2p_service
-        self.private_notification_manager: "PrivateNotificationManager" = (
+        self._domain_initialisation: "DomainInitialisation" = domain_initialisation
+        self._p2p_network_setup: "P2PNetworkSetup" = p2p_network_setup
+        self._wallet_app_setup: "WalletAppSetup" = wallet_app_setup
+        self._wallets_manager: "WalletsManager" = wallets_manager
+        self._wallets_setup: "WalletsSetup" = wallets_setup
+        self._btc_wallet_service: "BtcWalletService" = btc_wallet_service
+        self._p2p_service: "P2PService" = p2p_service
+        self._private_notification_manager: "PrivateNotificationManager" = (
             private_notification_manager
         )
-        self.signed_witness_storage_service: "SignedWitnessStorageService" = (
+        self._signed_witness_storage_service: "SignedWitnessStorageService" = (
             signed_witness_storage_service
         )
-        self.trade_manager: "TradeManager" = trade_manager
-        self.open_offer_manager: "OpenOfferManager" = open_offer_manager
-        self.preferences: "Preferences" = preferences
-        self.user: "User" = user
-        self.alert_manager: "AlertManager" = alert_manager
-        self.unconfirmed_bsq_change_output_list_service: (
+        self._trade_manager: "TradeManager" = trade_manager
+        self._open_offer_manager: "OpenOfferManager" = open_offer_manager
+        self._preferences: "Preferences" = preferences
+        self._user: "User" = user
+        self._alert_manager: "AlertManager" = alert_manager
+        self._unconfirmed_bsq_change_output_list_service: (
             "UnconfirmedBsqChangeOutputListService"
         ) = unconfirmed_bsq_change_output_list_service
-        self.config: "Config" = config
-        self.account_age_witness_service: "AccountAgeWitnessService" = (
+        self._config: "Config" = config
+        self._account_age_witness_service: "AccountAgeWitnessService" = (
             account_age_witness_service
         )
-        self.formatter: "CoinFormatter" = formatter
-        self.local_bitcoin_node: "LocalBitcoinNode" = local_bitcoin_node
-        self.app_startup_state: "AppStartupState" = app_startup_state
-        self.mediation_manager: "MediationManager" = mediation_manager
-        self.refund_manager: "RefundManager" = refund_manager
-        self.arbitration_manager: "ArbitrationManager" = arbitration_manager
+        self._formatter: "CoinFormatter" = formatter
+        self._local_bitcoin_node: "LocalBitcoinNode" = local_bitcoin_node
+        self._app_startup_state: "AppStartupState" = app_startup_state
+        self._mediation_manager: "MediationManager" = mediation_manager
+        self._refund_manager: "RefundManager" = refund_manager
+        self._arbitration_manager: "ArbitrationManager" = arbitration_manager
         # ---------------------------
         # ---------------------------
+        
         self.display_tac_handler: Optional[Callable[[Callable[[], None]], None]] = None
         self.chain_file_locked_exception_handler: Optional[Callable[[str], None]] = None
         self.spv_file_corrupted_handler: Optional[Callable[[str], None]] = None
@@ -221,19 +222,19 @@ class BisqSetup:
 
         if alert.is_software_update_notification():
             # only process if the alert version is "newer" than ours
-            if alert.is_new_version(self.preferences):
-                self.user.set_displayed_alert(alert)  # save context to compare later
+            if alert.is_new_version(self._preferences):
+                self._user.set_displayed_alert(alert)  # save context to compare later
                 self.new_version_available_property.set(
                     # shows link in footer bar
                     True
                 )
                 if (
-                    alert.can_show_popup(self.preferences) or open_new_version_popup
+                    alert.can_show_popup(self._preferences) or open_new_version_popup
                 ) and self.display_update_handler is not None:
                     self.display_update_handler(alert, alert.show_again_key())
         else:
             # it is a normal message alert
-            displayed_alert = self.user.displayed_alert
+            displayed_alert = self._user.displayed_alert
             if (
                 displayed_alert is None or displayed_alert != alert
             ) and self.display_alert_handler is not None:
@@ -253,7 +254,7 @@ class BisqSetup:
     def start(self):
         # If user tried to downgrade we require a shutdown
         if (
-            self.config.base_currency_network == BaseCurrencyNetwork.BTC_MAINNET
+            self._config.base_currency_network == BaseCurrencyNetwork.BTC_MAINNET
             and self.has_downgraded(self.down_grade_prevention_handler)
         ):
             return
@@ -293,28 +294,28 @@ class BisqSetup:
         # We do the delete of the spv file at startup before BitcoinJ is initialized to avoid issues with locked files under Windows.
         if self.get_resync_spv_semaphore():
             try:
-                self.wallets_setup.resync_spv_chain()
+                self._wallets_setup.resync_spv_chain()
 
                 # In case we had an unconfirmed change output we reset the unconfirmedBsqChangeOutputList so that
                 # after a SPV resync we do not have any dangling BSQ utxos in that list which would cause an incorrect
                 # BSQ balance state after the SPV resync.
-                self.unconfirmed_bsq_change_output_list_service.on_spv_resync()
+                self._unconfirmed_bsq_change_output_list_service.on_spv_resync()
             except Exception as e:
                 logger.error(str(e), exc_info=e)
 
     def _maybe_show_tac(self, next_step: Callable[[], None]):
-        if not self.preferences.is_tac_accepted_v120() and not DevEnv.is_dev_mode():
+        if not self._preferences.is_tac_accepted_v120() and not DevEnv.is_dev_mode():
             if self.display_tac_handler is not None:
                 self.display_tac_handler(
-                    lambda: (self.preferences.set_tac_accepted_v120(True), next_step())
+                    lambda: (self._preferences.set_tac_accepted_v120(True), next_step())
                 )
         else:
             next_step()
 
     def _read_maps_from_resources(self, complete_handler: Callable[[], None]):
-        post_fix = "_" + self.config.base_currency_network.name
+        post_fix = "_" + self._config.base_currency_network.name
         # TODO make this async ?
-        self.p2p_service.p2p_data_storage.read_from_resources(
+        self._p2p_service.p2p_data_storage.read_from_resources(
             post_fix, complete_handler
         )
 
@@ -330,14 +331,14 @@ class BisqSetup:
 
         def on_startup_timeout():
             if (
-                self.p2p_network_setup.p2p_network_failed.get()
-                or self.wallets_setup.wallets_setup_failed_property.get()
+                self._p2p_network_setup.p2p_network_failed.get()
+                or self._wallets_setup.wallets_setup_failed_property.get()
             ):
                 # Skip this timeout action if the p2p network or wallet setup failed
                 # since an error prompt will be shown containing the error message
                 return
             logger.warning("startupTimeout called")
-            if self.wallets_manager.are_wallets_encrypted():
+            if self._wallets_manager.are_wallets_encrypted():
                 self.wallet_initialized.add_listener(wallet_initialized_listener)
             elif self.display_tor_network_settings_handler:
                 self.display_tor_network_settings_handler(True)
@@ -349,7 +350,7 @@ class BisqSetup:
         logger.info("Init P2P network")
         for listener in self.bisq_setup_listeners:
             listener.on_init_p2p_network()
-        self.p2p_network_ready = self.p2p_network_setup.init(
+        self.p2p_network_ready = self._p2p_network_setup.init(
             self._init_wallet, self.display_tor_network_settings_handler
         )
 
@@ -363,14 +364,7 @@ class BisqSetup:
             transform=transform_p2p_and_wallet_ready,
         )
 
-        # // We only init wallet service here if not using Tor for bitcoinj.
-        # // When using Tor, wallet init must be deferred until Tor is ready.
-        # // JAVA TODO encapsulate below conditional inside getUseTorForBitcoinJ
-        if (
-            not self.preferences.get_use_tor_for_bitcoin_j()
-            or self.local_bitcoin_node.should_be_used()
-        ):
-            self._init_wallet()
+        # We only use electrum and with tor, so we will always wait for tor to init wallet
 
         self.p2p_network_and_wallet_initialized.add_listener(
             lambda e: (
@@ -402,13 +396,13 @@ class BisqSetup:
             for listener in self.bisq_setup_listeners:
                 listener.on_request_wallet_password()
             if self.p2p_network_ready.get():
-                self.p2p_network_setup.splash_p2p_network_animation_visible.set(True)
+                self._p2p_network_setup.splash_p2p_network_animation_visible.set(True)
 
             if self.request_wallet_password_handler is not None:
 
-                def on_aes_key_provided(aes_key: bytes):
-                    self.wallets_manager.set_aes_key(aes_key)
-                    self.wallets_manager.maybe_add_segwit_keychains(aes_key)
+                def on_password_provided(aes_key: bytes):
+                    self._wallets_manager.set_password(aes_key)
+                    self._wallets_manager.maybe_add_segwit_keychains(aes_key)
                     if self.get_resync_spv_semaphore():
                         if self.show_first_popup_if_resync_spv_requested_handler:
                             self.show_first_popup_if_resync_spv_requested_handler()
@@ -418,9 +412,9 @@ class BisqSetup:
                         # Usually init is fast and we have our wallet initialized at that state though.
                         self.wallet_initialized.set(True)
 
-                self.request_wallet_password_handler(on_aes_key_provided)
+                self.request_wallet_password_handler(on_password_provided)
 
-        self.wallet_app_setup.init(
+        self._wallet_app_setup.init(
             self.chain_file_locked_exception_handler,
             self.spv_file_corrupted_handler,
             self.get_resync_spv_semaphore(),
@@ -443,7 +437,7 @@ class BisqSetup:
     def _init_domain_services(self):
         logger.info("initDomainServices")
 
-        self.domain_initialisation.init_domain_services(
+        self._domain_initialisation.init_domain_services(
             self.rejected_tx_error_message_handler,
             self.display_private_notification_handler,
             self.dao_error_message_handler,
@@ -457,20 +451,20 @@ class BisqSetup:
             self.resync_dao_state_from_resources_handler,
         )
 
-        if self.wallets_setup.download_percentage_property.get() == 1:
+        if self._wallets_setup.download_percentage_property.get() == 1:
             self._check_for_locked_up_funds()
             self._check_for_invalid_maker_fee_txs()
 
-        self.alert_manager.alert_message_property.add_listener(
+        self._alert_manager.alert_message_property.add_listener(
             lambda e: self.display_alert_if_present(e.new_value, False)
         )
         self.display_alert_if_present(
-            self.alert_manager.alert_message_property.get(), False
+            self._alert_manager.alert_message_property.get(), False
         )
 
         self.all_basic_services_initialized = True
 
-        self.app_startup_state.on_domain_services_initialized()
+        self._app_startup_state.on_domain_services_initialized()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Utils
@@ -480,9 +474,9 @@ class BisqSetup:
         # We check if there are locked up funds in failed or closed trades
         try:
             set_of_all_trade_ids = (
-                self.trade_manager.get_set_of_failed_or_closed_trade_ids_from_locked_in_funds()
+                self._trade_manager.get_set_of_failed_or_closed_trade_ids_from_locked_in_funds()
             )
-            for entry in self.btc_wallet_service.get_address_entries_for_trade():
+            for entry in self._btc_wallet_service.get_address_entries_for_trade():
                 if (
                     entry.offer_id in set_of_all_trade_ids
                     and entry.context == AddressEntryContext.MULTI_SIG
@@ -491,7 +485,7 @@ class BisqSetup:
                     if balance.is_positive():
                         message = Res.get(
                             "popup.warning.lockedUpFunds",
-                            self.formatter.format_coin_with_code(balance),
+                            self._formatter.format_coin_with_code(balance),
                             entry.get_address_string(),
                             entry.offer_id,
                         )
@@ -507,12 +501,12 @@ class BisqSetup:
         # We check if we have open offers with no confidence object at the maker fee tx. That can happen if the
         # miner fee was too low and the transaction got removed from mempool and got out from our wallet after a
         # resync.
-        for offer_entry in self.open_offer_manager.get_observable_list():
+        for offer_entry in self._open_offer_manager.get_observable_list():
             if offer_entry.offer.is_bsq_swap_offer:
                 continue
             offer_fee_payment_tx_id = offer_entry.offer.offer_fee_payment_tx_id
             if (
-                self.btc_wallet_service.get_confidence_for_tx_id(
+                self._btc_wallet_service.get_confidence_for_tx_id(
                     offer_fee_payment_tx_id
                 )
                 is None
@@ -546,7 +540,7 @@ class BisqSetup:
 
         run_in_thread(
             get_usable_space,
-            self.config.app_data_dir,
+            self._config.app_data_dir,
         ).add_done_callback(on_done)
 
     def get_last_bisq_version(self) -> Optional[str]:
@@ -562,13 +556,13 @@ class BisqSetup:
         return None
 
     def get_resync_spv_semaphore(self) -> bool:
-        resync_spv_semaphore = self.config.app_data_dir.joinpath(
+        resync_spv_semaphore = self._config.app_data_dir.joinpath(
             BisqSetup.RESYNC_SPV_FILE_NAME
         )
         return resync_spv_semaphore.exists()
 
     def set_resync_spv_semaphore(self, is_resync_spv_requested: bool):
-        resync_spv_semaphore = self.config.app_data_dir.joinpath(
+        resync_spv_semaphore = self._config.app_data_dir.joinpath(
             BisqSetup.RESYNC_SPV_FILE_NAME
         )
         if is_resync_spv_requested:
@@ -583,7 +577,7 @@ class BisqSetup:
             resync_spv_semaphore.unlink(missing_ok=True)
 
     def _get_version_file(self):
-        return self.config.app_data_dir.joinpath(BisqSetup.VERSION_FILE_NAME)
+        return self._config.app_data_dir.joinpath(BisqSetup.VERSION_FILE_NAME)
 
     @staticmethod
     def is_downgrade(last_version: str):
@@ -633,20 +627,20 @@ class BisqSetup:
         their offers will not be reachable.
         Repeat this test hourly.
         """
-        onion_address = self.p2p_service.address
+        onion_address = self._p2p_service.address
         if onion_address is None or "onion" not in onion_address.get_full_address():
             return
 
         if (
-            self.p2p_service.network_node.up_time()
+            self._p2p_service.network_node.up_time()
             > timedelta(hours=1).total_seconds() * 1000
-            and self.p2p_service.network_node.get_inbound_connection_count() == 0
+            and self._p2p_service.network_node.get_inbound_connection_count() == 0
         ):
             # we've been online a while and did not find any inbound connections; lets try the self-ping check
             logger.info(
                 "No recent inbound connections found, starting the self-ping test"
             )
-            self.private_notification_manager.send_ping(
+            self._private_notification_manager.send_ping(
                 onion_address,
                 lambda string_result: (
                     logger.info(string_result),
@@ -673,13 +667,13 @@ class BisqSetup:
 
     def _maybe_show_security_recommendation(self):
         key = "remindPasswordAndBackup"
-        self.user.payment_accounts_observable.add_listener(
+        self._user.payment_accounts_observable.add_listener(
             lambda change: (
                 self.display_security_recommendation_handler(key)
                 if (
-                    not self.wallets_manager.are_wallets_encrypted()
-                    and not self.user.is_payment_account_import
-                    and self.preferences.show_again(key)
+                    not self._wallets_manager.are_wallets_encrypted()
+                    and not self._user.is_payment_account_import
+                    and self._preferences.show_again(key)
                     and change.added_elements
                     and self.display_security_recommendation_handler
                 )
@@ -688,7 +682,7 @@ class BisqSetup:
         )
 
     def _maybe_show_localhost_running_info(self):
-        if self.config.base_currency_network.is_mainnet():
+        if self._config.base_currency_network.is_mainnet():
 
             def on_done(f: Future[bool]):
                 try:
@@ -701,7 +695,7 @@ class BisqSetup:
                 except:
                     pass
 
-            as_future(self.local_bitcoin_node.should_be_used()).add_done_callback(
+            as_future(self._local_bitcoin_node.should_be_used()).add_done_callback(
                 on_done
             )
 
@@ -734,7 +728,7 @@ class BisqSetup:
         )
 
         # check signed witness during runtime
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
+        self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
             lambda payload: (
                 self._maybe_trigger_display_handler(
                     key_signed_by_arbitrator,
@@ -775,7 +769,7 @@ class BisqSetup:
     ):
         signing_state_found = any(
             self._is_signed_witness_of_mine_with_state(payload, state)
-            for payload in self.signed_witness_storage_service.get_map().values()
+            for payload in self._signed_witness_storage_service.get_map().values()
         )
         self._maybe_trigger_display_handler(key, display_handler, signing_state_found)
 
@@ -784,7 +778,7 @@ class BisqSetup:
         payload: "PersistableNetworkPayload",
         state: "AccountAgeWitnessService.SignState",
     ) -> bool:
-        if isinstance(payload, SignedWitness) and self.user.payment_accounts:
+        if isinstance(payload, SignedWitness) and self._user.payment_accounts:
             # We know at this point that it is already added to the signed witness list
             # Check if new signed witness is for one of my own accounts
             return any(
@@ -793,15 +787,15 @@ class BisqSetup:
                 )
                 and (
                     (
-                        signed_witness := self.account_age_witness_service.get_my_witness(
+                        signed_witness := self._account_age_witness_service.get_my_witness(
                             account.payment_account_payload
                         )
                     )
                     and signed_witness.get_hash() == payload.account_age_witness_hash
-                    and self.account_age_witness_service.get_sign_state(signed_witness)
+                    and self._account_age_witness_service.get_sign_state(signed_witness)
                     == state
                 )
-                for account in self.user.payment_accounts
+                for account in self._user.payment_accounts
             )
         return False
 
@@ -811,40 +805,40 @@ class BisqSetup:
         display_handler: Optional[Callable[[str], None]],
         signing_state_found: bool,
     ):
-        if signing_state_found and self.preferences.show_again(key) and display_handler:
+        if signing_state_found and self._preferences.show_again(key) and display_handler:
             display_handler(key)
 
     def _maybe_upgrade_bsq_explorer_url(self):
         # if wiz BSQ explorer selected, replace with 1st explorer in the list of available.
         if (
-            self.preferences.get_bsq_block_chain_explorer().name.lower()
+            self._preferences.get_bsq_block_chain_explorer().name.lower()
             == "mempool.space (@wiz)"
-            and len(self.preferences.get_block_chain_explorers()) > 0
+            and len(self._preferences.get_block_chain_explorers()) > 0
         ):
-            self.preferences.set_bsq_blockchain_explorer(
-                self.preferences.get_bsq_block_chain_explorers()[0]
+            self._preferences.set_bsq_blockchain_explorer(
+                self._preferences.get_bsq_block_chain_explorers()[0]
             )
 
         if (
-            self.preferences.get_bsq_block_chain_explorer().name.lower()
+            self._preferences.get_bsq_block_chain_explorer().name.lower()
             == "bisq.mempool.emzy.de (@emzy)"
-            and len(self.preferences.get_block_chain_explorers()) > 0
+            and len(self._preferences.get_block_chain_explorers()) > 0
         ):
-            self.preferences.set_bsq_blockchain_explorer(
-                self.preferences.get_bsq_block_chain_explorers()[0]
+            self._preferences.set_bsq_blockchain_explorer(
+                self._preferences.get_bsq_block_chain_explorers()[0]
             )
 
     def _maybe_show_tor_address_upgrade_information(self):
         # NOTE: This is probably unnecessary and can be removed at some point later
         # we implemented for completeness for now
-        if self.config.base_currency_network.is_regtest() or Utils.is_v3_address(
-            self.p2p_service.address.host_name
+        if self._config.base_currency_network.is_regtest() or Utils.is_v3_address(
+            self._p2p_service.address.host_name
         ):
             return
 
         self._maybe_run_tor_node_address_upgrade_handler()
 
-        self.trade_manager.num_pending_trades.add_listener(
+        self._trade_manager.num_pending_trades.add_listener(
             lambda e: (
                 self._maybe_run_tor_node_address_upgrade_handler()
                 if e.new_value == 0
@@ -856,17 +850,17 @@ class BisqSetup:
         if (
             all(
                 dispute.is_closed
-                for dispute in self.mediation_manager.get_disputes_as_observable_list()
+                for dispute in self._mediation_manager.get_disputes_as_observable_list()
             )
             and all(
                 dispute.is_closed
-                for dispute in self.refund_manager.get_disputes_as_observable_list()
+                for dispute in self._refund_manager.get_disputes_as_observable_list()
             )
             and all(
                 dispute.is_closed
-                for dispute in self.arbitration_manager.get_disputes_as_observable_list()
+                for dispute in self._arbitration_manager.get_disputes_as_observable_list()
             )
-            and self.trade_manager.num_pending_trades.get() == 0
+            and self._trade_manager.num_pending_trades.get() == 0
         ):
             if self.tor_address_upgrade_handler:
                 self.tor_address_upgrade_handler()
@@ -878,50 +872,50 @@ class BisqSetup:
     # Wallet
     @property
     def btc_info_property(self):
-        return self.wallet_app_setup.btc_info_property
+        return self._wallet_app_setup.btc_info_property
 
     @property
     def btc_sync_progress_property(self):
-        return self.wallet_app_setup.btc_sync_progress_property
+        return self._wallet_app_setup.btc_sync_progress_property
 
     @property
     def wallet_service_error_msg(self):
-        return self.wallet_app_setup.wallet_service_error_msg_property
+        return self._wallet_app_setup.wallet_service_error_msg_property
 
     @property
     def btc_splash_sync_icon_id(self):
-        return self.wallet_app_setup.btc_splash_sync_icon_id_property
+        return self._wallet_app_setup.btc_splash_sync_icon_id_property
 
     @property
     def use_tor_for_btc(self):
-        return self.wallet_app_setup.use_tor_for_btc_property
+        return self._wallet_app_setup.use_tor_for_btc_property
 
     # P2P
     # TODO: rename properties to have property at the end of their names
     @property
     def p2p_network_info(self):
-        return self.p2p_network_setup.p2p_network_info
+        return self._p2p_network_setup.p2p_network_info
 
     @property
     def splash_p2p_network_animation_visible(self):
-        return self.p2p_network_setup.splash_p2p_network_animation_visible
+        return self._p2p_network_setup.splash_p2p_network_animation_visible
 
     @property
     def p2p_network_warn_msg(self):
-        return self.p2p_network_setup.p2p_network_warn_msg
+        return self._p2p_network_setup.p2p_network_warn_msg
 
     @property
     def p2p_network_icon_id(self):
-        return self.p2p_network_setup.p2p_network_icon_id
+        return self._p2p_network_setup.p2p_network_icon_id
 
     @property
     def p2p_network_status_icon_id(self):
-        return self.p2p_network_setup.p2p_network_status_icon_id
+        return self._p2p_network_setup.p2p_network_status_icon_id
 
     @property
     def data_received(self):
-        return self.p2p_network_setup.data_received
+        return self._p2p_network_setup.data_received
 
     @property
     def p2p_network_label_id(self):
-        return self.p2p_network_setup.p2p_network_label_id
+        return self._p2p_network_setup.p2p_network_label_id

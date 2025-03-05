@@ -46,14 +46,16 @@ class WalletService(ABC):
 
         self.params = self.wallets_setup.params
         self.wallet: Optional["Wallet"] = None
-        self.aes_key: Optional[bytes] = None
+        self.password: Optional[str] = None
         self.balance_listeners = ThreadSafeSet["BalanceListener"]()
 
+    @property
     def is_wallet_ready(self):
         return self.wallet is not None
 
+    @property
     def is_encrypted(self) -> bool:
-        return self.wallet.is_encrypted() if self.wallet else False
+        return self.wallet.is_encrypted if self.wallet else False
 
     def get_transaction(
         hash_or_tx_id: Union[bytes, Optional[str]]

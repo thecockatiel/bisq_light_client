@@ -297,9 +297,9 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
                 # We need to use a compatible way to sign the txId
                 signature = (
                     key.sign(bytes.fromhex(blind_vote_tx_id))
-                    if not self.bsq_wallet_service.is_encrypted()
+                    if not self.bsq_wallet_service.is_encrypted
                     else key.sign(
-                        bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.aes_key
+                        bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.password
                     )
                 )
                 signature_as_bytes = signature.to_canonicalised().encode_to_der()

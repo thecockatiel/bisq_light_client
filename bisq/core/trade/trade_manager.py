@@ -585,7 +585,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
     def on_withdraw_request(self, to_address: str,
                           amount: 'Coin',
                           fee: 'Coin',
-                          aes_key: bytes,
+                          password: str,
                           trade: 'Trade',
                           memo: Optional[str],
                           result_handler: 'ResultHandler',
@@ -616,7 +616,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 to_address=to_address,
                 receiver_amount=amount,
                 fee=fee,
-                aes_key=aes_key,
+                aes_key=password,
                 context=AddressEntryContext.TRADE_PAYOUT,
                 memo=memo,
                 callback=on_done

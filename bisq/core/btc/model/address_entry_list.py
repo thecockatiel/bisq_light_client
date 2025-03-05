@@ -26,7 +26,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
 
     def __init__(self, persistence_manager: Optional["PersistenceManager[AddressEntryList]"] = None, entry_set: Optional[ThreadSafeSet["AddressEntry"]] = None):
         super().__init__()
-        self.wallet: Optional["Wallet"] = None
+        self._wallet: Optional["Wallet"] = None
         self.entry_set: ThreadSafeSet["AddressEntry"] = ThreadSafeSet(entry_set)
         self.persistence_manager = persistence_manager
         if self.persistence_manager:
@@ -58,9 +58,9 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
-    def on_wallet_ready(self):
-        # TODO
-        raise NotImplementedError("maybe_add_new_address_entry not implemented")
+    def on_wallet_ready(self, wallet: "Wallet"):
+        self._wallet = wallet
+        # TODO 
 
     def add_address_entry(self, address_entry: "AddressEntry") -> None:
         entry_with_same_offer_id_and_context_exists = any(

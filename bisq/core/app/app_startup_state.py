@@ -27,13 +27,14 @@ class AppStartupState:
 
         p2p_service.add_p2p_service_listener(P2PListener())
 
-        wallets_setup.download_percentage_property.add_listener(
-            lambda _: (
+        def on_wallets_setup_completed(e):
+            if wallets_setup.is_download_complete:
                 self.is_block_download_complete.set(True)
-                if wallets_setup.is_download_complete
-                else None
-            )
-        )
+                wallets_setup.chain_height_property.remove_listener(
+                    on_wallets_setup_completed
+                )
+
+        wallets_setup.chain_height_property.add_listener(on_wallets_setup_completed)
 
         wallets_setup.num_peers_property.add_listener(
             lambda _: (

@@ -11,6 +11,7 @@ from utils.data import (
     SimplePropertyChangeEvent,
     combine_simple_properties,
 )
+from bisq.core.btc.exceptions.rejected_tx_exception import RejectedTxException
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
     from bisq.core.offer.open_offer_manager import OpenOfferManager
     from bisq.core.trade.trade_manager import TradeManager
-    from bisq.core.btc.exceptions.rejected_tx_exception import RejectedTxException
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,6 @@ class WalletAppSetup:
         self.btc_info_binding: Optional[SimpleProperty[str]] = None
         self.btc_sync_progress_property = SimpleProperty(-1.0)
         self.wallet_service_error_msg_property = SimpleProperty("")
-        self.btc_splash_sync_icon_id_property = SimpleProperty("")
         self.btc_info_property = SimpleProperty(
             Res.get("mainView.footer.btcInfo.initializing")
         )
@@ -71,25 +70,77 @@ class WalletAppSetup:
         wallet_initialized_handler: Callable[[], None],
     ):
         logger.info(f"Initialize WalletAppSetup with partial python port of BitcoinJ")
-        download_complete_handler() # For now to make setup work
-        wallet_initialized_handler() # For now to make setup work
-        
-        # wallet_service_exception = SimpleProperty[Exception]()
 
-        # def handle_btc_info(info: list[Union[Literal['UNSET'], Any]]):
-        #     download_percentage: float = info[0]
-        #     chain_height: int = info[1]
-        #     fee_update_counter: int = info[2]
-        #     exception: Optional[Exception] = info[3]
-        #     result = None
+        wallet_service_exception = SimpleProperty[Exception]()
 
-        # self.btc_info_binding = combine_simple_properties(
-        #     self.wallets_setup.download_percentage_property,
-        #     self.wallets_setup.chain_height_property,
-        #     self.fee_service.fee_update_counter_property,
-        #     wallet_service_exception,
-        #     transform=handle_btc_info
-        # )
+        def handle_btc_info(info: list):
+            chain_height: int = info[0]
+            # fee_update_counter: int = info[1]
+            exception: Optional[Exception] = info[2]
+
+            if not exception:
+                if chain_height > 0:
+                    synchronized_with = Res.get(
+                        "mainView.footer.btcInfo.synchronizedWith",
+                        self._get_btc_network_as_string(),
+                        str(chain_height),
+                    )
+                    result = Res.get("mainView.footer.btcInfo", synchronized_with, info)
+                    download_complete_handler()
+                else:
+                    result = Res.get(
+                        "mainView.footer.btcInfo",
+                        Res.get("mainView.footer.btcInfo.connectingTo"),
+                        self._get_btc_network_as_string(),
+                    )
+            else:
+                # TODO review later for correctness (I think branches never happen)
+                result = Res.get(
+                    "mainView.footer.btcInfo",
+                    Res.get("mainView.footer.btcInfo.connectionFailed"),
+                    self._get_btc_network_as_string(),
+                )
+                logger.error(exception)
+                if isinstance(exception, TimeoutError):
+                    self.wallet_service_error_msg_property.set(
+                        Res.get("mainView.walletServiceErrorMsg.timeout")
+                    )
+                elif isinstance(exception, RejectedTxException):
+                    self.rejected_tx_exception_property.set(exception)
+                    self.wallet_service_error_msg_property.set(
+                        Res.get(
+                            "mainView.walletServiceErrorMsg.rejectedTxException",
+                            str(exception),
+                        )
+                    )
+                else:
+                    self.wallet_service_error_msg_property.set(
+                        Res.get(
+                            "mainView.walletServiceErrorMsg.connectionError",
+                            str(exception),
+                        )
+                    )
+            return result
+
+        self.btc_info_binding = combine_simple_properties(
+            self.wallets_setup.chain_height_property,
+            self.fee_service.fee_update_counter_property,
+            wallet_service_exception,
+            transform=handle_btc_info,
+        )
+
+        self.btc_info_binding.add_listener(
+            lambda e: self.btc_info_property.set(e.new_value)
+        )
+
+        def on_initialized():
+            # TODO handle wallet encryption later
+            wallet_initialized_handler()
+
+        def on_errored(e: Exception):
+            wallet_service_exception.set(e)
+
+        self.wallets_setup.initialize(None, on_initialized, on_errored)
 
     def set_rejected_tx_error_message_handler(
         self,
@@ -109,16 +160,16 @@ class WalletAppSetup:
             # To avoid such false positives we only handle reject messages which we consider clearly critical.
 
             if reject_message.get_reason_code() in (
-                    RejectCode.OBSOLETE,
-                    RejectCode.DUPLICATE,
-                    RejectCode.NONSTANDARD,
-                    RejectCode.CHECKPOINT,
-                    RejectCode.OTHER,
-                ):
-                    # We ignore those cases to avoid that not critical reject messages trigger a failed trade.
-                    logger.warning(
-                        "We ignore that reject message as it is likely not critical."
-                    )
+                RejectCode.OBSOLETE,
+                RejectCode.DUPLICATE,
+                RejectCode.NONSTANDARD,
+                RejectCode.CHECKPOINT,
+                RejectCode.OTHER,
+            ):
+                # We ignore those cases to avoid that not critical reject messages trigger a failed trade.
+                logger.warning(
+                    "We ignore that reject message as it is likely not critical."
+                )
 
             elif reject_message.get_reason_code() in (
                 RejectCode.MALFORMED,
@@ -193,15 +244,13 @@ class WalletAppSetup:
                                             )
                                         )
 
-                                UserThread.run_after(
-                                    handle_trade, timedelta(seconds=1)
-                                )
+                                UserThread.run_after(handle_trade, timedelta(seconds=1))
 
                     UserThread.run_after(process_delayed, timedelta(seconds=3))
 
         self.rejected_tx_exception_property.add_listener(handler)
 
-    def get_btc_network_as_string(self) -> str:
+    def _get_btc_network_as_string(self) -> str:
         if self.config.ignore_local_btc_node:
             postfix = " " + Res.get("mainView.footer.localhostBitcoinNode")
         elif self.preferences.get_use_tor_for_bitcoin_j():
