@@ -3934,15 +3934,15 @@ def create_new_wallet(*, path, config: SimpleConfig, passphrase=None, password=N
     return {'seed': seed, 'wallet': wallet, 'msg': msg}
 
 
-def create_new_bisq_wallet(*, path, config: SimpleConfig, derivation_path: str, passphrase=None, password=None,
-                      encrypt_file=True, seed_type=None, gap_limit=None) -> dict:
+def create_new_bisq_wallet(*, path, config: SimpleConfig, derivation_path: str, passphrase=None,
+                password=None, seed: str=None,encrypt_file=True, seed_type=None, gap_limit=None) -> dict:
     """Create a new wallet for bisq"""
     storage = WalletStorage(path)
     if storage.file_exists():
         raise UserFacingException("Remove the existing wallet first!")
     db = WalletDB('', storage=storage, upgrade=True)
-
-    seed = Mnemonic('en').make_seed(seed_type=seed_type, num_bits=256) # 24 words
+    if not seed:
+        seed = Mnemonic('en').make_seed(seed_type=seed_type, num_bits=256) # 24 words
     root_seed = keystore.bip39_to_seed(seed, passphrase=passphrase)
     derivation_path = normalize_bip32_derivation(derivation_path)
     k = keystore.from_bip43_rootseed(root_seed, derivation=derivation_path, xtype="p2wpkh")
