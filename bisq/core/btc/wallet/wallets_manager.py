@@ -47,13 +47,7 @@ class WalletsManager:
         self.trade_wallet_service.aes_key = aes_key
 
     def maybe_add_segwit_keychains(self, aes_key: bytes):
-        wallet_config = self.wallets_setup.get_wallet_config()
-        wallet_config.maybe_add_segwit_keychain(
-            wallet_config.btc_wallet(), aes_key, False
-        )
-        wallet_config.maybe_add_segwit_keychain(
-            wallet_config.bsq_wallet(), aes_key, True
-        )
+        pass # no need to implement
 
     # A bsq tx has miner fees in btc included. Thus we need to handle it on both wallets.
     def publish_and_commit_bsq_tx(

@@ -495,7 +495,7 @@ class Daemon(Logger):
         if wallet := self._wallets.get(wallet_key):
             return wallet
         wallet = self._load_wallet(path, password, upgrade=upgrade, config=self.config)
-        wallet.start_network(self.network)
+        # wallet.start_network(self.network) # IMPORTANT, we dont want to automatically start network here.
         self.add_wallet(wallet)
         return wallet
 

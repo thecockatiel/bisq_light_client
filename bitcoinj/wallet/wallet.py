@@ -5,7 +5,7 @@ from bitcoinj.core.address import Address
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
-from electrum_min.storage import StorageEncryptionVersion
+from electrum_min.network import Network
 from electrum_min.util import EventListener, InvalidPassword, event_listener
 from utils.concurrency import ThreadSafeSet
 
@@ -123,3 +123,9 @@ class Wallet:
     @property
     def is_encrypted(self):
         return self._electrum_wallet.has_storage_encryption()
+
+    def stop(self):
+        return self._electrum_wallet.stop()
+
+    def start_network(self, network: "Network"):
+        return self._electrum_wallet.start_network(network)
