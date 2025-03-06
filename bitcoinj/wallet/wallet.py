@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -5,6 +6,7 @@ from bitcoinj.core.address import Address
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.core.transaction import Transaction
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.network import Network
@@ -28,6 +30,7 @@ class Wallet(EventListener):
         self._network = network
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
         self._registered_for_callbacks = False
+        self._tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
         self.register_electrum_callbacks()
 
     # //////////////////////////////////////////////////////////////////////
@@ -55,6 +58,11 @@ class Wallet(EventListener):
         if self._electrum_wallet == wallet:
             for listener in self._change_listeners:
                 listener.on_wallet_changed(self)
+
+            if self._tx_listeners:
+                wrapped_tx = Transaction.from_electrum_tx(self._network, tx)
+                for listener in self._tx_listeners:
+                    listener(wrapped_tx)
 
     @event_listener
     def on_event_removed_transaction(self, wallet, tx):
@@ -119,6 +127,15 @@ class Wallet(EventListener):
             return True
         return False
 
+    def add_tx_listener(self, listener: Callable[["Transaction"], None]):
+        self._tx_listeners.add(listener)
+
+    def remove_tx_listener(self, listener: Callable[["Transaction"], None]):
+        if listener in self._tx_listeners:
+            self._tx_listeners.discard(listener)
+            return True
+        return False
+
     def decrypt(self, password: str):
         """removes wallet file password"""
         if not self.is_encrypted:
@@ -150,3 +167,19 @@ class Wallet(EventListener):
 
     def start_network(self, network: "Network"):
         return self._electrum_wallet.start_network(network)
+
+    def get_balances(self):
+        """returns a set of balances: confirmed and matured, unconfirmed, unmatured"""
+        return self._electrum_wallet.get_balance()
+
+    def get_available_balance(self) -> int:
+        return self.get_balances()[0]
+
+    def get_issued_receive_addresses(self) -> list["Address"]:
+        return [
+            Address.from_string(address, self._network)
+            for address in self._electrum_wallet.get_addresses()
+        ]
+
+    def is_mine(self, address: str):
+        return self._electrum_wallet.is_mine(address)
