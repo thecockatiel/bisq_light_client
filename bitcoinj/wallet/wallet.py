@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Generator, Optional
+from typing import TYPE_CHECKING, Generator, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -198,13 +198,28 @@ class Wallet(EventListener):
             utxo.value_sats() for utxo in self._electrum_wallet.get_spendable_coins()
         )
 
+    def get_address_balance(self, address: Union["Address", str]) -> int:
+        if isinstance(address, Address):
+            address = str(address)
+        return sum(
+            utxo.value_sats()
+            for utxo in self._electrum_wallet.get_spendable_coins([address])
+        )
+
     def get_issued_receive_addresses(self) -> list["Address"]:
         return [
             Address.from_string(address, self._network_params)
             for address in self._electrum_wallet.get_addresses()
         ]
 
-    def is_mine(self, address: str):
+    def is_address_unused(self, address: Union["Address", str]):
+        if isinstance(address, Address):
+            address = str(address)
+        return self._electrum_wallet.is_address_unused(address)
+
+    def is_mine(self, address: Union["Address", str]):
+        if isinstance(address, Address):
+            address = str(address)
         return self._electrum_wallet.is_mine(address)
 
     def get_transaction(self, txid: str) -> Optional["Transaction"]:
@@ -219,6 +234,7 @@ class Wallet(EventListener):
 
     def get_transactions(self) -> Generator["Transaction"]:
         """return an Generator that returns all transactions in the wallet, newest first"""
-        return (Transaction.from_electrum_tx(tx) for tx in reversed(self._electrum_wallet.db.transactions.values()))
-    
-    
+        return (
+            Transaction.from_electrum_tx(tx)
+            for tx in reversed(self._electrum_wallet.db.transactions.values())
+        )

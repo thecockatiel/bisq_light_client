@@ -2574,6 +2574,9 @@ class Abstract_Wallet(ABC, Logger, EventListener):
         domain = self.get_receiving_addresses()
         return [addr for addr in domain if not self.adb.is_used(addr) and not self.get_request_by_addr(addr)]
 
+    def is_address_unused(self, addr: str) -> bool:
+        return not self.adb.is_used(addr) and not self.get_request_by_addr(addr)
+
     @check_returned_address_for_corruption
     def get_unused_address(self) -> Optional[str]:
         """Get an unused receiving address, if there is one.
