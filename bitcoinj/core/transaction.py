@@ -107,7 +107,7 @@ class Transaction:
         return self.included_in_best_chain_at
 
     def get_confidence(self, *, context=None, table=None) -> "TransactionConfidence":
-        return TransactionConfidence()
+        return TransactionConfidence(self.get_tx_id())
     
     @property
     def has_confidence(self):

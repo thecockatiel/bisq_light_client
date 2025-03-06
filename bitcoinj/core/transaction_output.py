@@ -61,7 +61,7 @@ class TransactionOutput:
         if self.parent is not None:
             confidence = self.parent.get_confidence()
             if confidence.confidence_type == TransactionConfidenceType.BUILDING:
-                return confidence.get_depth_in_blocks()
+                return confidence.depth
         return -1
 
     def is_for_wallet(self, wallet: "Wallet") -> bool:

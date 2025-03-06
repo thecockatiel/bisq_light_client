@@ -681,7 +681,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 if DevEnv.is_dev_mode():
                     confidence = self.btc_wallet_service.get_confidence_for_tx_id(trade.deposit_tx_id)
                     if (confidence is not None and 
-                            confidence.get_depth_in_blocks() > 4):
+                            confidence.depth > 4):
                         trade.trade_period_state_property.value = TradePeriodState.TRADE_PERIOD_OVER
                         
                 if max_trade_period_date and half_trade_period_date:

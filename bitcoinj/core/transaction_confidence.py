@@ -16,9 +16,14 @@ if TYPE_CHECKING:
 # TODO
 class TransactionConfidence:
 
-    def __init__(self) -> None:
-        self.depth = -1
-        self.hash: bytes = bytes()
+    def __init__(
+        self,
+        tx_id: str,
+        *,
+        depth = 0,
+        confidence_type: "TransactionConfidenceType" = None,
+    ) -> None:
+        self.depth = depth or 0
         """
         the depth of the transaction in the best chain in blocks. An unconfirmed block has depth 0.
         
@@ -31,11 +36,16 @@ class TransactionConfidence:
         If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
         the depth is zero.
         """
-        self.confidence_type: "TransactionConfidenceType" = (
-            TransactionConfidenceType.UNKNOWN
-        )
-        self.confidence_source: "TransactionConfidenceSource" = TransactionConfidenceSource.UNKNOWN
+
+        self.tx_id = tx_id
+        """The txid that this confidence object is associated with."""
+
+        if confidence_type is None:
+            confidence_type = TransactionConfidenceType.UNKNOWN
+        self.confidence_type = confidence_type
         """a general statement of the level of confidence you can have in this transaction."""
+        self.confidence_source = TransactionConfidenceSource.NETWORK
+        """always Network since we use electrum"""
 
         self._listeners = ThreadSafeSet["TransactionConfidenceChangedListener"]()
 
@@ -64,12 +74,7 @@ class TransactionConfidence:
 
         return result
 
-    def get_depth_in_blocks(self):
-        return self.depth
-    
     def get_appeared_at_chain_height(self) -> int:
-        raise RuntimeError("TransactionConfidence.get_appeared_at_chain_height Not implemented yet")
-
-    def get_transaction_hash(self) -> str:
-        # return tx_id str
-        raise RuntimeError("TransactionConfidence.get_transaction_hash Not implemented yet")
+        raise RuntimeError(
+            "TransactionConfidence.get_appeared_at_chain_height Not implemented yet"
+        )

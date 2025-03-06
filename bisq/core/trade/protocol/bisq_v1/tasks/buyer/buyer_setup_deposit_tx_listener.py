@@ -123,7 +123,7 @@ class BuyerSetupDepositTxListener(TradeTask):
 
         wallet_tx: Optional["Transaction"] = (
             self.process_model.trade_wallet_service.get_wallet_tx(
-                confidence.get_transaction_hash()
+                confidence.tx_id
             )
         )
 
@@ -171,7 +171,7 @@ class BuyerSetupDepositTxListener(TradeTask):
         if self.trade.get_deposit_tx() is None:
             wallet_tx: Optional[Transaction] = (
                 self.process_model.trade_wallet_service.get_wallet_tx(
-                    confidence.get_transaction_hash()
+                    confidence.tx_id
                 )
             )
             self.trade.apply_deposit_tx(wallet_tx)

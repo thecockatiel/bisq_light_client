@@ -368,7 +368,7 @@ class CoreWalletsService:
 
     def get_transaction_confirmations(self, tx_id: str) -> int:
         return (
-            self._get_transaction_with_id(tx_id).get_confidence().get_depth_in_blocks()
+            self._get_transaction_with_id(tx_id).get_confidence().depth
         )
 
     def get_num_confirmations_for_most_recent_transaction(
@@ -376,7 +376,7 @@ class CoreWalletsService:
     ) -> int:
         address = self._get_address_entry(address_string).get_address()
         confidence = self.btc_wallet_service.get_confidence_for_address(address)
-        return 0 if confidence is None else confidence.get_depth_in_blocks()
+        return 0 if confidence is None else confidence.depth
 
     def set_wallet_password(self, password: str, new_password: str = None) -> None:
         self.verify_wallets_are_available()
