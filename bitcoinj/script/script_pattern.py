@@ -3,6 +3,7 @@ from bitcoinj.script.script_chunk import is_opcode
 from bitcoinj.script.script_utils import ScriptUtils
 from electrum_min.bitcoin import opcodes
 from electrum_min.transaction import (
+    SCRIPTPUBKEY_TEMPLATE_P2PK,
     SCRIPTPUBKEY_TEMPLATE_P2PKH,
     SCRIPTPUBKEY_TEMPLATE_P2SH,
     SCRIPTPUBKEY_TEMPLATE_P2WPKH,
@@ -16,6 +17,12 @@ if TYPE_CHECKING:
 
 
 class ScriptPattern:
+
+    @staticmethod
+    def is_p2pk(script: "Script") -> bool:
+        if match_script_against_template(script.decoded, SCRIPTPUBKEY_TEMPLATE_P2PK):
+            return True
+        return False
 
     @staticmethod
     def is_p2pkh(script: "Script") -> bool:
