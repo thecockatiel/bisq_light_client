@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Optional
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.core.address import Address
+from bitcoinj.core.legacy_address import LegacyAddress
+from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
@@ -82,6 +84,25 @@ class Wallet(EventListener):
                 pubkey = first_item[0]
                 keystore = first_item[1][0]
                 return DeterministicKey(pubkey, keystore)
+        return None
+
+    def find_key_from_pub_key_hash(
+        self,
+        pub_key_hash: bytes,
+        script_type: "ScriptType",
+    ) -> Optional["DeterministicKey"]:
+        if script_type == ScriptType.P2WPKH:
+            address = str(SegwitAddress.from_hash(pub_key_hash, self._network))
+        elif script_type == ScriptType.P2PKH:
+            address = str(LegacyAddress.from_pub_key_hash(pub_key_hash, self._network))
+        else:
+            return None
+        keys = self._electrum_wallet.get_public_keys_with_deriv_info(address)
+        if keys:
+            first_item = next(iter(keys.items()))
+            pubkey = first_item[0]
+            keystore = first_item[1][0]
+            return DeterministicKey(pubkey, keystore)
         return None
 
     def get_receiving_address(self) -> "Address":
