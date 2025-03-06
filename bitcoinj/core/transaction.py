@@ -44,6 +44,12 @@ class Transaction:
         self.included_in_best_chain_at: Optional[datetime] = None
         """Date of the block that includes this transaction on the best chain"""
 
+    @staticmethod
+    def from_electrum_tx(params: "NetworkParameters", tx: "ElectrumTransaction"):
+        transaction = Transaction(params)
+        transaction._electrum_transaction = tx
+        return transaction
+
     @property
     def lock_time(self):
         return self._electrum_transaction.locktime
