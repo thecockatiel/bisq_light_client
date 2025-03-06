@@ -6,6 +6,7 @@ from bitcoinj.core.address import Address
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.networks import NETWORKS
 from bitcoinj.core.address_format_exception import AddressFormatException
+from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160, hash160_to_b58_address
 
@@ -51,8 +52,12 @@ class LegacyAddress(Address):
         return LegacyAddress(params, False, hash160)
     
     @staticmethod
-    def from_key(key: Union["ECPrivkey", "ECPubkey"], params: "NetworkParameters") -> "LegacyAddress":
-        return LegacyAddress.from_pub_key_hash(get_sha256_ripemd160_hash(Encryption.get_public_key_bytes(key)), params)
+    def from_key(key: Union["ECPrivkey", "ECPubkey", "DeterministicKey"], params: "NetworkParameters") -> "LegacyAddress":
+        if isinstance(key, DeterministicKey):
+            key_hash = key.get_pub_key_hash()
+        else:
+            key_hash = get_sha256_ripemd160_hash(Encryption.get_public_key_bytes(key))
+        return LegacyAddress.from_pub_key_hash(key_hash, params)
     
     @property
     def version(self) -> int:

@@ -1,14 +1,16 @@
 from typing import Optional, Union
+from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.core.address import Address
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.crypto.ec_utils import is_compressed_pubkey
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.segwit_addr import Encoding, bech32_decode, convertbits, encode_segwit_address
 from bisq.common.crypto.encryption import Encryption, ECPubkey, ECPrivkey
 from bitcoinj.core.networks import NETWORKS
-from utils.preconditions import check_state
+from utils.preconditions import check_argument, check_state
 
 
 # NOTE: doesn't cover all methods and properties of the original class, but it should be enough
@@ -100,6 +102,10 @@ class SegwitAddress(Address):
         return SegwitAddress(params, bytes([witness_version]) + bytes(convertbits(hash, 8, 5, True)))
     
     @staticmethod
-    def from_key(key: Union["ECPubkey", "ECPrivkey"], params: "NetworkParameters") -> "SegwitAddress":
-        assert is_compressed_pubkey(key.get_public_key_bytes())
-        return SegwitAddress.from_hash(Encryption.get_public_key_bytes(key), params)
+    def from_key(key: Union["ECPubkey", "ECPrivkey", "DeterministicKey"], params: "NetworkParameters") -> "SegwitAddress":
+        if isinstance(key, DeterministicKey):
+            key_hash = key.get_pub_key_hash()
+        else:
+            check_argument(is_compressed_pubkey(key.get_public_key_bytes()), "only compressed keys allowed")
+            key_hash = get_sha256_ripemd160_hash(Encryption.get_public_key_bytes(key))
+        return SegwitAddress.from_hash(key_hash, params)

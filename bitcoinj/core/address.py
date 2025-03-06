@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import TYPE_CHECKING, Union
 from bitcoinj.core.address_format_exception import AddressFormatException
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.params.main_net_params import MainNetParams
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.bitcoin import b58_address_to_hash160
 from electrum_min.segwit_addr import decode_segwit_address
-from bisq.common.crypto.encryption import ECPubkey, ECPrivkey
+
+if TYPE_CHECKING:
+    from bisq.common.crypto.encryption import ECPubkey, ECPrivkey
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
 
 #NOTE: Implement as necessary
 class Address(ABC):
@@ -30,7 +33,7 @@ class Address(ABC):
                 raise e
         
     @staticmethod
-    def from_key(key: Union["ECPrivkey", "ECPubkey"], script_type: "ScriptType", network_parameters: NetworkParameters=None):
+    def from_key(key: Union["ECPrivkey", "ECPubkey", "DeterministicKey"], script_type: "ScriptType", network_parameters: NetworkParameters=None):
         from bitcoinj.core.legacy_address import LegacyAddress
         from bitcoinj.core.segwit_address import SegwitAddress
         
