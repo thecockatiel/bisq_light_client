@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
+from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.core.address import Address
@@ -112,6 +113,13 @@ class Wallet(EventListener):
             keystore = first_item[1][0]
             return DeterministicKey(pubkey, keystore)
         return None
+
+    def find_key_from_pub_key(
+        self,
+        pub_key: bytes,
+        script_type: "ScriptType",
+    ) -> Optional["DeterministicKey"]:
+        return self.find_key_from_pub_key_hash(get_sha256_ripemd160_hash(pub_key), script_type)
 
     def get_receiving_address(self) -> "Address":
         return Address.from_string(

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.config.config import Config
-from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
@@ -113,11 +112,11 @@ class AddressEntry(PersistablePayload):
             script_type = ScriptType.P2WPKH if self.segwit else ScriptType.P2PKH
             self._address = Address.from_key(self.key_pair, script_type, Config.BASE_CURRENCY_NETWORK_VALUE.parameters)
         if self._address is None:
-            logger.warning(f"Address is null at getAddress(). keyPair={self.key_pair}")
+            logger.warning(f"Address is None at get_address(). key_pair={self.key_pair}")
         return self._address
 
     @property
-    def is_address_null(self) -> bool:
+    def is_address_none(self) -> bool:
         return self._address is None
 
     @property

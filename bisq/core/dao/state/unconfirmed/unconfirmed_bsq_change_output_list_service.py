@@ -98,7 +98,7 @@ class UnconfirmedBsqChangeOutputListService(PersistedDataHost):
             return
 
         change = outputs[change_output_index]
-        if not change.is_mine(wallet):
+        if not change.is_for_wallet(wallet):
             return
 
         tx_output = UnconfirmedTxOutput.from_transaction_output(change)

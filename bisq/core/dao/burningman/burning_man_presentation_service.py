@@ -247,7 +247,7 @@ class BurningManPresentationService(DaoStateListener):
                 self._my_genesis_output_names = {
                     f"{BurningManService.GENESIS_OUTPUT_PREFIX}{output.index}"
                     for output in genesis_transaction.outputs
-                    if output.is_mine(self._bsq_wallet_service.wallet)
+                    if output.is_for_wallet(self._bsq_wallet_service.wallet)
                 }
         if self._my_genesis_output_names is None:
             self._my_genesis_output_names = set()

@@ -94,3 +94,27 @@ class ScriptPattern:
         """Returns whether this script is using OP_RETURN to store arbitrary data."""
         chunks = script.decoded
         return len(chunks) > 0 and chunks[0][0] == opcodes.OP_RETURN
+
+    def extract_key_from_p2pk(script: "Script"):
+        """
+        Extract the pubkey from a P2SH scriptPubKey.
+        It's important that the script is in the correct form,
+        so you will want to guard calls to this method with isP2PK(Script).
+        """
+        return script.decoded[0][1]
+
+    def extract_hash_from_p2pkh(script: "Script"):
+        """
+        Extract the pubkey hash from a P2PKH scriptPubKey.
+        It's important that the script is in the correct form,
+        so you will want to guard calls to this method with isP2PKH(Script).
+        """
+        return script.decoded[2][1]
+
+    def extract_hash_from_p2wpkh(script: "Script"):
+        """
+        Extract the pubkey hash from a P2WPKH or the script hash from a P2WSH scriptPubKey.
+        It's important that the script is in the correct form,
+        so you will want to guard calls to this method with isP2WH(Script).
+        """
+        return script.decoded[1][1]
