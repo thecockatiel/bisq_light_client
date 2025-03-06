@@ -80,12 +80,13 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
         )
         self._use_dev_privilege_keys = use_dev_privilege_keys
 
-        def block_download_listener(e: SimplePropertyChangeEvent["float"]):
-            if e.new_value == 1:
+        def on_new_block_height(e: SimplePropertyChangeEvent[int]):
+            # in place of blockDownloadListener
+            if e.new_value > 0:
                 self._setup_wallet_best_block_listener()
 
         self._pending_accounting_blocks: list["AccountingBlock"] = []
-        self._block_download_listener = block_download_listener
+        self._block_height_listener = on_new_block_height
         self._check_for_block_received_timer: Optional["Timer"] = None
         self._request_blocks_counter = 0
 
@@ -134,8 +135,8 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
         if self._wallets_setup.is_download_complete:
             self._setup_wallet_best_block_listener()
         else:
-            self._wallets_setup.download_percentage_property.add_listener(
-                self._block_download_listener
+            self._wallets_setup.chain_height_property.add_listener(
+                self._block_height_listener
             )
 
         super().on_initialized()
@@ -304,11 +305,11 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
             self.apply_reorg()
 
     def _setup_wallet_best_block_listener(self):
-        self._wallets_setup.download_percentage_property.remove_listener(
-            self._block_download_listener
+        self._wallets_setup.chain_height_property.remove_listener(
+            self._block_height_listener
         )
 
-        def on_new_best_block(block_from_wallet: "BitcoinJBlock"):
+        def on_new_block_height(new_height: int):
             # If we are not completed with initial block requests we return
             if not self._dao_state_service.parse_block_chain_complete:
                 return
@@ -317,7 +318,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 # In case we received a new block before out timer gets called we stop the old timer
                 self._check_for_block_received_timer.stop()
 
-            wallet_block_height = block_from_wallet.height
+            wallet_block_height = new_height
             logger.info(
                 f"New block at height {wallet_block_height} from bsqWalletService"
             )
@@ -344,4 +345,4 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 ),
             )
 
-        self._bsq_wallet_service.add_new_best_block_listener(on_new_best_block)
+        self._bsq_wallet_service.add_new_block_height_listener(on_new_block_height)

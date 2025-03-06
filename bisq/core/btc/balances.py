@@ -57,7 +57,7 @@ class Balances:
         # self.trade_manager.get_observable_list().add_listener(lambda change: self.update_balance())
         # self.refund_manager.get_disputes_as_observable_list().add_listener(lambda c: self.update_balance())
         # self.btc_wallet_service.add_balance_listener(lambda balance, tx: self.update_balance())
-        # self.btc_wallet_service.add_new_best_block_listener(lambda block: self.update_balance())
+        # self.btc_wallet_service.add_new_block_height_listener(lambda height: self.update_balance())
         # self.update_balance()
 
     def update_balance(self):

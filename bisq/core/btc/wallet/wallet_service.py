@@ -1,16 +1,21 @@
 from abc import ABC
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, Union
 
 from bisq.common.config.config import Config
-from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.exceptions.transaction_verification_exception import (
+    TransactionVerificationException,
+)
 from bisq.core.btc.listeners.balance_listener import BalanceListener
 from bitcoinj.base.coin import Coin
+from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
 from utils.concurrency import ThreadSafeSet
+from utils.data import SimplePropertyChangeEvent
 
 if TYPE_CHECKING:
-    from bitcoinj.core.listeners.new_best_block_listener import NewBestBlockListener
+    from bitcoinj.core.transaction_input import TransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
@@ -81,13 +86,41 @@ class WalletService(ABC):
 
     @staticmethod
     def check_wallet_consistency(wallet: "Wallet"):
-        raise RuntimeError("WalletService.check_wallet_consistency Not implemented yet")
+        # Electrum wallet cannot be inconsistent because of the way it stores transactions
+        pass
 
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
-        raise RuntimeError(
-            "WalletService.check_all_script_signatures_for_tx Not implemented yet"
-        )
+        for i, input in enumerate(transaction.inputs):
+            WalletService.check_script_sig(transaction, input, i)
+
+    @staticmethod
+    def check_script_sig(
+        transaction: "Transaction", input: "TransactionInput", input_index: int
+    ):
+        try:
+            assert (
+                input.connected_output is not None
+            ), "input.connected_output must not be None"
+            input.get_script_sig().correctly_spends(
+                transaction,
+                input_index,
+                input.witness,
+                input.value,
+                input.connected_output.script_pub_key,
+                Script.ALL_VERIFY_FLAGS,
+            )
+        except Exception as e:
+            logger.error(e, exc_info=e)
+            raise TransactionVerificationException(e)
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Sign tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Dust
+    # ///////////////////////////////////////////////////////////////////////////////////////////
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Broadcast tx
@@ -139,8 +172,10 @@ class WalletService(ABC):
             return Coin.value_of(self.wallet.get_available_balance())
         return Coin.ZERO()
 
-    def get_balance_for_address(self, address: "Address") -> "Coin":
-        raise RuntimeError("WalletService.get_balance_for_address Not implemented yet")
+    def get_balance_for_address(self, address: Union["Address", str]) -> "Coin":
+        if self.wallet:
+            return Coin.value_of(self.wallet.get_address_balance(address))
+        return Coin.ZERO()
 
     def get_tx_fee_for_withdrawal_per_vbyte(self) -> Coin:
         fee = (
@@ -155,8 +190,8 @@ class WalletService(ABC):
     # // Tx outputs
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def is_address_unused(self, address: "Address") -> bool:
-        raise RuntimeError("BtcWalletService.is_address_unused Not implemented yet")
+    def is_address_unused(self, address: Union["Address", str]) -> bool:
+        return self.wallet.is_address_unused(address)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Getters
@@ -166,7 +201,7 @@ class WalletService(ABC):
         return Transaction(self.params, tx)
 
     def get_best_chain_height(self) -> int:
-        raise RuntimeError("WalletService.get_best_chain_height Not implemented yet")
+        return self._wallets_setup.chain_height_property.value
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Wallet delegates to avoid direct access to wallet outside the service class
@@ -178,11 +213,15 @@ class WalletService(ABC):
     def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
         self.wallet.remove_change_event_listener(listener)
 
-    def add_new_best_block_listener(self, listener: "NewBestBlockListener"):
-        pass
+    def add_new_block_height_listener(
+        self, listener: Callable[[SimplePropertyChangeEvent[int]], None]
+    ):
+        return self._wallets_setup.chain_height_property.add_listener(listener)
 
-    def remove_new_best_block_listener(self, listener: "NewBestBlockListener"):
-        pass
+    def remove_new_block_height_listener(
+        self, listener: Callable[[SimplePropertyChangeEvent[int]], None]
+    ):
+        self._wallets_setup.chain_height_property.remove_listener(listener)
 
     @property
     def is_wallet_ready(self):
