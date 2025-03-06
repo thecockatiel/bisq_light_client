@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 class Wallet(EventListener):
 
     def __init__(
-        self, electrum_wallet: "Abstract_Wallet", network: "NetworkParameters"
+        self, electrum_wallet: "Abstract_Wallet", network_params: "NetworkParameters"
     ):
         self._electrum_wallet = electrum_wallet
-        self._network = network
+        self._network_params = network_params
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
         self._registered_for_callbacks = False
         self._tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
@@ -61,7 +61,7 @@ class Wallet(EventListener):
                 listener.on_wallet_changed(self)
 
             if self._tx_listeners:
-                wrapped_tx = Transaction.from_electrum_tx(self._network, tx)
+                wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
                 for listener in self._tx_listeners:
                     listener(wrapped_tx)
 
@@ -101,9 +101,9 @@ class Wallet(EventListener):
         script_type: "ScriptType",
     ) -> Optional["DeterministicKey"]:
         if script_type == ScriptType.P2WPKH:
-            address = str(SegwitAddress.from_hash(pub_key_hash, self._network))
+            address = str(SegwitAddress.from_hash(pub_key_hash, self._network_params))
         elif script_type == ScriptType.P2PKH:
-            address = str(LegacyAddress.from_pub_key_hash(pub_key_hash, self._network))
+            address = str(LegacyAddress.from_pub_key_hash(pub_key_hash, self._network_params))
         else:
             return None
         keys = self._electrum_wallet.get_public_keys_with_deriv_info(address)
@@ -123,7 +123,7 @@ class Wallet(EventListener):
 
     def get_receiving_address(self) -> "Address":
         return Address.from_string(
-            self._electrum_wallet.get_receiving_address(), self._network
+            self._electrum_wallet.get_receiving_address(), self._network_params
         )
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):
@@ -169,6 +169,10 @@ class Wallet(EventListener):
     @property
     def is_encrypted(self):
         return self._electrum_wallet.has_storage_encryption()
+    
+    @property
+    def network_params(self):
+        return self._network_params
 
     def stop(self):
         return self._electrum_wallet.stop()
@@ -185,7 +189,7 @@ class Wallet(EventListener):
 
     def get_issued_receive_addresses(self) -> list["Address"]:
         return [
-            Address.from_string(address, self._network)
+            Address.from_string(address, self._network_params)
             for address in self._electrum_wallet.get_addresses()
         ]
 
