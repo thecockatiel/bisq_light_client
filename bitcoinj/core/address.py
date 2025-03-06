@@ -23,12 +23,12 @@ class Address(ABC):
         from bitcoinj.core.legacy_address import LegacyAddress
         from bitcoinj.core.segwit_address import SegwitAddress
         try:
-            return LegacyAddress.from_base58(addr, network_parameters)
+            return SegwitAddress.from_bech32(addr, network_parameters)
         except AddressFormatException.WrongNetwork as e:
             raise e
         except Exception as e:
             try:
-                return SegwitAddress.from_bech32(addr, network_parameters)
+                return LegacyAddress.from_base58(addr, network_parameters)
             except Exception as e:
                 raise e
         
