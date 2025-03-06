@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 
 if TYPE_CHECKING:
-    from electrum_min.keystore import KeyStoreWithMPK
+    from electrum_min.keystore import BIP32_KeyStore
 
 
 # TODO: implement as needed
 class DeterministicKey:
     # A wrapper for KeyStoreWithMPK of electrum
 
-    def __init__(self, pubkey: bytes, keystore: "KeyStoreWithMPK"):
+    def __init__(self, pubkey: bytes, keystore: "BIP32_KeyStore"):
         self._keystore = keystore
         self._pubkey = pubkey
         self._pubkey_hash = None
