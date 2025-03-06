@@ -804,7 +804,7 @@ class OpenOfferManager(
             return
 
         # Don't allow trade start if BitcoinJ is not fully synced (bisq issue #4764)
-        if not self.btc_wallet_service.is_chain_height_synced_within_tolerance():
+        if not self.btc_wallet_service.is_chain_height_synced_within_tolerance:
             error_message = "We got a handle_offer_availability_request but our chain is not synced."
             logger.info(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)

@@ -207,8 +207,10 @@ class WalletsSetup:
     def bsq_wallet(self):
         return self.wallet_config.bsq_wallet
 
+    @property
     def is_chain_height_synced_within_tolerance(self):
-        # since we use electrum, we only need to know if its synced or not,
-        # because its fast.
+        # since we use electrum, we only need to know if its initialized or not
         if not self.wallet_config:
             return False
+
+        return self.wallet_config.current_height_property.value > 0
