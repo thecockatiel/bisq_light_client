@@ -276,7 +276,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                         )
                         committed_disputed_payout_tx = WalletService.maybe_add_network_tx_to_wallet(
                             signed_disputed_payout_tx,
-                            self.btc_wallet_service.get_wallet()
+                            self.btc_wallet_service.wallet
                         )
                         
                         class TxCallback(TxBroadcasterCallback):
@@ -377,7 +377,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         committed_dispute_payout_tx = (
             WalletService.maybe_add_network_tx_to_wallet(
                 peer_published_payout_tx_message.transaction,
-                self.btc_wallet_service.get_wallet(),
+                self.btc_wallet_service.wallet,
             )
         )
 

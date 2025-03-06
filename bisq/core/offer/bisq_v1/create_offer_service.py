@@ -149,7 +149,7 @@ class CreateOfferService:
             bank_id=bank_id,
             accepted_bank_ids=accepted_banks,
             version_nr=Version.VERSION,
-            block_height_at_offer_creation=self.btc_wallet_service.get_last_block_seen_height(),
+            block_height_at_offer_creation=self.btc_wallet_service.last_block_seen_height,
             tx_fee=tx_fee_to_use.value,
             maker_fee=maker_fee.value,
             is_currency_for_maker_fee_btc=is_maker_fee_btc,

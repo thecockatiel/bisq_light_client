@@ -30,7 +30,7 @@ class PublishedDelayedPayoutTx(TradeTask):
 
             committed_delayed_payout_tx = WalletService.maybe_add_self_tx_to_wallet(
                 delayed_payout_tx, 
-                btc_wallet_service.get_wallet()
+                btc_wallet_service.wallet
             )
 
             class BroadcastCallback(TxBroadcasterCallback):

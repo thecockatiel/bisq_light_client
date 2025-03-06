@@ -33,7 +33,7 @@ class ProcessPeerPublishedDelayedPayoutTxMessage(TradeTask):
                 
             WalletService.maybe_add_self_tx_to_wallet(
                 delayed_payout_tx, 
-                self.process_model.btc_wallet_service.get_wallet()
+                self.process_model.btc_wallet_service.wallet
             )
 
             self.process_model.trade_manager.request_persistence()
