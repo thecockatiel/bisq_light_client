@@ -137,6 +137,7 @@ class WalletConfig(EventListener):
                         btc_wallet_file,
                         False,
                     ),
+                    self._daemon.network,
                     self._config.network_parameters,
                 )
                 self._bsq_wallet = Wallet(
@@ -146,12 +147,13 @@ class WalletConfig(EventListener):
                         bsq_wallet_file,
                         False,
                     ),
+                    self._daemon.network,
                     self._config.network_parameters,
                 )
                 self._restore_from_seed = None
                 self._daemon.start_network()
-                self._btc_wallet.start_network(self._daemon.network)
-                self._bsq_wallet.start_network(self._daemon.network)
+                self._btc_wallet.start_network()
+                self._bsq_wallet.start_network()
                 self._initializing = False
                 self._initialized = True
                 on_complete()

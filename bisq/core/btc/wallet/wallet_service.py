@@ -32,6 +32,7 @@ logger = get_logger(__name__)
 
 # TODO
 class WalletService(ABC):
+    """Abstract base class for BTC and BSQ wallet. Provides all non-trade specific functionality."""
 
     def __init__(
         self,
@@ -40,14 +41,13 @@ class WalletService(ABC):
         fee_service: "FeeService",
     ):
         super().__init__()
-        self.wallets_setup = wallets_setup
-        self.preferences = preferences
-        self.fee_service = fee_service
+        self._wallets_setup = wallets_setup
+        self._preferences = preferences
+        self._fee_service = fee_service
 
-        self.params = self.wallets_setup.params
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
-        self.balance_listeners = ThreadSafeSet["BalanceListener"]()
+        self._balance_listeners = ThreadSafeSet["BalanceListener"]()
 
     @property
     def is_wallet_ready(self):
@@ -56,15 +56,19 @@ class WalletService(ABC):
     @property
     def is_encrypted(self) -> bool:
         return self.wallet.is_encrypted if self.wallet else False
+    
+    @property
+    def params(self):
+        return self._wallets_setup.params
 
-    def get_transaction(
+    def get_transaction(self,
         hash_or_tx_id: Union[bytes, Optional[str]]
     ) -> Optional["Transaction"]:
         if hash_or_tx_id is None:
             return None
         if isinstance(hash_or_tx_id, bytes):
             hash_or_tx_id = hash_or_tx_id.hex()
-        raise RuntimeError("WalletService.get_transaction Not implemented yet")
+        return self.wallet.get_transaction(hash_or_tx_id)
 
     def get_tx_from_serialized_tx(self, tx: bytes) -> Optional["Transaction"]:
         return Transaction(self.params, tx)
@@ -76,9 +80,9 @@ class WalletService(ABC):
 
     def get_tx_fee_for_withdrawal_per_vbyte(self) -> Coin:
         fee = (
-            Coin.value_of(self.preferences.get_withdrawal_tx_fee_in_vbytes())
-            if self.preferences.get_use_custom_withdrawal_tx_fee()
-            else self.fee_service.get_tx_fee_per_vbyte()
+            Coin.value_of(self._preferences.get_withdrawal_tx_fee_in_vbytes())
+            if self._preferences.get_use_custom_withdrawal_tx_fee()
+            else self._fee_service.get_tx_fee_per_vbyte()
         )
         logger.info(f"tx fee = {fee.to_friendly_string()}")
         return fee
@@ -123,7 +127,7 @@ class WalletService(ABC):
         raise RuntimeError("WalletService.broadcast_tx Not implemented yet")
 
     def is_chain_height_synced_within_tolerance(self) -> bool:
-        return self.wallets_setup.is_chain_height_synced_within_tolerance()
+        return self._wallets_setup.is_chain_height_synced_within_tolerance()
 
     def get_wallet(self) -> "Wallet":
         raise RuntimeError("WalletService.get_wallet Not implemented yet")
@@ -143,10 +147,10 @@ class WalletService(ABC):
         )
 
     def add_balance_listener(self, listener: "BalanceListener"):
-        self.balance_listeners.add(listener)
+        self._balance_listeners.add(listener)
 
     def remove_balance_listener(self, listener: "BalanceListener"):
-        self.balance_listeners.discard(listener)
+        self._balance_listeners.discard(listener)
 
     def get_confidence_for_address(self, address: "Address") -> "TransactionConfidence":
         raise RuntimeError(

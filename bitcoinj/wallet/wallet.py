@@ -25,9 +25,13 @@ if TYPE_CHECKING:
 class Wallet(EventListener):
 
     def __init__(
-        self, electrum_wallet: "Abstract_Wallet", network_params: "NetworkParameters"
+        self,
+        electrum_wallet: "Abstract_Wallet",
+        electrum_network: "Network",
+        network_params: "NetworkParameters",
     ):
         self._electrum_wallet = electrum_wallet
+        self._electrum_network = electrum_network
         self._network_params = network_params
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
         self._registered_for_callbacks = False
@@ -103,7 +107,9 @@ class Wallet(EventListener):
         if script_type == ScriptType.P2WPKH:
             address = str(SegwitAddress.from_hash(pub_key_hash, self._network_params))
         elif script_type == ScriptType.P2PKH:
-            address = str(LegacyAddress.from_pub_key_hash(pub_key_hash, self._network_params))
+            address = str(
+                LegacyAddress.from_pub_key_hash(pub_key_hash, self._network_params)
+            )
         else:
             return None
         keys = self._electrum_wallet.get_public_keys_with_deriv_info(address)
@@ -119,7 +125,9 @@ class Wallet(EventListener):
         pub_key: bytes,
         script_type: "ScriptType",
     ) -> Optional["DeterministicKey"]:
-        return self.find_key_from_pub_key_hash(get_sha256_ripemd160_hash(pub_key), script_type)
+        return self.find_key_from_pub_key_hash(
+            get_sha256_ripemd160_hash(pub_key), script_type
+        )
 
     def get_receiving_address(self) -> "Address":
         return Address.from_string(
@@ -169,7 +177,7 @@ class Wallet(EventListener):
     @property
     def is_encrypted(self):
         return self._electrum_wallet.has_storage_encryption()
-    
+
     @property
     def network_params(self):
         return self._network_params
@@ -177,8 +185,8 @@ class Wallet(EventListener):
     def stop(self):
         return self._electrum_wallet.stop()
 
-    def start_network(self, network: "Network"):
-        return self._electrum_wallet.start_network(network)
+    def start_network(self):
+        return self._electrum_wallet.start_network(self._electrum_network)
 
     def get_balances(self):
         """returns a set of balances for display purposes: confirmed and matured, unconfirmed, unmatured"""
@@ -186,7 +194,9 @@ class Wallet(EventListener):
 
     def get_available_balance(self) -> int:
         # see https://github.com/spesmilo/electrum/issues/8835
-        return sum(utxo.value_sats() for utxo in self._electrum_wallet.get_spendable_coins())
+        return sum(
+            utxo.value_sats() for utxo in self._electrum_wallet.get_spendable_coins()
+        )
 
     def get_issued_receive_addresses(self) -> list["Address"]:
         return [
@@ -196,3 +206,9 @@ class Wallet(EventListener):
 
     def is_mine(self, address: str):
         return self._electrum_wallet.is_mine(address)
+
+    def get_transaction(self, txid: str) -> Optional["Transaction"]:
+        e_tx = self._electrum_wallet.db.get_transaction(txid)
+        if e_tx:
+            return Transaction.from_electrum_tx(self.network_params, e_tx)
+        return None
