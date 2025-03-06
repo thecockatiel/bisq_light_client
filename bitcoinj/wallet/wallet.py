@@ -181,11 +181,12 @@ class Wallet(EventListener):
         return self._electrum_wallet.start_network(network)
 
     def get_balances(self):
-        """returns a set of balances: confirmed and matured, unconfirmed, unmatured"""
+        """returns a set of balances for display purposes: confirmed and matured, unconfirmed, unmatured"""
         return self._electrum_wallet.get_balance()
 
     def get_available_balance(self) -> int:
-        return self.get_balances()[0]
+        # see https://github.com/spesmilo/electrum/issues/8835
+        return sum(utxo.value_sats() for utxo in self._electrum_wallet.get_spendable_coins())
 
     def get_issued_receive_addresses(self) -> list["Address"]:
         return [
