@@ -657,6 +657,7 @@ class Trade(TradeModel, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def setup_confidence_listener(self):
+        # TODO: fix to get confidence from wallet
         if self.get_deposit_tx() is not None:
             transaction_confidence = self.get_deposit_tx().get_confidence()
             if transaction_confidence.confidence_type == TransactionConfidenceType.BUILDING:

@@ -43,7 +43,7 @@ class SetupPayoutTxListener(TradeTask):
                 # check if the payout already happened (ensuring it was > deposit block height, see GH #5725)
                 confidence = wallet_service.get_confidence_for_address_from_block_height(
                     address,
-                    deposit_tx.get_confidence().get_appeared_at_chain_height()
+                    deposit_tx.get_confidence().appeared_at_chain_height
                 )
                 
                 if self._is_in_network(confidence):

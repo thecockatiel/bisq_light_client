@@ -21,9 +21,10 @@ class TransactionConfidence:
         tx_id: str,
         *,
         depth = 0,
+        appeared_at_chain_height = -1,
         confidence_type: "TransactionConfidenceType" = None,
     ) -> None:
-        self.depth = depth or 0
+        self.depth = depth
         """
         the depth of the transaction in the best chain in blocks. An unconfirmed block has depth 0.
         
@@ -40,6 +41,8 @@ class TransactionConfidence:
         self.tx_id = tx_id
         """The txid that this confidence object is associated with."""
 
+        self.appeared_at_chain_height = appeared_at_chain_height
+
         if confidence_type is None:
             confidence_type = TransactionConfidenceType.UNKNOWN
         self.confidence_type = confidence_type
@@ -47,34 +50,3 @@ class TransactionConfidence:
         self.confidence_source = TransactionConfidenceSource.NETWORK
         """always Network since we use electrum"""
 
-        self._listeners = ThreadSafeSet["TransactionConfidenceChangedListener"]()
-
-    def add_listener(self, listener: "TransactionConfidenceChangedListener") -> None:
-        self._listeners.add(listener)
-
-    def remove_listener(self, listener: "TransactionConfidenceChangedListener") -> None:
-        self._listeners.discard(listener)
-
-    def get_depth_future(self, depth: int) -> Future["TransactionConfidence"]:
-        result = Future()
-
-        if self.depth >= depth:
-            result.set_result(self)
-        else:
-
-            def on_change(
-                confidence: "TransactionConfidence",
-                reason: "TransactionConfidenceChangeReason",
-            ):
-                if confidence.depth >= depth:
-                    self.remove_listener(on_change)
-                    result.set_result(confidence)
-
-            self.add_listener(on_change)
-
-        return result
-
-    def get_appeared_at_chain_height(self) -> int:
-        raise RuntimeError(
-            "TransactionConfidence.get_appeared_at_chain_height Not implemented yet"
-        )
