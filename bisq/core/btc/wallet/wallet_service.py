@@ -7,7 +7,6 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
-from bisq.core.btc.listeners.balance_listener import BalanceListener
 from bitcoinj.base.coin import Coin
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
@@ -54,7 +53,14 @@ class WalletService(ABC):
 
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
-        self._balance_listeners = ThreadSafeSet["BalanceListener"]()
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Lifecycle
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def shut_down(self):
+        # TODO
+        pass
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener
@@ -74,11 +80,11 @@ class WalletService(ABC):
             "WalletService.remove_address_confidence_listener Not implemented yet"
         )
 
-    def add_balance_listener(self, listener: "BalanceListener"):
-        self._balance_listeners.add(listener)
+    def add_balance_listener(self, listener: Callable[[Coin], None]):
+        return self.wallet.available_balance_property.add_listener(listener)
 
-    def remove_balance_listener(self, listener: "BalanceListener"):
-        self._balance_listeners.discard(listener)
+    def remove_balance_listener(self, listener: Callable[[Coin], None]):
+        self.wallet.available_balance_property.remove_listener(listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Checks
@@ -155,14 +161,6 @@ class WalletService(ABC):
             "WalletService.get_confidence_for_address_from_block_height Not implemented yet"
         )
 
-    @property
-    def is_chain_height_synced_within_tolerance(self) -> bool:
-        return self._wallets_setup.is_chain_height_synced_within_tolerance
-
-    def shut_down(self):
-        # TODO
-        pass
-
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Balance
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -202,6 +200,10 @@ class WalletService(ABC):
 
     def get_best_chain_height(self) -> int:
         return self._wallets_setup.chain_height_property.value
+
+    @property
+    def is_chain_height_synced_within_tolerance(self) -> bool:
+        return self._wallets_setup.is_chain_height_synced_within_tolerance
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Wallet delegates to avoid direct access to wallet outside the service class

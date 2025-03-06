@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Generator, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
+from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
@@ -13,6 +14,7 @@ from bitcoinj.script.script_type import ScriptType
 from electrum_min.network import Network
 from electrum_min.util import EventListener, InvalidPassword, event_listener
 from utils.concurrency import ThreadSafeSet
+from utils.data import SimpleProperty
 
 if TYPE_CHECKING:
     from electrum_min.wallet import Abstract_Wallet
@@ -37,6 +39,12 @@ class Wallet(EventListener):
         self._registered_for_callbacks = False
         self._tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
         self.register_electrum_callbacks()
+        self._last_balance = 0
+        self._available_balance_property = SimpleProperty(Coin.ZERO())
+
+    @property
+    def available_balance_property(self):
+        return self._available_balance_property
 
     # //////////////////////////////////////////////////////////////////////
     # // Electrum bridge
@@ -55,14 +63,12 @@ class Wallet(EventListener):
     @event_listener
     def on_event_verified(self, wallet, txid, info):
         if self._electrum_wallet == wallet:
-            for listener in self._change_listeners:
-                listener.on_wallet_changed(self)
+            self.on_wallet_changed()
 
     @event_listener
     def on_event_new_transaction(self, wallet, tx):
         if self._electrum_wallet == wallet:
-            for listener in self._change_listeners:
-                listener.on_wallet_changed(self)
+            self.on_wallet_changed()
 
             if self._tx_listeners:
                 wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
@@ -72,14 +78,17 @@ class Wallet(EventListener):
     @event_listener
     def on_event_removed_transaction(self, wallet, tx):
         if self._electrum_wallet == wallet:
-            for listener in self._change_listeners:
-                listener.on_wallet_changed(self)
+            self.on_wallet_changed()
 
     @event_listener
     def on_event_wallet_updated(self, wallet):
         if self._electrum_wallet == wallet:
-            for listener in self._change_listeners:
-                listener.on_wallet_changed(self)
+            self.on_wallet_changed()
+
+    def on_wallet_changed(self):
+        for listener in self._change_listeners:
+            listener.on_wallet_changed(self)
+        self._available_balance_property.set(Coin.value_of(self.get_available_balance()))
 
     # //////////////////////////////////////////////////////////////////////
     # // Bitcoinj Wallet API
@@ -143,10 +152,10 @@ class Wallet(EventListener):
             return True
         return False
 
-    def add_tx_listener(self, listener: Callable[["Transaction"], None]):
+    def add_new_tx_listener(self, listener: Callable[["Transaction"], None]):
         self._tx_listeners.add(listener)
 
-    def remove_tx_listener(self, listener: Callable[["Transaction"], None]):
+    def remove_new_tx_listener(self, listener: Callable[["Transaction"], None]):
         if listener in self._tx_listeners:
             self._tx_listeners.discard(listener)
             return True

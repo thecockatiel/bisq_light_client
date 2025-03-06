@@ -119,7 +119,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         # funds (e.g. if the user sends funds to an address which has not been provided in the main UI - like from the
         # wallet details window).
  
-        wallet.add_tx_listener(self.maybe_add_new_address_entry)
+        wallet.add_new_tx_listener(self.maybe_add_new_address_entry)
         
         self.request_persistence()
 

@@ -58,7 +58,7 @@ class BsqSwapOfferModel:
         self.tx_fee: Optional[Coin] = None
         self.tx_fee_per_vbyte: int = 0
 
-        self._btc_balance_listener: Optional["BalanceListener"] = None
+        self._btc_balance_listener: Optional[Callable[[Coin], None]] = None
         self._bsq_balance_listener: Optional["BsqBalanceListener"] = None
 
     def _is_non_zero_amount(
@@ -114,11 +114,7 @@ class BsqSwapOfferModel:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def create_listeners(self) -> None:
-        class BL(BalanceListener):
-            def on_balance_changed(self_, balance: Coin, tx: "Transaction") -> None:
-                self.calculate_input_and_payout()
-
-        self._btc_balance_listener = BL()
+        self._btc_balance_listener = lambda *_: self.calculate_input_and_payout()
         self._bsq_balance_listener = lambda *_: self.calculate_input_and_payout()
 
     def add_listeners(self) -> None:
