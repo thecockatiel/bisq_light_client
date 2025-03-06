@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Generator, Optional
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -212,3 +212,13 @@ class Wallet(EventListener):
         if e_tx:
             return Transaction.from_electrum_tx(self.network_params, e_tx)
         return None
+
+    @property
+    def last_block_seen_height(self):
+        return self._electrum_network.get_local_height()
+
+    def get_transactions(self) -> Generator["Transaction"]:
+        """return an Generator that returns all transactions in the wallet, newest first"""
+        return (Transaction.from_electrum_tx(tx) for tx in reversed(self._electrum_wallet.db.transactions.values()))
+    
+    
