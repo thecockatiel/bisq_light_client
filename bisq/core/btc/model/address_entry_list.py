@@ -6,6 +6,8 @@ from bisq.common.protocol.persistable.persistable_envelope import PersistableEnv
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
+from bitcoinj.core.segwit_address import SegwitAddress
+from bitcoinj.script.script_type import ScriptType
 import pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeSet
 
@@ -60,7 +62,66 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
     
     def on_wallet_ready(self, wallet: "Wallet"):
         self._wallet = wallet
-        # TODO 
+        
+        # TODO: check if works correctly
+        if self.entry_set:
+            to_be_removed = set["AddressEntry"]()
+            for entry in self.entry_set:
+                if entry.segwit:
+                    script_type = ScriptType.P2WPKH
+                else:
+                    script_type = ScriptType.P2PKH
+                key = wallet.find_key_from_pub_key_hash(entry.pub_key_hash, script_type)
+                if key:
+                    address_from_key = Address.from_key(key, script_type)
+                    # We want to ensure key and address matches in case we have address in entry available already
+                    if entry.is_address_none or address_from_key == entry.get_address():
+                        entry.set_deterministic_key(key)
+                    else:
+                        logger.error(f"We found an address entry without key but cannot apply the key as the address "
+                                     f"is not matching. "
+                                     f"We remove that entry as it seems it is not compatible with our wallet. "
+                                     f"addressFromKey={address_from_key}, addressEntry.getAddress()={entry.get_address()}")
+                        to_be_removed.add(entry)
+                else:
+                    logger.error(f"Key from addressEntry {entry} not found in that wallet. We remove that entry. "
+                                 "This is expected at restore from seeds.")
+                    to_be_removed.add(entry)
+            
+            for entry in to_be_removed:
+                self.entry_set.discard(entry)
+        else:
+            # TODO: double check later if its okay to generate a segwit address here.
+            # to generate a legacy address means we have to create and handle an extra wallet instance,
+            # so we use segwit for now to not do that
+            key = wallet.find_key_from_address(wallet.get_receiving_address())
+            self.entry_set.add(
+                AddressEntry(key_pair=key, context=AddressEntryContext.ARBITRATOR, segwit=True)
+            )
+        
+        # In case we restore from seed words and have balance we need to add the relevant addresses to our list.
+        # IssuedReceiveAddresses does not contain all addresses where we expect balance so we need to listen to
+        # incoming txs at blockchain sync to add the rest.
+        if self._wallet.get_available_balance() > 0:
+            for address in self._wallet.get_issued_receive_addresses():
+                if self.is_address_not_in_entries():
+                    key = self._wallet.find_key_from_address(address)
+                    if key:
+                        # Address will be derived from key in getAddress method
+                        logger.info(f"Create AddressEntry for IssuedReceiveAddress. address={address}")
+                        self.entry_set.add(AddressEntry(key_pair=key, context=AddressEntryContext.AVAILABLE, segwit=isinstance(address, SegwitAddress)))
+                    else:
+                        logger.warning(f"DeterministicKey for address {address} is None")
+        
+        # We add those listeners to get notified about potential new transactions and
+        # add an address entry list in case it does not exist yet. This is mainly needed for restore from seed words
+        # but can help as well in case the addressEntry list would miss an address where the wallet was received
+        # funds (e.g. if the user sends funds to an address which has not been provided in the main UI - like from the
+        # wallet details window).
+ 
+        wallet.add_tx_listener(self.maybe_add_new_address_entry)
+        
+        self.request_persistence()
 
     def add_address_entry(self, address_entry: "AddressEntry") -> None:
         entry_with_same_offer_id_and_context_exists = any(
@@ -148,8 +209,22 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
     def maybe_add_new_address_entry(self, tx: "Transaction"):
-        # TODO
-        raise NotImplementedError("maybe_add_new_address_entry not implemented")
+        for output in tx.outputs:
+            if output.is_for_wallet(self._wallet):
+                try:
+                    address = output.get_script_pub_key().get_to_address(self._wallet.network_params)
+                except:
+                    address = None
+                if address and self.is_address_not_in_entries(address):
+                    key = self._wallet.find_key_from_address(address)
+                    if key:
+                        self.add_address_entry(
+                            AddressEntry(
+                                key_pair=key,
+                                context=AddressEntryContext.AVAILABLE,
+                                segwit=isinstance(address, SegwitAddress)
+                            )
+                        )
 
     def is_address_not_in_entries(self, address: "Address") -> bool:
         return not any(address == entry.get_address() for entry in self.entry_set)
