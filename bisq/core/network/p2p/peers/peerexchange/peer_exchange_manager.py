@@ -344,6 +344,6 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
             del self.handler_map[peers_node_address]
 
     def _close_all_handlers(self):
-        for handler in self.handler_map.values():
+        for handler in self.handler_map.copy().values():
             handler.cancel()
         self.handler_map.clear()
