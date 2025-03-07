@@ -526,12 +526,12 @@ class Trade(TradeModel, ABC):
         start_time = 0
         
         if deposit_tx is not None:
-            if deposit_tx.get_confidence().depth > 0:
+            if deposit_tx.confirmations is not None and deposit_tx.confirmations > 0:
                 trade_time = self.get_date().timestamp() * 1000  # Convert to milliseconds
                 # Use tx.included_in_best_chain_at when available, otherwise use tx.update_time
-                block_time = (deposit_tx.get_included_in_best_chain_at().timestamp() * 1000 
-                            if deposit_tx.get_included_in_best_chain_at() is not None 
-                            else deposit_tx.get_update_time().timestamp() * 1000)
+                block_time = (deposit_tx.included_in_best_chain_at.timestamp() * 1000 
+                            if deposit_tx.included_in_best_chain_at is not None 
+                            else deposit_tx.update_time.timestamp() * 1000)
                 
                 # If block date is in future (Date in Bitcoin blocks can be off by +/- 2 hours) we use our current date.
                 # If block date is earlier than our trade date we use our trade date.

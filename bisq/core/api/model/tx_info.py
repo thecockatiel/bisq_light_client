@@ -112,8 +112,8 @@ class TxInfo(Payload):
 
         builder.extend([
             f"\tanyOutputSpent:               {transaction.is_any_output_spent()}",
-            f"\tupdateTime:                   {transaction.get_update_time()}",
-            f"\tincludedInBestChainAt:        {transaction.get_included_in_best_chain_at()}",
+            f"\tupdateTime:                   {transaction.update_time}",
+            f"\tincludedInBestChainAt:        {transaction.included_in_best_chain_at}",
             f"\thasWitnesses:                 {transaction.has_witnesses}",
             f"\tlockTime:                     {transaction.lock_time}",
             f"\tversion:                      {transaction.version}",

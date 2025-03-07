@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Optional, Union
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
-from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
 from bitcoinj.core.verification_exception import VerificationException
@@ -14,26 +13,30 @@ from electrum_min.bitcoin import opcodes
 from electrum_min.transaction import Transaction as ElectrumTransaction, TxOutput
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
-from bitcoinj.core.transaction_confidence import TransactionConfidence
 
 if TYPE_CHECKING:
+    from bitcoinj.wallet.wallet import Wallet
+    from electrum_min.util import TxMinedInfo
     from bitcoinj.core.network_parameters import NetworkParameters
 
 
 def date_time_format(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+
 # TODO
 class Transaction:
     LOCKTIME_THRESHOLD = 500000000
 
     def __init__(
-        self, params: "NetworkParameters", payload_bytes: bytes = None
+        self,
+        params: "NetworkParameters",
+        payload_bytes: bytes = None,
     ) -> None:
         self._electrum_transaction = ElectrumTransaction(payload_bytes)
         self.params = params
 
-        self.updated_at: Optional[datetime] = None
+        self._update_time: Optional[datetime] = None
         """
         This is either the time the transaction was broadcast as measured from the local clock, or the time from the
         block in which it was included. Note that this can be changed by re-orgs so the wallet may update this field.
@@ -41,8 +44,11 @@ class Transaction:
         list of transactions from a wallet, which is helpful for presenting to users.
         """
 
-        self.included_in_best_chain_at: Optional[datetime] = None
+        self._included_in_best_chain_at: Optional[datetime] = None
         """Date of the block that includes this transaction on the best chain"""
+
+        self._tx_mined_info: Optional["TxMinedInfo"] = None
+        self._label = ""
 
     @staticmethod
     def from_electrum_tx(params: "NetworkParameters", tx: "ElectrumTransaction"):
@@ -51,9 +57,52 @@ class Transaction:
         return transaction
 
     @property
+    def update_time(self):
+        """
+        Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
+        or the epoch if that information isn't available.
+        """
+        if self._update_time is None:
+            # Older wallets did not store this field. Set to the epoch.
+            self._update_time = datetime.fromtimestamp(0, tz=timezone.utc)
+        return self._update_time
+
+    @property
+    def height(self):
+        return self._tx_mined_info.height if self._tx_mined_info else None
+
+    @property
+    def confirmations(self):
+        return self._tx_mined_info.conf if self._tx_mined_info else None
+
+    @property
+    def is_pending(self):
+        if (
+            self._tx_mined_info is not None
+            and self._tx_mined_info.height > 0
+            and self._tx_mined_info.conf == 0
+        ):
+            return True
+        return False
+
+    @property
+    def has_info_from_wallet(self):
+        return self._tx_mined_info is not None
+
+    def add_info_from_wallet(self, wallet: "Wallet"):
+        txid = self.get_tx_id()
+        self._tx_mined_info = wallet.get_tx_mined_info(txid)
+        if self._tx_mined_info.timestamp:
+            self._update_time = datetime.fromtimestamp(
+                self._tx_mined_info.timestamp, tz=timezone.utc
+            )
+            self._included_in_best_chain_at = self._update_time
+        self._label = wallet.get_label_for_txid(txid)
+
+    @property
     def lock_time(self):
         return self._electrum_transaction.locktime
-    
+
     @lock_time.setter
     def lock_time(self, value: int):
         self._electrum_transaction.locktime = value
@@ -93,26 +142,10 @@ class Transaction:
     def bitcoin_serialize(self) -> bytes:
         return bytes.fromhex(self._electrum_transaction.serialize_to_network())
 
-    def get_update_time(self):
-        """
-        Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
-        or the epoch if that information isn't available.
-        """
-        if self.updated_at is None:
-            # Older wallets did not store this field. Set to the epoch.
-            self.updated_at = datetime.fromtimestamp(0, tz=timezone.utc)
-        return self.updated_at
-
-    def get_included_in_best_chain_at(self):
-        return self.included_in_best_chain_at
-
-    def get_confidence(self, *, context=None, table=None) -> "TransactionConfidence":
-        return TransactionConfidence(self.get_tx_id())
-    
     @property
-    def has_confidence(self):
-        return self.get_confidence().confidence_type != TransactionConfidenceType.UNKNOWN
-    
+    def included_in_best_chain_at(self):
+        return self._included_in_best_chain_at
+
     def get_sig_op_count(self):
         sig_ops = 0
         for tx_input in self.inputs:
@@ -136,16 +169,16 @@ class Transaction:
 
     def get_vsize(self) -> int:
         return self._electrum_transaction.estimated_size()
-    
+
     def get_input_sum(self) -> Coin:
         input_total = Coin.ZERO()
 
         for tx_input in self.inputs:
             if tx_input.value is not None:
                 input_total = input_total.add(tx_input.value)
-        
+
         return input_total
-    
+
     def get_output_sum(self) -> Coin:
         total_out = Coin.ZERO()
 
@@ -158,13 +191,12 @@ class Transaction:
     @property
     def is_time_locked(self):
         return self.lock_time > 0
-    
+
     @property
     def memo(self):
-        # TODO
         # it should be retrieved from the wallet
         # it's called "label" in electrum
-        return ""
+        return self._label
 
     @property
     def has_relative_lock_time(self):
@@ -179,10 +211,6 @@ class Transaction:
     @property
     def is_coin_base(self):
         return len(self.inputs) == 1 and self.inputs[0].is_coin_base
-    
-    @property
-    def is_pending(self):
-        return self.get_confidence().confidence_type == TransactionConfidenceType.PENDING
 
     @property
     def appears_in_hashes(self) -> Optional[dict[str, int]]:
@@ -207,19 +235,19 @@ class Transaction:
             tx._electrum_transaction.deserialize()
         except Exception as e:
             raise VerificationException(e) from e
-        
+
         if len(tx.inputs) == 0 or len(tx.outputs) == 0:
             raise VerificationException.EmptyInputsOrOutputs()
-        
+
         if tx.get_message_size() > Block.MAX_BLOCK_SIZE:
             raise VerificationException.LargerThanMaxBlockSize()
-        
+
         outpoints = set()
         for tx_in in tx.inputs:
             if tx_in.outpoint in outpoints:
                 raise VerificationException.DuplicatedOutPoint()
             outpoints.add(tx_in.outpoint)
-        
+
         value_out = Coin.ZERO()
         for tx_out in tx.outputs:
             value = tx_out.get_value()
@@ -229,10 +257,10 @@ class Transaction:
                 value_out = value_out.add(value)
             except:
                 raise VerificationException.ExcessiveValue()
-            
+
             if network.has_max_money() and value_out > network.get_max_money():
                 raise VerificationException.ExcessiveValue()
-            
+
         if tx.is_coin_base:
             if len(tx.inputs[0].script_sig) < 2 or len(tx.inputs[0].script_sig) > 100:
                 raise VerificationException.CoinbaseScriptSizeOutOfRange()
@@ -276,9 +304,7 @@ class Transaction:
 
         if not anyone_can_pay and sign_all:
             hash_sequence = Sha256Hash.twice_of(
-                b"".join(
-                    input.nsequence.to_bytes(4, "little") for input in self.inputs
-                )
+                b"".join(input.nsequence.to_bytes(4, "little") for input in self.inputs)
             ).hash_bytes
 
         if sign_all:
@@ -316,14 +342,22 @@ class Transaction:
         bos.extend((sig_hash_type & 0x000000FF).to_bytes(4, "little"))
 
         return Sha256Hash.twice_of(bos).hash_bytes
-    
-    def hash_for_signature(self, input_index: int, connected_script: Union[bytes, "Script"], sig_hash_type: Union[TransactionSigHash, int], anyone_can_pay: Optional[bool] = None):
+
+    def hash_for_signature(
+        self,
+        input_index: int,
+        connected_script: Union[bytes, "Script"],
+        sig_hash_type: Union[TransactionSigHash, int],
+        anyone_can_pay: Optional[bool] = None,
+    ):
         if isinstance(connected_script, Script):
             connected_script = connected_script.program
-        
+
         if isinstance(sig_hash_type, TransactionSigHash):
-            sig_hash_type = TransactionSignature.calc_sig_hash_value(sig_hash_type, anyone_can_pay)
-        
+            sig_hash_type = TransactionSignature.calc_sig_hash_value(
+                sig_hash_type, anyone_can_pay
+            )
+
         tx = None
         try:
             tx = Transaction(self.params, self.bitcoin_serialize())
@@ -332,47 +366,55 @@ class Transaction:
         except:
             # Should not happen unless we were given a totally broken transaction.
             raise
-        
+
         for i, tx_in in enumerate(tx.inputs()):
-            tx_in.script_sig = b''
+            tx_in.script_sig = b""
             setattr(tx_in, "_TxInput__scriptpubkey", None)
             tx_in.witness = None
-            
-        connected_script = Script.remove_all_instances_of_op(connected_script, opcodes.OP_CODESEPARATOR)
-        
+
+        connected_script = Script.remove_all_instances_of_op(
+            connected_script, opcodes.OP_CODESEPARATOR
+        )
+
         input = tx._inputs[input_index]
         input.script_sig = connected_script
         setattr(input, "_TxInput__scriptpubkey", connected_script)
-        
+
         # using variable or getters for inputs and outputs in different places is intentional.
-        
-        if (sig_hash_type & 0x1f) == TransactionSigHash.NONE.int_value:
+
+        if (sig_hash_type & 0x1F) == TransactionSigHash.NONE.int_value:
             # SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".
             tx._outputs = []
             for i in range(len(tx._inputs)):
                 if i != input_index:
                     tx._inputs[i].nsequence = 0
-        elif (sig_hash_type & 0x1f) == TransactionSigHash.SINGLE.int_value:
+        elif (sig_hash_type & 0x1F) == TransactionSigHash.SINGLE.int_value:
             # SIGHASH_SINGLE means only sign the output at the same index as the input (ie, my output).
             if input_index >= len(tx.outputs()):
                 # The input index is beyond the number of outputs, it's a buggy signature made by a broken wallet.
-                return Sha256Hash.wrap("0100000000000000000000000000000000000000000000000000000000000000").hash_bytes
-            
-            tx._outputs = tx._outputs[:input_index + 1]
+                return Sha256Hash.wrap(
+                    "0100000000000000000000000000000000000000000000000000000000000000"
+                ).hash_bytes
+
+            tx._outputs = tx._outputs[: input_index + 1]
             for i in range(input_index):
                 tx._outputs[i] = TxOutput(scriptpubkey=b"", value=-1)
             # The signature isn't broken by new versions of the transaction issued by other parties.
             for i in range(len(tx._inputs)):
                 if i != input_index:
                     tx._inputs[i].nsequence = 0
-        
-        if (sig_hash_type & TransactionSigHash.ANYONECANPAY.int_value) == TransactionSigHash.ANYONECANPAY.int_value:
+
+        if (
+            sig_hash_type & TransactionSigHash.ANYONECANPAY.int_value
+        ) == TransactionSigHash.ANYONECANPAY.int_value:
             tx._inputs = []
             tx._inputs.append(input)
-        
+
         tx.invalidate_ser_cache()
-        bos = bytes.fromhex(tx.serialize_to_network(include_sigs=True, force_legacy=True))
-        bos = bos + (0x000000ff & sig_hash_type).to_bytes(4, "little")
+        bos = bytes.fromhex(
+            tx.serialize_to_network(include_sigs=True, force_legacy=True)
+        )
+        bos = bos + (0x000000FF & sig_hash_type).to_bytes(4, "little")
         return Sha256Hash.twice_of(bos).hash_bytes
 
     def to_debug_str(self, chain=None, indent=None):

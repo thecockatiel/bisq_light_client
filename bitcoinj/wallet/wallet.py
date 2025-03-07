@@ -72,6 +72,7 @@ class Wallet(EventListener):
 
             if self._tx_listeners:
                 wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
+                wrapped_tx.add_info_from_wallet(self)
                 for listener in self._tx_listeners:
                     listener(wrapped_tx)
 
@@ -88,7 +89,9 @@ class Wallet(EventListener):
     def on_wallet_changed(self):
         for listener in self._change_listeners:
             listener.on_wallet_changed(self)
-        self._available_balance_property.set(Coin.value_of(self.get_available_balance()))
+        self._available_balance_property.set(
+            Coin.value_of(self.get_available_balance())
+        )
 
     # //////////////////////////////////////////////////////////////////////
     # // Bitcoinj Wallet API
@@ -234,7 +237,9 @@ class Wallet(EventListener):
     def get_transaction(self, txid: str) -> Optional["Transaction"]:
         e_tx = self._electrum_wallet.db.get_transaction(txid)
         if e_tx:
-            return Transaction.from_electrum_tx(self.network_params, e_tx)
+            tx = Transaction.from_electrum_tx(self.network_params, e_tx)
+            tx.add_info_from_wallet(self)
+            return tx
         return None
 
     @property
@@ -243,7 +248,13 @@ class Wallet(EventListener):
 
     def get_transactions(self) -> Generator["Transaction"]:
         """return an Generator that returns all transactions in the wallet, newest first"""
-        return (
-            Transaction.from_electrum_tx(tx)
-            for tx in reversed(self._electrum_wallet.db.transactions.values())
-        )
+        for tx in reversed(self._electrum_wallet.db.transactions.values()):
+            tx = Transaction.from_electrum_tx(self.network_params, tx)
+            tx.add_info_from_wallet(self)
+            yield tx
+
+    def get_tx_mined_info(self, txid: str):
+        return self._electrum_wallet.adb.get_tx_height(txid)
+
+    def get_label_for_txid(self, txid: str):
+        return self._electrum_wallet.get_label_for_txid(txid)
