@@ -10,12 +10,12 @@ from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.script.script_type import ScriptType
 import pb_pb2 as protobuf
 from utils.concurrency import ThreadSafeSet
+from bitcoinj.core.address import Address
 
 if TYPE_CHECKING:
     from bisq.common.persistence.persistence_manager import PersistenceManager
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.wallet.wallet import Wallet
-    from bitcoinj.core.address import Address
 
 logger = get_logger(__name__)
 
