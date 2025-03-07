@@ -17,7 +17,7 @@ class TestDefaultSeedNodeRepository(unittest.TestCase):
         self.assertEqual(len(self.repo.cache), 0)
         self.assertEqual(self.repo.config, self.config)
 
-    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.resource_readlines')
+    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.core_resource_readlines')
     def test_reload_with_config_seed_nodes(self, mock_resource_readlines):
         # Given
         self.config.seed_nodes = ['node1.onion:8000', 'node2.onion:8000']
@@ -29,7 +29,7 @@ class TestDefaultSeedNodeRepository(unittest.TestCase):
         self.assertEqual(len(self.repo.cache), 2)
         mock_resource_readlines.assert_not_called()
 
-    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.resource_readlines')
+    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.core_resource_readlines')
     def test_reload_from_property_file(self, mock_resource_readlines):
         # Given
         mock_resource_readlines.return_value = [
@@ -44,7 +44,7 @@ class TestDefaultSeedNodeRepository(unittest.TestCase):
         # Then
         self.assertEqual(len(self.repo.cache), 3)
 
-    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.resource_readlines')
+    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.core_resource_readlines')
     def test_reload_with_banned_nodes(self, mock_resource_readlines):
         # Given
         mock_resource_readlines.return_value = ['node1.onion:8000', 'node2.onion:8000']
@@ -97,7 +97,7 @@ class TestDefaultSeedNodeRepository(unittest.TestCase):
         # Then
         self.assertIsNone(result)
 
-    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.resource_readlines')
+    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.core_resource_readlines')
     def test_get_seed_node_addresses_from_property_file(self, mock_resource_readlines):
         # Given
         mock_resource_readlines.return_value = [
@@ -114,7 +114,7 @@ class TestDefaultSeedNodeRepository(unittest.TestCase):
         self.assertEqual(len(result), 3)
         self.assertTrue(all(isinstance(addr, NodeAddress) for addr in result))
 
-    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.resource_readlines')
+    @patch('bisq.core.network.p2p.seed.default_seed_node_repository.core_resource_readlines')
     def test_get_seed_node_addresses_from_property_file_empty(self, mock_resource_readlines):
         # Given
         mock_resource_readlines.return_value = []
