@@ -53,10 +53,10 @@ compiled binary must be placed in `electrum_min` directory beside `ecc_fast.py` 
 python -m unittest discover -s tests -p '*_test.py'
 ```
 
-## Run client
+## Run daemon
 
 ```bash
-python run_client.py
+python run_daemon.py
 ```
 
 ## Credits
