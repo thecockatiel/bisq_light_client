@@ -230,12 +230,12 @@ class XmrTxProofService(AssetTxProofService):
         if self.wallets_setup.is_download_complete:
             result.set(True)
         else:
-            def listener(e: SimplePropertyChangeEvent[float]):
+            def listener(e: SimplePropertyChangeEvent[int]):
                 if self.wallets_setup.is_download_complete:
-                    self.wallets_setup.download_percentage_property.remove_listener(self.btc_block_listener)
+                    self.wallets_setup.chain_height_property.remove_listener(self.btc_block_listener)
                     result.set(True)
             self.btc_block_listener = listener
-            self.wallets_setup.download_percentage_property.add_listener(self.btc_block_listener)
+            self.wallets_setup.chain_height_property.add_listener(self.btc_block_listener)
         return result
     
     def has_sufficient_btc_peers(self) -> SimpleProperty[bool]:
