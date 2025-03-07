@@ -117,11 +117,10 @@ class TxInfo(Payload):
             f"\thasWitnesses:                 {transaction.has_witnesses}",
             f"\tlockTime:                     {transaction.lock_time}",
             f"\tversion:                      {transaction.version}",
-            f"\thasConfidence:                {transaction.has_confidence}",
             f"\tsigOpCount:                   {transaction.get_sig_op_count()}",
-            f"\tisTimeLocked:                 {transaction.is_time_locked()}",
-            f"\thasRelativeLockTime:          {transaction.has_relative_lock_time()}",
-            f"\tisOptInFullRBF:               {transaction.is_opt_in_full_rbf()}",
+            f"\tisTimeLocked:                 {transaction.is_time_locked}",
+            f"\thasRelativeLockTime:          {transaction.has_relative_lock_time}",
+            f"\tisOptInFullRBF:               {transaction.is_opt_in_full_rbf}",
             f"\tmemo:                         {transaction.memo}",
             # purpose was omitted
         ])
