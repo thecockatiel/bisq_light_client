@@ -8,12 +8,13 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
+from bisq.core.btc.listeners.tx_confidence_listener import TxConfidenceListener
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
-from utils.concurrency import AtomicReference
+from utils.concurrency import AtomicReference, ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
 from bitcoinj.core.transaction import Transaction
 
@@ -60,6 +61,10 @@ class WalletService(ABC):
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
 
+        self._address_confidence_listeners = ThreadSafeSet[
+            "AddressConfidenceListener"
+        ]()
+        self._tx_confidence_listeners = ThreadSafeSet["TxConfidenceListener"]()
         self._cache_invalidation_listener = (
             lambda *_: self._address_to_matching_tx_set_cache.set(None)
         )
@@ -70,27 +75,45 @@ class WalletService(ABC):
 
     def add_listeners_to_wallet(self):
         self.wallet.add_change_event_listener(self._cache_invalidation_listener)
+        self.wallet.add_tx_changed_listener(self._on_tx_changed)
 
     def shut_down(self):
         self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
+        self.wallet.remove_tx_changed_listener(self._on_tx_changed)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def _on_tx_changed(self, tx: "Transaction"):
+        if not self.wallet:
+            return
+
+        for listener in self._address_confidence_listeners:
+            confidence = self._get_transaction_confidence(tx, listener.address)
+            listener.on_transaction_confidence_changed(confidence)
+
+        if self._tx_confidence_listeners:
+            confidence = self.get_confidence_for_tx_id(tx.get_tx_id())
+            for listener in self._tx_confidence_listeners:
+                if tx.get_tx_id() == listener.tx_id:
+                    listener.on_transaction_confidence_changed(confidence)
+
     def add_address_confidence_listener(
         self, listener: "AddressConfidenceListener"
     ) -> None:
-        raise RuntimeError(
-            "WalletService.add_address_confidence_listener Not implemented yet"
-        )
+        self._address_confidence_listeners.add(listener)
 
     def remove_address_confidence_listener(
         self, listener: "AddressConfidenceListener"
     ) -> None:
-        raise RuntimeError(
-            "WalletService.remove_address_confidence_listener Not implemented yet"
-        )
+        self._address_confidence_listeners.discard(listener)
+
+    def add_tx_confidence_listener(self, listener: "TxConfidenceListener") -> None:
+        self._tx_confidence_listeners.add(listener)
+
+    def remove_tx_confidence_listener(self, listener: "TxConfidenceListener") -> None:
+        self._tx_confidence_listeners.discard(listener)
 
     def add_balance_listener(self, listener: Callable[[Coin], None]):
         return self.wallet.available_balance_property.add_listener(listener)

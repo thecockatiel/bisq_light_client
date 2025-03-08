@@ -41,6 +41,7 @@ class Wallet(EventListener):
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
         self._registered_for_callbacks = False
         self._tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
+        self._tx_changed_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
         self.register_electrum_callbacks()
         self._last_balance = 0
         self._available_balance_property = SimpleProperty(Coin.ZERO())
@@ -68,6 +69,12 @@ class Wallet(EventListener):
         if self._electrum_wallet == wallet:
             self.on_wallet_changed()
 
+            if self._tx_changed_listeners:
+                wrapped_tx = self.get_transaction(txid)
+                wrapped_tx.add_info_from_wallet(self)
+                for listener in self._tx_changed_listeners:
+                    listener(wrapped_tx)
+
     @event_listener
     def on_event_new_transaction(self, wallet, tx):
         if self._electrum_wallet == wallet:
@@ -77,6 +84,12 @@ class Wallet(EventListener):
                 wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
                 wrapped_tx.add_info_from_wallet(self)
                 for listener in self._tx_listeners:
+                    listener(wrapped_tx)
+
+            if self._tx_changed_listeners:
+                wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
+                wrapped_tx.add_info_from_wallet(self)
+                for listener in self._tx_changed_listeners:
                     listener(wrapped_tx)
 
     @event_listener
@@ -164,6 +177,15 @@ class Wallet(EventListener):
     def remove_new_tx_listener(self, listener: Callable[["Transaction"], None]):
         if listener in self._tx_listeners:
             self._tx_listeners.discard(listener)
+            return True
+        return False
+
+    def add_tx_changed_listener(self, listener: Callable[["Transaction"], None]):
+        self._tx_changed_listeners.add(listener)
+
+    def remove_tx_changed_listener(self, listener: Callable[["Transaction"], None]):
+        if listener in self._tx_changed_listeners:
+            self._tx_changed_listeners.discard(listener)
             return True
         return False
 
