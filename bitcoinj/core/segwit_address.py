@@ -34,6 +34,8 @@ class SegwitAddress(Address):
         if witness_version == 0 and len(witness_program) != SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH \
                 and len(witness_program) != SegwitAddress.WITNESS_PROGRAM_LENGTH_SH:
             raise AddressFormatException.InvalidDataLength(f"Invalid length for address version 0: {len(witness_program)}")
+
+        self._str = None
             
     @property
     def witness_version(self) -> int:
@@ -62,8 +64,20 @@ class SegwitAddress(Address):
             return ScriptType.P2WSH
         raise IllegalStateException("Cannot happen.")
     
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return str(self) == other
+        if isinstance(other, SegwitAddress):
+            return self.params == other.params and self.bytes == other.bytes
+        return False
+    
+    def __hash__(self):
+        return hash((self.params, self.bytes))
+    
     def __str__(self):
-        return self.to_bech32()
+        if self._str is None:
+            self._str = self.to_bech32()
+        return self._str
     
     def to_bech32(self) -> str:
         """Returns the bech32-encoded textual form."""

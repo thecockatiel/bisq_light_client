@@ -21,6 +21,7 @@ class LegacyAddress(Address):
             raise ValueError(f"Legacy address hash160 is not 160 bits: {len(hash160)}")
         self.p2sh = p2sh
         """True if P2SH, false if P2PKH."""
+        self._str = None
         
     
     @staticmethod
@@ -82,9 +83,13 @@ class LegacyAddress(Address):
         return ScriptType.P2PKH
     
     def __str__(self):
-        return self.to_base58()
+        if self._str is None:
+            self._str = self.to_base58()
+        return self._str
     
-    def __eq__(self, value):
-        if not isinstance(value, LegacyAddress):
-            return False
-        return self.bytes == value.bytes and self.p2sh == value.p2sh and self.params == value.params
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return str(self) == other
+        if isinstance(other, LegacyAddress):
+            return self.bytes == other.bytes and self.p2sh == other.p2sh and self.params == other.params
+        return False
