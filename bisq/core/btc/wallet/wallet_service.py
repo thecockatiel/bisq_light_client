@@ -1,4 +1,5 @@
 from abc import ABC
+from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -9,8 +10,10 @@ from bisq.core.btc.exceptions.transaction_verification_exception import (
 )
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
+from utils.concurrency import AtomicReference
 from utils.data import SimplePropertyChangeEvent
 from bitcoinj.core.transaction import Transaction
 
@@ -51,16 +54,25 @@ class WalletService(ABC):
         self._preferences = preferences
         self._fee_service = fee_service
 
+        self._address_to_matching_tx_set_cache = AtomicReference(
+            defaultdict[Address, set["Transaction"]](set)
+        )
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
+
+        self._cache_invalidation_listener = (
+            lambda *_: self._address_to_matching_tx_set_cache.set(None)
+        )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Lifecycle
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def add_listeners_to_wallet(self):
+        self.wallet.add_change_event_listener(self._cache_invalidation_listener)
+
     def shut_down(self):
-        # TODO
-        pass
+        self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener
@@ -144,22 +156,122 @@ class WalletService(ABC):
     # // TransactionConfidence
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_confidence_for_tx_id(
-        self, tx_id: Optional[str]
+    def get_confidence_for_address(
+        self, address: "Address"
     ) -> Optional["TransactionConfidence"]:
-        raise RuntimeError("WalletService.get_confidence_for_tx_id Not implemented yet")
-
-    def get_confidence_for_address(self, address: "Address") -> "TransactionConfidence":
-        raise RuntimeError(
-            "WalletService.get_confidence_for_address Not implemented yet"
-        )
+        # TODO: room for optimization
+        transaction_confidence_list = []
+        if self.wallet:
+            transactions = self._get_address_to_matching_tx_set_multimap().get(address)
+            if transactions:
+                transaction_confidence_list.extend(
+                    self._get_transaction_confidence(tx, address) for tx in transactions
+                )
+        return self._get_most_recent_confidence(transaction_confidence_list)
 
     def get_confidence_for_address_from_block_height(
         self, address: "Address", target_height: int
-    ) -> "TransactionConfidence":
-        raise RuntimeError(
-            "WalletService.get_confidence_for_address_from_block_height Not implemented yet"
+    ) -> Optional["TransactionConfidence"]:
+        # TODO: room for optimization
+        transaction_confidence_list = []
+        if self.wallet:
+            transactions = self._get_address_to_matching_tx_set_multimap().get(address)
+            if transactions:
+                # "acceptable confidence" is either a new (pending) Tx, or a Tx confirmed after target block height
+                transaction_confidence_list.extend(
+                    confidence
+                    for tx in transactions
+                    if (confidence := self._get_transaction_confidence(tx, address))
+                    and (
+                        confidence.confidence_type == TransactionConfidenceType.PENDING
+                        or (
+                            confidence.confidence_type
+                            == TransactionConfidenceType.BUILDING
+                            and confidence.appeared_at_chain_height > target_height
+                        )
+                    )
+                )
+        return self._get_most_recent_confidence(transaction_confidence_list)
+
+    def _get_address_to_matching_tx_set_multimap(
+        self,
+    ) -> defaultdict["Address", set["Transaction"]]:
+        return self._address_to_matching_tx_set_cache.update_and_get(
+            lambda map: (
+                map if map else self._compute_address_to_matching_tx_set_multimap()
+            )
         )
+
+    def _compute_address_to_matching_tx_set_multimap(
+        self,
+    ) -> defaultdict["Address", set["Transaction"]]:
+        if not self.wallet:
+            return defaultdict(set)
+
+        address_to_tx_map = defaultdict(set)
+
+        for tx in self.wallet.get_transactions():
+            for address in (
+                addr
+                for output in self._get_outputs_with_connected_outputs(tx)
+                if (addr := WalletService.get_address_from_output(output)) is not None
+            ):
+                address_to_tx_map[address].add(tx)
+
+        return address_to_tx_map
+
+    def get_confidence_for_tx_id(
+        self, tx_id: Optional[str]
+    ) -> Optional["TransactionConfidence"]:
+        if not self.wallet:
+            return None
+
+        return self.wallet.get_confidence_for_tx_id(tx_id)
+
+    def _get_transaction_confidence(
+        self, tx: "Transaction", address: "Address"
+    ) -> Optional["TransactionConfidence"]:
+        tx.add_info_from_wallet(self.wallet)
+        transaction_confidence_list = [
+            self.get_confidence_for_tx_id(output.parent.get_tx_id())
+            for output in self._get_outputs_with_connected_outputs(tx)
+            if address and address == self.get_address_from_output(output)
+        ]
+        return self._get_most_recent_confidence(transaction_confidence_list)
+
+    def _get_outputs_with_connected_outputs(
+        self, tx: "Transaction"
+    ) -> list["TransactionOutput"]:
+        transaction_outputs = tx.outputs
+        connected_outputs = []
+
+        # add all connected outputs from any inputs as well
+        for transaction_input in tx.inputs:
+            transaction_output = transaction_input.connected_output
+            if transaction_output:
+                connected_outputs.append(transaction_output)
+
+        merged_outputs = transaction_outputs + connected_outputs
+        return merged_outputs
+
+    def _get_most_recent_confidence(
+        self, transaction_confidence_list: list["TransactionConfidence"]
+    ) -> Optional["TransactionConfidence"]:
+        transaction_confidence = None
+        for confidence in transaction_confidence_list:
+            if confidence:
+                if (
+                    transaction_confidence is None
+                    or confidence.confidence_type == TransactionConfidenceType.PENDING
+                    or (
+                        confidence.confidence_type == TransactionConfidenceType.BUILDING
+                        and transaction_confidence.confidence_type
+                        == TransactionConfidenceType.BUILDING
+                        and confidence.depth < transaction_confidence.depth
+                    )
+                ):
+                    transaction_confidence = confidence
+        return transaction_confidence
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Balance
@@ -281,6 +393,16 @@ class WalletService(ABC):
         )
 
     @staticmethod
+    def get_address_from_output(
+        transaction_output: "TransactionOutput",
+    ) -> Optional[Address]:
+        if WalletService.is_output_script_convertible_to_address(transaction_output):
+            return transaction_output.get_script_pub_key().get_to_address(
+                Config.BASE_CURRENCY_NETWORK_VALUE.parameters
+            )
+        return None
+
+    @staticmethod
     def get_address_string_from_output(
         transaction_output: "TransactionOutput",
     ) -> Optional[str]:
@@ -291,7 +413,6 @@ class WalletService(ABC):
                 )
             )
         return None
- 
 
     @staticmethod
     def maybe_add_tx_to_wallet(
