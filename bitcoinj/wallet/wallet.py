@@ -9,6 +9,7 @@ from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction import Transaction
+from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.network import Network
@@ -258,3 +259,23 @@ class Wallet(EventListener):
 
     def get_label_for_txid(self, txid: str):
         return self._electrum_wallet.get_label_for_txid(txid)
+
+    def maybe_add_transaction(self, tx: "Transaction"):
+        """tries to add transaction to history of wallet and may raise error"""
+        existing_tx = self._electrum_wallet.db.get_transaction(tx.get_tx_id())
+        if existing_tx:
+            return Transaction.from_electrum_tx(self.network_params, existing_tx)
+        Transaction.verify(Wallet.network_params, tx)
+        self._electrum_wallet.adb.add_unverified_or_unconfirmed_tx(tx.get_tx_id(), 0)
+        added = self._electrum_wallet.adb.add_transaction(
+            tx._electrum_transaction, allow_unrelated=True, is_new=True
+        )
+        if not added:
+            raise VerificationException(
+                "Transaction could not be added to wallet history due to conflicts"
+            )
+        existing_tx = self._electrum_wallet.db.get_transaction(tx.get_tx_id())
+        if not existing_tx:
+            # unlikely, just in case
+            raise IllegalStateException("Transaction was not added to wallet history")
+        return Transaction.from_electrum_tx(self.network_params, existing_tx)

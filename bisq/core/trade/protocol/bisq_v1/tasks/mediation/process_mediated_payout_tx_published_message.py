@@ -43,7 +43,7 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
 
             if self.trade.get_payout_tx() is None:
                 committed_mediated_payout_tx = (
-                    WalletService.maybe_add_network_tx_to_wallet(
+                    WalletService.maybe_add_tx_to_wallet(
                         message.payout_tx,
                         self.process_model.btc_wallet_service.wallet,
                     )

@@ -28,7 +28,7 @@ class PublishedDelayedPayoutTx(TradeTask):
             btc_wallet_service.reset_coin_locked_in_multi_sig_address_entry(self.trade.get_id())
             # We might receive funds on AddressEntry.Context.TRADE_PAYOUT so we don't swap that
 
-            committed_delayed_payout_tx = WalletService.maybe_add_self_tx_to_wallet(
+            committed_delayed_payout_tx = WalletService.maybe_add_tx_to_wallet(
                 delayed_payout_tx, 
                 btc_wallet_service.wallet
             )

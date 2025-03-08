@@ -31,7 +31,7 @@ class ProcessPeerPublishedDelayedPayoutTxMessage(TradeTask):
             delayed_payout_tx = self.trade.get_delayed_payout_tx()
             assert delayed_payout_tx is not None
                 
-            WalletService.maybe_add_self_tx_to_wallet(
+            WalletService.maybe_add_tx_to_wallet(
                 delayed_payout_tx, 
                 self.process_model.btc_wallet_service.wallet
             )

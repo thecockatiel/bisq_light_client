@@ -8,10 +8,11 @@ from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
-from utils.concurrency import ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
+from bitcoinj.core.transaction import Transaction
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
@@ -28,7 +29,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
-    from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.network_parameters import NetworkParameters
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.transaction_output import TransactionOutput
@@ -291,19 +291,15 @@ class WalletService(ABC):
                 )
             )
         return None
+ 
 
     @staticmethod
-    def maybe_add_network_tx_to_wallet(
-        serialized_transaction: bytes, wallet: "Wallet"
+    def maybe_add_tx_to_wallet(
+        transaction_or_bytes: Union[bytes, "Transaction"], wallet: "Wallet"
     ) -> "Transaction":
-        raise RuntimeError(
-            "WalletService.maybe_add_network_tx_to_wallet Not implemented yet"
-        )
-
-    @staticmethod
-    def maybe_add_self_tx_to_wallet(
-        transaction: "Transaction", wallet: "Wallet"
-    ) -> "Transaction":
-        raise RuntimeError(
-            "WalletService.maybe_add_self_tx_to_wallet Not implemented yet"
-        )
+        if isinstance(transaction_or_bytes, Transaction):
+            tx = transaction_or_bytes
+        else:
+            tx = Transaction(wallet.network_params, transaction_or_bytes)
+        tx = wallet.maybe_add_transaction(tx)
+        return tx

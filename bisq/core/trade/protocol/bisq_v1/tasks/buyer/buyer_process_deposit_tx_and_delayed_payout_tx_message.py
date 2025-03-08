@@ -36,7 +36,7 @@ class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
             )
             # update with full tx
             wallet = self.process_model.btc_wallet_service.wallet
-            committed_deposit_tx = BtcWalletService.maybe_add_self_tx_to_wallet(
+            committed_deposit_tx = BtcWalletService.maybe_add_tx_to_wallet(
                 deposit_tx, wallet
             )
             self.trade.apply_deposit_tx(committed_deposit_tx)

@@ -32,7 +32,7 @@ class BuyerProcessPayoutTxPublishedMessage(TradeTask):
             )
 
             if self.trade.payout_tx is None:
-                committed_payout_tx = WalletService.maybe_add_network_tx_to_wallet(
+                committed_payout_tx = WalletService.maybe_add_tx_to_wallet(
                     message.payout_tx,
                     self.process_model.btc_wallet_service.wallet,
                 )

@@ -274,10 +274,6 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                             contract.seller_multi_sig_pub_key,
                             dispute_result.arbitrator_pub_key
                         )
-                        committed_disputed_payout_tx = WalletService.maybe_add_network_tx_to_wallet(
-                            signed_disputed_payout_tx,
-                            self.btc_wallet_service.wallet
-                        )
                         
                         class TxCallback(TxBroadcasterCallback):
                             
@@ -292,7 +288,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
 
 
                         self.trade_wallet_service.broadcast_tx(
-                            committed_disputed_payout_tx,
+                            signed_disputed_payout_tx,
                             TxCallback(),
                             15
                         )
@@ -375,7 +371,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         self.cleanup_retry_map(uid)
 
         committed_dispute_payout_tx = (
-            WalletService.maybe_add_network_tx_to_wallet(
+            WalletService.maybe_add_tx_to_wallet(
                 peer_published_payout_tx_message.transaction,
                 self.btc_wallet_service.wallet,
             )
