@@ -90,6 +90,7 @@ class Transaction:
         return self._tx_mined_info is not None
 
     def add_info_from_wallet(self, wallet: "Wallet"):
+        wallet.add_info_from_wallet(self)
         txid = self.get_tx_id()
         self._tx_mined_info = wallet.get_tx_mined_info(txid)
         if self._tx_mined_info.timestamp:

@@ -9,6 +9,8 @@ from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction import Transaction
+from bitcoinj.core.transaction_confidence import TransactionConfidence
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
@@ -256,6 +258,12 @@ class Wallet(EventListener):
 
     def get_tx_mined_info(self, txid: str):
         return self._electrum_wallet.adb.get_tx_height(txid)
+    
+    def add_info_from_wallet(self, tx: "Transaction"):
+        """populates prev_txs"""
+        tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
+        tx.inputs.invalidate()
+        tx.outputs.invalidate()
 
     def get_label_for_txid(self, txid: str):
         return self._electrum_wallet.get_label_for_txid(txid)
@@ -279,3 +287,35 @@ class Wallet(EventListener):
             # unlikely, just in case
             raise IllegalStateException("Transaction was not added to wallet history")
         return Transaction.from_electrum_tx(self.network_params, existing_tx)
+
+    def is_transaction_pending(self, tx_id: str):
+        return (
+            tx_id in self._electrum_wallet.adb.unconfirmed_tx
+            or tx_id in self._electrum_wallet.adb.unverified_tx
+        )
+
+    def get_confidence_for_tx_id(
+        self, tx_id: Optional[str]
+    ) -> Optional["TransactionConfidence"]:
+        if not tx_id:
+            return None
+
+        info = self.get_tx_mined_info(tx_id)
+        if info.conf > 0:
+            return TransactionConfidence(
+                tx_id,
+                depth=self.last_block_seen_height - info.height,
+                appeared_at_chain_height=info.height,
+                confidence_type=TransactionConfidenceType.BUILDING,
+            )
+        else:
+            is_pending = self.is_transaction_pending(tx_id)
+            return TransactionConfidence(
+                tx_id,
+                depth=0,
+                confidence_type=(
+                    TransactionConfidenceType.PENDING
+                    if is_pending
+                    else TransactionConfidenceType.UNKNOWN
+                ),
+            )
