@@ -13,6 +13,11 @@ class LazySequenceWrapper(Generic[_T, _R]):
         self._sequence: Sequence[_T] = None
         self._wrapper = wrapper
         self._initialized_idx = {}
+
+    def invalidate(self) -> None:
+        """invalidates the cache of the wrapped elements"""
+        self._sequence = None
+        self._initialized_idx.clear()
         
     def _check_and_get_sequence(self) -> Sequence[_T]:
         if self._sequence is None:
