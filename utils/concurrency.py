@@ -350,3 +350,28 @@ class AtomicInt:
     def __str__(self) -> str:
         with self._lock:
             return str(self._value)
+
+class AtomicReference(Generic[T]):
+    def __init__(self, initial: T=None):
+        self._value = initial
+        self._lock = threading.Lock()
+
+    def get(self):
+        with self._lock:
+            return self._value
+
+    def set(self, new_value: T):
+        with self._lock:
+            self._value = new_value
+
+    def compare_and_set(self, expected_value: T, new_value: T):
+        with self._lock:
+            if self._value == expected_value:
+                self._value = new_value
+                return True
+            return False
+        
+    def update_and_get(self, update_function: Callable[[T], T]) -> T:
+        with self._lock:
+            self._value = update_function(self._value)
+            return self._value
