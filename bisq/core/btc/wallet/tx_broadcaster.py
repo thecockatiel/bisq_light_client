@@ -11,7 +11,6 @@ from bisq.core.btc.wallet.http.mem_pool_space_tx_broadcaster import (
     MemPoolSpaceTxBroadcaster,
 )
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
-from bisq.core.btc.wallet.wallet_service import WalletService
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.wallet.wallet import Wallet
 
@@ -68,7 +67,7 @@ class TxBroadcaster:
         # If it's a bsq tx WalletManager.publishAndCommitBsqTx() should have committed the tx to both bsq and btc
         # wallets so the next line causes no effect.
         # If it's a btc tx, the next line adds the tx to the wallet.
-        WalletService.maybe_add_tx_to_wallet(tx, wallet)
+        wallet.maybe_add_transaction(tx)
 
         def on_broadcast_success(res):
             # We expect that there is still a timeout in our map, otherwise the timeout got triggered

@@ -57,7 +57,7 @@ class WalletService(ABC):
         self._fee_service = fee_service
 
         self._address_to_matching_tx_set_cache = AtomicReference(
-            defaultdict[Address, set["Transaction"]](set)
+            defaultdict["Address", set["Transaction"]](set)
         )
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
@@ -419,7 +419,7 @@ class WalletService(ABC):
     @staticmethod
     def get_address_from_output(
         transaction_output: "TransactionOutput",
-    ) -> Optional[Address]:
+    ) -> Optional["Address"]:
         if WalletService.is_output_script_convertible_to_address(transaction_output):
             return transaction_output.get_script_pub_key().get_to_address(
                 Config.BASE_CURRENCY_NETWORK_VALUE.parameters
