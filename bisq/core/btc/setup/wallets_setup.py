@@ -8,8 +8,8 @@ from bisq.common.file.file_util import (
 from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
+from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from utils.data import SimpleProperty, SimplePropertyChangeEvent
-from utils.dir import check_dir
 from bisq.core.btc.setup.wallet_config import WalletConfig
 
 if TYPE_CHECKING:
@@ -215,3 +215,10 @@ class WalletsSetup:
             return False
 
         return self.wallet_config.current_height_property.value > 0
+
+    def get_addresses_by_context(self, context: "AddressEntryContext"):
+        return {
+            address_entry.get_address()
+            for address_entry in self._address_entry_list.entry_set.copy()
+            if address_entry.context == context
+        }
