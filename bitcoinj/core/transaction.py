@@ -31,7 +31,7 @@ class Transaction:
     def __init__(
         self,
         params: "NetworkParameters",
-        payload_bytes: bytes = None,
+        payload_bytes: Optional[bytes] = None,
     ) -> None:
         self._electrum_transaction = ElectrumTransaction(payload_bytes)
         self.params = params
