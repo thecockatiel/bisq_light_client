@@ -75,12 +75,14 @@ class WalletService(ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def add_listeners_to_wallet(self):
-        self.wallet.add_change_event_listener(self._cache_invalidation_listener)
-        self.wallet.add_tx_changed_listener(self._on_tx_changed)
+        if self.wallet:
+            self.wallet.add_change_event_listener(self._cache_invalidation_listener)
+            self.wallet.add_tx_changed_listener(self._on_tx_changed)
 
     def shut_down(self):
-        self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
-        self.wallet.remove_tx_changed_listener(self._on_tx_changed)
+        if self.wallet:
+            self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
+            self.wallet.remove_tx_changed_listener(self._on_tx_changed)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener
