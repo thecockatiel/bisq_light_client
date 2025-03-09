@@ -779,6 +779,9 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         else:
             return self.pref_payload.block_notify_port
 
+    def get_ignore_dust_threshold(self):
+        return self.pref_payload.ignore_dust_threshold
+
     def get_default_xmr_tx_proof_services(self) -> list[str]:
         if self.config.use_localhost_for_p2p:
             return XMR_TX_PROOF_SERVICES_CLEAR_NET
