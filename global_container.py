@@ -1960,6 +1960,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._btc_wallet_service = BtcWalletService(
                 self.wallets_setup,
+                self.address_entry_list,
                 self.preferences,
                 self.fee_service,
             )
