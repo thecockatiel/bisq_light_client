@@ -1,4 +1,4 @@
-import utils.aio  # importing it sets up stuff
+from utils.aio import as_future # importing it sets up stuff
 from threading import Lock
 from electrum_min.util import EventListener, event_listener
 import asyncio
@@ -167,8 +167,8 @@ class WalletConfig(EventListener):
                 self._initialized = False
                 complete_handler()
             else:
-                btc_stop_task = asyncio.create_task(self._btc_wallet.stop())
-                bsq_stop_task = asyncio.create_task(self._bsq_wallet.stop())
+                btc_stop_task = as_future(self._btc_wallet.stop())
+                bsq_stop_task = as_future(self._bsq_wallet.stop())
 
                 async def stop_wallets_and_daemon():
                     await asyncio.gather(btc_stop_task, bsq_stop_task)
@@ -176,7 +176,7 @@ class WalletConfig(EventListener):
                     self._initialized = False
                     complete_handler()
 
-                asyncio.create_task(stop_wallets_and_daemon())
+                as_future(stop_wallets_and_daemon())
 
     def _create_or_load_wallet(
         self,

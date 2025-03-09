@@ -1,4 +1,4 @@
-from utils.aio import get_asyncio_loop
+from utils.aio import as_future, get_asyncio_loop
 import socket
 import aiohttp
 import asyncio
@@ -86,7 +86,7 @@ class LimitedRunningTor(TorMode):
                     return False
 
         # Start validation request handler
-        validation_task = asyncio.create_task(handle_validation_request())
+        validation_task = as_future(handle_validation_request())
         exception = None
         
         async with aiohttp.ClientSession(connector=proxy_connector, timeout=client_timeout) as session:

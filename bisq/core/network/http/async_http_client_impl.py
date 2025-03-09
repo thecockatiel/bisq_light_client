@@ -1,3 +1,4 @@
+from utils.aio import as_future
 import asyncio
 from typing import Literal, Union
 import uuid
@@ -34,7 +35,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         self.uid = str(uuid.uuid4())
         self.has_pending_request = False
         self.ignore_socks5_proxy = False
-        self.current_task: "asyncio.Task[str]" = None
+        self.current_task: "asyncio.Future[str]" = None
         self.default_timeout = timeout
         self.base_url = base_url
 
@@ -71,7 +72,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         headers: dict[str, str] = {"User-Agent": f"bisq/{Version.VERSION}"},
         timeout: asyncio.TimeoutError = None,
     ):
-        self.current_task = asyncio.create_task(
+        self.current_task = as_future(
             self._do_request(
                 "GET", url, params=params, headers=headers, timeout=timeout
             )
@@ -86,7 +87,7 @@ class AsyncHttpClientImpl(AsyncHttpClient):
         headers: dict[str, str] = {"User-Agent": f"bisq/{Version.VERSION}"},
         timeout: asyncio.TimeoutError = None,
     ):
-        self.current_task = asyncio.create_task(
+        self.current_task = as_future(
             self._do_request(
                 "POST", url, data, params=params, headers=headers, timeout=timeout
             )
