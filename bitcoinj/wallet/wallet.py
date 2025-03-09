@@ -276,7 +276,7 @@ class Wallet(EventListener):
 
     @property
     def last_block_seen_height(self):
-        return self._electrum_network.get_local_height()
+        return self._electrum_wallet.adb.get_local_height()
 
     def get_transactions(self) -> Generator["Transaction"]:
         """return an Generator that returns all transactions in the wallet, newest first"""

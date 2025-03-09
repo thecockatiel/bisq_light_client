@@ -71,7 +71,7 @@ class WalletConfig(EventListener):
 
     @event_listener
     def on_event_blockchain_updated(self):
-        self._current_height_property.value = self._daemon.network.get_local_height()
+        self._current_height_property.value = self._btc_wallet.last_block_seen_height
 
     @event_listener
     def on_event_network_updated(self):

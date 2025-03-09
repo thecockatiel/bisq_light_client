@@ -74,6 +74,7 @@ class WalletsSetup:
 
         def on_complete():
             timeout_timer.stop()
+            self._chain_height_property.set(self.wallet_config.current_height_property.value)
             UserThread.execute(
                 lambda: (
                     self._address_entry_list.on_wallet_ready(
