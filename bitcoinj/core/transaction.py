@@ -9,12 +9,20 @@ from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.crypto.transaction_signature import TransactionSignature
+from bitcoinj.script.script_builder import ScriptBuilder
 from electrum_min.bitcoin import opcodes
-from electrum_min.transaction import Transaction as ElectrumTransaction, TxOutput
+from electrum_min.transaction import (
+    Transaction as ElectrumTransaction,
+    TxInput as ElectrumTxInput,
+    TxOutput as ElectrumTxOutput,
+)
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
 
 if TYPE_CHECKING:
+    from bitcoinj.core.address import Address
+    from bitcoinj.core.transaction_input import TransactionInput
+    from bitcoinj.core.transaction_output import TransactionOutput
     from bitcoinj.wallet.wallet import Wallet
     from electrum_min.util import TxMinedInfo
     from bitcoinj.core.network_parameters import NetworkParameters
@@ -123,7 +131,7 @@ class Transaction:
 
         return LazySequenceWrapper(
             self._electrum_transaction.outputs,
-            lambda tx_output, idx: TransactionOutput(self, tx_output, idx),
+            lambda tx_output, idx: TransactionOutput(self, tx_output),
         )
 
     @property
@@ -399,7 +407,7 @@ class Transaction:
 
             tx._outputs = tx._outputs[: input_index + 1]
             for i in range(input_index):
-                tx._outputs[i] = TxOutput(scriptpubkey=b"", value=-1)
+                tx._outputs[i] = ElectrumTxOutput(scriptpubkey=b"", value=-1)
             # The signature isn't broken by new versions of the transaction issued by other parties.
             for i in range(len(tx._inputs)):
                 if i != input_index:
@@ -558,3 +566,27 @@ class Transaction:
 
     def __str__(self):
         return self.to_debug_str(None, None)
+
+    def add_input(self, tx_input: "TransactionInput"):
+        if self._electrum_transaction._inputs is None:
+            self._electrum_transaction._inputs = [tx_input._ec_tx_input]
+        else:
+            self._electrum_transaction._inputs.append(tx_input._ec_tx_input)
+
+    def add_output(self, tx_output: "TransactionOutput"):
+        if self._electrum_transaction._outputs is None:
+            self._electrum_transaction._outputs = [tx_output._ec_tx_output]
+        else:
+            self._electrum_transaction._outputs.append(tx_output._ec_tx_output)
+
+    def add_output_using_coin_and_address(self, coin: Coin, address: "Address"):
+        from bitcoinj.core.transaction_output import TransactionOutput
+
+        output = TransactionOutput(
+            self,
+            ElectrumTxOutput(
+                scriptpubkey=ScriptBuilder.create_output_script(address).program,
+                value=coin.value,
+            ),
+        )
+        self.add_output(output)

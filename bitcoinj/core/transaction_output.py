@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
-from bitcoinj.core.sha_256_hash import Sha256Hash
-from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
@@ -25,14 +24,19 @@ class TransactionOutput:
         self,
         tx: "Transaction",
         ec_tx_output: "ElectrumTxOutput",
-        index: int,
         available_for_spending: bool = True,
     ):
         self.parent = tx
         self._ec_tx_output = ec_tx_output
-        self.index = index
         self.spent_by: Optional["TransactionInput"] = None
         self.available_for_spending = available_for_spending
+
+    @property
+    def index(self):
+        for i, output in enumerate(self.parent.outputs):
+            if output == self:
+                return i
+        raise IllegalStateException("Output linked to wrong parent transaction?")
 
     def get_value(self) -> Coin:
         assert isinstance(
