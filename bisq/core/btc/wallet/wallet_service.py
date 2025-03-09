@@ -407,6 +407,10 @@ class WalletService(ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
+    def print_tx(trade_prefix: str, tx: "Transaction") -> None:
+        logger.info(f"\n{trade_prefix}:\n{tx}")
+
+    @staticmethod
     def is_output_script_convertible_to_address(
         transaction_output: "TransactionOutput",
     ) -> bool:

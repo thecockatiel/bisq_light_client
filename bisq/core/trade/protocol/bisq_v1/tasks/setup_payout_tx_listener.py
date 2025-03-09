@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
-from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
+from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
@@ -76,7 +76,7 @@ class SetupPayoutTxListener(TradeTask):
             wallet_tx = self.process_model.trade_wallet_service.get_wallet_tx(confidence.tx_id)
             self.trade.set_payout_tx(wallet_tx)
             self.process_model.trade_manager.request_persistence()
-            BtcWalletService.print_tx("payoutTx received from network", wallet_tx)
+            WalletService.print_tx("payoutTx received from network", wallet_tx)
             self.set_state()
         else:
             logger.info(f"We had the payout tx already set. tradeId={self.trade.get_id()}, state={self.trade.get_trade_state()}")

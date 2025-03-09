@@ -7,7 +7,7 @@ from bisq.core.btc.listeners.address_confidence_listener import (
     AddressConfidenceListener,
 )
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
-from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
+from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
@@ -175,7 +175,7 @@ class BuyerSetupDepositTxListener(TradeTask):
                 )
             )
             self.trade.apply_deposit_tx(wallet_tx)
-            BtcWalletService.print_tx("depositTx received from network", wallet_tx)
+            WalletService.print_tx("depositTx received from network", wallet_tx)
 
             # We don't want to trigger the tradeStateSubscription when setting the state, so we unsubscribe before
             self._unsubscribe_and_remove_listener()

@@ -378,7 +378,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         )
 
         dispute.dispute_payout_tx_id = committed_dispute_payout_tx.get_tx_id()
-        self.btc_wallet_service.print_tx(
+        WalletService.print_tx(
             "Disputed payoutTx received from peer", committed_dispute_payout_tx
         )
 

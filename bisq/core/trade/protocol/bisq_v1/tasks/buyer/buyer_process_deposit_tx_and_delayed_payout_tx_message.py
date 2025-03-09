@@ -2,7 +2,7 @@ from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sig import Sig
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
-from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
+from bisq.core.btc.wallet.btc_wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_tx_and_delayed_payout_tx_message import (
     DepositTxAndDelayedPayoutTxMessage,
@@ -36,11 +36,11 @@ class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
             )
             # update with full tx
             wallet = self.process_model.btc_wallet_service.wallet
-            committed_deposit_tx = BtcWalletService.maybe_add_tx_to_wallet(
+            committed_deposit_tx = WalletService.maybe_add_tx_to_wallet(
                 deposit_tx, wallet
             )
             self.trade.apply_deposit_tx(committed_deposit_tx)
-            BtcWalletService.print_tx(
+            WalletService.print_tx(
                 "depositTx received from peer", committed_deposit_tx
             )
 

@@ -1,5 +1,5 @@
 from bisq.common.setup.log_setup import get_logger
-from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
+from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import (
@@ -37,7 +37,7 @@ class BuyerProcessPayoutTxPublishedMessage(TradeTask):
                     self.process_model.btc_wallet_service.wallet,
                 )
                 self.trade.payout_tx = committed_payout_tx
-                BtcWalletService.print_tx(
+                WalletService.print_tx(
                     "payoutTx received from peer", committed_payout_tx
                 )
 
