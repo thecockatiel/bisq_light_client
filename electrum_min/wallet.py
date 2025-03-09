@@ -421,6 +421,7 @@ class Abstract_Wallet(ABC, Logger, EventListener):
         self._invoices              = db.get_dict('invoices')  # type: Dict[str, Invoice]
         self._reserved_addresses   = set(db.get('reserved_addresses', []))
         self._num_parents          = db.get_dict('num_parents')
+        self._maybe_broadcast          = db.get_dict('maybe_broadcast') # type: Dict[str, float]
 
         self._freeze_lock = threading.RLock()  # for mutating/iterating frozen_{addresses,coins}
 
@@ -604,6 +605,7 @@ class Abstract_Wallet(ABC, Logger, EventListener):
         if adb != self.adb:
             return
         self._update_invoices_and_reqs_touched_by_tx(tx_hash)
+        self.remove_txid_from_maybe_broadcast(tx_hash)
         tx_mined_status = self.adb.get_tx_height(tx_hash)
         util.trigger_callback('verified', self, tx_hash, tx_mined_status)
 
@@ -722,6 +724,17 @@ class Abstract_Wallet(ABC, Logger, EventListener):
 
     def export_labels(self, path):
         write_json_file(path, self.get_all_labels())
+
+    def add_txid_to_maybe_broadcast(self, tx_hash: str) -> None:
+        with self.lock:
+            self._maybe_broadcast[tx_hash] = time.time()
+    
+    def remove_txid_from_maybe_broadcast(self, tx_hash: str) -> None:
+        with self.lock:
+            self._maybe_broadcast.pop(tx_hash, None)
+
+    def get_maybe_broadcast_tx_ids(self):
+        return self._maybe_broadcast.copy()
 
     def set_fiat_value(self, txid, ccy, text, fx, value_sat):
         if not self.db.get_transaction(txid):

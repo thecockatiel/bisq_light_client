@@ -9,6 +9,7 @@ from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
 from bisq.core.btc.listeners.tx_confidence_listener import TxConfidenceListener
+from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
@@ -171,9 +172,9 @@ class WalletService(ABC):
         self,
         tx: "Transaction",
         callback: "TxBroadcasterCallback",
-        timeout: Optional[int] = None,
+        timeout: float = None,
     ):
-        raise RuntimeError("WalletService.broadcast_tx Not implemented yet")
+        TxBroadcaster.broadcast_tx(self.wallet, tx, callback, timeout)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // TransactionConfidence

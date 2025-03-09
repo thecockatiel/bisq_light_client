@@ -1,4 +1,8 @@
+from utils.aio import as_future
+from bisq.common.setup.log_setup import get_logger
+from asyncio import Future
 from collections.abc import Callable
+import time
 from typing import TYPE_CHECKING, Generator, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
@@ -24,6 +28,8 @@ if TYPE_CHECKING:
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
     )
+
+logger = get_logger(__name__)
 
 
 # TODO implement as needed
@@ -223,7 +229,8 @@ class Wallet(EventListener):
         return self._electrum_wallet.stop()
 
     def start_network(self):
-        return self._electrum_wallet.start_network(self._electrum_network)
+        self._electrum_wallet.start_network(self._electrum_network)
+        self._maybe_broadcast_possibly_not_broadcasted_txs()
 
     def get_balances(self):
         """returns a set of balances for display purposes: confirmed and matured, unconfirmed, unmatured"""
@@ -278,9 +285,35 @@ class Wallet(EventListener):
             tx.add_info_from_wallet(self)
             yield tx
 
+    def _get_possibly_not_broadcasted_txs(self) -> Generator["Transaction"]:
+        """return an Generator that returns all transactions in the wallet that are possibly not yet broadcasted"""
+        maybe_broadcast = self._electrum_wallet.get_maybe_broadcast_tx_ids()
+        for tx_id, timestamp in maybe_broadcast.items():
+            # cleanup txids older than a week
+            if timestamp < time.time() - 7 * 24 * 60 * 60:
+                self._electrum_wallet.remove_txid_from_maybe_broadcast(tx_id)
+                continue
+            tx = self.get_transaction(tx_id)
+            if tx:
+                yield tx
+
+    def _maybe_broadcast_possibly_not_broadcasted_txs(self):
+        def on_done(f: Future):
+            try:
+                f.result()
+            except Exception as e:
+                logger.warning(
+                    f"Error when trying to broadcast tx at wallet start: {e}"
+                )
+
+        for tx in self._get_possibly_not_broadcasted_txs():
+            as_future(
+                self._electrum_network.broadcast_transaction(tx._electrum_transaction)
+            ).add_done_callback(on_done)
+
     def get_tx_mined_info(self, txid: str):
         return self._electrum_wallet.adb.get_tx_height(txid)
-    
+
     def add_info_from_wallet(self, tx: "Transaction"):
         """populates prev_txs"""
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
@@ -300,6 +333,7 @@ class Wallet(EventListener):
         added = self._electrum_wallet.adb.add_transaction(
             tx._electrum_transaction, allow_unrelated=True, is_new=True
         )
+        self._electrum_wallet.add_txid_to_maybe_broadcast(tx.get_tx_id())
         if not added:
             raise VerificationException(
                 "Transaction could not be added to wallet history due to conflicts"
@@ -341,3 +375,10 @@ class Wallet(EventListener):
                     else TransactionConfidenceType.UNKNOWN
                 ),
             )
+
+    def broadcast_tx(self, tx: "Transaction", timeout: float = None):
+        return as_future(
+            self._electrum_network.broadcast_transaction(
+                tx._electrum_transaction, timeout=timeout
+            )
+        )
