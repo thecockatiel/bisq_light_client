@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -6,10 +6,10 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
+from electrum_min.transaction import TxOutput as ElectrumTxOutput
 
 if TYPE_CHECKING:
     from bitcoinj.wallet.wallet import Wallet
-    from electrum_min.transaction import TxOutput as ElectrumTxOutput
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_input import TransactionInput
 
@@ -30,6 +30,17 @@ class TransactionOutput:
         self._ec_tx_output = ec_tx_output
         self.spent_by: Optional["TransactionInput"] = None
         self.available_for_spending = available_for_spending
+
+    @staticmethod
+    def from_coin_and_script(
+        tx: "Transaction", coin: Coin, script: Union[bytes, Script]
+    ) -> "TransactionOutput":
+        if isinstance(script, Script):
+            script = script.program
+        return TransactionOutput(
+            tx,
+            ElectrumTxOutput(scriptpubkey=script, value=coin.value),
+        )
 
     @property
     def index(self):
