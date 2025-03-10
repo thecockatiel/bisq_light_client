@@ -6,8 +6,8 @@ from bitcoinj.wallet.missing_sigs_mode import MissingSigsMode
 
 
 if TYPE_CHECKING:
+    from bitcoinj.core.transaction import Transaction
     from bitcoinj.wallet.coin_selector import CoinSelector
-    from electrum_min.transaction import Transaction
     from bitcoinj.core.address import Address
 
 
@@ -27,6 +27,7 @@ class SendRequest:
     exchange_rate: "ExchangeRate" = field(default=None)
     memo: "str" = field(default=None)
     recipients_pay_fees: bool = field(default=False)
+    completed: bool = field(default=False)
 
     @staticmethod
     def for_tx(tx: "Transaction"):
