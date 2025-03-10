@@ -22,24 +22,24 @@ class TransactionOutput:
 
     def __init__(
         self,
-        tx: "Transaction",
         ec_tx_output: "ElectrumTxOutput",
+        parent_tx: Optional["Transaction"] = None,
         available_for_spending: bool = True,
     ):
-        self.parent = tx
+        self.parent = parent_tx
         self._ec_tx_output = ec_tx_output
         self.spent_by: Optional["TransactionInput"] = None
         self.available_for_spending = available_for_spending
 
     @staticmethod
     def from_coin_and_script(
-        tx: "Transaction", coin: Coin, script: Union[bytes, Script]
+        coin: Coin, script: Union[bytes, Script], parent_tx: "Transaction"
     ) -> "TransactionOutput":
         if isinstance(script, Script):
             script = script.program
         return TransactionOutput(
-            tx,
             ElectrumTxOutput(scriptpubkey=script, value=coin.value),
+            parent_tx,
         )
 
     @property

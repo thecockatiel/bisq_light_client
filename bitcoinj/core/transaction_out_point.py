@@ -19,10 +19,28 @@ class TransactionOutPoint:
         from_tx: Optional["Transaction"] = None,
         connected_output: Optional["TransactionOutput"] = None,
     ):
-        self.connected_output = connected_output
-        self.from_tx = from_tx
-        self.index = index
-        self.hash = hash
+        self._connected_output = connected_output
+        self._connected_tx = from_tx
+        self._index = index
+        self._hash = hash
+
+    @property
+    def connected_output(self):
+        return self._connected_output
+    
+    @property
+    def connected_tx(self):
+        return self._connected_tx
+
+    @property
+    def index(self):
+        """Which output of that transaction we are talking about."""
+        return self.index
+    
+    @property
+    def hash(self):
+        """Hash of the transaction to which we refer."""
+        return self.hash
 
     @property
     def length(self):
@@ -33,9 +51,12 @@ class TransactionOutPoint:
         return TransactionOutPoint(
             tx_output.index,
             tx_output.parent.get_tx_id(),
-            from_tx=tx_output.parent,
             connected_output=tx_output,
         )
+    
+    @staticmethod
+    def from_tx(tx: "Transaction", index: int):
+        return TransactionOutPoint(index, tx.get_tx_id(), from_tx=tx)
 
     def to_electrum_tx_output(self):
         return TxOutpoint(self.hash, self.index)
