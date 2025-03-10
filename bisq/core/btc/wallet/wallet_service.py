@@ -130,8 +130,16 @@ class WalletService(ABC):
 
     @staticmethod
     def check_wallet_consistency(wallet: "Wallet"):
-        # Electrum wallet cannot be inconsistent because of the way it stores transactions
+        # Electrum wallet cannot be inconsistent because of the way it stores transactions (?)
         pass
+
+    @staticmethod
+    def verify_transaction(transaction: "Transaction") -> None:
+        try:
+            transaction.verify()
+        except Exception as e:
+            logger.error(e, exc_info=e)
+            raise TransactionVerificationException(e)
 
     @staticmethod
     def check_all_script_signatures_for_tx(transaction: "Transaction"):
