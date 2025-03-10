@@ -227,9 +227,10 @@ class Transaction:
         return None
 
     def get_fee(self) -> Optional[Coin]:
-        if self._electrum_transaction.get_fee() is None:
+        fee = self._electrum_transaction.get_fee()
+        if fee is None:
             return None
-        return Coin.value_of(self._electrum_transaction.get_fee())
+        return Coin.value_of(fee)
 
     def is_any_output_spent(self) -> bool:
         for output in self.outputs:
