@@ -12,6 +12,7 @@ from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script_builder import ScriptBuilder
 from electrum_min.bitcoin import opcodes
 from electrum_min.transaction import (
+    PartialTransaction as PartialElectrumTransaction,
     Transaction as ElectrumTransaction,
     TxInput as ElectrumTxInput,
     TxOutput as ElectrumTxOutput,
@@ -41,7 +42,12 @@ class Transaction:
         params: "NetworkParameters",
         payload_bytes: Optional[bytes] = None,
     ) -> None:
-        self._electrum_transaction = ElectrumTransaction(payload_bytes)
+        
+        if payload_bytes:
+            self._electrum_transaction = ElectrumTransaction(payload_bytes)
+        else:
+            self._electrum_transaction = PartialElectrumTransaction()
+            
         self.params = params
 
         self._update_time: Optional[datetime] = None
