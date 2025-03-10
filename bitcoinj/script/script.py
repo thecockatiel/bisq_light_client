@@ -44,7 +44,7 @@ class Script:
     MAX_P2SH_SIGOPS = 15
 
     def __init__(self, program: Optional[bytes] = None):
-        self._program = program or bytes()
+        self._program = program if program is not None else bytes()
         self._decoded: tuple[int, Optional[bytes], Union[int, Any]] = None
         self.address = None
     

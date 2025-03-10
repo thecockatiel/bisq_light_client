@@ -4,6 +4,7 @@ from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.crypto.ec_utils import is_compressed_pubkey
 from bitcoinj.script.script import Script
 from electrum_min.bitcoin import construct_script, opcodes, pubkeyhash_to_p2pkh_script
+from utils.preconditions import check_argument
 
 
 # NOTE: implement as needed
@@ -37,3 +38,8 @@ class ScriptBuilder:
         """Creates a scriptPubKey that sends to the given public key."""
         assert is_compressed_pubkey(pub_key_hash), "pubkey was not compressed"
         return Script(bytes.fromhex(pubkeyhash_to_p2pkh_script(pub_key_hash)))
+
+    @staticmethod
+    def create_op_return_script(data: bytes):
+        check_argument(len(data) <= 80, "Data must be <= 80 bytes")
+        return Script(bytes.fromhex(construct_script([opcodes.OP_RETURN, data])))
