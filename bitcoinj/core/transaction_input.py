@@ -6,6 +6,7 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script import Script
 from electrum_min.bitcoin import witness_push
+from electrum_min.transaction import TxOutpoint, PartialTxInput as ElectrumPartialTxInput
 
 if TYPE_CHECKING:
     from electrum_min.transaction import TxInput as ElectrumTxInput
@@ -39,6 +40,18 @@ class TransactionInput:
             TransactionOutPoint(
                 ec_tx_input.prevout.out_idx, ec_tx_input.prevout.txid.hex()
             ),
+        )
+    
+    @staticmethod
+    def from_output(tx_output: "TransactionOutput", parent_tx: Optional["Transaction"] = None):
+        input = ElectrumPartialTxInput(
+            prevout=TxOutpoint(tx_output.parent.get_tx_id(), tx_output.index),
+            nsequence=TransactionInput.NO_SEQUENCE,
+        )
+        return TransactionInput(
+            input,
+            parent_tx,
+            TransactionOutPoint.from_tx_output(tx_output),
         )
 
     @property
@@ -81,7 +94,7 @@ class TransactionInput:
 
     @property
     def has_witness(self) -> bool:
-        return self._ec_tx_input.is_segwit()
+        return bool(self.witness_elements)
 
     @property
     def has_relative_lock_time(self) -> bool:
