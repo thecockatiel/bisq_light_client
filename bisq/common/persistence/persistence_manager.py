@@ -257,6 +257,9 @@ class PersistenceManager(Generic[T]):
         try:
             with storage_file.open("rb") as f:
                 proto = read_delimited(f, protobuf.PersistableEnvelope)
+                if proto is None:
+                    logger.warning(f"Reading {file_name} failed. file exists but contains no data.")
+                    return None
                 persistable_envelope = self.persistence_proto_resolver.from_proto(proto)
                 logger.info(f"Reading {file_name} completed in {get_time_ms() - ts} ms")
                 return cast(T, persistable_envelope)
