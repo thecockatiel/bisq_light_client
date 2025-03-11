@@ -189,7 +189,7 @@ class Coin(Monetary):
 
     def divide(self, divisor: Union[int, 'Coin']):
         if isinstance(divisor, Coin):
-            return self.value // divisor.value
+            return Coin.value_of(self.value // divisor.value)
         return Coin.value_of(self.value // divisor)
 
     # Python special method for division
