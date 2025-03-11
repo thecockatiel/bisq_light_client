@@ -9,8 +9,12 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.script.script_builder import ScriptBuilder
 from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.wallet.send_request import SendRequest
 from utils.aio import FutureCallback
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
@@ -51,8 +55,9 @@ class BtcWalletService(WalletService, DaoStateListener):
     def complete_prepared_burn_bsq_tx(
         self, prepared_burn_fee_tx: "Transaction", op_return_data: bytes
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_burn_bsq_tx Not implemented yet"
+        return self._complete_prepared_proposal_tx(
+            prepared_burn_fee_tx,
+            op_return_data,
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -66,8 +71,8 @@ class BtcWalletService(WalletService, DaoStateListener):
         fee_tx: "Transaction",
         op_return_data: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_compensation_request_tx Not implemented yet"
+        return self._complete_prepared_proposal_tx(
+            fee_tx, op_return_data, issuance_amount, issuance_address
         )
 
     def complete_prepared_compensation_request_tx(
@@ -77,8 +82,8 @@ class BtcWalletService(WalletService, DaoStateListener):
         fee_tx: "Transaction",
         op_return_data: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_compensation_request_tx Not implemented yet"
+        return self._complete_prepared_proposal_tx(
+            fee_tx, op_return_data, issuance_amount, issuance_address
         )
 
     def _complete_prepared_proposal_tx(
@@ -88,9 +93,120 @@ class BtcWalletService(WalletService, DaoStateListener):
         issuance_amount: Optional[Coin] = None,
         issuance_address: Optional["Address"] = None,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService._complete_prepared_proposal_tx Not implemented yet"
+        # (BsqFee)tx has following structure:
+        # inputs [1-n] BSQ inputs (fee)
+        # outputs [0-1] BSQ request fee change output (>= 546 Satoshi)
+
+        # preparedCompensationRequestTx has following structure:
+        # inputs [1-n] BSQ inputs for request fee
+        # inputs [1-n] BTC inputs for BSQ issuance and miner fee
+        # outputs [1] Mandatory BSQ request fee change output (>= 546 Satoshi)
+        # outputs [1] Potentially BSQ issuance output (>= 546 Satoshi) - in case of a issuance tx, otherwise that output does not exist
+        # outputs [0-1] BTC change output from issuance and miner fee inputs (>= 546 Satoshi)
+        # outputs [1] OP_RETURN with opReturnData and amount 0
+        # mining fee: BTC mining fee + burned BSQ fee
+
+        prepared_tx = Transaction(self.params)
+        # Copy inputs from BSQ fee tx
+        for tx_input in fee_tx.inputs:
+            prepared_tx.add_input(tx_input)
+
+        # Need to be first because issuance is not guaranteed to be valid and would otherwise burn change output!
+        # BSQ change outputs from BSQ fee inputs.
+        for tx_output in fee_tx.outputs:
+            prepared_tx.add_output(tx_output)
+
+        # For generic proposals there is no issuance output, for compensation and reimburse requests there is
+        if issuance_amount is not None and issuance_address is not None:
+            # BSQ issuance output
+            prepared_tx.add_output_using_coin_and_address(
+                issuance_amount, issuance_address
+            )
+
+        # safety check counter to avoid endless loops
+        counter = 0
+        # estimated size of input sig
+        sig_size_per_input = 106
+        # typical size for a tx with 3 inputs
+        tx_vsize_with_unsigned_inputs = 300
+        tx_fee_per_vbyte = self._fee_service.get_tx_fee_per_vbyte()
+
+        change_address = self.get_fresh_address_entry().get_address()
+        coin_selector = BtcCoinSelector(
+            self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
+            self._preferences.get_ignore_dust_threshold(),
         )
+        prepared_bsq_tx_inputs = prepared_tx.inputs
+        prepared_bsq_tx_outputs = prepared_tx.outputs
+
+        num_legacy_inputs, num_segwit_inputs = self.get_num_inputs(prepared_tx)
+        result_tx: "Transaction" = None
+        is_fee_outside_tolerance = True
+
+        while is_fee_outside_tolerance:
+            counter += 1
+            if counter >= 10:
+                assert result_tx is not None, "result_tx should not be None"
+                logger.error(f"Could not calculate the fee. Tx={result_tx}")
+                break
+
+            tx = Transaction(self.params)
+            for tx_input in prepared_bsq_tx_inputs:
+                tx.add_input(tx_input)
+            for tx_output in prepared_bsq_tx_outputs:
+                tx.add_output(tx_output)
+
+            send_request = SendRequest.for_tx(tx)
+            send_request.shuffle_outputs = False
+            send_request.password = self.password
+            # signInputs needs to be false as it would try to sign all inputs (BSQ inputs are not in this wallet)
+            send_request.sign_inputs = False
+
+            send_request.fee = tx_fee_per_vbyte.multiply(
+                tx_vsize_with_unsigned_inputs
+                + sig_size_per_input * num_legacy_inputs
+                + sig_size_per_input * num_segwit_inputs // 4
+            )
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+
+            send_request.coin_selector = coin_selector
+            send_request.change_address = change_address
+            self.wallet.complete_tx(send_request)
+
+            result_tx = send_request.tx
+
+            # add OP_RETURN output
+            result_tx.add_output(
+                TransactionOutput.from_coin_and_script(
+                    tx,
+                    Coin.ZERO(),
+                    ScriptBuilder.create_op_return_script(op_return_data).program,
+                )
+            )
+
+            num_legacy_inputs, num_segwit_inputs = self.get_num_inputs(result_tx)
+            tx_vsize_with_unsigned_inputs = result_tx.get_vsize()
+            estimated_fee = tx_fee_per_vbyte.multiply(
+                tx_vsize_with_unsigned_inputs
+                + sig_size_per_input * num_legacy_inputs
+                + sig_size_per_input * num_segwit_inputs // 4
+            ).value
+
+            # calculated fee must be inside of a tolerance range with tx fee
+            is_fee_outside_tolerance = (
+                abs(result_tx.get_fee().value - estimated_fee) > 1000
+            )
+
+        # Sign all BTC inputs
+        # TODO: Check if this is correct
+        result_tx = self.wallet.sign_tx(self.password, result_tx)
+
+        WalletService.check_wallet_consistency(self.wallet)
+        WalletService.verify_transaction(result_tx)
+
+        # self.print_tx("BTC wallet: Signed Tx", result_tx)
+        return result_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Blind vote tx
