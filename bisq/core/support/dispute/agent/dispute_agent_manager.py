@@ -160,7 +160,7 @@ class DisputeAgentManager(Generic[T], ABC):
                     )
             
             is_sig_valid = self.verify_signature(
-                agent.pub_key_ring.signature_pub_key,
+                agent.pub_key_ring.signature_pub_key_bytes,
                 agent.registration_pub_key,
                 agent.registration_signature
             )
@@ -264,9 +264,9 @@ class DisputeAgentManager(Generic[T], ABC):
                 on_error
             )
 
-    def verify_signature(self, storage_signature_pub_key: "DSA.DsaKey", registration_pub_key_ec: bytes, signature_base64: str) -> bool:
+    def verify_signature(self, storage_signature_pub_key_bytes: bytes, registration_pub_key_ec: bytes, signature_base64: str) -> bool:
         try:
-            key_to_sign_as_hex = Sig.get_public_key_as_hex_string(storage_signature_pub_key)
+            key_to_sign_as_hex = storage_signature_pub_key_bytes.hex()
             key = Encryption.get_ec_public_key_from_bytes(registration_pub_key_ec)
             return key.verify_message_hash(base64.b64decode(signature_base64), key_to_sign_as_hex)
         except:
