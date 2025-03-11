@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
 from bitcoinj.core.verification_exception import VerificationException
@@ -19,11 +20,11 @@ from electrum_min.transaction import (
 )
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
+from bitcoinj.core.transaction_output import TransactionOutput
 
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_input import TransactionInput
-    from bitcoinj.core.transaction_output import TransactionOutput
     from bitcoinj.wallet.wallet import Wallet
     from electrum_min.util import TxMinedInfo
     from bitcoinj.core.network_parameters import NetworkParameters
@@ -574,11 +575,14 @@ class Transaction:
     def __str__(self):
         return self.to_debug_str(None, None)
 
-    def add_input(self, tx_input: "TransactionInput"):
+    def add_input(self, tx_io: Union["TransactionInput", "TransactionOutput"]):
+        if isinstance(tx_io, TransactionOutput):
+            tx_io = TransactionInput.from_output(tx_io)
         if self._electrum_transaction._inputs is None:
-            self._electrum_transaction._inputs = [tx_input._ec_tx_input]
+            self._electrum_transaction._inputs = [tx_io._ec_tx_input]
         else:
-            self._electrum_transaction._inputs.append(tx_input._ec_tx_input)
+            self._electrum_transaction._inputs.append(tx_io._ec_tx_input)
+        return tx_io
 
     def add_output(self, tx_output: "TransactionOutput"):
         if self._electrum_transaction._outputs is None:
