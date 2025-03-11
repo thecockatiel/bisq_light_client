@@ -13,11 +13,11 @@ from bisq.core.dao.node.parser.exceptions.required_reorg_from_snapshot_exception
 from bisq.core.network.p2p.network.connection_state import ConnectionState
 from utils.data import SimplePropertyChangeEvent
 from utils.time import get_time_ms
+from bisq.core.dao.node.lite.network.lite_node_network_service import (
+    LiteNodeNetworkService,
+)
 
 if TYPE_CHECKING:
-    from bisq.core.dao.node.lite.network.lite_node_network_service import (
-        LiteNodeNetworkService,
-    )
     from bisq.core.dao.node.messages.get_blocks_response import GetBlocksResponse
     from bisq.core.dao.node.full.raw_block import RawBlock
     from bisq.core.dao.node.explorer.export_json_file_manager import (
