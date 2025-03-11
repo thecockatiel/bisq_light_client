@@ -757,9 +757,12 @@ class BtcWalletService(WalletService, DaoStateListener):
         )
 
     def get_address_entries_for_open_offer(self) -> list[AddressEntry]:
-        raise RuntimeError(
-            "BtcWalletService.get_address_entries_for_open_offer Not implemented yet"
-        )
+        ctx_filter = {AddressEntryContext.OFFER_FUNDING, AddressEntryContext.RESERVED_FOR_TRADE}
+        return [
+            address_entry
+            for address_entry in self.get_address_entry_list_as_immutable_list()
+            if address_entry.context in ctx_filter
+        ]
 
     def is_unconfirmed_transactions_limit_hit(self) -> bool:
         raise RuntimeError(
