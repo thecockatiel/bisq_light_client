@@ -6,7 +6,7 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script import Script
 from electrum_min.bitcoin import witness_push
-from electrum_min.transaction import TxOutpoint, PartialTxInput as ElectrumPartialTxInput
+from electrum_min.transaction import _NEEDS_RECALC, TxOutpoint, PartialTxInput as ElectrumPartialTxInput
 
 if TYPE_CHECKING:
     from electrum_min.transaction import TxInput as ElectrumTxInput
@@ -48,6 +48,10 @@ class TransactionInput:
             prevout=TxOutpoint(tx_output.parent.get_tx_id(), tx_output.index),
             nsequence=TransactionInput.NO_SEQUENCE,
         )
+        # TODO double check
+        input._TxInput__scriptpubkey = tx_output.script_pub_key
+        input._TxInput__address = _NEEDS_RECALC
+        input._TxInput__value_sats = tx_output.value
         return TransactionInput(
             input,
             parent_tx,
