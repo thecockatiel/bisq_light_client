@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Set, Callable, Optional, Collection
+from typing import TYPE_CHECKING, Callable, Optional, Collection
 from abc import ABC, abstractmethod
 import base64
 
@@ -85,12 +85,12 @@ class FilterManager:
         self._ignore_dev_msg: bool = ignore_dev_msg
 
         self.filter_property: SimpleProperty[Optional["Filter"]] = SimpleProperty(None)
-        self.listeners: Set["FilterManager.Listener"] = []
-        self.invalid_filters: Set["Filter"] = set()
+        self.listeners: set["FilterManager.Listener"] = set()
+        self.invalid_filters: set["Filter"] = set()
         self.filter_warning_handler: Optional[Callable[[str], None]] = None
         self.filter_signing_key: Optional[ECPrivkey] = None
 
-        self.public_keys: List[str] = []
+        self.public_keys: list[str] = []
 
         if use_dev_privilege_keys:
             self.public_keys = DevEnv.get_dev_privilege_pub_keys()
@@ -500,7 +500,7 @@ class FilterManager:
             )
         )
 
-    def get_enabled_pow_versions(self) -> List[int]:
+    def get_enabled_pow_versions(self) -> list[int]:
         filter = self.get_filter()
         return (
             filter.enabled_pow_versions
@@ -627,7 +627,7 @@ class FilterManager:
         if self._price_feed_node_address_provider.banned_nodes is not None:
             self._price_feed_node_address_provider.apply_banned_nodes(None)
 
-    def save_banned_nodes(self, option_name: str, banned_nodes: Optional[List[str]]):
+    def save_banned_nodes(self, option_name: str, banned_nodes: Optional[list[str]]):
         if banned_nodes is not None:
             self._config_file_editor.set_option(option_name, ",".join(banned_nodes))
         else:
