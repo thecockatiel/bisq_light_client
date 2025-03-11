@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.address import Address
 from bitcoinj.script.script import Script
+from bitcoinj.script.script_builder import ScriptBuilder
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.transaction import (
@@ -45,6 +47,17 @@ class TransactionOutput:
             ElectrumTxOutput(scriptpubkey=script, value=coin.value),
             parent_tx,
         )
+    
+    @staticmethod
+    def from_coin_and_address(
+        coin: Coin, address: Union[Address, str], parent_tx: "Transaction"
+    ) -> "TransactionOutput":
+        if isinstance(address, str):
+            address = Address.from_string(address)
+        return TransactionOutput(
+            ElectrumTxOutput(scriptpubkey=ScriptBuilder.create_output_script(address).program, value=coin.value),
+            parent_tx,
+        )
 
     @staticmethod
     def from_utxo(
@@ -74,6 +87,10 @@ class TransactionOutput:
             self._ec_tx_output.value, int
         )  # we don't expend spend max like here
         return self._ec_tx_output.value
+    
+    @value.setter
+    def value(self, value: int) -> None:
+        self._ec_tx_output.value = value
 
     def get_script_pub_key(self) -> Script:
         return Script(self._ec_tx_output.scriptpubkey)
@@ -147,6 +164,9 @@ class TransactionOutput:
         return output.value < TransactionOutput._get_min_non_dust_value(
             output.serialize_to_network()
         )
+
+    def get_min_non_dust_value(self):
+        return TransactionOutput._get_min_non_dust_value(self._ec_tx_output.serialize_to_network())
 
     @staticmethod
     def _get_min_non_dust_value(serialized_size: int):
