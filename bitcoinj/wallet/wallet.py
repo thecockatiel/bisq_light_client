@@ -140,7 +140,7 @@ class Wallet(EventListener):
 
     def on_wallet_changed(self):
         for listener in self._change_listeners:
-            listener.on_wallet_changed(self)
+            listener(self)
         self._available_balance_property.set(
             Coin.value_of(self.get_available_balance())
         )
