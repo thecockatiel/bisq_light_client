@@ -140,6 +140,10 @@ class ThreadSafeDict(Generic[K, V]):
     def remove(self, key: K) -> V:
         with self._lock:
             return self._dict.pop(key, None)
+        
+    def pop(self, key: K, default: V = None) -> V:
+        with self._lock:
+            return self._dict.pop(key, default)
     
     def update(self, other: Dict[K, V]):
         with self._lock:
