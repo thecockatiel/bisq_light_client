@@ -49,7 +49,8 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
                         break
 
             if (output.parent is not None and
-                self.is_tx_spendable(output.parent) and
+                # no need because we only pass spendable outputs to coin selector
+                # self.is_tx_spendable(output.parent) and 
                 self.is_tx_output_spendable(output)):
                 selected.append(output)
                 total += output.value
@@ -69,16 +70,6 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
         if change < 0:
             raise ValueError(f"Insufficient money: missing {Coin.value_of(change * -1)}")
         return Coin.value_of(change)
-
-    # We allow spending from own unconfirmed txs and if permitForeignPendingTx is set as well from foreign
-    # unconfirmed txs.  
-    def is_tx_spendable(self, tx: "Transaction") -> bool:
-        confidence = tx.get_confidence()
-        type = confidence.confidence_type
-        is_confirmed = type == TransactionConfidenceType.BUILDING
-        is_pending = type == TransactionConfidenceType.PENDING
-        is_own_tx = confidence.confidence_source == TransactionConfidenceSource.SELF
-        return is_confirmed or (is_pending and (self.permit_foreign_pending_tx or is_own_tx))
     
     @abstractmethod
     def is_tx_output_spendable(self, output: "TransactionOutput") -> bool:
