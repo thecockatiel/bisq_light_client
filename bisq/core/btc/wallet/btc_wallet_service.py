@@ -132,12 +132,14 @@ class BtcWalletService(WalletService, DaoStateListener):
         tx_fee_per_vbyte = self._fee_service.get_tx_fee_per_vbyte()
 
         change_address = self.get_fresh_address_entry().get_address()
+        assert change_address is not None, "change_address must not be None"
+
         coin_selector = BtcCoinSelector(
             self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
             self._preferences.get_ignore_dust_threshold(),
         )
-        prepared_bsq_tx_inputs = prepared_tx.inputs
-        prepared_bsq_tx_outputs = prepared_tx.outputs
+        prepared_bsq_tx_inputs = list(prepared_tx.inputs)
+        prepared_bsq_tx_outputs = list(prepared_tx.outputs)
 
         num_legacy_inputs, num_segwit_inputs = self.get_num_inputs(prepared_tx)
         result_tx: "Transaction" = None
@@ -236,9 +238,6 @@ class BtcWalletService(WalletService, DaoStateListener):
     def _complete_prepared_bsq_tx_with_btc_fee(
         self, prepared_tx: "Transaction", op_return_data: bytes
     ) -> "Transaction":
-        # Remember index for first BTC input
-        index_of_btc_first_input = len(prepared_tx.inputs)
-
         tx = self._add_inputs_for_miner_fee(prepared_tx, op_return_data)
         # Sign all BTC inputs
         # TODO: Check if this is correct
@@ -268,8 +267,8 @@ class BtcWalletService(WalletService, DaoStateListener):
             self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
             self._preferences.get_ignore_dust_threshold(),
         )
-        prepared_bsq_tx_inputs = prepared_tx.inputs
-        prepared_bsq_tx_outputs = prepared_tx.outputs
+        prepared_bsq_tx_inputs = list(prepared_tx.inputs)
+        prepared_bsq_tx_outputs = list(prepared_tx.outputs)
 
         num_legacy_inputs, num_segwit_inputs = self.get_num_inputs(prepared_tx)
         result_tx: "Transaction" = None
@@ -329,19 +328,29 @@ class BtcWalletService(WalletService, DaoStateListener):
             is_fee_outside_tolerance = (
                 abs(result_tx.get_fee().value - estimated_fee) > 1000
             )
-        
+
         return result_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Vote reveal tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    # We add BTC fees to the prepared reveal tx
+    # (BsqFee)tx has following structure:
+    # inputs [1] BSQ input (stake)
+    # output [1] BSQ unlocked stake
+
+    # preparedVoteTx has following structure:
+    # inputs [1] BSQ inputs (stake)
+    # inputs [1-n] BTC inputs for miner fee
+    # outputs [1] BSQ unlocked stake
+    # outputs [0-1] BTC change output from miner fee inputs (>= 546 Satoshi)
+    # outputs [1] OP_RETURN with opReturnData and amount 0
+    # mining fee: BTC mining fee + burned BSQ fee
     def complete_prepared_vote_reveal_tx(
         self, prepared_tx: "Transaction", op_return_data: bytes
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_vote_reveal_tx Not implemented yet"
-        )
+        return self._complete_prepared_bsq_tx_with_btc_fee(prepared_tx, op_return_data)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Add fee input to prepared BSQ send tx
@@ -350,9 +359,21 @@ class BtcWalletService(WalletService, DaoStateListener):
     def complete_prepared_send_bsq_tx(
         self, prepared_bsq_tx: "Transaction", tx_fee_per_vbyte: Coin = None
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_send_bsq_tx Not implemented yet"
-        )
+        # preparedBsqTx has following structure:
+        # inputs [1-n] BSQ inputs
+        # outputs [1] BSQ receiver's output
+        # outputs [0-1] BSQ change output
+
+        # We add BTC mining fee. Result tx looks like:
+        # inputs [1-n] BSQ inputs
+        # inputs [1-n] BTC inputs
+        # outputs [1] BSQ receiver's output
+        # outputs [0-1] BSQ change output
+        # outputs [0-1] BTC change output
+        # mining fee: BTC mining fee
+        if tx_fee_per_vbyte is None:
+            tx_fee_per_vbyte = self.get_tx_fee_for_withdrawal_per_vbyte()
+        return self.complete_prepared_bsq_tx(prepared_bsq_tx, None, tx_fee_per_vbyte)
 
     def complete_prepared_bsq_tx(
         self,
@@ -360,9 +381,150 @@ class BtcWalletService(WalletService, DaoStateListener):
         op_return_data: Optional[bytes],
         tx_fee_per_vbyte: Coin = None,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.complete_prepared_bsq_tx Not implemented yet"
+        if tx_fee_per_vbyte is None:
+            tx_fee_per_vbyte = self.get_tx_fee_for_withdrawal_per_vbyte()
+
+        # preparedBsqTx has following structure:
+        # inputs [1-n] BSQ inputs
+        # outputs [1] BSQ receiver's output
+        # outputs [0-1] BSQ change output
+        # mining fee: optional burned BSQ fee (only if opReturnData != null)
+
+        # We add BTC mining fee. Result tx looks like:
+        # inputs [1-n] BSQ inputs
+        # inputs [1-n] BTC inputs
+        # outputs [0-1] BSQ receiver's output
+        # outputs [0-1] BSQ change output
+        # outputs [0-1] BTC change output
+        # outputs [0-1] OP_RETURN with opReturnData (only if opReturnData != null)
+        # mining fee: BTC mining fee + optional burned BSQ fee (only if opReturnData != null)
+
+        # In case of txs for burned BSQ fees we have no receiver output and it might be that there is no change outputs
+        # We need to guarantee that min. 1 valid output is added (OP_RETURN does not count). So we use a higher input
+        # for BTC to force an additional change output.
+
+        # safety check counter to avoid endless loops
+        counter = 0
+        # estimated size of input sig
+        sig_size_per_input = 106
+        # typical size for a tx with 2 inputs
+        tx_vsize_with_unsigned_inputs = 203
+        # In case there are no change outputs we force a change by adding min dust to the BTC input
+        forced_change_value = Coin.ZERO()
+
+        change_address = self.get_fresh_address_entry().get_address()
+        assert change_address is not None, "change_address must not be None"
+
+        coin_selector = BtcCoinSelector(
+            self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
+            self._preferences.get_ignore_dust_threshold(),
         )
+        prepared_bsq_tx_inputs = list(prepared_bsq_tx.inputs)
+        prepared_bsq_tx_outputs = list(prepared_bsq_tx.outputs)
+
+        # We don't know at this point what type the btc input would be (segwit/legacy).
+        # We use legacy to be on the safe side.
+        num_legacy_inputs = len(prepared_bsq_tx_inputs)
+        num_segwit_inputs = 0
+        result_tx: "Transaction" = None
+        is_fee_outside_tolerance = True
+        op_return_is_only_output = True
+
+        while (
+            is_fee_outside_tolerance
+            or op_return_is_only_output
+            or (
+                result_tx.get_fee().value
+                < tx_fee_per_vbyte.multiply(result_tx.get_vsize()).value
+            )
+        ):
+            counter += 1
+            if counter >= 10:
+                assert result_tx is not None, "result_tx should not be None"
+                logger.error(f"Could not calculate the fee. Tx={result_tx}")
+                break
+
+            tx = Transaction(self.params)
+            for tx_input in prepared_bsq_tx_inputs:
+                tx.add_input(tx_input)
+
+            if forced_change_value.is_zero():
+                for tx_output in prepared_bsq_tx_outputs:
+                    tx.add_output(tx_output)
+            else:
+                # JAVA TODO test that case
+                check_argument(
+                    len(prepared_bsq_tx_outputs) == 0,
+                    "prepared_bsq_tx_outputs size must be 0 in that code branch",
+                )
+                tx.add_output_using_coin_and_address(
+                    forced_change_value, change_address
+                )
+
+            send_request = SendRequest.for_tx(tx)
+            send_request.shuffle_outputs = False
+            send_request.password = self.password
+            # signInputs needs to be false as it would try to sign all inputs (BSQ inputs are not in this wallet)
+            send_request.sign_inputs = False
+
+            send_request.fee = tx_fee_per_vbyte.multiply(
+                tx_vsize_with_unsigned_inputs
+                + sig_size_per_input * num_legacy_inputs
+                + sig_size_per_input * num_segwit_inputs // 4
+            )
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+
+            send_request.coin_selector = coin_selector
+            send_request.change_address = change_address
+            self.wallet.complete_tx(send_request)
+
+            result_tx = send_request.tx
+
+            # We might have the rare case that both inputs matched the required fees, so both did not require
+            # a change output.
+            # In such cases we need to add artificially a change output (OP_RETURN is not allowed as only output)
+            op_return_is_only_output = (
+                len(result_tx._electrum_transaction._outputs) == 0
+            )
+            forced_change_value = (
+                Restrictions.get_min_non_dust_output()
+                if op_return_is_only_output
+                else Coin.ZERO()
+            )
+
+            # add OP_RETURN output
+            if op_return_data is not None:
+                result_tx.add_output(
+                    TransactionOutput.from_coin_and_script(
+                        Coin.ZERO(),
+                        ScriptBuilder.create_op_return_script(op_return_data).program,
+                        tx,
+                    )
+                )
+
+            num_legacy_inputs, num_segwit_inputs = self.get_num_inputs(result_tx)
+            tx_vsize_with_unsigned_inputs = result_tx.get_vsize()
+            estimated_fee = tx_fee_per_vbyte.multiply(
+                tx_vsize_with_unsigned_inputs
+                + sig_size_per_input * num_legacy_inputs
+                + sig_size_per_input * num_segwit_inputs // 4
+            ).value
+
+            # calculated fee must be inside of a tolerance range with tx fee
+            is_fee_outside_tolerance = (
+                abs(result_tx.get_fee().value - estimated_fee) > 1000
+            )
+        
+        # Sign all BTC inputs
+        # TODO: Check if this is correct
+        result_tx = self.wallet.sign_tx(self.password, result_tx)
+
+        WalletService.check_wallet_consistency(self.wallet)
+        WalletService.verify_transaction(result_tx)
+
+        self.print_tx("BTC wallet: Signed tx", result_tx)
+        return result_tx
 
     # // BISQ issue #4039: Prevent dust outputs from being created.
     # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
