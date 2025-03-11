@@ -340,7 +340,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                         reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
                         self.send_message(CloseConnectionMessage(reason=reason))
                     except Exception as e:
-                        logger.error(e, exc_info=e)
+                        logger.error(e, exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
                     finally:
                         self.stopped.set(True)
                         UserThread.run_after(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler), timedelta(milliseconds=200))
