@@ -43,7 +43,7 @@ class ProposalValidator(ConsensusCritical, ABC):
             )
             return False
 
-    def validate_data_fields(proposal: "Proposal"):
+    def validate_data_fields(self, proposal: "Proposal"):
         try:
             check_argument(proposal.name, "name must not be empty")
             check_argument(proposal.link, "link must not be empty")
