@@ -515,7 +515,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             is_fee_outside_tolerance = (
                 abs(result_tx.get_fee().value - estimated_fee) > 1000
             )
-        
+
         # Sign all BTC inputs
         # TODO: Check if this is correct
         result_tx = self.wallet.sign_tx(self.password, result_tx)
@@ -525,29 +525,6 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         self.print_tx("BTC wallet: Signed tx", result_tx)
         return result_tx
-
-    # // BISQ issue #4039: Prevent dust outputs from being created.
-    # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
-    # // add up the dust, log the details, and return the cumulative dust amount.
-    def get_dust(self, proposed_transaction: "Transaction") -> Coin:
-        dust = Coin.ZERO()
-        for transaction_output in proposed_transaction.outputs:
-            if transaction_output.get_value().is_less_than(
-                Restrictions.get_min_non_dust_output()
-            ):
-                dust = dust.add(transaction_output.get_value())
-                logger.info(f"Dust TXO = {transaction_output}")
-        return dust
-
-    def get_tx_from_serialized_tx(self, serialized_tx: bytes) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.get_tx_from_serialized_tx Not implemented yet"
-        )
-
-    def get_available_address_entries(self) -> list["AddressEntry"]:
-        raise RuntimeError(
-            "BtcWalletService.get_available_address_entries Not implemented yet"
-        )
 
     def get_num_inputs(self, tx: "Transaction") -> tuple[int, int]:
         num_legacy_inputs = 0
@@ -608,6 +585,13 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.get_or_create_address_entry Not implemented yet"
         )
+
+    def get_available_address_entries(self) -> list["AddressEntry"]:
+        return [
+            address_entry
+            for address_entry in self.get_address_entry_list_as_immutable_list()
+            if address_entry.context == AddressEntryContext.AVAILABLE
+        ]
 
     def get_arbitrator_address_entry(self) -> "AddressEntry":
         raise RuntimeError(

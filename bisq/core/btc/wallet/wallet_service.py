@@ -9,6 +9,7 @@ from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
 from bisq.core.btc.listeners.tx_confidence_listener import TxConfidenceListener
+from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
@@ -337,11 +338,24 @@ class WalletService(ABC):
     def is_address_unused(self, address: Union["Address", str]) -> bool:
         return self.wallet.is_address_unused(address)
 
+    # // BISQ issue #4039: Prevent dust outputs from being created.
+    # // Check the outputs of a proposed transaction.  If any are below the dust threshold,
+    # // add up the dust, log the details, and return the cumulative dust amount.
+    def get_dust(self, proposed_transaction: "Transaction") -> Coin:
+        dust = Coin.ZERO()
+        for transaction_output in proposed_transaction.outputs:
+            if transaction_output.get_value().is_less_than(
+                Restrictions.get_min_non_dust_output()
+            ):
+                dust = dust.add(transaction_output.get_value())
+                logger.info(f"Dust TXO = {transaction_output}")
+        return dust
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Getters
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_tx_from_serialized_tx(self, tx: bytes) -> Optional["Transaction"]:
+    def get_tx_from_serialized_tx(self, tx: bytes) -> "Transaction":
         return Transaction(self.params, tx)
 
     def get_best_chain_height(self) -> int:
