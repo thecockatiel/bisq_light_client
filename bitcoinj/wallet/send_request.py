@@ -18,7 +18,7 @@ class SendRequest:
     change_address: "Address" = field(default=None)
     fee: "Coin" = field(default=None)
     fee_per_kb: "Coin" = field(default=None)
-    ensure_min_required_fee = field(default=False)
+    ensure_min_required_fee: bool  = field(default=False)
     sign_inputs: bool = field(default=True)
     password: str = field(default=None)
     coin_selector: "CoinSelector" = field(default=None)
