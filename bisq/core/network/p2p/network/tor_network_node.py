@@ -114,9 +114,10 @@ class TorNetworkNode(NetworkNode):
         )
 
         def complete_handler():
+            f = None
             try:
                 if self.tor:
-                    as_future(self.tor.quit()) # NOTE: we didn't wait for the tor to quit
+                    f = as_future(self.tor.quit())
                     self.tor = None
                     logger.info(f"Tor shutdown completed at {get_time_ms()}")
             except Exception as e:
@@ -124,8 +125,13 @@ class TorNetworkNode(NetworkNode):
             finally:
                 if self.shut_down_timeout_timer:
                     self.shut_down_timeout_timer.stop()
-                if shut_down_complete_handler:
-                    shut_down_complete_handler()
+                def on_finish(*_):
+                    if shut_down_complete_handler:
+                        shut_down_complete_handler()
+                if f:
+                    f.add_done_callback(on_finish)
+                else:
+                    on_finish()
 
         super().shut_down(complete_handler)
 
