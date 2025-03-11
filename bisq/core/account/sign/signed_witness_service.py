@@ -13,6 +13,7 @@ from bitcoinj.base.coin import Coin
 from bisq.common.user_thread import UserThread
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.common.crypto.sig import DSA
+from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 
 if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.p2p.persistence.append_only_data_store_service import AppendOnlyDataStoreService
-    from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
     from bisq.core.support.dispute.arbitration.arbitrator.arbitrator_manager import ArbitratorManager
     from bisq.core.user.user import User
     from bisq.core.account.witness.account_age_witness import AccountAgeWitness
