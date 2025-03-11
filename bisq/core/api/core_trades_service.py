@@ -339,7 +339,7 @@ class CoreTradesService:
         # JAVA TODO Recommend API users call this method with extra care because
         # the API lacks methods for diagnosing trade problems, and does not support
         # interaction with mediators. Users may accidentally fail valid trades,
-        # although they can easily be un-failed with the 'un_fail_trade' method.
+        # although they can easily be un-failed with the 'unfail_trade' method.
         self.core_wallets_service.verify_wallets_are_available()
         self.core_wallets_service.verify_encrypted_wallet_is_unlocked()
 

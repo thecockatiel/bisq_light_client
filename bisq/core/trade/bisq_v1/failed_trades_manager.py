@@ -99,7 +99,7 @@ class FailedTradesManager(PersistedDataHost):
     def get_trades_stream_with_funds_locked_in(self) -> Iterator['Trade']:
         return filter(lambda trade: trade.is_funds_locked_in, self.failed_trades)
 
-    def un_fail_trade(self, trade: "Trade"):
+    def unfail_trade(self, trade: "Trade"):
         if self.unfail_trade_callback is None:
             return
 
@@ -108,7 +108,7 @@ class FailedTradesManager(PersistedDataHost):
             if self.failed_trades.remove(trade):
                 self.request_persistence()
 
-    def check_un_fail(self, trade: "Trade") -> str:
+    def check_unfail(self, trade: "Trade") -> str:
         addresses = self.trade_util.get_trade_addresses(trade)
         if addresses is None:
             return "Addresses not found"

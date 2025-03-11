@@ -152,7 +152,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
 
         self.p2p_service.add_decrypted_direct_message_listener(self)
 
-        self.failed_trades_manager.unfail_trade_callback = self.un_fail_trade
+        self.failed_trades_manager.unfail_trade_callback = self.unfail_trade
 
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -816,7 +816,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
 
     # If trade still has funds locked up it might come back from failed trades
     # Aborts unfailing if the address entries needed are not available
-    def un_fail_trade(self, trade: 'Trade') -> bool:
+    def unfail_trade(self, trade: 'Trade') -> bool:
         if not self.recover_addresses(trade):
             logger.warning("Failed to recover address during unFail trade")
             return False
