@@ -69,8 +69,8 @@ class LiteNode(BsqNode):
 
         self._check_for_block_received_timer: Optional["Timer"] = None
 
-        def block_download_listener(e: SimplePropertyChangeEvent["float"]):
-            if e.new_value == 1:
+        def block_download_listener(e: SimplePropertyChangeEvent[int]):
+            if e.new_value > 0:
                 self._setup_wallet_best_block_listener()
                 self._maybe_start_requesting_blocks()
 
@@ -89,12 +89,12 @@ class LiteNode(BsqNode):
         if self._wallets_setup.is_download_complete:
             self._setup_wallet_best_block_listener()
         else:
-            self._wallets_setup.download_percentage_property.add_listener(
+            self._wallets_setup.chain_height_property.add_listener(
                 self._block_download_listener
             )
 
     def _setup_wallet_best_block_listener(self):
-        self._wallets_setup.download_percentage_property.remove_listener(
+        self._wallets_setup.chain_height_property.remove_listener(
             self._block_download_listener
         )
 

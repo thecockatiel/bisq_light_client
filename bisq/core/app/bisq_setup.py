@@ -451,7 +451,7 @@ class BisqSetup:
             self.resync_dao_state_from_resources_handler,
         )
 
-        if self._wallets_setup.download_percentage_property.get() == 1:
+        if self._wallets_setup.chain_height_property.get() > 0:
             self._check_for_locked_up_funds()
             self._check_for_invalid_maker_fee_txs()
 
