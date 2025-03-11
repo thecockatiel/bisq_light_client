@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.legacy_address import LegacyAddress
 from bitcoinj.core.segwit_address import SegwitAddress
@@ -25,6 +26,7 @@ from electrum_min.transaction import (
 )
 
 if TYPE_CHECKING:
+    from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.address import Address
     from bitcoinj.core.network_parameters import NetworkParameters
@@ -815,3 +817,37 @@ class Script:
             # Ignore errors and count up to the parse-able length
             pass
         return Script.get_sig_op_count(chunks, False)
+    
+    def get_number_of_signatures_required_to_spend(self):
+        if ScriptPattern.is_sent_to_multi_sig(self):
+            # for N of M CHECKMULTISIG script we will need N signatures to spend
+            n_chunk = self.decoded[0]
+            return ScriptUtils.decode_from_op_n(n_chunk[0])
+        elif ScriptPattern.is_p2pkh(self) or ScriptPattern.is_p2pk(self):
+            # P2PKH and P2PK require single sig
+            return 1
+        elif ScriptPattern.is_p2sh(self):
+            raise IllegalStateException("For P2SH number of signatures depends on redeem script")
+        else:
+            raise IllegalStateException("Unsupported script type")
+
+    def get_number_of_bytes_required_to_spend(self, key: "DeterministicKey", redeem_script):
+        if ScriptPattern.is_p2sh(self):
+            raise NotImplementedError("P2SH spending not yet supported")
+        elif ScriptPattern.is_sent_to_multi_sig(self):
+            # scriptSig: OP_0 <sig> [sig] [sig...]
+            return self.get_number_of_signatures_required_to_spend() * Script.SIG_SIZE + 1
+        elif ScriptPattern.is_p2pk(self):
+            # scriptSig: <sig>
+            return Script.SIG_SIZE
+        elif ScriptPattern.is_p2pkh(self):
+            # scriptSig: <sig> <pubkey>
+            # uncompressed_pub_key_size = 65 # very conservative
+            return Script.SIG_SIZE + (len(key.get_pub_key()) if key.get_pub_key() else 65)
+        elif ScriptPattern.is_p2wpkh(self):
+            # scriptSig is empty
+            # witness: <sig> <pubKey>
+            # compressed_pub_key_size = 33
+            return Script.SIG_SIZE + (len(key.get_pub_key()) if key.get_pub_key() else 33)
+        else:
+            raise IllegalStateException("Unsupported script type")
