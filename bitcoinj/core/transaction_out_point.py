@@ -51,6 +51,7 @@ class TransactionOutPoint:
         return TransactionOutPoint(
             tx_output.index,
             tx_output.parent.get_tx_id(),
+            from_tx=tx_output.parent,
             connected_output=tx_output,
         )
     
