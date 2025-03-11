@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Iterable, Optional
+from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
@@ -9,12 +10,16 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_builder import ScriptBuilder
 from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.script.script_type import ScriptType
 from bitcoinj.wallet.send_request import SendRequest
 from utils.aio import FutureCallback
 from utils.preconditions import check_argument
+from bitcoinj.core.transaction import Transaction
+
 
 if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
@@ -23,7 +28,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.address import Address
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
-    from bitcoinj.core.transaction import Transaction
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
 
 logger = get_logger(__name__)
@@ -571,20 +575,73 @@ class BtcWalletService(WalletService, DaoStateListener):
             None,
         )
 
+    # For cloned offers with shared maker fee we create a new address entry based on the source entry
+    # and set the new offerId.
     def get_or_clone_address_entry_with_offer_id(
         self, source_address_entry: "AddressEntry", offer_id: str
     ) -> "AddressEntry":
-        raise RuntimeError(
-            "BtcWalletService.get_or_clone_address_entry_with_offer_id Not implemented yet"
+        address_entry = next(
+            (
+                entry
+                for entry in self.get_address_entry_list_as_immutable_list()
+                if offer_id == entry.offer_id
+                and source_address_entry.context == entry.context
+            ),
+            None,
         )
+        if address_entry:
+            return address_entry
+        else:
+            clone_with_new_offer_id = AddressEntry(
+                source_address_entry.key_pair,
+                source_address_entry.context,
+                offer_id,
+                segwit=source_address_entry.segwit,
+            )
+            self.address_entry_list.add_address_entry(clone_with_new_offer_id)
+            return clone_with_new_offer_id
 
     def get_or_create_address_entry(
         self, offer_id: str, context: AddressEntryContext
     ) -> "AddressEntry":
-        # TODO: There's an override, check and name properly
-        raise RuntimeError(
-            "BtcWalletService.get_or_create_address_entry Not implemented yet"
+        address_entry = next(
+            (
+                entry
+                for entry in self.get_address_entry_list_as_immutable_list()
+                if offer_id == entry.offer_id and context == entry.context
+            ),
+            None,
         )
+        if address_entry:
+            return address_entry
+        else:
+            #  We try to use available and not yet used entries
+            empty_available_address_entry = next(
+                (
+                    entry
+                    for entry in self.get_address_entry_list_as_immutable_list()
+                    if entry.context == AddressEntryContext.AVAILABLE
+                    and (addr := entry.get_address())
+                    and self.is_address_unused(addr)
+                    and addr.output_script_type == ScriptType.P2WPKH
+                ),
+                None,
+            )
+            if (
+                empty_available_address_entry
+                and context != AddressEntryContext.MULTI_SIG
+            ):
+                return self.address_entry_list.swap_available_to_address_entry_with_offer_id(
+                    empty_available_address_entry, context, offer_id
+                )
+            else:
+                key = self.wallet.find_key_from_address(
+                    self.wallet.get_receiving_address()
+                )
+                entry = AddressEntry(key, context, offer_id, segwit=True)
+                logger.info(f"get_or_create_address_entry: new AddressEntry={entry}")
+                self.address_entry_list.add_address_entry(entry)
+                return entry
 
     def get_available_address_entries(self) -> list["AddressEntry"]:
         return [
@@ -594,26 +651,66 @@ class BtcWalletService(WalletService, DaoStateListener):
         ]
 
     def get_arbitrator_address_entry(self) -> "AddressEntry":
-        raise RuntimeError(
-            "BtcWalletService.get_arbitrator_address_entry Not implemented yet"
+        address_entry = next(
+            (
+                e
+                for e in self.get_address_entry_list_as_immutable_list()
+                if e.context == AddressEntryContext.ARBITRATOR
+            ),
+            None,
+        )
+        return self.get_or_create_address_entry_segwit(
+            AddressEntryContext.ARBITRATOR, address_entry
         )
 
     def get_fresh_address_entry(self) -> "AddressEntry":
         # we only support segwit addresses in python client
-        raise RuntimeError(
-            "BtcWalletService.get_fresh_address_entry Not implemented yet"
+        available_address_entry = next(
+            (
+                entry
+                for entry in self.get_address_entry_list_as_immutable_list()
+                if entry.context == AddressEntryContext.AVAILABLE
+                and self.is_address_unused(entry.get_address())
+                and entry.get_address().output_script_type == ScriptType.P2WPKH
+            ),
+            None,
+        )
+        return self.get_or_create_address_entry_segwit(
+            AddressEntryContext.AVAILABLE, available_address_entry
         )
 
     def recover_address_entry(
         self, offer_id: str, address: str, context: AddressEntryContext
     ) -> None:
-        raise RuntimeError("BtcWalletService.recover_address_entry Not implemented yet")
+        address_entry = self._find_address_entry(address, context)
+        if address_entry:
+            self.address_entry_list.swap_available_to_address_entry_with_offer_id(
+                address_entry, context, offer_id
+            )
 
-    def get_estimated_fee_tx_vsize(
-        self, output_values: list[Coin], tx_fee: Coin
-    ) -> int:
-        raise RuntimeError(
-            "BtcWalletService.get_estimated_fee_tx_vsize Not implemented yet"
+    def get_or_create_address_entry_segwit(
+        self, context: AddressEntryContext, address_entry: Optional["AddressEntry"]
+    ) -> "AddressEntry":
+        if address_entry:
+            return address_entry
+        else:
+            # NOTE: we only use segwit
+            key = self.wallet.find_key_from_address(self.wallet.get_receiving_address())
+            entry = AddressEntry(key, context, segwit=True)
+            logger.info(
+                f"get_or_create_address_entry_with_context: add new AddressEntry {entry}"
+            )
+            self.address_entry_list.add_address_entry(entry)
+            return entry
+
+    def _find_address_entry(self, address: str, context: "AddressEntryContext"):
+        return next(
+            (
+                entry
+                for entry in self.get_address_entry_list_as_immutable_list()
+                if address == entry.get_address_string() and context == entry.context
+            ),
+            None,
         )
 
     def get_address_entries_for_trade(self):
@@ -635,9 +732,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         ]
 
     def get_address_entry_list_as_immutable_list(self) -> list["AddressEntry"]:
-        raise RuntimeError(
-            "BtcWalletService.get_address_entry_list_as_immutable_list Not implemented yet"
-        )
+        return self.address_entry_list.entry_set
 
     def swap_trade_entry_to_available_entry(
         self, offer_id: str, context: AddressEntryContext
@@ -724,6 +819,34 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.get_fee_estimation_transaction_for_multiple_addresses Not implemented yet"
         )
+
+    def get_estimated_fee_tx_vsize(
+        self, output_values: list[Coin], tx_fee: Coin
+    ) -> int:
+        tx = Transaction(self.params)
+        # In reality txs have a mix of segwit/legacy ouputs, but we don't care too much because the size of
+        # a segwit ouput is just 3 byte smaller than the size of a legacy ouput.
+        dummy_address = SegwitAddress.from_key(
+            ECPrivkey.generate_random_key(), self.params
+        )
+        for output_value in output_values:
+            tx.add_output(
+                TransactionOutput.from_coin_and_address(output_value, dummy_address)
+            )
+        send_request = SendRequest.for_tx(tx)
+        send_request.shuffle_outputs = False
+        send_request.password = None
+        send_request.coin_selector = BtcCoinSelector(
+            self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
+            self._preferences.get_ignore_dust_threshold(),
+        )
+        send_request.fee = tx_fee
+        send_request.fee_per_kb = Coin.ZERO()
+        send_request.ensure_min_required_fee = False
+        send_request.change_address = dummy_address
+        self.wallet.complete_tx(send_request)
+        tx = send_request.tx
+        return tx.get_vsize()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Withdrawal Send
