@@ -22,7 +22,7 @@ from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.utils.capability_utils import CapabilityUtils
 from utils.concurrency import AtomicInt, ThreadSafeSet
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
-
+from bisq.core.network.p2p.mailbox.mailbox_item import MailboxItem
 from utils.formatting import readable_file_size
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.mailbox.ignored_mailbox_service import (
         IgnoredMailboxService,
     )
-    from bisq.core.network.p2p.mailbox.mailbox_item import MailboxItem
     from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.common.crypto.key_ring import KeyRing
