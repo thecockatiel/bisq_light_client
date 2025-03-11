@@ -6,7 +6,11 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
-from electrum_min.transaction import TxOutput as ElectrumTxOutput
+from electrum_min.transaction import (
+    TxOutput as ElectrumTxOutput,
+    PartialTxInput as ElectrumPartialTxInput,
+)
+from utils.preconditions import check_state
 
 if TYPE_CHECKING:
     from bitcoinj.wallet.wallet import Wallet
@@ -41,6 +45,15 @@ class TransactionOutput:
             ElectrumTxOutput(scriptpubkey=script, value=coin.value),
             parent_tx,
         )
+
+    @staticmethod
+    def from_utxo(
+        partial_input: "ElectrumPartialTxInput", wallet: "Wallet"
+    ) -> "TransactionOutput":
+        parent_tx = wallet.get_transaction(partial_input.prevout.txid.hex())
+        check_state(parent_tx is not None, "Parent transaction not found in wallet")
+        output = parent_tx.outputs[partial_input.prevout.out_idx]
+        return output
 
     @property
     def index(self):
@@ -120,21 +133,21 @@ class TransactionOutput:
                 )
             )
             return False
-    
+
     @staticmethod
     def is_dust(output: Union["TransactionOutput", "ElectrumTxOutput"]) -> bool:
         # Transactions that are OP_RETURN can't be dust regardless of their value.
         if not isinstance(output, ElectrumTxOutput):
             output = output._ec_tx_output
 
-        assert isinstance(
-            output, int
-        )  # we don't expend spend max like here
-        
+        assert isinstance(output, int)  # we don't expend spend max like here
+
         if ScriptPattern.is_op_return(Script(output.scriptpubkey)):
             return False
-        return output.value < TransactionOutput._get_min_non_dust_value(output.serialize_to_network())
-    
+        return output.value < TransactionOutput._get_min_non_dust_value(
+            output.serialize_to_network()
+        )
+
     @staticmethod
     def _get_min_non_dust_value(serialized_size: int):
         # A typical output is 33 bytes (pubkey hash + opcodes) and requires an input of 148 bytes to spend so we add
@@ -142,6 +155,6 @@ class TransactionOutput:
         # formula is wrong for anything that's not a P2PKH output, unfortunately, we must follow Bitcoin Core's
         # wrongness in order to ensure we're considered standard. A better formula would either estimate the
         # size of data needed to satisfy all different script types, or just hard code 33 below.
-        fee_per_kb = 3000 # REFERENCE_DEFAULT_MIN_TX_FEE * 3
+        fee_per_kb = 3000  # REFERENCE_DEFAULT_MIN_TX_FEE * 3
         size = serialized_size + 148
         return fee_per_kb * size // 1000
