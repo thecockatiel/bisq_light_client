@@ -1,3 +1,24 @@
+import random
+from threading import Lock
+from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
+from bitcoinj.core.transaction_input import TransactionInput
+from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.script.script import Script
+from bitcoinj.script.script_exception import ScriptException
+from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.wallet.exceptions.could_not_adjust_downwards import (
+    CouldNotAdjustDownwards,
+)
+from bitcoinj.wallet.exceptions.dusty_send_requested_exception import (
+    DustySendRequestedException,
+)
+from bitcoinj.wallet.exceptions.exceeded_max_transaction_size import (
+    ExceededMaxTransactionSize,
+)
+from bitcoinj.wallet.exceptions.multiple_op_return_requested import (
+    MultipleOpReturnRequested,
+)
+from bitcoinj.wallet.fee_calculation import FeeCalculation
 from utils.aio import as_future
 from bisq.common.setup.log_setup import get_logger
 from asyncio import Future
@@ -18,12 +39,20 @@ from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.script.script_type import ScriptType
+from electrum_min.transaction import (
+    PartialTransaction,
+    PartialTxInput as ElectrumPartialTxInput,
+    TxOutput as ElectrumTxOutput,
+)
 from electrum_min.network import Network
 from electrum_min.util import EventListener, InvalidPassword, event_listener
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty
+from utils.preconditions import check_argument, check_state
 
 if TYPE_CHECKING:
+    from bitcoinj.wallet.coin_selection import CoinSelection
+    from bitcoinj.wallet.send_request import SendRequest
     from electrum_min.wallet import Abstract_Wallet
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
@@ -51,6 +80,7 @@ class Wallet(EventListener):
         self.register_electrum_callbacks()
         self._last_balance = 0
         self._available_balance_property = SimpleProperty(Coin.ZERO())
+        self._lock = Lock()
 
     @property
     def available_balance_property(self):
@@ -382,3 +412,338 @@ class Wallet(EventListener):
                 tx._electrum_transaction, timeout=timeout
             )
         )
+
+    # TODO: needs checking
+    def complete_tx(self, req: "SendRequest"):
+        """
+        Given a spend request containing an incomplete transaction,
+        makes it valid by adding outputs and signed inputs according to the instructions in the request.
+        The transaction in the request is modified by this method.
+        """
+        check_argument(req.coin_selector, "No coin selector provided")
+        with self._lock:
+            check_argument(
+                not req.completed, "Given SendRequest has already been completed."
+            )
+            # Calculate the amount of value we need to import.
+            value = 0
+            for output in req.tx._electrum_transaction._outputs:
+                value += output.value
+            value = Coin.value_of(value)
+
+            logger.info(
+                f"Completing send tx with {len(req.tx._electrum_transaction._outputs)} outputs totalling {value.to_friendly_string()} and a fee of {req.fee_per_kb.to_friendly_string()}/vkB"
+            )
+
+            total_input = 0
+            for input in req.tx._electrum_transaction._inputs:
+                self._electrum_wallet.add_input_info(input)
+                if input.value_sats() is not None:
+                    total_input += input.value_sats()
+                else:
+                    logger.warning(
+                        "SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee."
+                    )
+            total_input = Coin.value_of(total_input)
+            value = value.subtract(total_input)
+
+            original_inputs = req.tx._electrum_transaction._inputs.copy()
+
+            # Check for dusty sends and the OP_RETURN limit.
+            if req.ensure_min_required_fee and not req.empty_wallet:
+                op_return_count = 0
+                for output in req.tx._electrum_transaction._outputs:
+                    if TransactionOutput.is_dust(output):
+                        raise DustySendRequestedException()
+                    if ScriptPattern.is_op_return(Script(output.scriptpubkey)):
+                        op_return_count += 1
+                if op_return_count > 1:
+                    # Only 1 OP_RETURN per transaction allowed.
+                    raise MultipleOpReturnRequested()
+
+            # Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
+            # with the actual outputs that'll be used to gather the required amount of value. In this way, users
+            # can customize coin selection policies. The call below will ignore immature coinbases and outputs
+            # we don't have the keys for.
+            candidates = [
+                TransactionOutput.from_utxo(utxo, self)
+                for utxo in self._electrum_wallet.get_spendable_coins(
+                    confirmed_only=True
+                )
+            ]
+
+            best_change_output = None
+            if not req.empty_wallet:
+                # This can throw InsufficientMoneyException.
+                fee_calculation = self._calculate_fee(
+                    req, value, original_inputs, req.ensure_min_required_fee, candidates
+                )
+                best_coin_selection = fee_calculation.best_coin_selection
+                best_change_output = fee_calculation.best_change_output
+                updated_output_values = fee_calculation.updated_output_values
+            else:
+                # We're being asked to empty the wallet. What this means is ensuring "tx" has only a single output
+                # of the total value we can currently spend as determined by the selector, and then subtracting the fee.
+                check_state(
+                    len(req.tx.outputs) == 1,
+                    "Empty wallet TX must have a single output only.",
+                )
+                best_coin_selection = req.coin_selector.select(
+                    self.network_params.get_max_money(), candidates
+                )
+                candidates = None  # Selector took ownership and might have changed candidates. Don't access again.
+                req.tx.outputs[0].value = best_coin_selection.value_gathered.value
+                logger.info(
+                    f"  emptying {best_coin_selection.value_gathered.to_friendly_string()}"
+                )
+
+            for output in best_coin_selection.gathered:
+                req.tx.add_input(output)
+
+            if req.empty_wallet:
+                base_fee = Coin.ZERO() if req.fee is None else req.fee
+                fee_per_kb = Coin.ZERO() if req.fee_per_kb is None else req.fee_per_kb
+                if not self._adjust_output_downwards_for_fee(
+                    req.tx,
+                    best_coin_selection,
+                    base_fee,
+                    fee_per_kb,
+                    req.ensure_min_required_fee,
+                ):
+                    raise CouldNotAdjustDownwards()
+
+            if updated_output_values:
+                for i, updated_value in enumerate(updated_output_values):
+                    req.tx._electrum_transaction._outputs[i].value = updated_value
+
+            if best_change_output is not None:
+                req.tx.add_output(best_change_output)
+                logger.info(
+                    f"  with {best_change_output.get_value().to_friendly_string()} change"
+                )
+
+            # Now shuffle the outputs to obfuscate which is the change.
+            if req.shuffle_outputs:
+                random.shuffle(req.tx._electrum_transaction._outputs)
+
+            # Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
+            if req.sign_inputs:
+                # TODO: possibly wrong
+                req.tx = self.sign_tx(req.password, req.tx)
+
+            # Check size.
+            size = len(req.tx.bitcoin_serialize())
+            if size > 100000:  # MAX_STANDARD_TX_SIZE = 100000
+                raise ExceededMaxTransactionSize()
+
+            calculated_fee = req.tx.get_fee()
+            if calculated_fee:
+                logger.info(
+                    "  with a fee of {}/kB, {} for {} bytes".format(
+                        calculated_fee.multiply(1000).divide(size).to_friendly_string(),
+                        calculated_fee.to_friendly_string(),
+                        size,
+                    )
+                )
+
+            req.tx._label = req.memo
+            req.completed = True
+            req.fee = calculated_fee
+            logger.info(f"  completed: {req.tx}")
+
+    def sign_tx(
+        self,
+        password: Optional[str],
+        tx: "Transaction",
+    ):
+        """returns partial tx if successful else None"""
+        if not isinstance(tx, PartialTransaction):
+            tx = PartialTransaction.from_tx(tx)
+        result = self._electrum_wallet.sign_transaction(
+            tx._electrum_transaction, password, ignore_warnings=True
+        )
+        if result:
+            return Transaction.from_electrum_tx(self.network_params, result)
+        return None
+
+    def _calculate_fee(
+        self,
+        req: "SendRequest",
+        value: "Coin",
+        original_inputs: list["ElectrumPartialTxInput"],
+        ensure_min_required_fee: bool,
+        candidates: list["TransactionOutput"],
+    ) -> "FeeCalculation":
+        fee = Coin.ZERO()
+        while True:
+            result = FeeCalculation()
+            tx = Transaction(self.network_params)
+            self._add_supplied_inputs(tx, original_inputs)
+
+            value_needed = value
+            if not req.recipients_pay_fees:
+                value_needed = value_needed.add(fee)
+
+            for i, output in enumerate(req.tx._electrum_transaction._outputs):
+                tx_output = TransactionOutput(
+                    ElectrumTxOutput.from_network_bytes(output.serialize_to_network()),
+                    tx,
+                )
+                if req.recipients_pay_fees:
+                    # Subtract fee equally from each selected recipient
+                    tx_output.value = (
+                        tx_output.value
+                        - fee.divide(len(req.tx._electrum_transaction._outputs)).value
+                    )
+                    # first receiver pays the remainder not divisible by output count
+                    if i == 0:
+                        # Subtract fee equally from each selected recipient
+                        tx_output.value = (
+                            tx_output.value
+                            - fee.divide_and_remainder(
+                                len(req.tx._electrum_transaction._outputs)
+                            )[1].value
+                        )
+                    result.updated_output_values.append(Coin.value_of(tx_output.value))
+                    if tx_output.get_min_non_dust_value() > tx_output.value:
+                        raise CouldNotAdjustDownwards()
+                tx.add_output(tx_output)
+
+            # selector is allowed to modify candidates list
+            selection = req.coin_selector.select(value_needed, candidates.copy())
+            result.best_coin_selection = selection
+            # Can we afford this?
+            if selection.value_gathered < value_needed:
+                value_missing = value_needed.subtract(selection.value_gathered)
+                raise InsufficientMoneyException(value_missing)
+
+            change = selection.value_gathered.subtract(value_needed)
+            if change.is_greater_than(Coin.ZERO()):
+                # The value of the inputs is greater than what we want to send. Just like in real life then,
+                # we need to take back some coins ... this is called "change". Add another output that sends the change
+                # back to us. The address comes either from the request or currentChangeAddress() as a default.
+                change_address = req.change_address
+                if not change_address:
+                    change_address = (
+                        self._electrum_wallet.get_single_change_address_for_new_transaction()
+                    )
+                    if not change_address:
+                        raise IllegalStateException("No change address available")
+                    change_address = Address.from_string(
+                        change_address, self.network_params
+                    )
+                change_output = TransactionOutput.from_coin_and_address(
+                    change, change_address, tx
+                )
+                if req.recipients_pay_fees and TransactionOutput.is_dust(change_output):
+                    # We do not move dust-change to fees, because the sender would end up paying more than requested.
+                    # This would be against the purpose of the all-inclusive feature.
+                    # So instead we raise the change and deduct from the first recipient.
+                    missing_to_not_be_dust = (
+                        change_output.get_min_non_dust_value() - change_output.value
+                    )
+                    change_output.value = change_output.value + missing_to_not_be_dust
+                    first_output = tx.outputs[0]
+                    first_output.value = first_output.value - missing_to_not_be_dust
+                    result.updated_output_values[0] = first_output.get_value()
+                    if TransactionOutput.is_dust(first_output):
+                        raise CouldNotAdjustDownwards()
+
+                if TransactionOutput.is_dust(change_output):
+                    # Never create dust outputs; if we would, just
+                    # add the dust to the fee.
+                    # Oscar comment: This seems like a way to make the condition below "if
+                    # (!fee.isLessThan(feeNeeded))" to become true.
+                    # This is a non-easy to understand way to do that.
+                    # Maybe there are other effects I am missing
+                    fee = fee.add(change_output.get_value())
+                else:
+                    tx.add_output(change_output)
+                    result.best_change_output = change_output
+
+            for selected_output in selection.gathered:
+                input = tx.add_input(TransactionInput.from_output(selected_output, tx))
+                # If the scriptBytes don't default to none, our size calculations will be thrown off.
+                check_state(not input.script_sig)
+                check_state(not input.has_witness)
+
+            vsize = tx.get_vsize() + self._estimate_virtual_bytes_for_signing(selection)
+
+            base_fee_needed = Coin.ZERO() if req.fee is None else req.fee
+            fee_per_kb_needed = req.fee_per_kb
+            fee_needed = base_fee_needed.add(
+                fee_per_kb_needed.multiply(vsize).divide(1000)
+            )
+            # REFERENCE_DEFAULT_MIN_TX_FEE: 1000 satoshis
+            min_fee_needed = Coin.value_of(1000).multiply(vsize).divide(1000)
+            if ensure_min_required_fee and fee_needed.is_less_than(min_fee_needed):
+                fee_needed = min_fee_needed
+
+            if not fee.is_less_than(fee_needed):
+                # Done, enough fee included.
+                break
+
+            # Include more fee and try again.
+            fee = fee_needed
+
+        return result
+
+    def _add_supplied_inputs(
+        self, tx: "Transaction", original_inputs: list["ElectrumPartialTxInput"]
+    ):
+        for input in original_inputs:
+            tx.add_input(TransactionInput.from_electrum_input(input, tx))
+
+    def _estimate_virtual_bytes_for_signing(self, selection: "CoinSelection"):
+        vsize = 0
+        for output in selection.gathered:
+            try:
+                script = output.get_script_pub_key()
+                key = None
+                if ScriptPattern.is_p2pkh(script):
+                    key = self.find_key_from_pub_key_hash(
+                        ScriptPattern.extract_hash_from_p2pkh(script), ScriptType.P2PKH
+                    )
+                    assert (
+                        key is not None
+                    ), "Coin selection includes unspendable outputs"
+                    vsize += script.get_number_of_bytes_required_to_spend(key, None)
+                elif ScriptPattern.is_p2wpkh(script):
+                    key = self.find_key_from_pub_key_hash(
+                        ScriptPattern.extract_hash_from_p2wpkh(script),
+                        ScriptType.P2WPKH,
+                    )
+                    assert (
+                        key is not None
+                    ), "Coin selection includes unspendable outputs"
+                    vsize += (
+                        script.get_number_of_bytes_required_to_spend(key, None) + 3
+                    ) // 4  # round up
+                elif ScriptPattern.is_p2sh(script):
+                    raise IllegalStateException("We don't support p2sh")
+                else:
+                    vsize += script.get_number_of_bytes_required_to_spend(key, None)
+            except ScriptException as e:
+                # If this happens it means an output script in a wallet tx could not be understood. That should never
+                # happen, if it does it means the wallet has got into an inconsistent state.
+                raise IllegalStateException(e)
+        return vsize
+
+    def _adjust_output_downwards_for_fee(
+        self,
+        tx: "Transaction",
+        coin_selection: "CoinSelection",
+        base_fee: "Coin",
+        fee_per_kb: "Coin",
+        ensure_min_required_fee: bool,
+    ):
+        REFERENCE_DEFAULT_MIN_TX_FEE = Coin.value_of(1000)
+        vsize = tx.get_vsize() + self._estimate_virtual_bytes_for_signing(
+            coin_selection
+        )
+        fee = base_fee.add(fee_per_kb.multiply(vsize).divide(1000))
+        if ensure_min_required_fee and fee.is_less_than(REFERENCE_DEFAULT_MIN_TX_FEE):
+            fee = REFERENCE_DEFAULT_MIN_TX_FEE
+        output = tx.outputs[0]
+        output.value = output.value - fee.value
+        return not TransactionOutput.is_dust(output)
