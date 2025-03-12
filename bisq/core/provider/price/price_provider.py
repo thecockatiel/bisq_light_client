@@ -27,7 +27,7 @@ class PriceProvider(HttpClientProvider):
 
         hs_version = ""
         if self._p2p_service.address is not None:
-            host_name = self._p2p_service.address
+            host_name = self._p2p_service.address.host_name
             hs_version = ", HSv3" if len(host_name) > 22 else ", HSv2"
 
         user_agent = f"bisq/{Version.VERSION}{hs_version}"
