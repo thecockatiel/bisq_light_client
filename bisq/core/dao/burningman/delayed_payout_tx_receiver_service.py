@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, List
 from datetime import datetime, timezone
 
+from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from utils.preconditions import check_argument
 from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 from bisq.core.dao.burningman.burning_man_service import BurningManService
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-class DelayedPayoutTxReceiverService:
+class DelayedPayoutTxReceiverService(DaoStateListener):
     """
     Used in the trade protocol for creating and verifying the delayed payout transaction.
     Requires to be deterministic.
