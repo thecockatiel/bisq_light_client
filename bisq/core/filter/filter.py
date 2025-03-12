@@ -76,7 +76,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         # The pub EC key from the dev who has signed and published the filter (different to ownerPubKeyBytes)
         self.signer_pub_key_as_hex = signer_pub_key_as_hex
         # The pub key used for the data protection in the p2p storage
-        self.owner_pub_key_bytes = owner_pub_key_bytes
+        self._owner_pub_key_bytes = owner_pub_key_bytes
         self.disable_dao = disable_dao
         self.disable_dao_below_version = disable_dao_below_version
         self.disable_trade_below_version = disable_trade_below_version
@@ -95,9 +95,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         # The hash of the data is not unique anymore if the only change have been at
         # the ExcludeForHash annotated fields.
         self.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(extra_data_map)
-
-        self.owner_pub_key: "DSA.DsaKey" = owner_pub_key
-        
+        self._owner_pub_key = owner_pub_key
         # added at v1.3.8
         self.disable_auto_conf = disable_auto_conf or False
         
@@ -135,26 +133,21 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         # The hash of the data is not unique anymore if the only change have been at
         # the ExcludeForHash annotated fields.
         self.uid = uid
-        
-        if owner_pub_key_bytes is None and owner_pub_key is None:
-            raise IllegalArgumentException("either owner_pub_key or owner_pub_key_bytes must be set")
-        self._owner_pub_key = owner_pub_key
-        self._owner_pub_key_bytes = owner_pub_key_bytes
 
     @property
     def owner_pub_key(self) -> "DSA.DsaKey":
-        if self._owner_pub_key is None:
-            self._owner_pub_key = Sig.get_public_key_from_bytes(self._owner_pub_key_bytes)
+        if self._owner_pub_key is None and self.owner_pub_key_bytes is not None:
+            self._owner_pub_key = Sig.get_public_key_from_bytes(self.owner_pub_key_bytes)
         return self._owner_pub_key
     
     @owner_pub_key.setter
     def owner_pub_key(self, owner_pub_key: "DSA.DsaKey") -> None:
         self._owner_pub_key = owner_pub_key
-        self._owner_pub_key_bytes = None
+        self._owner_pub_key_bytes = Sig.get_public_key_bytes(self._owner_pub_key)
 
     @property
     def owner_pub_key_bytes(self) -> bytes:
-        if self._owner_pub_key_bytes is None:
+        if self._owner_pub_key_bytes is None and self._owner_pub_key is not None:
             self._owner_pub_key_bytes = Sig.get_public_key_bytes(self._owner_pub_key)
         return self._owner_pub_key_bytes
     
@@ -168,6 +161,12 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
     def clone_with_sig(filter_obj: 'Filter', signature_as_base64: str) -> 'Filter':
         filter_dict = filter_obj.__dict__.copy()
         del filter_dict['signature_as_base64']
+        filter_dict.update({
+            'owner_pub_key': filter_dict['_owner_pub_key'],
+            'owner_pub_key_bytes': filter_dict['_owner_pub_key_bytes']
+        })
+        del filter_dict['_owner_pub_key']
+        del filter_dict['_owner_pub_key_bytes']
         return Filter(**filter_dict, signature_as_base64=signature_as_base64)
 
     # Used for signature verification as we created the sig without the signatureAsBase64 field we set it to null again
@@ -175,6 +174,12 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
     def clone_without_sig(filter_obj: 'Filter') -> 'Filter':
         filter_dict = filter_obj.__dict__.copy()
         del filter_dict['signature_as_base64']
+        filter_dict.update({
+            'owner_pub_key': filter_dict['_owner_pub_key'],
+            'owner_pub_key_bytes': filter_dict['_owner_pub_key_bytes']
+        })
+        del filter_dict['_owner_pub_key']
+        del filter_dict['_owner_pub_key_bytes']
         return Filter(**filter_dict, signature_as_base64=None)
 
     def to_proto_message(self) -> 'protobuf.StoragePayload':
