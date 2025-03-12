@@ -592,7 +592,7 @@ class FilterManager:
         #     self.preferences.set_bitcoin_nodes_option_ordinal(BtcNodes.BitcoinNodesOption.PROVIDED.ordinal())
 
         for listener in self.listeners:
-            listener.on_filter_added(filter_from_network)
+            listener(filter_from_network)
 
     def on_filter_removed_from_network(self, filter: Filter):
         if not self.is_filter_public_key_in_list(filter):
