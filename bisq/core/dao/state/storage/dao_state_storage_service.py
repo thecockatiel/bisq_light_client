@@ -111,12 +111,18 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         self._executor_service.shutdown()
 
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
+        def handle_error(f: Future):
+            try:
+                f.result()
+            except Exception as e:
+                logger.error("Error at readFromResources", exc_info=e)
+
         def task():
             current_thread().name = "copyBsqBlocksFromResources"
             self._bsq_blocks_storage_service.copy_from_resources(post_fix)
 
             super(DaoStateStorageService, self).read_from_resources(
-                post_fix, lambda: self._executor_service.submit(inner_task)
+                post_fix, lambda: self._executor_service.submit(inner_task).add_done_callback(handle_error)
             )
 
         def inner_task():
@@ -147,7 +153,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
             current_thread().name = "Read-BsqBlocksStore-idle"
             UserThread.execute(complete_handler)
 
-        self._executor_service.submit(task)
+        self._executor_service.submit(task).add_done_callback(handle_error)
 
     def get_persisted_bsq_state(self) -> DaoState:
         dao_state_as_proto = self.store.dao_state_as_proto
