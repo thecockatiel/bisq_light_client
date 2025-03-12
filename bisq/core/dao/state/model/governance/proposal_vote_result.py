@@ -4,9 +4,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
 from utils.preconditions import check_argument
-
-if TYPE_CHECKING:
-    from bisq.core.dao.state.model.governance.proposal import Proposal
+from bisq.core.dao.state.model.governance.proposal import Proposal
 
 logger = get_logger(__name__)
 
