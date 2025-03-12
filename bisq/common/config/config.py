@@ -334,7 +334,7 @@ class Config:
 
         parsed_config = self.parser.parse_known_args(option_lines)[0]
 
-        for arg in ["help", "configFile"]:
+        for arg in ["helpRequested", "configFile"]:
             if getattr(parsed_config, arg):
                 if (
                     arg == "configFile"
