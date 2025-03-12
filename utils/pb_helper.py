@@ -3,12 +3,12 @@ import os
 def is_pb_map_order_preserved():
     """must not be run on current process, otherwise defeats the point of checking"""
     import pb_pb2 as protobuf
+    original = protobuf.BlindVote(
+        extra_data={"1": "1", "2": "2", "3": "3"}
+    ).SerializeToString() 
 
-    original = protobuf.GetInventoryResponse(
-        inventory={"1": "1", "2": "2", "3": "3"}
-    ).SerializeToString()
-    for i in range(20):
-        # we need to test it 10 times quickly, because it is non deterministic
+    for _ in range(20):
+        # we need to test it 20 times quickly, because it is non deterministic
         inv = dict(protobuf.GetInventoryResponse.FromString(original).inventory)
         test = protobuf.GetInventoryResponse(inventory=inv).SerializeToString()
         if test != original:
