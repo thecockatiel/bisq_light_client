@@ -32,6 +32,9 @@ class ImmutableMap(Generic[K, V]):
     
     def items(self):
         return self._data.items()
+    
+    def keys(self):
+        return self._data.keys()
 
     # Prevent modifications
     def __setitem__(self, key, value):
