@@ -11,6 +11,7 @@ from utils.data import ObservableChangeEvent, ObservableList
 from bisq.core.dao.governance.proposal.storage.appendonly.proposal_payload import (
     ProposalPayload,
 )
+from bisq.core.dao.state.model.governance.ballot import Ballot
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.governance.proposal import Proposal
@@ -23,7 +24,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.proposal.proposal_validator_provider import (
         ProposalValidatorProvider,
     )
-    from bisq.core.dao.state.model.governance.ballot import Ballot
     from bisq.core.dao.state.model.governance.vote import Vote
 
 
