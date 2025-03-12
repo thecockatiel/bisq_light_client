@@ -7,12 +7,12 @@ from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.node.parser.op_return_parser import OpReturnParser
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 from utils.preconditions import check_argument
+from bisq.core.dao.state.model.blockchain.op_return_type import OpReturnType
+from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
 
 
 if TYPE_CHECKING:
     from bisq.core.dao.node.parser.temp_tx_output import TempTxOutput
-    from bisq.core.dao.state.model.blockchain.op_return_type import OpReturnType
-    from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
 logger = get_logger(__name__)
