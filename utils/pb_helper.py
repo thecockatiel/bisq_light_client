@@ -5,7 +5,7 @@ def is_pb_map_order_preserved():
     import pb_pb2 as protobuf
 
     original = protobuf.GetInventoryResponse(
-        inventory={"1": "1", "2": "2", "3": "3"}
+        inventory={"capabilities": "1", "accountAgeWitnessHash": "2"}
     ).SerializeToString()
     for i in range(20):
         # we need to test it 10 times quickly, because it is non deterministic
