@@ -10,10 +10,10 @@ from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from bitcoinj.base.coin import Coin
+from bisq.core.dao.node.parser.temp_tx import TempTx
 
 if TYPE_CHECKING:
     from bisq.core.dao.node.full.raw_tx import RawTx
-    from bisq.core.dao.node.parser.temp_tx import TempTx
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
