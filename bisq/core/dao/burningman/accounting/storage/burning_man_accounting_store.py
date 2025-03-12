@@ -15,9 +15,7 @@ from bisq.core.dao.burningman.accounting.exceptions.block_hash_not_connecting_ex
 from bisq.core.dao.burningman.accounting.exceptions.block_height_not_connecting_exception import (
     BlockHeightNotConnectingException,
 )
-from bisq.core.dao.burningman.burning_man_accounting_service import (
-    BurningManAccountingService,
-)
+from bisq.core.dao.burningman.burning_man_accounting_const import BurningManAccountingConst
 import pb_pb2 as protobuf
 
 logger = get_logger(__name__)
@@ -79,7 +77,7 @@ class BurningManAccountingStore(PersistableEnvelope):
                         raise BlockHashNotConnectingException()
                 elif (
                     new_block.height
-                    != BurningManAccountingService.EARLIEST_BLOCK_HEIGHT
+                    != BurningManAccountingConst.EARLIEST_BLOCK_HEIGHT
                 ):
                     raise BlockHeightNotConnectingException()
                 logger.info(

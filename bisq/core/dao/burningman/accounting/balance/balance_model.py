@@ -11,12 +11,10 @@ from bisq.core.dao.burningman.accounting.balance.monthly_balance_entry import (
 from bisq.core.dao.burningman.accounting.balance.monthly_burned_bsq_balance_entry import (
     MonthlyBurnedBsqBalanceEntry,
 )
-from bisq.core.dao.burningman.burning_man_accounting_service import (
-    BurningManAccountingService,
-)
 from bisq.core.dao.burningman.accounting.balance.balance_entry_type import (
     BalanceEntryType,
 )
+from bisq.core.dao.burningman.burning_man_accounting_const import BurningManAccountingConst
 
 
 if TYPE_CHECKING:
@@ -85,8 +83,9 @@ class BalanceModel:
         burn_output_models_by_month = burning_man_candidate.burn_output_models_by_month
         months = self._get_months(
             datetime.now(),
-            BurningManAccountingService.EARLIEST_DATE_YEAR,
-            BurningManAccountingService.EARLIEST_DATE_MONTH,
+            # we avoid importing BurningManAccountingService because of circular imports
+            BurningManAccountingConst.EARLIEST_DATE_YEAR,
+            BurningManAccountingConst.EARLIEST_DATE_MONTH,
         )
         monthly_balance_entries = []
 

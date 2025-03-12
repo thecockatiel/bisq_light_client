@@ -2,11 +2,9 @@ from collections.abc import Callable
 from datetime import datetime
 import threading
 from typing import TYPE_CHECKING, Optional
-from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.math_utils import MathUtils
-from bisq.core.dao.burningman.accounting.balance.balance_entry import BalanceEntry
 from bisq.core.dao.burningman.accounting.balance.balance_entry_type import (
     BalanceEntryType,
 )
@@ -16,22 +14,22 @@ from bisq.core.dao.burningman.accounting.balance.received_btc_balance_entry impo
 from bisq.core.dao.burningman.accounting.blockchain.accounting_tx_type import (
     AccountingTxType,
 )
+from bisq.core.dao.burningman.burning_man_accounting_const import BurningManAccountingConst
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.monetary.price import Price
 from bisq.core.util.average_price_util import get_average_price_tuple
 from bitcoinj.base.coin import Coin
 from utils.data import SimpleProperty
-from utils.python_helpers import classproperty
 
 if TYPE_CHECKING:
+    from bisq.core.dao.burningman.accounting.balance.balance_model import BalanceModel
     from bisq.core.trade.statistics.trade_statistics_manager import (
         TradeStatisticsManager,
     )
     from bisq.core.dao.burningman.accounting.storage.burning_man_accounting_store_service import (
         BurningManAccountingStoreService,
     )
-    from bisq.core.dao.burningman.accounting.balance.balance_model import BalanceModel
     from bisq.core.dao.burningman.burning_man_presentation_service import (
         BurningManPresentationService,
     )
@@ -52,22 +50,8 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
     Combines the received funds from BTC trade fees and DPT payouts and the burned BSQ.
     """
 
-    # now 763195 -> 107159 blocks takes about 14h
-    # First tx at BM address 656036 Sun Nov 08 19:02:18 EST 2020
-    # 2 months ago 754555 (date of comment = 2022-11-22)
-    @classproperty
-    def EARLIEST_BLOCK_HEIGHT(cls):
-        return 111 if Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() else 656035
-
-    EARLIEST_DATE_YEAR = 2020
-    EARLIEST_DATE_MONTH = (
-        11  # in java its 10 because it starts from 0, but in python it starts from 1
-    )
-    HIST_BSQ_PRICE_LAST_DATE_YEAR = 2022
-    HIST_BSQ_PRICE_LAST_DATE_MONTH = (
-        11  # in java its 10 because it starts from 0, but in python it starts from 1
-    )
-
+    # Constants moved to BurningManAccountingConst
+    
     def __init__(
         self,
         dao_state_service: "DaoStateService",
@@ -159,7 +143,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         return (
             last_block.height
             if last_block
-            else BurningManAccountingService.EARLIEST_BLOCK_HEIGHT - 1
+            else BurningManAccountingConst.EARLIEST_BLOCK_HEIGHT - 1
         )
 
     def get_last_block(self) -> Optional["AccountingBlock"]:
@@ -174,8 +158,8 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
             self._average_bsq_price_by_month.update(
                 self._get_average_bsq_price_by_month(
                     datetime.now(),
-                    BurningManAccountingService.HIST_BSQ_PRICE_LAST_DATE_YEAR,
-                    BurningManAccountingService.HIST_BSQ_PRICE_LAST_DATE_MONTH,
+                    BurningManAccountingConst.HIST_BSQ_PRICE_LAST_DATE_YEAR,
+                    BurningManAccountingConst.HIST_BSQ_PRICE_LAST_DATE_MONTH,
                 )
             )
             self._average_prices_valid = True
