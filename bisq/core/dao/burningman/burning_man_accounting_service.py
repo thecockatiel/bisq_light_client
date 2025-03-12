@@ -21,9 +21,9 @@ from bisq.core.monetary.price import Price
 from bisq.core.util.average_price_util import get_average_price_tuple
 from bitcoinj.base.coin import Coin
 from utils.data import SimpleProperty
+from bisq.core.dao.burningman.accounting.balance.balance_model import BalanceModel
 
 if TYPE_CHECKING:
-    from bisq.core.dao.burningman.accounting.balance.balance_model import BalanceModel
     from bisq.core.trade.statistics.trade_statistics_manager import (
         TradeStatisticsManager,
     )
