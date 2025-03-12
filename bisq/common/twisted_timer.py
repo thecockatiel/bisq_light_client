@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from utils.aio import (
     is_async_callable,
     get_asyncio_loop,
@@ -11,6 +12,14 @@ from twisted.internet.task import deferLater
 from utils.time import get_time_ms
 from bisq.common.timer import Timer
 from twisted.python import log
+
+if TYPE_CHECKING:
+    from twisted.internet.defer import Deferred
+    from twisted.python.failure import Failure
+
+
+def callbacks_count(deferred: "Deferred"):
+    return len(deferred.callbacks)
 
 
 class TwistedTimer(Timer):
@@ -26,6 +35,16 @@ class TwistedTimer(Timer):
         self._stopped = False
         self._deferred = None
 
+    def _on_error(self, failure: "Failure"):
+        if not self._stopped:
+            count = callbacks_count(self._deferred)
+            # user has not added callbacks:
+            if self._is_periodically:
+                if count <= 2:
+                    log.err(failure)
+            elif count <= 1:
+                log.err(failure)
+
     def _run_later(self, delay: timedelta, callable: Callable[[], None]):
         self._is_periodically = False
         self._stopped = False
@@ -36,7 +55,7 @@ class TwistedTimer(Timer):
                 callable(), get_asyncio_loop()
             )
         self._deferred = deferLater(reactor, delay.total_seconds(), self._callable)
-        self._deferred.addErrback(lambda f: log.err(f))
+        self._deferred.addErrback(self._on_error)
         return self
 
     def run_later(self, delay: timedelta, callable: Callable[[], None]):
@@ -53,7 +72,7 @@ class TwistedTimer(Timer):
                 callable(), get_asyncio_loop()
             )
         self._deferred = deferLater(reactor, interval.total_seconds(), self._callable)
-        self._deferred.addErrback(lambda f: log.err(f))
+        self._deferred.addErrback(self._on_error)
         self._deferred.addBoth(lambda _: self._run_periodically(interval, callable))
         return self
 
