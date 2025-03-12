@@ -1,5 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
@@ -92,9 +90,6 @@ class CoreWalletsService:
 
         self.lock_timer: Optional[Timer] = None
         self.temp_password: Optional[str] = None
-        self.executor = ThreadPoolExecutor(
-            max_workers=1, thread_name_prefix="CoreWalletsService"
-        )
 
     def get_key(self) -> str:
         self.verify_encrypted_wallet_is_unlocked()
