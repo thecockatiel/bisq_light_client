@@ -86,7 +86,7 @@ class Tx(BaseTx, PersistablePayload, ImmutableDaoStateModel):
             proto.time,
             tx_inputs,
             tx_outputs,
-            TxType.from_proto(proto_tx.txType) if proto_tx.HasField("txType") else None,
+            TxType.from_proto(proto_tx.txType),
             proto_tx.burnt_bsq,
         )
 

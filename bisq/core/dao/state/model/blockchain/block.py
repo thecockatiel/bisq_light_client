@@ -3,9 +3,7 @@ from bisq.common.protocol.persistable.persistable_payload import PersistablePayl
 from bisq.core.dao.state.model.blockchain.base_block import BaseBlock
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
-
-if TYPE_CHECKING:
-    from bisq.core.dao.state.model.blockchain.tx import Tx
+from bisq.core.dao.state.model.blockchain.tx import Tx
 
 
 class Block(BaseBlock, PersistablePayload, ImmutableDaoStateModel):

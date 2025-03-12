@@ -6,10 +6,10 @@ import pb_pb2 as protobuf
 from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 from bisq.core.dao.state.storage.blocks_persistence import BlocksPersistence
+from bisq.core.dao.state.model.blockchain.block import Block
 
 
 if TYPE_CHECKING:
-    from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.common.protocol.persistable.persistence_proto_resolver import (
         PersistenceProtoResolver,
     )
