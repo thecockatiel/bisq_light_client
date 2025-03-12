@@ -43,8 +43,7 @@ def read_delimited(stream: BinaryIO, proto_class_name: Type[T]) -> Optional[T]:
     if size == 0:
         return None
     buf = stream.read(size)
-    msg = proto_class_name()
-    msg.ParseFromString(buf)
+    msg = proto_class_name.FromString(buf)
     return msg
 
 

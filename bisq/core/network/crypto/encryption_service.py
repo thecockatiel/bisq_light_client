@@ -45,8 +45,7 @@ class EncryptionService:
 
         try:
             bytes_ = Encryption.decrypt_payload_with_hmac(sealed_and_signed.encrypted_payload_with_hmac, secret_key)
-            envelope = protobuf.NetworkEnvelope()
-            envelope.ParseFromString(bytes_)
+            envelope = protobuf.NetworkEnvelope.FromString(bytes_)
             decrypted_payload = self.network_proto_resolver.from_proto(envelope)
             return DecryptedDataTuple(decrypted_payload, sealed_and_signed.sig_public_key)
         except message.DecodeError as e:
