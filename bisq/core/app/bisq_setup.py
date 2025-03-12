@@ -14,6 +14,9 @@ from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.app.bisq_setup_listener import BisqSetupListener
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.locale.res import Res
+from bisq.core.network.p2p.persistence.append_only_data_store_listener import (
+    AppendOnlyDataStoreListener,
+)
 from bisq.core.network.utils.utils import Utils
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.trade.bisq_v1.trade_tx_exception import TradeTxException
@@ -144,7 +147,7 @@ class BisqSetup:
         self._arbitration_manager: "ArbitrationManager" = arbitration_manager
         # ---------------------------
         # ---------------------------
-        
+
         self.display_tac_handler: Optional[Callable[[Callable[[], None]], None]] = None
         self.chain_file_locked_exception_handler: Optional[Callable[[str], None]] = None
         self.spv_file_corrupted_handler: Optional[Callable[[str], None]] = None
@@ -728,22 +731,22 @@ class BisqSetup:
         )
 
         # check signed witness during runtime
-        self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            lambda payload: (
+        class Listener(AppendOnlyDataStoreListener):
+            def on_added(self_, payload):
                 self._maybe_trigger_display_handler(
                     key_signed_by_arbitrator,
                     self.display_signed_by_arbitrator_handler,
                     self._is_signed_witness_of_mine_with_state(
                         payload, AccountAgeWitnessService.SignState.ARBITRATOR
                     ),
-                ),
+                )
                 self._maybe_trigger_display_handler(
                     key_signed_by_peer,
                     self.display_signed_by_peer_handler,
                     self._is_signed_witness_of_mine_with_state(
                         payload, AccountAgeWitnessService.SignState.PEER_INITIAL
                     ),
-                ),
+                )
                 self._maybe_trigger_display_handler(
                     key_peer_limit_lifted,
                     self.display_peer_limit_lifted_handler,
@@ -757,8 +760,10 @@ class BisqSetup:
                     self._is_signed_witness_of_mine_with_state(
                         payload, AccountAgeWitnessService.SignState.PEER_SIGNER
                     ),
-                ),
-            )
+                )
+
+        self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
+            Listener()
         )
 
     def _check_signing_state(
@@ -805,7 +810,11 @@ class BisqSetup:
         display_handler: Optional[Callable[[str], None]],
         signing_state_found: bool,
     ):
-        if signing_state_found and self._preferences.show_again(key) and display_handler:
+        if (
+            signing_state_found
+            and self._preferences.show_again(key)
+            and display_handler
+        ):
             display_handler(key)
 
     def _maybe_upgrade_bsq_explorer_url(self):

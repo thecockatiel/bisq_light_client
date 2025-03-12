@@ -16,6 +16,7 @@ from bisq.core.account.witness.account_age_witness_utils import AccountAgeWitnes
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
+from bisq.core.network.p2p.persistence.append_only_data_store_listener import AppendOnlyDataStoreListener
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.offer.offer import Offer
 from bisq.core.offer.offer_direction import OfferDirection
@@ -137,9 +138,11 @@ class AccountAgeWitnessService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
     
     def on_all_services_initialized(self):
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            lambda payload: self.add_to_map(payload) if isinstance(payload, AccountAgeWitness) else None
-        )
+        class Listener(AppendOnlyDataStoreListener):
+            def on_added(self_, payload):
+                if isinstance(payload, AccountAgeWitness):
+                    self.add_to_map(payload)
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(Listener())
 
         # At startup the P2PDataStorage initializes earlier, otherwise we get the listener called
         for entry in self.account_age_witness_storage_service.get_map_of_all_data().values():
