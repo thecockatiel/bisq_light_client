@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 
 def callbacks_count(deferred: "Deferred"):
+    if deferred is None:
+        return 0
     return len(deferred.callbacks)
 
 
