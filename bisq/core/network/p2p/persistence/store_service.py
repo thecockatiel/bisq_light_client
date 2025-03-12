@@ -70,7 +70,7 @@ class StoreService(Generic[T], ABC):
                 logger.warning(f"make dir failed.\ndbDir={self.storage_dir.absolute()}")
                 
         resource_file_name = f"{file_name}{postfix}"
-        destination_file = self.storage_dir.joinpath(resource_file_name)
+        destination_file = self.storage_dir.joinpath(file_name)
         if not destination_file.exists():
             try:
                 logger.debug(f"We copy resource to file: resourceFileName={resource_file_name}, destinationFile={destination_file}")
