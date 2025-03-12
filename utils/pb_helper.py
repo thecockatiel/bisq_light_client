@@ -9,7 +9,9 @@ def is_pb_map_order_preserved():
     ).SerializeToString()
     for i in range(20):
         # we need to test it 10 times quickly, because it is non deterministic
-        inv = dict(protobuf.GetInventoryResponse.FromString(original).inventory)
+        msg = protobuf.GetInventoryResponse()
+        msg.ParseFromString(original)
+        inv = dict(msg.inventory)
         test = protobuf.GetInventoryResponse(inventory=inv).SerializeToString()
         if test != original:
             return False

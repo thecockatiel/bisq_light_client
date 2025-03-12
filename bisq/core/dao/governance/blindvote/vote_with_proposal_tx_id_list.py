@@ -20,12 +20,14 @@ class VoteWithProposalTxIdList(Proto, ConsensusCritical):
     def get_vote_with_proposal_tx_id_list_from_bytes(
         bytes_: bytes,
     ) -> "VoteWithProposalTxIdList":
-        proto = protobuf.VoteWithProposalTxIdList.FromString(bytes_)
+        proto = protobuf.VoteWithProposalTxIdList()
+        proto.ParseFromString(bytes_)
         return VoteWithProposalTxIdList.from_proto(proto)
 
     @staticmethod
     def from_bytes(bytes_: bytes) -> "VoteWithProposalTxIdList":
-        proto = protobuf.VoteWithProposalTxIdList.FromString(bytes_)
+        proto = protobuf.VoteWithProposalTxIdList()
+        proto.ParseFromString(bytes_)
         return VoteWithProposalTxIdList.from_proto(proto)
 
     def to_proto_message(self):
