@@ -24,7 +24,7 @@ from bisq.common.setup.log_setup import get_logger
 from asyncio import Future
 from collections.abc import Callable
 import time
-from typing import TYPE_CHECKING, Generator, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -308,14 +308,14 @@ class Wallet(EventListener):
     def last_block_seen_height(self):
         return self._electrum_wallet.adb.get_local_height()
 
-    def get_transactions(self) -> Generator["Transaction"]:
+    def get_transactions(self):
         """return an Generator that returns all transactions in the wallet, newest first"""
         for tx in reversed(self._electrum_wallet.db.transactions.values()):
             tx = Transaction.from_electrum_tx(self.network_params, tx)
             tx.add_info_from_wallet(self)
             yield tx
 
-    def _get_possibly_not_broadcasted_txs(self) -> Generator["Transaction"]:
+    def _get_possibly_not_broadcasted_txs(self):
         """return an Generator that returns all transactions in the wallet that are possibly not yet broadcasted"""
         maybe_broadcast = self._electrum_wallet.get_maybe_broadcast_tx_ids()
         for tx_id, timestamp in maybe_broadcast.items():
