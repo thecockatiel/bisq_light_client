@@ -166,7 +166,7 @@ class Wallet(EventListener):
     def find_key_from_pub_key_hash(
         self,
         pub_key_hash: bytes,
-        script_type: "ScriptType",
+        script_type: Optional["ScriptType"],
     ) -> Optional["DeterministicKey"]:
         if script_type == ScriptType.P2WPKH:
             address = str(SegwitAddress.from_hash(pub_key_hash, self._network_params))
@@ -175,7 +175,22 @@ class Wallet(EventListener):
                 LegacyAddress.from_pub_key_hash(pub_key_hash, self._network_params)
             )
         else:
-            return None
+            try:
+                address = str(
+                    SegwitAddress.from_hash(pub_key_hash, self._network_params)
+                )
+            except:
+                try:
+                    address = str(
+                        LegacyAddress.from_pub_key_hash(
+                            pub_key_hash, self._network_params
+                        )
+                    )
+                except:
+                    address = None
+            if not address:
+                return None
+
         keys = self._electrum_wallet.get_public_keys_with_deriv_info(address)
         if keys:
             first_item = next(iter(keys.items()))
@@ -187,7 +202,7 @@ class Wallet(EventListener):
     def find_key_from_pub_key(
         self,
         pub_key: bytes,
-        script_type: "ScriptType",
+        script_type: Optional["ScriptType"],
     ) -> Optional["DeterministicKey"]:
         return self.find_key_from_pub_key_hash(
             get_sha256_ripemd160_hash(pub_key), script_type
@@ -465,12 +480,7 @@ class Wallet(EventListener):
             # with the actual outputs that'll be used to gather the required amount of value. In this way, users
             # can customize coin selection policies. The call below will ignore immature coinbases and outputs
             # we don't have the keys for.
-            candidates = [
-                TransactionOutput.from_utxo(utxo, self)
-                for utxo in self._electrum_wallet.get_spendable_coins(
-                    confirmed_only=True
-                )
-            ]
+            candidates = self.calculate_all_spend_candidates()
 
             best_change_output = None
             if not req.empty_wallet:
@@ -550,6 +560,16 @@ class Wallet(EventListener):
             req.completed = True
             req.fee = calculated_fee
             logger.info(f"  completed: {req.tx}")
+
+    def calculate_all_spend_candidates(self) -> list["TransactionOutput"]:
+        """
+        Returns a list of the outputs that can potentially be spent, i.e. that we have the keys for and are unspent
+        according to our knowledge of the block chain.
+        """
+        return [
+            TransactionOutput.from_utxo(utxo, self)
+            for utxo in self._electrum_wallet.get_spendable_coins(confirmed_only=True)
+        ]
 
     def sign_tx(
         self,
@@ -747,3 +767,18 @@ class Wallet(EventListener):
         output = tx.outputs[0]
         output.value = output.value - fee.value
         return not TransactionOutput.is_dust(output)
+
+    def is_unconfirmed_transactions_limit_hit(self) -> bool:
+        """Check if there are more than 20 unconfirmed transactions in the chain right now."""
+        # For published delayed payout transactions we do not receive the tx confidence
+        # so we cannot check if it is confirmed so we ignore it for that check. The check is any arbitrarily
+        # using a limit of 20, so we don't need to be exact here. Should just reduce the likelihood of issues with
+        # the too long chains of unconfirmed transactions.
+        return (
+            sum(
+                1
+                for tx in self.get_transactions()
+                if tx.lock_time == 0 and self.is_transaction_pending(tx.get_tx_id())
+            )
+            > 20
+        )

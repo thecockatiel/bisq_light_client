@@ -159,7 +159,7 @@ class WalletService(ABC):
                 transaction,
                 input_index,
                 input.witness,
-                input.value,
+                input.get_value(),
                 input.connected_output.script_pub_key,
                 Script.ALL_VERIFY_FLAGS,
             )
@@ -318,7 +318,7 @@ class WalletService(ABC):
         return Coin.ZERO()
 
     def get_balance_for_address(self, address: Union["Address", str]) -> "Coin":
-        if self.wallet:
+        if self.wallet and address:
             return Coin.value_of(self.wallet.get_address_balance(address))
         return Coin.ZERO()
 

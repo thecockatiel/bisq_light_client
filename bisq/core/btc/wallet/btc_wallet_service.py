@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import itertools
 from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.setup.log_setup import get_logger
@@ -10,6 +11,7 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_builder import ScriptBuilder
@@ -17,7 +19,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
 from bitcoinj.wallet.send_request import SendRequest
 from utils.aio import FutureCallback
-from utils.preconditions import check_argument
+from utils.preconditions import check_argument, check_state
 from bitcoinj.core.transaction import Transaction
 
 
@@ -737,44 +739,104 @@ class BtcWalletService(WalletService, DaoStateListener):
     def swap_trade_entry_to_available_entry(
         self, offer_id: str, context: AddressEntryContext
     ) -> None:
-        raise RuntimeError(
-            "BtcWalletService.swap_trade_entry_to_available_entry Not implemented yet"
-        )
+        if context == AddressEntryContext.MULTI_SIG:
+            logger.error(
+                "swap_trade_entry_to_available_entry called with MULTI_SIG context. "
+                "This is not permitted as we must not reuse those address entries and there "
+                "are no redeemable funds on those addresses. Only the keys are used for creating "
+                f"the Multisig address. offer_id={offer_id}, context={context}"
+            )
+            return
 
+        for entry in self.get_address_entry_list_as_immutable_list():
+            if offer_id == entry.offer_id and context == entry.context:
+                logger.info(
+                    f"swap addressEntry with address {entry.get_address_string()} and offerId {entry.offer_id} from context {context} to available"
+                )
+                self.address_entry_list.swap_to_available(entry)
+
+    # When funds from MultiSig address is spent we reset the coinLockedInMultiSig value to 0.
     def reset_coin_locked_in_multi_sig_address_entry(self, offer_id: str) -> None:
-        raise RuntimeError(
-            "BtcWalletService.reset_coin_locked_in_multi_sig_address_entry Not implemented yet"
+        self.set_coin_locked_in_multi_sig_address_entry_for_offer_id(offer_id, 0)
+
+    def set_coin_locked_in_multi_sig_address_entry_for_offer_id(
+        self, offer_id: str, value: int
+    ) -> None:
+        for address_entry in self.get_address_entry_list_as_immutable_list():
+            if (
+                address_entry.context == AddressEntryContext.MULTI_SIG
+                and address_entry.offer_id == offer_id
+            ):
+                self.set_coin_locked_in_multi_sig_address_entry(address_entry, value)
+
+    def set_coin_locked_in_multi_sig_address_entry(
+        self, address_entry: "AddressEntry", value: int
+    ) -> None:
+        logger.info(
+            f"Set coinLockedInMultiSig for addressEntry {address_entry} to value {value}"
+        )
+        self.address_entry_list.set_coin_locked_in_multi_sig_address_entry(
+            address_entry, value
         )
 
-    def reset_address_entries_for_open_offer(self) -> None:
-        raise RuntimeError(
-            "BtcWalletService.reset_address_entries_for_open_offer Not implemented yet"
+    def reset_address_entries_for_open_offer(self, offer_id: str) -> None:
+        logger.info(f"reset_address_entries_for_open_offer offerId={offer_id}")
+        self.swap_trade_entry_to_available_entry(
+            offer_id, AddressEntryContext.OFFER_FUNDING
+        )
+        self.swap_trade_entry_to_available_entry(
+            offer_id, AddressEntryContext.RESERVED_FOR_TRADE
         )
 
     def reset_address_entries_for_pending_trade(self, offer_id: str) -> None:
-        raise RuntimeError(
-            "BtcWalletService.reset_address_entries_for_pending_trade Not implemented yet"
+        # We must not swap MULTI_SIG entries as those addresses are not detected in the isAddressUnused
+        # check at getOrCreateAddressEntry and could lead to a reuse of those keys and result in the same 2of2 MS
+        # address if same peers trade again.
+
+        # We swap TRADE_PAYOUT to be sure all is cleaned up. There might be cases where a user cannot send the funds
+        # to an external wallet directly in the last step of the trade, but the funds are in the Bisq wallet anyway and
+        # the dealing with the external wallet is pure UI thing. The user can move the funds to the wallet and then
+        # send out the funds to the external wallet. As this cleanup is a rare situation and most users do not use
+        # the feature to send out the funds we prefer that strategy (if we keep the address entry it might cause
+        # complications in some edge cases after a SPV resync).
+        self.swap_trade_entry_to_available_entry(
+            offer_id, AddressEntryContext.TRADE_PAYOUT
         )
 
     def get_address_entries_for_open_offer(self) -> list[AddressEntry]:
-        ctx_filter = {AddressEntryContext.OFFER_FUNDING, AddressEntryContext.RESERVED_FOR_TRADE}
+        ctx_filter = {
+            AddressEntryContext.OFFER_FUNDING,
+            AddressEntryContext.RESERVED_FOR_TRADE,
+        }
         return [
             address_entry
             for address_entry in self.get_address_entry_list_as_immutable_list()
             if address_entry.context in ctx_filter
         ]
 
-    def is_unconfirmed_transactions_limit_hit(self) -> bool:
-        raise RuntimeError(
-            "BtcWalletService.is_unconfirmed_transactions_limit_hit Not implemented yet"
-        )
-
     def get_multi_sig_key_pair(
         self, trade_id: str, pub_key: bytes
     ) -> "DeterministicKey":
-        raise RuntimeError(
-            "BtcWalletService.get_multi_sig_key_pair Not implemented yet"
+        multi_sig_key_pair = None
+        multi_sig_address_entry = self.get_address_entry(
+            trade_id, AddressEntryContext.MULTI_SIG
         )
+        if multi_sig_address_entry:
+            multi_sig_key_pair = multi_sig_address_entry.key_pair
+            if pub_key != multi_sig_address_entry.pub_key:
+                logger.error(
+                    f"Pub Key from AddressEntry does not match key pair from trade data. Trade ID={trade_id}\n"
+                    "We try to find the keypair in the wallet with the pubKey we found in the trade data."
+                )
+                multi_sig_key_pair = self.wallet.find_key_from_pub_key(pub_key, None)
+        else:
+            logger.error(
+                f"multiSigAddressEntry not found for trade ID={trade_id}.\n"
+                "We try to find the keypair in the wallet with the pubKey we found in the trade data."
+            )
+            multi_sig_key_pair = self.wallet.find_key_from_pub_key(pub_key, None)
+
+        return multi_sig_key_pair
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Balance
@@ -791,22 +853,25 @@ class BtcWalletService(WalletService, DaoStateListener):
     def get_address_entries_for_available_balance_stream(
         self,
     ) -> Iterable[AddressEntry]:
-        raise RuntimeError(
-            "BtcWalletService.get_address_entries_for_available_balance_stream Not implemented yet"
+        available_and_payout = itertools.chain(
+            self.get_address_entries(AddressEntryContext.TRADE_PAYOUT),
+            self.get_funded_available_address_entries(),
+        )
+        available = itertools.chain(
+            available_and_payout,
+            self.get_address_entries(AddressEntryContext.ARBITRATOR),
+            self.get_address_entries(AddressEntryContext.OFFER_FUNDING),
+        )
+        return filter(
+            lambda address_entry: self.get_balance_for_address(
+                address_entry.get_address()
+            ).is_positive(),
+            available,
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Double spend unconfirmed transaction (unlock in case we got into a tx with a too low mining fee)
     # ///////////////////////////////////////////////////////////////////////////////////////////
-
-    # ///////////////////////////////////////////////////////////////////////////////////////////
-    # // Find inputs and change
-    # ///////////////////////////////////////////////////////////////////////////////////////////
-
-    def get_inputs_and_change(
-        required: Coin,
-    ) -> tuple[list["RawTransactionInput"], Coin]:
-        raise RuntimeError("BtcWalletService.get_inputs_and_change Not implemented yet")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Withdrawal Fee calculation
@@ -882,3 +947,35 @@ class BtcWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BtcWalletService.send_funds_for_multiple_addresses Not implemented yet"
         )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Find inputs and change
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_inputs_and_change(
+        self,
+        required: Coin,
+    ) -> tuple[list["RawTransactionInput"], Coin]:
+        check_state(self.wallet, "Wallet is not initialized yet")
+        coin_selector = BtcCoinSelector(
+            self._wallets_setup.get_addresses_by_context(AddressEntryContext.AVAILABLE),
+            self._preferences.get_ignore_dust_threshold(),
+        )
+        coin_selection = coin_selector.select(
+            required, self.wallet.calculate_all_spend_candidates()
+        )
+
+        try:
+            change = coin_selector.get_change(required, coin_selection)
+        except InsufficientMoneyException as e:
+            logger.error(f"Missing funds in get_inputs_and_change. missing={e.missing}")
+            raise InsufficientMoneyException(e.missing)
+
+        dummy_tx = Transaction(self.params)
+        for tx_input in coin_selection.gathered:
+            dummy_tx.add_input(tx_input)
+        inputs = [
+            RawTransactionInput.from_transaction_input(tx_input)
+            for tx_input in dummy_tx.inputs
+        ]
+        return inputs, change

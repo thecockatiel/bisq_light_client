@@ -3,6 +3,7 @@ from functools import total_ordering
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from bisq.core.btc.wallet.restrictions import Restrictions
+from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
@@ -68,7 +69,7 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
         available = coin_selection.value_gathered.value
         change = available - value
         if change < 0:
-            raise ValueError(f"Insufficient money: missing {Coin.value_of(change * -1)}")
+            raise InsufficientMoneyException(Coin.value_of(change * -1))
         return Coin.value_of(change)
     
     @abstractmethod

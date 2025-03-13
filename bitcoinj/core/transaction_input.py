@@ -30,7 +30,13 @@ class TransactionInput:
         self.parent = parent_tx
         self._ec_tx_input = ec_tx_input
         self.outpoint = outpoint
-        self.value: Optional[Coin] = None
+
+    @property
+    def value(self):
+        return self._ec_tx_input.value_sats() or 0
+    
+    def get_value(self): 
+        return Coin.value_of(self.value)
 
     @staticmethod
     def from_electrum_input(ec_tx_input: "ElectrumTxInput", parent_tx: Optional["Transaction"]):

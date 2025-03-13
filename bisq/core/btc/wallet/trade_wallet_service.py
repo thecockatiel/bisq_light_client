@@ -187,7 +187,7 @@ class TradeWalletService:
             seller_pub_key,
             buyer_signature,
             seller_signature,
-            input.value,
+            input.get_value(),
         )
 
         WalletService.check_wallet_consistency(self.wallet)

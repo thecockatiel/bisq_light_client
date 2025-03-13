@@ -190,8 +190,8 @@ class Transaction:
         input_total = Coin.ZERO()
 
         for tx_input in self.inputs:
-            if tx_input.value is not None:
-                input_total = input_total.add(tx_input.value)
+            if tx_input.value:
+                input_total = input_total.add(tx_input.get_value())
 
         return input_total
 
@@ -498,7 +498,7 @@ class Transaction:
                 s.append(f"{indent}   in   ")
                 try:
                     s.append(f"{tx_in.script_sig.hex()}")
-                    value = tx_in.value
+                    value = tx_in.get_value()
                     if value is not None:
                         s.append(f"  {value.to_friendly_string()} ({value})")
                     s.append("\n")
