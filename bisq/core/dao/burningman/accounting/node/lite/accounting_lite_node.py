@@ -309,7 +309,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
             self._block_height_listener
         )
 
-        def on_new_block_height(new_height: int):
+        def on_new_block_height(e: SimplePropertyChangeEvent[int]):
             # If we are not completed with initial block requests we return
             if not self._dao_state_service.parse_block_chain_complete:
                 return
@@ -318,7 +318,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 # In case we received a new block before out timer gets called we stop the old timer
                 self._check_for_block_received_timer.stop()
 
-            wallet_block_height = new_height
+            wallet_block_height = e.new_value
             logger.info(
                 f"New block at height {wallet_block_height} from bsqWalletService"
             )

@@ -42,6 +42,9 @@ from utils.data import ObservableList
 from bisq.core.dao.governance.voteresult.vote_result_exception import (
     VoteResultException,
 )
+from bisq.core.dao.state.model.governance.decrypted_ballots_with_merits import (
+    DecryptedBallotsWithMerits,
+)
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
@@ -61,9 +64,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.dao.governance.proposal.proposal_list_presentation import (
         ProposalListPresentation,
-    )
-    from bisq.core.dao.state.model.governance.decrypted_ballots_with_merits import (
-        DecryptedBallotsWithMerits,
     )
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.governance.blindvote.blind_vote_list_service import (

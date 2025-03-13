@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
 from bisq.core.dao.governance.bond.bond_repository import BondRepository
 from bisq.core.dao.governance.bond.reputation.bonded_reputation import BondedReputation
+from bisq.core.dao.governance.bond.reputation.reputation import Reputation
 
 if TYPE_CHECKING:
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
@@ -9,7 +10,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.bond.role.bonded_roles_repository import (
         BondedRolesRepository,
     )
-    from bisq.core.dao.governance.bond.reputation.reputation import Reputation
     from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
 
 
