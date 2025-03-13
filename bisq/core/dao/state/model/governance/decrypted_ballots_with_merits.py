@@ -99,4 +99,14 @@ class DecryptedBallotsWithMerits(PersistablePayload, ImmutableDaoStateModel):
         )
 
     def __hash__(self):
-        return None
+        # This is wrong but we do it anyway
+        return hash(
+            (
+                self.hash_of_blind_vote_list,
+                self.blind_vote_tx_id,
+                self.vote_reveal_tx_id,
+                self.stake,
+                self.ballot_list,
+                self.merit_list,
+            )
+        )

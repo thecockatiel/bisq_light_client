@@ -23,3 +23,10 @@ class BallotList(PersistableList[Ballot], ConsensusCritical, ImmutableDaoStateMo
 
     def __str__(self):
         return "BallotList: " + str([ballot.info() for ballot in self])
+    
+    def __eq__(self, value):
+        return isinstance(value, BallotList) and self.list == value.list
+    
+    def __hash__(self):
+        # wrong but we do it anyway
+        return hash(tuple(self.list))

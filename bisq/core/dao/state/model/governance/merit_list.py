@@ -34,4 +34,5 @@ class MeritList(Proto, ConsensusCritical, ImmutableDaoStateModel):
         return isinstance(value, MeritList) and self._list == value._list
 
     def __hash__(self):
-        return None
+        # wrong but we do it anyway
+        return hash(tuple(self._list))
