@@ -239,7 +239,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         return {
             result
             for tx_output in self._dao_state_service.get_vote_reveal_op_return_tx_outputs()
-            if self._period_service.is_tx_in_correct_cycle(
+            if self._period_service.is_tx_in_correct_cycle_by_id(
                 tx_output.tx_id, chain_height
             )
             and self._is_in_vote_reveal_phase(tx_output)
