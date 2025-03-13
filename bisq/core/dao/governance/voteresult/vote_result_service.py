@@ -683,7 +683,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             proposal
         ) in self._proposal_list_presentation.active_or_my_unconfirmed_proposals:
             if (
-                self._period_service.is_tx_in_correct_cycle(
+                self._period_service.is_tx_in_correct_cycle_by_id(
                     proposal.tx_id, chain_height
                 )
                 and proposal.tx_id not in evaluated_proposals_by_tx_id_map

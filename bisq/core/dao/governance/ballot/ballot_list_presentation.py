@@ -42,7 +42,7 @@ class BallotListPresentation(BallotListChangeListener, DaoStateListener):
 
     def on_parse_block_complete_after_batch_processing(self, block: "Block"):
         self.ballots_of_cycle.set_filter(
-            lambda ballot: self._period_service.is_tx_in_correct_cycle(
+            lambda ballot: self._period_service.is_tx_in_correct_cycle_by_id(
                 ballot.tx_id, block.height
             )
         )

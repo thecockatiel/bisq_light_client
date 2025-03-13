@@ -132,7 +132,7 @@ class BallotListService(PersistedDataHost, DaoSetupService):
             if self.validator_provider.get_validator(ballot.proposal).is_tx_type_valid(
                 ballot.proposal
             )
-            and self.period_service.is_tx_in_correct_cycle(
+            and self.period_service.is_tx_in_correct_cycle_by_id(
                 ballot.tx_id, self.period_service.chain_height
             )
         ]
