@@ -1,5 +1,7 @@
 import sys
 
+from utils.pb_helper import is_patched_pb_working_as_expected
+
 
 MIN_PYTHON_VERSION = "3.9.0"
 
@@ -22,4 +24,11 @@ def do_common_checks():
     if sys.version_info[:3] < _min_python_version_tuple:
         sys.exit(
             f"Error: Bisq light client requires Python version >= {MIN_PYTHON_VERSION}..."
+        )
+
+    if not is_patched_pb_working_as_expected():
+        raise AssertionError(
+            "Our custom stable extra_data is no longer producing the same bytes as pb mapping. \n"
+            "This is a fatal error. \n"
+            "Exiting now..."
         )

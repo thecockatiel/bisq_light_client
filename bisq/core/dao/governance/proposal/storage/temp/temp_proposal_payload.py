@@ -12,6 +12,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
 )
 from bisq.core.dao.state.model.governance.proposal import Proposal
 import pb_pb2 as protobuf
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 
 class TempProposalPayload(
@@ -71,7 +72,7 @@ class TempProposalPayload(
             temp_proposal_payload=protobuf.TempProposalPayload(
                 proposal=self.proposal.to_proto_message(),
                 owner_pub_key_encoded=self.owner_pub_key_encoded,
-                extra_data=self.extra_data_map,
+                extra_data=map_to_stable_extra_data(self.extra_data_map),
             )
         )
 
@@ -80,7 +81,7 @@ class TempProposalPayload(
         return TempProposalPayload(
             proposal=Proposal.from_proto(proto.proposal),
             owner_pub_key_or_its_bytes=proto.owner_pub_key_encoded,
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
         )
 
     def get_owner_pub_key(self):

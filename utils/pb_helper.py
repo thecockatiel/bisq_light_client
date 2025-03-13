@@ -1,55 +1,34 @@
-import os
+from typing import Iterable
+from spb_pb2 import StableExtraData, StableExample, UnstableExample
 
-def is_pb_map_order_preserved():
-    """must not be run on current process, otherwise defeats the point of checking"""
-    import pb_pb2 as protobuf
 
-    original = protobuf.GetInventoryResponse(
-        inventory={"capabilities": "1", "accountAgeWitnessHash": "2"}
-    ).SerializeToString()
-    for i in range(20):
-        # we need to test it 10 times quickly, because it is non deterministic
-        inv = dict(protobuf.GetInventoryResponse.FromString(original).inventory)
-        test = protobuf.GetInventoryResponse(inventory=inv).SerializeToString()
-        if test != original:
-            return False
-    return True
+def map_to_stable_extra_data(map: dict[str, str]):
+    if not map:
+        return None
+    return [StableExtraData(key=k, value=v) for k, v in map.items()]
 
-def is_python_pb_impl_required():
-    # there's no known version that doesn't have this issue, so we just return True
-    return True
-    # import grpc
-    # try:
-    #     version = grpc.__version__
-    #     version = version.split('.')
-    #     major, minor = int(version[0]), int(version[1])
-    #     if major > 1 or (major == 1 and minor > 48):
-    #         return False
-    # except:
-    #     pass
-    # return True
 
-def use_pure_python_pb_implementation():
-    os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+def stable_extra_data_to_map(extra_data: Iterable[StableExtraData]):
+    if not extra_data:
+        return None
+    return {v.key: v.value for v in extra_data}
 
-def check_and_use_pure_python_pb_implementation(print_warning=True):
-    if is_python_pb_impl_required():
-        if print_warning:
-            # fmt: off
-            print("######################################################################")
-            print("######################################################################")
-            print("###   Setting PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION to 'python'   ###")
-            print("###                    Expect Degraded Performance                 ###")
-            print("######################################################################")
-            print("######################################################################")
-            # fmt: on
 
-        use_pure_python_pb_implementation()
+def is_patched_pb_working_as_expected():
+    map = {
+        "capabilities": "1",
+        "accountAgeWitnessHash": "2",
+    }  # order matters for our test
+    u = UnstableExample(extra_data=map)
+    s = StableExample(extra_data=map_to_stable_extra_data(map))
 
-    # Now we can run the check again to make sure it worked
-    if not is_pb_map_order_preserved():
-        raise AssertionError(
-            "Protobuf map order was not preserved during the test. \n"
-            "This is a fatal error. \n"
-            "Exiting now..."
-        )
+    first_test = u.SerializeToString() == s.SerializeToString()
+
+    round_tripped_stable = StableExample(
+        extra_data=map_to_stable_extra_data(stable_extra_data_to_map(s.extra_data))
+    )
+
+    second_test = s.SerializeToString() == round_tripped_stable.SerializeToString()
+
+    return first_test and second_test
+

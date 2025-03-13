@@ -11,6 +11,7 @@ from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
 import pb_pb2 as protobuf
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 logger = get_logger(__name__)
 
@@ -106,7 +107,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
                 prefixed_sealed_and_signed_message=self.prefixed_sealed_and_signed_message.to_proto_network_envelope().prefixed_sealed_and_signed_message,
                 sender_pub_key_for_add_operation_bytes=self.sender_pub_key_for_add_operation_bytes,
                 owner_pub_key_bytes=self.owner_pub_key_bytes,
-                extra_data=self.extra_data_map,
+                extra_data=map_to_stable_extra_data(self.extra_data_map),
             )
         )
 
@@ -116,7 +117,7 @@ class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePa
             PrefixedSealedAndSignedMessage.from_payload_proto(proto.prefixed_sealed_and_signed_message),
             sender_pub_key_for_add_operation_bytes=proto.sender_pub_key_for_add_operation_bytes,
             owner_pub_key_bytes=proto.owner_pub_key_bytes,
-            extra_data_map=dict(proto.extra_data) if bool(proto.extra_data) else None
+            extra_data_map=stable_extra_data_to_map(proto.extra_data)
         )
 
     # API

@@ -25,6 +25,7 @@ from bisq.core.network.p2p.storage.payload.process_once_persistable_network_payl
     ProcessOncePersistableNetworkPayload,
 )
 from bisq.core.util.json_util import JsonUtil
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
@@ -59,7 +60,7 @@ class TradeStatistics2(
         trade_date: int,
         deposit_tx_id: Optional[str] = None,
         hash_bytes: Optional[bytes] = None,
-        extra_data_map: Optional[dict] = None,
+        extra_data_map: Optional[dict[str, str]] = None,
     ):
         self.direction = direction
         self.base_currency = base_currency
@@ -133,7 +134,7 @@ class TradeStatistics2(
             hash=self.hash,
         )
         if self.extra_data_map:
-            builder.extra_data.update(self.extra_data_map)
+            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
         return builder
 
     def to_proto_trade_statistics_2(self):
@@ -160,7 +161,7 @@ class TradeStatistics2(
             proto.trade_date,
             ProtoUtil.string_or_none_from_proto(proto.deposit_tx_id),
             None,  # We want to clean up the hashes with the changed hash method in v.1.2.0 so we don't use the value from the proto
-            dict(proto.extra_data) if proto.extra_data else None,
+            stable_extra_data_to_map(proto.extra_data),
         )
 
     @staticmethod
@@ -207,7 +208,7 @@ class TradeStatistics2(
         trade_amount: Coin,
         trade_date: datetime,
         deposit_tx_id: Optional[str],
-        extra_data_map: dict,
+        extra_data_map: dict[str, str],
     ):
         return TradeStatistics2(
             offer_payload.direction,

@@ -11,6 +11,7 @@ from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
 from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 logger = get_logger(__name__)
 
@@ -64,7 +65,7 @@ class RefundAgent(DisputeAgent, CapabilityRequiringPayload):
         if self.info:
             refund_agent.info = self.info
         if self.extra_data_map:
-            refund_agent.extra_data.update(self.extra_data_map)
+            refund_agent.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
 
         return protobuf.StoragePayload(refund_agent=refund_agent)
 
@@ -79,7 +80,7 @@ class RefundAgent(DisputeAgent, CapabilityRequiringPayload):
             registration_signature=proto.registration_signature,
             email_address=ProtoUtil.string_or_none_from_proto(proto.email_address),
             info=ProtoUtil.string_or_none_from_proto(proto.info),
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
         )
 
     def __str__(self):

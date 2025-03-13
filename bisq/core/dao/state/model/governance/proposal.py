@@ -10,6 +10,7 @@ from bisq.common.protocol.protobuffer_exception import ProtobufferException
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.dao.governance.consensus_critical import ConsensusCritical
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
+from utils.pb_helper import map_to_stable_extra_data
 
 if TYPE_CHECKING:
     from bisq.core.dao.governance.param.param import Param
@@ -51,7 +52,7 @@ class Proposal(
             creation_date=self.creation_date,
         )
         if self.extra_data_map:
-            builder.extra_data.update(self.extra_data_map)
+            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
         if self.tx_id:
             builder.tx_id = self.tx_id
         return builder

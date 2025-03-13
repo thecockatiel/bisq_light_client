@@ -5,6 +5,7 @@ from bisq.core.dao.state.model.governance.proposal import Proposal
 from bisq.core.dao.governance.proposal.proposal_type import ProposalType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
+from utils.pb_helper import stable_extra_data_to_map
 from utils.time import get_time_ms
 import pb_pb2 as protobuf
 
@@ -43,7 +44,7 @@ class GenericProposal(Proposal, ImmutableDaoStateModel):
             proto.version,
             proto.creation_date,
             proto.tx_id,
-            dict(proto.extra_data) if proto.extra_data else None,
+            stable_extra_data_to_map(proto.extra_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

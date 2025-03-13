@@ -11,6 +11,7 @@ from bisq.common.protocol.network.get_data_response_priority import (
 )
 from bisq.common.version import Version
 import pb_pb2 as protobuf
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
@@ -73,7 +74,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         )
 
         if self.extra_data_map:
-            alert.extra_data.update(self.extra_data_map)
+            alert.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
 
         return protobuf.StoragePayload(alert=alert)
 
@@ -91,7 +92,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
             version=proto.version,
             owner_pub_key_bytes=proto.owner_pub_key_bytes,
             signature_as_base64=proto.signature_as_base64,
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
         )
 
     def get_data_response_priority(self) -> GetDataResponsePriority:

@@ -10,7 +10,9 @@ from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_payload_base import OfferPayloadBase
 import pb_pb2 as protobuf
 from utils.data import raise_required
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 from utils.preconditions import check_argument
+
 
 
 # OfferPayload has about 1.4 kb. We should look into options to make it smaller but will be hard to do it in a
@@ -142,7 +144,7 @@ class OfferPayload(OfferPayloadBase):
         if self.hash_of_challenge:
             offer_payload.hash_of_challenge = self.hash_of_challenge
         if self.extra_data_map:
-            offer_payload.extra_data.update(self.extra_data_map)
+            offer_payload.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
 
         return protobuf.StoragePayload(offer_payload=offer_payload)
 
@@ -202,7 +204,7 @@ class OfferPayload(OfferPayloadBase):
             hash_of_challenge=ProtoUtil.string_or_none_from_proto(
                 proto.hash_of_challenge
             ),
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
             protocol_version=proto.protocol_version,
         )
 

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package io.bisq.protobuffer;
+option java_package = "bisq.proto.grpc";
+option java_multiple_files = true;
+
+message UnstableExample {
+  map<string, string> extra_data = 1;
+}
+
+message StableExample {
+  repeated StableExtraData extra_data = 1;
+}
+
+message StableExtraData {
+  string key = 1;
+  optional string value = 2;
+}
+

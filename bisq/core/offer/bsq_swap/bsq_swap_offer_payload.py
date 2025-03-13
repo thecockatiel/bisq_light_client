@@ -11,6 +11,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.crypto.proof_of_work import ProofOfWork
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequiringPayload):
 
@@ -78,12 +79,12 @@ class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequir
         )
         
         if self.extra_data_map:
-            payload.extra_data.update(self.extra_data_map)
+            payload.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
+
         return protobuf.StoragePayload(bsq_swap_offer_payload=payload)
 
     @staticmethod
-    def from_proto(proto: protobuf.BsqSwapOfferPayload) -> "BsqSwapOfferPayload":
-        extra_data_map = dict(proto.extra_data) if proto.extra_data else None
+    def from_proto(proto: protobuf.BsqSwapOfferPayload) -> "BsqSwapOfferPayload": 
         return BsqSwapOfferPayload(
             id=proto.id,
             date=proto.date,
@@ -94,7 +95,7 @@ class BsqSwapOfferPayload(OfferPayloadBase, ProofOfWorkPayload, CapabilityRequir
             amount=proto.amount,
             min_amount=proto.min_amount,
             proof_of_work=ProofOfWork.from_proto(proto.proof_of_work),
-            extra_data_map=extra_data_map,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
             version_nr=proto.version_nr,
             protocol_version=proto.protocol_version
         )

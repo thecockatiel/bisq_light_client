@@ -32,6 +32,7 @@ from bisq.core.network.p2p.storage.payload.process_once_persistable_network_payl
 from bisq.core.trade.statistics.trade_statistics_3_payment_method_wrapper import TradeStatistics3PaymentMethodWrapper
 from bisq.core.util.json_util import JsonUtil
 from utils.java_compat import java_arrays_byte_hashcode, java_string_hashcode, long_unsigned_right_shift
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 
 if TYPE_CHECKING:
@@ -124,7 +125,7 @@ class TradeStatistics3(
         if self.refund_agent:
             builder.refund_agent = self.refund_agent
         if self.extra_data_map:
-            builder.extra_data.update(self.extra_data_map)
+            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
         return builder
     
     def to_proto_message(self):
@@ -142,7 +143,7 @@ class TradeStatistics3(
             date=proto.date,
             mediator=ProtoUtil.string_or_none_from_proto(proto.mediator),
             refund_agent=ProtoUtil.string_or_none_from_proto(proto.refund_agent),
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
             hash=proto.hash,
         )
         

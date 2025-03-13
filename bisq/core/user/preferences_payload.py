@@ -12,6 +12,7 @@ from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.locale.trade_currency import TradeCurrency
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 class PreferencesPayload(PersistableEnvelope):
     
@@ -195,7 +196,7 @@ class PreferencesPayload(PersistableEnvelope):
             resync_Spv_requested=self.resync_spv_requested, # weird protobuf names
             sort_market_currencies_numerically=self.sort_market_currencies_numerically,
             use_percentage_based_price=self.use_percentage_based_price,
-            peer_tag_map=self.peer_tag_map,
+            peer_tag_map=map_to_stable_extra_data(self.peer_tag_map),
             bitcoin_nodes=self.bitcoin_nodes,
             ignore_traders_list=self.ignore_traders_list,
             directory_chooser_path=self.directory_chooser_path,
@@ -307,7 +308,7 @@ class PreferencesPayload(PersistableEnvelope):
             resync_spv_requested=proto.resync_Spv_requested, # weird protobuf names
             sort_market_currencies_numerically=proto.sort_market_currencies_numerically,
             use_percentage_based_price=proto.use_percentage_based_price,
-            peer_tag_map=dict(proto.peer_tag_map),
+            peer_tag_map=stable_extra_data_to_map(proto.peer_tag_map),
             bitcoin_nodes=proto.bitcoin_nodes,
             ignore_traders_list=list(proto.ignore_traders_list),
             directory_chooser_path=proto.directory_chooser_path,

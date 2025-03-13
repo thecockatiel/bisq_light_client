@@ -4,6 +4,7 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.core.network.p2p.inventory.model.inventory_item import InventoryItem
 import pb_pb2 as protobuf
 from utils.data import raise_required
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 
 @dataclass(eq=True)
@@ -13,7 +14,7 @@ class GetInventoryResponse(NetworkEnvelope):
     def to_proto_message(self):
         # For protobuf we use a map with a string key
         return protobuf.GetInventoryResponse(
-            inventory={item.key: value for item, value in self.inventory.items()}
+            inventory=map_to_stable_extra_data({item.key: value for item, value in self.inventory.items()})
         )
 
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
@@ -24,7 +25,7 @@ class GetInventoryResponse(NetworkEnvelope):
     @staticmethod
     def from_proto(proto: protobuf.GetInventoryResponse, message_version: int):
         inventory: dict[InventoryItem, str] = {}
-        for key, value in proto.inventory.items():
+        for key, value in stable_extra_data_to_map(proto.inventory).items():
             try:
                 inventory_item = InventoryItem.from_key(key)
                 inventory[inventory_item] = value

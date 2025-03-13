@@ -13,6 +13,7 @@ from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePay
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 import pb_pb2 as protobuf
 from utils.ordered_containers import OrderedSet
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 from utils.time import get_time_ms
 
 class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto):
@@ -251,7 +252,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         if self.signature_as_base64:
             builder.signature_as_base64 = self.signature_as_base64
         if self.extra_data_map:
-            builder.extra_data.update(self.extra_data_map)
+            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
 
         return builder
 
@@ -288,7 +289,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             btc_fee_receiver_addresses=ProtoUtil.protocol_string_list_to_list(proto.btc_fee_receiver_addresses),
             owner_pub_key_bytes=proto.owner_pub_key_bytes,
             creation_date=proto.creation_date,
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
             signature_as_base64=proto.signature_as_base64,
             signer_pub_key_as_hex=proto.signer_pub_key_as_hex,
             banned_privileged_dev_pub_keys=ProtoUtil.protocol_string_list_to_list(proto.bannedPrivilegedDevPubKeys),

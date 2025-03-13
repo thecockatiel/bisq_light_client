@@ -4,6 +4,7 @@ from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.dao.governance.consensus_critical import ConsensusCritical
 import pb_pb2 as protobuf
+from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 
 
 class BlindVote(PersistablePayload, NetworkPayload, ConsensusCritical):
@@ -57,7 +58,7 @@ class BlindVote(PersistablePayload, NetworkPayload, ConsensusCritical):
             date=self.date,
         )
         if self.extra_data_map:
-            builder.extra_data.update(self.extra_data_map)
+            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
         return builder
 
     @staticmethod
@@ -68,7 +69,7 @@ class BlindVote(PersistablePayload, NetworkPayload, ConsensusCritical):
             stake=proto.stake,
             encrypted_merit_list=proto.encrypted_merit_list,
             date=proto.date,
-            extra_data_map=dict(proto.extra_data) if proto.extra_data else None,
+            extra_data_map=stable_extra_data_to_map(proto.extra_data),
         )
 
     def __str__(self):
