@@ -13,6 +13,10 @@ message StableExample {
 
 message StableExtraData {
   string key = 1;
-  optional string value = 2;
+  // we should use optional keyword, but older versions do not support it,
+  // so we use this hack instead.
+  oneof value_oneof {
+    string value = 2; 
+  } 
 }
 
