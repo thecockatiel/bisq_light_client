@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption
-from bisq.common.crypto.hash import get_sha256_hash
+from bisq.common.crypto.hash import get_sha256_hash_from_string
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.voteresult.vote_result_exception import (
     VoteResultException,
@@ -90,7 +90,7 @@ class MeritConsensus:
                 bytes.fromhex(pub_key_as_hex)
             )
             result = pub_key.verify_message_hash(
-                signature_from_merit, get_sha256_hash(blind_vote_tx_id)
+                signature_from_merit, get_sha256_hash_from_string(blind_vote_tx_id)
             )
         except Exception as e:
             logger.error(f"Signature verification of issuance failed: {str(e)}")
