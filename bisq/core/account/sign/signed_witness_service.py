@@ -3,6 +3,7 @@ from datetime import timedelta
 from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption
 from bisq.common.crypto.hash import get_ripemd160_hash
 from bisq.common.crypto.sig import Sig
+from bisq.core.network.p2p.persistence.append_only_data_store_listener import AppendOnlyDataStoreListener
 from bisq.core.offer.offer_restrictions import OfferRestrictions
 from utils.time import get_time_ms
 from typing import TYPE_CHECKING, Collection, Optional, Union
@@ -69,8 +70,12 @@ class SignedWitnessService:
         append_only_data_store_service.add_service(signed_witness_storage_service)
 
     def on_all_services_initialized(self):
+        class AppendListener(AppendOnlyDataStoreListener):
+            def on_added(self_, payload):
+                if isinstance(payload, SignedWitness):
+                    self.add_to_map(payload)
         self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            lambda payload: self.add_to_map(payload) if isinstance(payload, SignedWitness) else None
+            AppendListener()
         )
         
         # At startup the P2PDataStorage initializes earlier, otherwise we get the listener called.
