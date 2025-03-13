@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.bisq_default_coin_selector import BisqDefaultCoinSelector
@@ -20,12 +20,13 @@ class BtcCoinSelector(BisqDefaultCoinSelector):
 
     def __init__(
         self,
-        addresses: set["Address"],
+        addresses: Union[set["Address"], "Address"],
         ignore_dust_threshold: int,
         permit_foreign_pending_tx=True,
     ):
         super().__init__(permit_foreign_pending_tx)
-        self._addresses = addresses
+        assert addresses is not None, "addresses must not be None"
+        self._addresses = addresses if isinstance(addresses, set) else {addresses}
         self._ignore_dust_threshold = ignore_dust_threshold
 
     def is_tx_output_spendable(self, output: "TransactionOutput") -> bool:
