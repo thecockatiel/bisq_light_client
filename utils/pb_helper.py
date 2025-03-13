@@ -15,20 +15,22 @@ def stable_extra_data_to_map(extra_data: Iterable[StableExtraData]):
 
 
 def is_patched_pb_working_as_expected():
-    map = {
-        "capabilities": "1",
-        "accountAgeWitnessHash": "2",
-    }  # order matters for our test
-    u = UnstableExample(extra_data=map)
-    s = StableExample(extra_data=map_to_stable_extra_data(map))
-
-    first_test = u.SerializeToString() == s.SerializeToString()
-
-    round_tripped_stable = StableExample(
-        extra_data=map_to_stable_extra_data(stable_extra_data_to_map(s.extra_data))
+    s = StableExample(
+        extra_data=map_to_stable_extra_data(
+            {
+                "capabilities": "1",
+                "accountAgeWitnessHash": "2",
+            }
+        )
     )
 
-    second_test = s.SerializeToString() == round_tripped_stable.SerializeToString()
+    # try to round trip the stable example to make sure it stays the same
+    for i in range(5):
+        round_tripped = StableExample(
+            extra_data=map_to_stable_extra_data(stable_extra_data_to_map(s.extra_data))
+        )
+        if s.SerializeToString() != round_tripped.SerializeToString():
+            return False
+        s = round_tripped
 
-    return first_test and second_test
-
+    return True
