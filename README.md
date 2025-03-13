@@ -10,10 +10,10 @@ Minimum required python version is 3.9
 
 ```bash
 # fresh clone:
-git clone --recurse-submodules https://github.com/thecockatiel/bisq_light_client.git
+git clone --recurse-submodules --shallow-submodules https://github.com/thecockatiel/bisq_light_client.git
 
 # if you have already cloned the repo without `--recurse-submodules`:
-cd bisq_light_client && git submodule update --init --recursive
+cd bisq_light_client && git submodule update --init --recursive --depth=1
 ```
 
 ### 2. Install dependencies
