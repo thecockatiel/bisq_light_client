@@ -45,6 +45,9 @@ from bisq.core.dao.governance.voteresult.vote_result_exception import (
 from bisq.core.dao.state.model.governance.decrypted_ballots_with_merits import (
     DecryptedBallotsWithMerits,
 )
+from bisq.core.dao.state.model.governance.evaluated_proposal import (
+    EvaluatedProposal,
+)
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
@@ -55,9 +58,6 @@ if TYPE_CHECKING:
         VoteWithProposalTxIdList,
     )
     from bisq.core.dao.state.model.governance.proposal import Proposal
-    from bisq.core.dao.state.model.governance.evaluated_proposal import (
-        EvaluatedProposal,
-    )
     from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.core.dao.governance.voteresult.issuance.issuance_service import (
         IssuanceService,
