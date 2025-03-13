@@ -75,7 +75,7 @@ class GrpcWalletsService(WalletsServicer):
     def GetBalances(self, request: "GetBalancesRequest", context: "ServicerContext"):
         try:
             return GetBalancesReply(
-                balances=self.core_api.get_balances().to_proto_message()
+                balances=self.core_api.get_balances(request.currency_code).to_proto_message()
             )
         except Exception as e:
             self.exception_handler.handle_exception(logger, e, context)
