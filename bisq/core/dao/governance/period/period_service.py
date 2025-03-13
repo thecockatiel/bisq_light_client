@@ -60,7 +60,7 @@ class PeriodService:
     def is_tx_in_phase_and_cycle(
         self, tx_id: str, phase: DaoPhase.Phase, current_chain_head_height: int
     ) -> bool:
-        return self.is_tx_in_phase(tx_id, phase) and self.is_tx_in_correct_cycle(
+        return self.is_tx_in_phase(tx_id, phase) and self.is_tx_in_correct_cycle_by_id(
             tx_id, current_chain_head_height
         )
 
