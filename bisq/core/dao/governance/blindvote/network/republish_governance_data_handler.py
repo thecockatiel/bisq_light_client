@@ -135,7 +135,7 @@ class RepublishGovernanceDataHandler:
 
             if seed_node_list:
                 node_address = seed_node_list.pop(0)
-                self._seed_node_addresses.remove(node_address)
+                self._seed_node_addresses.discard(node_address)
                 self._send_republish_request(node_address)
             else:
                 logger.warning(

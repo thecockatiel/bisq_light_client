@@ -101,7 +101,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
     def _on_disputes_change_listener(self, e: ObservableChangeEvent["Dispute"]) -> None:
         if e.removed_elements:
             for dispute in e.removed_elements:
-                self._disputed_trade_ids.remove(dispute.trade_id)
+                self._disputed_trade_ids.discard(dispute.trade_id)
 
         for dispute in e.added_elements:
             # for each dispute added, keep track of its "BadgeCountProperty"

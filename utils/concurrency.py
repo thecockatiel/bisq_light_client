@@ -21,10 +21,11 @@ class ThreadSafeSet(Generic[T]):
 
     def remove(self, item: T):
         with self._write_lock:
-            if item in self._set:
+            try:
                 self._set.remove(item)
                 return True
-            return False
+            except:
+                return False
 
     def discard(self, item: T):
         with self._write_lock:

@@ -102,8 +102,10 @@ class SepaInstantAccountPayload(
             self.accepted_country_codes.append(country_code)
 
     def remove_accepted_country(self, country_code: str) -> None:
-        if country_code in self.accepted_country_codes:
+        try:
             self.accepted_country_codes.remove(country_code)
+        except:
+            pass
 
     def on_persist_changes(self) -> None:
         self.persisted_accepted_country_codes.clear()

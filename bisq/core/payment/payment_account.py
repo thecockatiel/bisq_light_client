@@ -73,7 +73,10 @@ class PaymentAccount(PersistablePayload, ABC):
         ngn_tw = next((curr for curr in trade_currencies 
                       if payment_method_id == PaymentMethod.TRANSFERWISE_ID and curr.code == "NGN"), None)
         if ngn_tw:
-            trade_currencies.remove(ngn_tw)
+            try:
+                trade_currencies.remove(ngn_tw)
+            except:
+                pass
 
         from bisq.core.payment.payment_account_factory import PaymentAccountFactory
         try:
@@ -109,8 +112,10 @@ class PaymentAccount(PersistablePayload, ABC):
             self.trade_currencies.append(trade_currency)
 
     def remove_currency(self, trade_currency: 'TradeCurrency') -> None:
-        if trade_currency in self.trade_currencies:
+        try:
             self.trade_currencies.remove(trade_currency)
+        except:
+            pass
 
     @property
     def has_multiple_currencies(self) -> bool:

@@ -158,7 +158,10 @@ class BsqNode(DaoSetupService, ABC):
         try:
             block = self._block_parser.parse_block(raw_block)
 
-            self.pending_blocks.remove(raw_block)
+            try:
+                self.pending_blocks.remove(raw_block)
+            except:
+                pass
 
             # After parsing we check if we have pending blocks we might have received earlier but which have been
             # not connecting from the latest height we had. The list is sorted by height

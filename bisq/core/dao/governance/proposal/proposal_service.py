@@ -272,13 +272,15 @@ class ProposalService(
                 unconfirmed_or_non_bsq_tx = tx is None
                 # if the tx is unconfirmed we need to be in the PROPOSAL phase, otherwise the tx must be confirmed
                 if in_phase or tx_in_past_cycle or unconfirmed_or_non_bsq_tx:
-                    if proposal in temp_proposals_with_updates:
+                    try:
                         temp_proposals_with_updates.remove(proposal)
                         logger.debug(
                             f"We received a remove request for a TempProposalPayload and have removed the proposal "
                             f"from our list. proposal creation date={proposal.get_creation_date_as_date()}, proposalTxId={proposal.tx_id}, inPhase={in_phase}, "
                             f"txInPastCycle={tx_in_past_cycle}, unconfirmedOrNonBsqTx={unconfirmed_or_non_bsq_tx}"
                         )
+                    except:
+                        pass
                 else:
                     logger.warning(
                         f"We received a remove request outside the PROPOSAL phase. "

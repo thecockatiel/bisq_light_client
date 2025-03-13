@@ -61,8 +61,10 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
     def request_reported_peers_from_seed_nodes(self, node_address: "NodeAddress"):
         assert self.network_node.node_address_property.value, "My node address must not be null at request_reported_peers"
         remaining_node_addresses = list(self.seed_node_addresses)
-        if node_address in remaining_node_addresses:
+        try:
             remaining_node_addresses.remove(node_address)
+        except:
+            pass
         random.shuffle(remaining_node_addresses)
         self.request_reported_peers(node_address, remaining_node_addresses)
         
@@ -190,7 +192,10 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
                             logger.debug("There are remaining nodes available for requesting peers. "
                                          "We will try getReportedPeers again.")
                             next_candidate = random.choice(self.remaining_node_addresses)
-                            self.remaining_node_addresses.remove(next_candidate)
+                            try:
+                                self.remaining_node_addresses.remove(next_candidate)
+                            except:
+                                pass
                             self.outer.request_reported_peers(next_candidate, self.remaining_node_addresses)
                         else:
                             # That path will rarely be reached
@@ -262,7 +267,10 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
         if node_list:
             # Don't shuffle as we want the seed nodes at the last entries
             next_candidate = node_list[0]
-            node_list.remove(next_candidate)
+            try:
+                node_list.remove(next_candidate)
+            except:
+                pass
             self.request_reported_peers(next_candidate, node_list)
         else:
             logger.debug("No more peers are available for request_reported_peers. We will try again after a pause.")

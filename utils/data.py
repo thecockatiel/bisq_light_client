@@ -253,9 +253,11 @@ class ObservableList(list[T]):
         self._notify(ObservableChangeEvent([element]))
         
     def remove(self, element: T) -> None:
-        if element in self:
+        try:
             super().remove(element)
             self._notify(ObservableChangeEvent(None, [element]))
+        except:
+            pass
             
     def pop(self, index: int = -1) -> T:
         element = super().pop(index)

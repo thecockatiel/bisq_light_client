@@ -181,7 +181,7 @@ class User(PersistedDataHost):
         self.is_payment_account_import = False
 
     def remove_payment_account(self, payment_account: "PaymentAccount"):
-        changed = self.payment_accounts_observable.remove(payment_account)
+        changed = self.payment_accounts_observable.discard(payment_account)
         if changed:
             self.request_persistence()
 
@@ -291,8 +291,11 @@ class User(PersistedDataHost):
         self.request_persistence()
 
     def remove_market_alert_filter(self, filter: "MarketAlertFilter"):
-        self.market_alert_filters.remove(filter)
-        self.request_persistence()
+        try:
+            self.market_alert_filters.remove(filter)
+            self.request_persistence()
+        except:
+            pass
 
     def set_price_alert_filter(self, filter: Optional["PriceAlertFilter"]):
         self.user_payload.price_alert_filter = filter

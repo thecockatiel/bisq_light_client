@@ -29,10 +29,11 @@ class PersistableList(Generic[T], PersistableEnvelope, ABC):
         return False
 
     def remove(self, item: T) -> bool:
-        if item in self.list:
+        try:
             self.list.remove(item)
             return True
-        return False
+        except:
+            return False
 
     def is_empty(self) -> bool:
         return len(self.list) == 0

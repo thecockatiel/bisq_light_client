@@ -120,8 +120,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
 
     def _on_node_address_changed(self, e: "SimplePropertyChangeEvent"):
         if e.new_value is not None:
-            if e.new_value in self.seed_node_addresses:
+            try:
                 self.seed_node_addresses.remove(e.new_value)
+            except:
+                pass
             if self.seed_node_repository.is_seed_node(e.new_value):
                 RequestDataManager.NUM_SEEDS_FOR_PRELIMINARY_REQUEST = 3
                 RequestDataManager.NUM_ADDITIONAL_SEEDS_FOR_UPDATE_REQUEST = 2
@@ -153,7 +155,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
             )
             for i in range(size):
                 node_address = final_node_addresses[i]
-                node_addresses.remove(node_address)
+                try:
+                    node_addresses.remove(node_address)
+                except:
+                    pass
                 # We clone list to avoid mutable change during iterations
                 remaining_node_addresses = list(node_addresses)
                 UserThread.run_after(
@@ -177,8 +182,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
             # We use the node we have already connected to to request again
             candidate = self.node_address_of_preliminary_data_request
             if candidate:
-                if candidate in node_addresses:
+                try:
                     node_addresses.remove(candidate)
+                except:
+                    pass
                 self.request_data(candidate, node_addresses)
 
                 final_node_addresses = list(node_addresses)
@@ -187,7 +194,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                     if num_requests >= RequestDataManager.NUM_ADDITIONAL_SEEDS_FOR_UPDATE_REQUEST:
                         break
                     node_address = final_node_addresses[i]
-                    node_addresses.remove(node_address)
+                    try:
+                        node_addresses.remove(node_address)
+                    except:
+                        pass
 
                     # It might be that we have a prelim. request open for the same seed, if so we skip to the next.
                     if node_address not in self.handler_map:
@@ -222,8 +232,10 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
             and connection.peers_node_address
         ):
             node_address = connection.peers_node_address
-            if node_address in self.seed_node_addresses:
+            try:
                 self.seed_node_addresses.remove(node_address)
+            except:
+                pass
             self.handler_map.pop(node_address, None)
 
     # /////////////////////////////////////////////////////////////////////////////////////////

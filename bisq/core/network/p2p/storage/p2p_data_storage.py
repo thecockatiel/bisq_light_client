@@ -1154,7 +1154,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             return False
 
         # If we have already seen an Entry with the same hash, verify the metadata is the same
-        stored_entry = self.map.get(hash_of_payload)
+        stored_entry = self.map.get(hash_of_payload, None)
         if (
             stored_entry is not None
             and not protected_storage_entry.matches_relevant_pub_key(stored_entry)

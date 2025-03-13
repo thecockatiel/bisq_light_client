@@ -54,7 +54,10 @@ class MemPoolSpaceTxBroadcaster:
         service_address = await cls._attempt_to_broadcast_tx(tx_id_to_send, raw_tx, tx_broadcast_services)
         if service_address:
             # Broadcast to second service
-            tx_broadcast_services.remove(service_address)
+            try:
+                tx_broadcast_services.remove(service_address)
+            except:
+                pass
             await cls._attempt_to_broadcast_tx(tx_id_to_send, raw_tx, tx_broadcast_services)
         
         

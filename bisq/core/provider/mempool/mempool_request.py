@@ -39,8 +39,10 @@ class MempoolRequest:
         return as_future(self.mempool_http_client.request_tx_as_hex(tx_id))
     
     def switch_to_another_provider(self):
-        if self.mempool_http_client.base_url in self.tx_broadcast_services:
+        try:
             self.tx_broadcast_services.remove(self.mempool_http_client.base_url)
+        except:
+            pass
         return len(self.tx_broadcast_services) > 0
         
     @staticmethod

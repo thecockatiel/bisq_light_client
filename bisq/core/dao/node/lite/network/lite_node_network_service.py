@@ -358,7 +358,7 @@ class LiteNodeNetworkService(MessageListener, ConnectionListener, PeerManager.Li
 
         if candidate_list:
             next_candidate = candidate_list[0]
-            self._seed_node_addresses.remove(next_candidate)
+            self._seed_node_addresses.discard(next_candidate)
             logger.info(
                 f"We try requestBlocks from {next_candidate} with startBlockHeight={start_block_height}"
             )
