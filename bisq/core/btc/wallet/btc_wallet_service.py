@@ -3,6 +3,8 @@ import itertools
 from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.exceptions.address_entry_exception import AddressEntryException
+from bisq.core.btc.exceptions.insufficient_funds_exception import InsufficientFundsException
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.btc_coin_selector import BtcCoinSelector
@@ -890,9 +892,76 @@ class BtcWalletService(WalletService, DaoStateListener):
         amount: Coin,
         tx_fee_for_withdrawal_per_vbyte: Coin,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.get_fee_estimation_transaction_for_multiple_addresses Not implemented yet"
+        address_entries = set["AddressEntry"]()
+        for address in from_addresses:
+            address_entry = self._find_address_entry(
+                address, AddressEntryContext.AVAILABLE
+            )
+            if not address_entry:
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.OFFER_FUNDING
+                )
+            if not address_entry:
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.TRADE_PAYOUT
+                )
+            if not address_entry:
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.ARBITRATOR
+                )
+            if address_entry:
+                address_entries.add(address_entry)
+
+        if not address_entries:
+            raise AddressEntryException("No Addresses for withdraw found in our wallet")
+        
+        try:
+            fee = Coin.ZERO()
+            counter = 0
+            tx_vsize = 0
+            tx = None
+            while True:
+                counter += 1
+                fee = tx_fee_for_withdrawal_per_vbyte.multiply(tx_vsize)
+                send_request = self.get_send_request_for_multiple_addresses(
+                    from_addresses, to_address, amount, fee, None, None
+                )
+                self.wallet.complete_tx(send_request)
+                tx = send_request.tx
+                tx_vsize = tx.get_vsize()
+                self.print_tx("FeeEstimationTransactionForMultipleAddresses", tx)
+                if not self._tx_fee_estimation_not_satisfied(counter, tx):
+                    # satisfied
+                    break
+                if counter == 10:
+                    logger.error(f"Could not calculate the fee. Tx={tx}")
+                    break
+            return tx
+        except InsufficientMoneyException as e:
+            raise InsufficientFundsException(
+                "The fees for that transaction exceed the available funds "
+                "or the resulting output value is below the min. dust value:\n"
+                f"Missing: {e.missing.to_friendly_string() if e.missing else 'None'}"
+            )
+
+    def _tx_fee_estimation_not_satisfied(self, counter: int, tx: "Transaction"):
+        return self._fee_estimation_not_satisfied(
+            counter,
+            tx.get_fee().value,
+            tx.get_vsize(),
+            self.get_tx_fee_for_withdrawal_per_vbyte(),
         )
+
+    def _fee_estimation_not_satisfied(
+        self,
+        counter: int,
+        tx_fee: int,
+        tx_vsize: int,
+        tx_fee_for_withdrawal_per_vbyte: Coin,
+    ):
+        target_fee = tx_fee_for_withdrawal_per_vbyte.multiply(tx_vsize).value
+        higher_than_target_fee = tx_fee - target_fee
+        return counter < 10 and (tx_fee < target_fee or higher_than_target_fee > 1000)
 
     def get_estimated_fee_tx_vsize(
         self, output_values: list[Coin], tx_fee: Coin
@@ -932,7 +1001,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         to_address: str,
         receiver_amount: Coin,
         fee: Coin,
-        aes_key: Optional[bytes],
+        password: Optional[str],
         context: AddressEntryContext,
         memo: Optional[str],
         callback: FutureCallback["Transaction"],
@@ -946,13 +1015,67 @@ class BtcWalletService(WalletService, DaoStateListener):
         receiver_amount: Coin,
         fee: Coin,
         change_address: Optional[str],
-        aes_key: Optional[bytes],
+        password: Optional[str],
         memo: Optional[str],
         callback: FutureCallback["Transaction"],
     ) -> "Transaction":
         raise RuntimeError(
             "BtcWalletService.send_funds_for_multiple_addresses Not implemented yet"
         )
+    
+    def get_send_request_for_multiple_addresses(
+        self,
+        from_addresses: set[str],
+        to_address: str,
+        amount: Coin,
+        fee: Coin,
+        change_address: Optional[str],
+        password: Optional[str], 
+    ) -> "SendRequest":
+        tx = Transaction(self.params)
+        net_value = amount.subtract(fee)
+        check_argument(Restrictions.is_above_dust(net_value), "The amount is too low (dust limit).")
+
+        tx.add_output(TransactionOutput.from_coin_and_address(net_value, Address.from_string(self.params, to_address)))
+
+        send_request = SendRequest.for_tx(tx)
+        send_request.fee = fee
+        send_request.fee_per_kb = Coin.ZERO()
+        send_request.ensure_min_required_fee = False
+        send_request.password = password
+        send_request.shuffle_outputs = False
+
+        address_entries = set["AddressEntry"]()
+        for address in from_addresses:
+            address_entry = self._find_address_entry(address, AddressEntryContext.AVAILABLE)
+            if not address_entry:
+                address_entry = self._find_address_entry(address, AddressEntryContext.OFFER_FUNDING)
+            if not address_entry:
+                address_entry = self._find_address_entry(address, AddressEntryContext.TRADE_PAYOUT)
+            if not address_entry:
+                address_entry = self._find_address_entry(address, AddressEntryContext.ARBITRATOR)
+            if address_entry:
+                address_entries.add(address_entry)
+
+        if not address_entries:
+            raise AddressEntryException("No Addresses for withdraw found in our wallet")
+
+        send_request.coin_selector = BtcCoinSelector(
+            self._wallets_setup.get_addresses_from_address_entries(address_entries),
+            self._preferences.get_ignore_dust_threshold()
+        )
+
+        change_address_entry = None
+        if change_address:
+            change_address_entry = self._find_address_entry(change_address, AddressEntryContext.AVAILABLE)
+
+        if not change_address_entry:
+            change_address_entry = self.get_fresh_address_entry()
+
+        check_argument(change_address_entry is not None, "change address must not be None")
+        send_request.change_address = change_address_entry.get_address()
+
+        return send_request
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Find inputs and change

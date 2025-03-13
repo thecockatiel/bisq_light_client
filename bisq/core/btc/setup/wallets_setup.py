@@ -13,6 +13,8 @@ from utils.data import SimpleProperty, SimplePropertyChangeEvent
 from bisq.core.btc.setup.wallet_config import WalletConfig
 
 if TYPE_CHECKING:
+    from bitcoinj.core.address import Address
+    from bisq.core.btc.model.address_entry import AddressEntry
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
     from bisq.core.user.preferences import Preferences
     from bisq.core.btc.model.address_entry_list import AddressEntryList
@@ -74,7 +76,9 @@ class WalletsSetup:
 
         def on_complete():
             timeout_timer.stop()
-            self._chain_height_property.set(self.wallet_config.current_height_property.value)
+            self._chain_height_property.set(
+                self.wallet_config.current_height_property.value
+            )
             UserThread.execute(
                 lambda: (
                     self._address_entry_list.on_wallet_ready(
@@ -222,3 +226,8 @@ class WalletsSetup:
             for address_entry in self._address_entry_list.entry_set.copy()
             if address_entry.context == context
         }
+
+    def get_addresses_from_address_entries(
+        self, address_entries: set["AddressEntry"]
+    ) -> set["Address"]:
+        return {addr for entry in address_entries if (addr := entry.get_address())}
