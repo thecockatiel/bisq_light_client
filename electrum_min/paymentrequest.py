@@ -32,9 +32,10 @@ import urllib.parse
 import certifi
 import aiohttp
 
-
+# NOTE: we skip importing since it breaks on older protobuf versions and we don't need it right now
 try:
-    from . import paymentrequest_pb2 as pb2
+    # from . import paymentrequest_pb2 as pb2
+    pb2 = None
 except ImportError:
     sys.exit("Error: could not find paymentrequest_pb2.py. Create it with 'contrib/generate_payreqpb2.sh'")
 
