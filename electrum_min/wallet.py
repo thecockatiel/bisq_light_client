@@ -613,6 +613,7 @@ class Abstract_Wallet(ABC, Logger, EventListener):
     def on_event_adb_removed_verified_tx(self, adb, tx_hash):
         if adb != self.adb:
             return
+        self.remove_txid_from_maybe_broadcast(tx_hash)
         self._update_invoices_and_reqs_touched_by_tx(tx_hash)
 
     def clear_history(self):

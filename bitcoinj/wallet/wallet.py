@@ -364,12 +364,15 @@ class Wallet(EventListener):
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         tx.inputs.invalidate()
         tx.outputs.invalidate()
+        tx.memo = self.get_label_for_txid(tx.get_tx_id())
 
     def get_label_for_txid(self, txid: str):
         return self._electrum_wallet.get_label_for_txid(txid)
 
     def maybe_add_transaction(self, tx: "Transaction"):
         """tries to add transaction to history of wallet and may raise error"""
+        if tx.memo is not None:
+            self._electrum_wallet.set_label(tx.get_tx_id(), tx.memo)
         existing_tx = self._electrum_wallet.db.get_transaction(tx.get_tx_id())
         if existing_tx:
             return Transaction.from_electrum_tx(self.network_params, existing_tx)
@@ -421,12 +424,11 @@ class Wallet(EventListener):
                 ),
             )
 
-    def broadcast_tx(self, tx: "Transaction", timeout: float = None):
-        return as_future(
-            self._electrum_network.broadcast_transaction(
-                tx._electrum_transaction, timeout=timeout
-            )
+    async def broadcast_tx(self, tx: "Transaction", timeout: float = None):
+        await self._electrum_network.broadcast_transaction(
+            tx._electrum_transaction, timeout=timeout
         )
+        self._electrum_wallet.remove_txid_from_maybe_broadcast(tx.get_tx_id())
 
     # TODO: needs checking
     def complete_tx(self, req: "SendRequest"):
@@ -556,9 +558,10 @@ class Wallet(EventListener):
                     )
                 )
 
-            req.tx._label = req.memo
-            req.completed = True
+            req.tx.memo = req.memo
             req.fee = calculated_fee
+            req.tx._electrum_transaction.finalize_psbt()
+            req.completed = True
             logger.info(f"  completed: {req.tx}")
 
     def calculate_all_spend_candidates(self) -> list["TransactionOutput"]:
@@ -782,3 +785,8 @@ class Wallet(EventListener):
             )
             > 20
         )
+    
+    def send_coins(self, send_request: "SendRequest"):
+        send_request.tx.maybe_finalize()
+        self.maybe_add_transaction(send_request.tx)
+        return as_future(self.broadcast_tx(send_request.tx))

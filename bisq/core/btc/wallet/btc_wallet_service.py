@@ -4,10 +4,15 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.address_entry_exception import AddressEntryException
-from bisq.core.btc.exceptions.insufficient_funds_exception import InsufficientFundsException
+from bisq.core.btc.exceptions.insufficient_funds_exception import (
+    InsufficientFundsException,
+)
 from bisq.core.btc.model.address_entry import AddressEntry
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.btc_coin_selector import BtcCoinSelector
+from bisq.core.btc.wallet.http.mem_pool_space_tx_broadcaster import (
+    MemPoolSpaceTxBroadcaster,
+)
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
@@ -914,7 +919,7 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         if not address_entries:
             raise AddressEntryException("No Addresses for withdraw found in our wallet")
-        
+
         try:
             fee = Coin.ZERO()
             counter = 0
@@ -923,7 +928,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             while True:
                 counter += 1
                 fee = tx_fee_for_withdrawal_per_vbyte.multiply(tx_vsize)
-                send_request = self.get_send_request_for_multiple_addresses(
+                send_request = self._get_send_request_for_multiple_addresses(
                     from_addresses, to_address, amount, fee, None, None
                 )
                 self.wallet.complete_tx(send_request)
@@ -1006,7 +1011,24 @@ class BtcWalletService(WalletService, DaoStateListener):
         memo: Optional[str],
         callback: FutureCallback["Transaction"],
     ) -> str:
-        raise RuntimeError("BtcWalletService.send_funds Not implemented yet")
+        send_request = self._get_send_request(
+            from_address, to_address, receiver_amount, fee, password, context
+        )
+        send_request.tx.memo = memo
+        future = self.wallet.send_coins(send_request)
+
+        def on_success(_):
+            callback.on_success(send_request.tx)
+
+        def on_error(e: Exception):
+            callback.on_failure(e)
+
+        future.add_done_callback(FutureCallback(on_success, on_error))
+        # For better redundancy in case the broadcast via Electrum fails we also
+        # publish the tx via mempool nodes.
+        MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
+
+        return send_request.tx.get_tx_id()
 
     def send_funds_for_multiple_addresses(
         self,
@@ -1019,24 +1041,93 @@ class BtcWalletService(WalletService, DaoStateListener):
         memo: Optional[str],
         callback: FutureCallback["Transaction"],
     ) -> "Transaction":
-        raise RuntimeError(
-            "BtcWalletService.send_funds_for_multiple_addresses Not implemented yet"
+        send_request = self._get_send_request_for_multiple_addresses(
+            from_addresses, to_address, receiver_amount, fee, change_address, password
         )
-    
-    def get_send_request_for_multiple_addresses(
+        send_request.tx.memo = memo
+        future = self.wallet.send_coins(send_request)
+
+        def on_success(_):
+            callback.on_success(send_request.tx)
+
+        def on_error(e: Exception):
+            callback.on_failure(e)
+
+        future.add_done_callback(FutureCallback(on_success, on_error))
+
+        self.print_tx("sendFunds", send_request.tx)
+
+        # For better redundancy in case the broadcast via Electrum fails we also
+        # publish the tx via mempool nodes.
+        MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
+
+        return send_request.tx
+
+    def _get_send_request(
+        self,
+        from_address: str,
+        to_address: str,
+        amount: Coin,
+        fee: Coin,
+        password: Optional[str],
+        context: AddressEntryContext,
+    ) -> "SendRequest":
+        tx = Transaction(self.params)
+        receiver_amount = amount.subtract(fee)
+        check_argument(
+            Restrictions.is_above_dust(receiver_amount),
+            "The amount is too low (dust limit).",
+        )
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                receiver_amount, Address.from_string(self.params, to_address)
+            )
+        )
+
+        send_request = SendRequest.for_tx(tx)
+        send_request.fee = fee
+        send_request.fee_per_kb = Coin.ZERO()
+        send_request.ensure_min_required_fee = False
+        send_request.password = password
+        send_request.shuffle_outputs = False
+
+        address_entry = self._find_address_entry(from_address, context)
+        if not address_entry:
+            raise AddressEntryException(
+                "WithdrawFromAddress is not found in our wallet."
+            )
+
+        check_argument(address_entry is not None, "address_entry must not be None")
+        check_argument(
+            address_entry.get_address() is not None,
+            "address_entry.get_address() must not be None",
+        )
+        send_request.coin_selector = BtcCoinSelector(
+            address_entry.get_address(), self._preferences.get_ignore_dust_threshold()
+        )
+        send_request.change_address = address_entry.get_address()
+        return send_request
+
+    def _get_send_request_for_multiple_addresses(
         self,
         from_addresses: set[str],
         to_address: str,
         amount: Coin,
         fee: Coin,
         change_address: Optional[str],
-        password: Optional[str], 
+        password: Optional[str],
     ) -> "SendRequest":
         tx = Transaction(self.params)
         net_value = amount.subtract(fee)
-        check_argument(Restrictions.is_above_dust(net_value), "The amount is too low (dust limit).")
+        check_argument(
+            Restrictions.is_above_dust(net_value), "The amount is too low (dust limit)."
+        )
 
-        tx.add_output(TransactionOutput.from_coin_and_address(net_value, Address.from_string(self.params, to_address)))
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                net_value, Address.from_string(self.params, to_address)
+            )
+        )
 
         send_request = SendRequest.for_tx(tx)
         send_request.fee = fee
@@ -1047,13 +1138,21 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         address_entries = set["AddressEntry"]()
         for address in from_addresses:
-            address_entry = self._find_address_entry(address, AddressEntryContext.AVAILABLE)
+            address_entry = self._find_address_entry(
+                address, AddressEntryContext.AVAILABLE
+            )
             if not address_entry:
-                address_entry = self._find_address_entry(address, AddressEntryContext.OFFER_FUNDING)
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.OFFER_FUNDING
+                )
             if not address_entry:
-                address_entry = self._find_address_entry(address, AddressEntryContext.TRADE_PAYOUT)
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.TRADE_PAYOUT
+                )
             if not address_entry:
-                address_entry = self._find_address_entry(address, AddressEntryContext.ARBITRATOR)
+                address_entry = self._find_address_entry(
+                    address, AddressEntryContext.ARBITRATOR
+                )
             if address_entry:
                 address_entries.add(address_entry)
 
@@ -1062,17 +1161,21 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         send_request.coin_selector = BtcCoinSelector(
             self._wallets_setup.get_addresses_from_address_entries(address_entries),
-            self._preferences.get_ignore_dust_threshold()
+            self._preferences.get_ignore_dust_threshold(),
         )
 
         change_address_entry = None
         if change_address:
-            change_address_entry = self._find_address_entry(change_address, AddressEntryContext.AVAILABLE)
+            change_address_entry = self._find_address_entry(
+                change_address, AddressEntryContext.AVAILABLE
+            )
 
         if not change_address_entry:
             change_address_entry = self.get_fresh_address_entry()
 
-        check_argument(change_address_entry is not None, "change address must not be None")
+        check_argument(
+            change_address_entry is not None, "change address must not be None"
+        )
         send_request.change_address = change_address_entry.get_address()
 
         return send_request

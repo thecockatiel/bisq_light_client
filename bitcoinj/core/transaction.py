@@ -43,12 +43,12 @@ class Transaction:
         params: "NetworkParameters",
         payload_bytes: Optional[bytes] = None,
     ) -> None:
-        
+
         if payload_bytes:
             self._electrum_transaction = ElectrumTransaction(payload_bytes)
         else:
             self._electrum_transaction = PartialElectrumTransaction()
-            
+
         self.params = params
 
         self._update_time: Optional[datetime] = None
@@ -63,7 +63,7 @@ class Transaction:
         """Date of the block that includes this transaction on the best chain"""
 
         self._tx_mined_info: Optional["TxMinedInfo"] = None
-        self._label = ""
+        self._label: Optional[str] = None
 
     @staticmethod
     def from_electrum_tx(params: "NetworkParameters", tx: "ElectrumTransaction"):
@@ -214,6 +214,10 @@ class Transaction:
         # it's called "label" in electrum
         return self._label
 
+    @memo.setter
+    def memo(self, value: str):
+        self._label = value
+
     @property
     def has_relative_lock_time(self):
         if self._electrum_transaction.version < 2:
@@ -285,6 +289,13 @@ class Transaction:
             for tx_in in tx.inputs:
                 if tx_in.is_coin_base:
                     raise VerificationException.UnexpectedCoinbaseInput()
+
+    def maybe_finalize(self):
+        if (
+            isinstance(self._electrum_transaction, PartialElectrumTransaction)
+            and not self._electrum_transaction.is_complete()
+        ):
+            self._electrum_transaction.finalize_psbt()
 
     def hash_for_witness_signature(
         self,

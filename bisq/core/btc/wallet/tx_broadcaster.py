@@ -93,7 +93,7 @@ class TxBroadcaster:
                 )
             )
 
-        wallet.broadcast_tx(tx).add_done_callback(
+        as_future(wallet.broadcast_tx(tx)).add_done_callback(
             FutureCallback(on_broadcast_success, on_broadcast_failure)
         )
 
