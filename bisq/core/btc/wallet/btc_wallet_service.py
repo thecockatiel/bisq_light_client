@@ -723,8 +723,14 @@ class BtcWalletService(WalletService, DaoStateListener):
             or entry.context == AddressEntryContext.TRADE_PAYOUT
         ]
 
-    def get_address_entries(self, context: AddressEntryContext) -> list["AddressEntry"]:
-        raise RuntimeError("BtcWalletService.get_address_entries Not implemented yet")
+    def get_address_entries(
+        self, context: "AddressEntryContext"
+    ) -> list["AddressEntry"]:
+        return [
+            address_entry
+            for address_entry in self.get_address_entry_list_as_immutable_list()
+            if context == address_entry.context
+        ]
 
     def get_funded_available_address_entries(self) -> list["AddressEntry"]:
         return [
