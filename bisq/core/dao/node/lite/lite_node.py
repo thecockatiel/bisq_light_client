@@ -141,7 +141,6 @@ class LiteNode(BsqNode):
     def on_p2p_network_ready(self):
         super().on_p2p_network_ready()
 
-        # TODO:
         class Listener(LiteNodeNetworkService.Listener):
             def on_requested_blocks_received(
                 self_,
