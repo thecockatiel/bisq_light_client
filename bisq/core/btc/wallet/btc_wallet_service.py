@@ -28,13 +28,13 @@ from bitcoinj.wallet.send_request import SendRequest
 from utils.aio import FutureCallback
 from utils.preconditions import check_argument, check_state
 from bitcoinj.core.transaction import Transaction
+from bitcoinj.core.address import Address
 
 
 if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
     from bisq.core.btc.model.address_entry_list import AddressEntryList
-    from bitcoinj.core.address import Address
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
@@ -979,7 +979,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         )
         for output_value in output_values:
             tx.add_output(
-                TransactionOutput.from_coin_and_address(output_value, dummy_address)
+                TransactionOutput.from_coin_and_address(output_value, dummy_address, tx)
             )
         send_request = SendRequest.for_tx(tx)
         send_request.shuffle_outputs = False
@@ -1080,7 +1080,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         )
         tx.add_output(
             TransactionOutput.from_coin_and_address(
-                receiver_amount, Address.from_string(self.params, to_address)
+                receiver_amount, Address.from_string(to_address, self.params), tx
             )
         )
 
@@ -1125,7 +1125,7 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         tx.add_output(
             TransactionOutput.from_coin_and_address(
-                net_value, Address.from_string(self.params, to_address)
+                net_value, Address.from_string(to_address, self.params), tx
             )
         )
 
