@@ -13,11 +13,9 @@ class CoinSelection:
     """
     def __init__(
         self,
+        value_gathered: "Coin",
         gathered: list["TransactionOutput"],
     ):
-        self.value_gathered = CoinSelection.sum_output_values(gathered)
-        self.gathered = tuple(gathered)
+        self.value_gathered = value_gathered
+        self.gathered = gathered
 
-    @staticmethod
-    def sum_output_values(outputs: list["TransactionOutput"]):
-        return sum((output.get_value() for output in outputs), Coin.ZERO())
