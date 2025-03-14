@@ -51,7 +51,7 @@ class TransactionInput:
     @staticmethod
     def from_output(tx_output: "TransactionOutput", parent_tx: Optional["Transaction"] = None):
         input = ElectrumPartialTxInput(
-            prevout=TxOutpoint(tx_output.parent.get_tx_id(), tx_output.index),
+            prevout=TxOutpoint(bytes.fromhex(tx_output.parent.get_tx_id()), tx_output.index),
             nsequence=TransactionInput.NO_SEQUENCE,
         )
         # TODO double check

@@ -35,12 +35,12 @@ class TransactionOutPoint:
     @property
     def index(self):
         """Which output of that transaction we are talking about."""
-        return self.index
+        return self._index
     
     @property
     def hash(self):
         """Hash of the transaction to which we refer."""
-        return self.hash
+        return self._hash
 
     @property
     def length(self):
@@ -60,17 +60,17 @@ class TransactionOutPoint:
         return TransactionOutPoint(index, tx.get_tx_id(), from_tx=tx)
 
     def to_electrum_tx_output(self):
-        return TxOutpoint(self.hash, self.index)
+        return TxOutpoint(bytes.fromhex(self._hash), self._index)
 
     def __str__(self):
-        return f"{self.hash}:{self.index}"
+        return f"{self._hash}:{self._index}"
 
     def __hash__(self):
-        return hash((self.hash, self.index))
+        return hash((self._hash, self._index))
 
     def __eq__(self, value):
         if isinstance(value, TransactionOutPoint):
-            return self.hash == value.hash and self.index == value.index
+            return self._hash == value._hash and self._index == value.index
         if isinstance(value, TxOutpoint):
-            return self.hash == value.txid.hex() and self.index == value.out_idx
+            return self._hash == value.txid.hex() and self._index == value.out_idx
         return False
