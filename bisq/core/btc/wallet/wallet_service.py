@@ -277,7 +277,7 @@ class WalletService(ABC):
     def _get_outputs_with_connected_outputs(
         self, tx: "Transaction"
     ) -> list["TransactionOutput"]:
-        transaction_outputs = tx.outputs
+        transaction_outputs = list(tx.outputs)
         connected_outputs = []
 
         # add all connected outputs from any inputs as well
