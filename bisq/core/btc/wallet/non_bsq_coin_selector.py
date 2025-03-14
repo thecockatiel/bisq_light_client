@@ -6,7 +6,6 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 
 
-
 if TYPE_CHECKING:
     from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import (
         UnconfirmedBsqChangeOutputListService,
@@ -28,17 +27,10 @@ class NonBsqCoinSelector(BisqDefaultCoinSelector):
     def __init__(
         self,
         dao_state_service: "DaoStateService",
+        preferences: "Preferences",
     ):
         super().__init__(False)
         self._dao_state_service = dao_state_service
-        self._preferences: Optional["Preferences"] = None
-
-    @property
-    def preferences(self):
-        return self._preferences
-    
-    @preferences.setter
-    def preferences(self, preferences: "Preferences"):
         self._preferences = preferences
 
     def is_tx_output_spendable(self, output: "TransactionOutput") -> bool:
@@ -54,7 +46,9 @@ class NonBsqCoinSelector(BisqDefaultCoinSelector):
         key = TxOutputKey(output.parent.get_tx_id(), output.index)
         # It might be that we received BTC in a non-BSQ tx so that will not be stored in out state and not found.
         # So we consider any txOutput which is not in the state as BTC output.
-        return not self._dao_state_service.exists_tx_output(key) or self._dao_state_service.is_rejected_issuance_output(key)
+        return not self._dao_state_service.exists_tx_output(
+            key
+        ) or self._dao_state_service.is_rejected_issuance_output(key)
 
     # Prevent usage of dust attack utxos
     def is_dust_attack_utxo(self, output: "TransactionOutput") -> bool:

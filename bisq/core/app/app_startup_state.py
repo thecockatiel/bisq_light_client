@@ -14,11 +14,11 @@ class AppStartupState:
         wallets_setup: "WalletsSetup",
         p2p_service: "P2PService",
     ):
-        self.wallet_and_network_ready = SimpleProperty(False)
+        self.p2p_network_and_wallet_initialized = SimpleProperty(False)
+        self.wallet_synced = SimpleProperty(False)
         self.all_domain_services_initialized = SimpleProperty(False)
         self.application_fully_initialized = SimpleProperty(False)
         self.data_received = SimpleProperty(False)
-        self.is_block_download_complete = SimpleProperty(False)
         self.has_sufficient_peers_for_broadcast = SimpleProperty(False)
 
         class P2PListener(BootstrapListener):
@@ -29,7 +29,7 @@ class AppStartupState:
 
         def on_wallets_setup_completed(e):
             if wallets_setup.is_download_complete:
-                self.is_block_download_complete.set(True)
+                self.wallet_synced.set(True)
                 wallets_setup.chain_height_property.remove_listener(
                     on_wallets_setup_completed
                 )
@@ -44,15 +44,15 @@ class AppStartupState:
             )
         )
 
-        self.network_and_wallet_initialized = combine_simple_properties(
+        self.p2p_network_and_wallet_initialized = combine_simple_properties(
             self.data_received,
-            self.is_block_download_complete,
+            self.wallet_synced,
             self.has_sufficient_peers_for_broadcast,
             self.all_domain_services_initialized,
             transform=all,
         )
 
-        self.network_and_wallet_initialized.add_listener(
+        self.p2p_network_and_wallet_initialized.add_listener(
             lambda e: (
                 self.application_fully_initialized.set(True) if e.new_value else None
             )

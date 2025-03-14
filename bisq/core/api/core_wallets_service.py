@@ -396,8 +396,8 @@ class CoreWalletsService:
         )
 
     def verify_wallets_are_available(self) -> None:
-        """Throws a RuntimeException if wallets are not available (encrypted or not)."""
-        self.verify_wallet_and_network_is_ready()
+        """Throws a RuntimeError if wallets are not available (encrypted or not)."""
+        self.verify_wallet_is_synced()
 
         # JAVA TODO This check may be redundant, but the AppStartupState is new and unused
         # prior to commit 838595cb03886c3980c40df9cfe5f19e9f8a0e39. I would prefer
@@ -407,8 +407,8 @@ class CoreWalletsService:
             raise NotAvailableException("wallet is not yet available")
 
     def verify_wallet_is_available_and_encrypted(self) -> None:
-        """Throws a RuntimeException if wallets are not available or not encrypted."""
-        self.verify_wallet_and_network_is_ready()
+        """Throws a RuntimeError if wallets are not available or not encrypted."""
+        self.verify_wallet_is_synced()
 
         if not self.wallets_manager.are_wallets_available():
             raise NotAvailableException("wallet is not yet available")
@@ -417,17 +417,17 @@ class CoreWalletsService:
             raise FailedPreconditionException("wallet is not encrypted with a password")
 
     def verify_encrypted_wallet_is_unlocked(self) -> None:
-        """Throws a RuntimeException if wallets are encrypted and locked."""
+        """Throws a RuntimeError if wallets are encrypted and locked."""
         if self.wallets_manager.are_wallets_encrypted() and self.temp_password is None:
             raise FailedPreconditionException("wallet is locked")
 
-    def verify_wallet_and_network_is_ready(self) -> None:
-        """Throws a RuntimeException if wallets and network are not ready."""
-        if not self.app_startup_state.wallet_and_network_ready.get():
-            raise NotAvailableException("wallet and network are not yet initialized")
+    def verify_wallet_is_synced(self) -> None:
+        """Throws a RuntimeError if wallets is not synced yet."""
+        if not self.app_startup_state.wallet_synced.get():
+            raise NotAvailableException("wallet not synced yet")
 
     def verify_application_is_fully_initialized(self) -> None:
-        """Throws a RuntimeException if application is not fully initialized."""
+        """Throws a RuntimeError if application is not fully initialized."""
         if not self.app_startup_state.application_fully_initialized.get():
             raise NotAvailableException("server is not fully initialized")
 
@@ -440,7 +440,7 @@ class CoreWalletsService:
             raise IllegalArgumentException(f"{address} is not a valid bsq address")
 
     def _verify_wallet_currency_code_is_valid(self, currency_code: str) -> None:
-        """Throws a RuntimeException if wallet currency code is not BSQ or BTC."""
+        """Throws a RuntimeError if wallet currency code is not BSQ or BTC."""
         if not currency_code or not currency_code.strip():
             return
 

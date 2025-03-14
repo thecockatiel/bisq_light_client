@@ -1974,8 +1974,14 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
 
             GlobalContainer._bsq_wallet_service = BsqWalletService(
                 self.wallets_setup,
+                self.bsq_coin_selector,
+                self.non_bsq_coin_selector,
+                self.dao_state_service,
+                self.unconfirmed_bsq_change_output_list_service,
                 self.preferences,
                 self.fee_service,
+                self.dao_kill_switch,
+                self.bsq_formatter
             )
 
         return GlobalContainer._bsq_wallet_service
@@ -2001,6 +2007,30 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             GlobalContainer._trade_wallet_service = TradeWalletService()
 
         return GlobalContainer._trade_wallet_service
+    
+    @property
+    def bsq_coin_selector(self):
+        if GlobalContainer._bsq_coin_selector is None:
+            from bisq.core.btc.wallet.bsq_coin_selector import BsqCoinSelector
+
+            GlobalContainer._bsq_coin_selector = BsqCoinSelector(
+                self.dao_state_service,
+                self.unconfirmed_bsq_change_output_list_service,
+            )
+
+        return GlobalContainer._bsq_coin_selector
+    
+    @property
+    def non_bsq_coin_selector(self):
+        if GlobalContainer._non_bsq_coin_selector is None:
+            from bisq.core.btc.wallet.non_bsq_coin_selector import NonBsqCoinSelector
+
+            GlobalContainer._non_bsq_coin_selector = NonBsqCoinSelector(
+                self.dao_state_service,
+                self.preferences,
+            )
+
+        return GlobalContainer._non_bsq_coin_selector
 
     @property
     def price_feed_node_address_provider(self):

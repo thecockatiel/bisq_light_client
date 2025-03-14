@@ -6,6 +6,12 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bisq.core.btc.wallet.bsq_coin_selector import BsqCoinSelector
+    from bisq.core.btc.wallet.non_bsq_coin_selector import NonBsqCoinSelector
+    from bisq.core.dao.dao_kill_switch import DaoKillSwitch
+    from bisq.core.dao.state.dao_state_service import DaoStateService
+    from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import UnconfirmedBsqChangeOutputListService
+    from bisq.core.util.coin.bsq_formatter import BsqFormatter
     from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.core.address import Address
@@ -23,10 +29,24 @@ class BsqWalletService(WalletService, DaoStateListener):
     def __init__(
         self,
         wallets_setup: "WalletsSetup",
+        bsq_coin_selector: "BsqCoinSelector",
+        non_bsq_coin_selector: "NonBsqCoinSelector",
+        dao_state_service: "DaoStateService",
+        unconfirmed_bsq_change_output_list_service: "UnconfirmedBsqChangeOutputListService",
         preferences: "Preferences",
         fee_service: "FeeService",
+        dao_kill_switch: "DaoKillSwitch",
+        bsq_formatter: "BsqFormatter"
     ):
         super().__init__(wallets_setup, preferences, fee_service)
+
+        self._bsq_coin_selector = bsq_coin_selector
+        self._non_bsq_coin_selector = non_bsq_coin_selector
+        self._dao_state_service = dao_state_service
+        self._unconfirmed_bsq_change_output_list_service = unconfirmed_bsq_change_output_list_service
+        self._dao_kill_switch = dao_kill_switch
+        self._bsq_formatter = bsq_formatter
+
         self.available_non_bsq_balance = Coin.ZERO()
         self.available_balance = Coin.ZERO()
         self.unverified_balance = Coin.ZERO()
@@ -36,6 +56,19 @@ class BsqWalletService(WalletService, DaoStateListener):
         self.lockup_bonds_balance = Coin.ZERO()
         self.unlocking_bonds_balance = Coin.ZERO()
         self.bsq_balance_listeners = ThreadSafeSet["BsqBalanceListener"]()
+
+        wallets_setup.add_setup_completed_handler(self._on_setup_completed)
+
+    @property
+    def bsq_formatter(self):
+        return self._bsq_formatter
+
+    def _on_setup_completed(self):
+        self.wallet = self._wallets_setup.btc_wallet
+        self.add_listeners_to_wallet()
+
+    def add_listeners_to_wallet(self):
+        super().add_listeners_to_wallet()
 
     def add_wallet_transactions_change_listener(self, listener: Callable[[], None]):
         pass

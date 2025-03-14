@@ -14,7 +14,7 @@ from bisq.common.setup.log_setup import get_logger
 from electrum_min.daemon import Daemon
 from electrum_min.simple_config import SimpleConfig
 from bisq.common.config.config import Config
-from utils.data import SimpleProperty
+from utils.data import SimpleProperty, SimplePropertyChangeEvent
 from utils.preconditions import check_state
 
 
@@ -70,8 +70,13 @@ class WalletConfig(EventListener):
         return self._num_peers_property
 
     @event_listener
-    def on_event_blockchain_updated(self):
+    def on_event_blockchain_updated(self, *args):
         self._current_height_property.value = self._btc_wallet.last_block_seen_height
+
+    @event_listener
+    def on_event_wallet_updated(self, *args):
+        if self._btc_wallet.is_up_to_date:
+            self._current_height_property.value = self._btc_wallet.last_block_seen_height
 
     @event_listener
     def on_event_network_updated(self):
