@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, Union
@@ -321,6 +321,10 @@ class WalletService(ABC):
         if self.wallet and address:
             return Coin.value_of(self.wallet.get_address_balance(address))
         return Coin.ZERO()
+    
+    @abstractmethod
+    def is_dust_attack_utxo(output: "TransactionOutput"):
+        pass
 
     def get_tx_fee_for_withdrawal_per_vbyte(self) -> Coin:
         fee = (

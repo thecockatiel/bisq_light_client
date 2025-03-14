@@ -1180,6 +1180,12 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         return send_request
 
+    # We ignore utxos which are considered dust attacks for spying on users' wallets.
+    # The ignoreDustThreshold value is set in the preferences. If not set we use default non dust
+    # value of 546 sat.
+    def is_dust_attack_utxo(self, output: "TransactionOutput"):
+        return output.value < self._preferences.get_ignore_dust_threshold()
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Find inputs and change
     # ///////////////////////////////////////////////////////////////////////////////////////////

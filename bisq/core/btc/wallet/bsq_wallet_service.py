@@ -10,7 +10,9 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.non_bsq_coin_selector import NonBsqCoinSelector
     from bisq.core.dao.dao_kill_switch import DaoKillSwitch
     from bisq.core.dao.state.dao_state_service import DaoStateService
-    from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import UnconfirmedBsqChangeOutputListService
+    from bisq.core.dao.state.unconfirmed.unconfirmed_bsq_change_output_list_service import (
+        UnconfirmedBsqChangeOutputListService,
+    )
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
     from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
@@ -36,14 +38,16 @@ class BsqWalletService(WalletService, DaoStateListener):
         preferences: "Preferences",
         fee_service: "FeeService",
         dao_kill_switch: "DaoKillSwitch",
-        bsq_formatter: "BsqFormatter"
+        bsq_formatter: "BsqFormatter",
     ):
         super().__init__(wallets_setup, preferences, fee_service)
 
         self._bsq_coin_selector = bsq_coin_selector
         self._non_bsq_coin_selector = non_bsq_coin_selector
         self._dao_state_service = dao_state_service
-        self._unconfirmed_bsq_change_output_list_service = unconfirmed_bsq_change_output_list_service
+        self._unconfirmed_bsq_change_output_list_service = (
+            unconfirmed_bsq_change_output_list_service
+        )
         self._dao_kill_switch = dao_kill_switch
         self._bsq_formatter = bsq_formatter
 
@@ -106,12 +110,6 @@ class BsqWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BsqWalletService.get_prepared_send_bsq_tx Not implemented yet"
         )
-
-    def get_unused_address(self) -> "Address":
-        raise RuntimeError("BsqWalletService.get_unused_address Not implemented yet")
-
-    def get_unused_bsq_address_as_string(self) -> str:
-        return "B" + self.get_unused_address()
 
     def get_buyers_bsq_inputs_for_bsq_swap_tx(
         self, required: Coin
@@ -198,3 +196,18 @@ class BsqWalletService(WalletService, DaoStateListener):
         raise RuntimeError(
             "BsqWalletService.get_prepared_unlock_tx Not implemented yet"
         )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Addresses
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_unused_address(self) -> "Address":
+        raise RuntimeError("BsqWalletService.get_unused_address Not implemented yet")
+
+    def get_unused_bsq_address_as_string(self) -> str:
+        return "B" + self.get_unused_address()
+    
+    # For BSQ we do not check for dust attack utxos as they are 5.46 BSQ and a considerable value.
+    # The default 546 sat dust limit is handled in the BitcoinJ side anyway.
+    def is_dust_attack_utxo(self, output):
+        return False
