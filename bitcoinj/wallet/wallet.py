@@ -145,6 +145,10 @@ class Wallet(EventListener):
             Coin.value_of(self.get_available_balance())
         )
 
+    @property
+    def is_up_to_date(self):
+        return self._electrum_wallet.is_up_to_date()
+
     # //////////////////////////////////////////////////////////////////////
     # // Bitcoinj Wallet API
     # //////////////////////////////////////////////////////////////////////
