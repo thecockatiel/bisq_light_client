@@ -21,10 +21,10 @@ from electrum_min.transaction import (
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
 from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.core.transaction_input import TransactionInput
 
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
-    from bitcoinj.core.transaction_input import TransactionInput
     from bitcoinj.wallet.wallet import Wallet
     from electrum_min.util import TxMinedInfo
     from bitcoinj.core.network_parameters import NetworkParameters
