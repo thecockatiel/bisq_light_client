@@ -93,3 +93,6 @@ class LegacyAddress(Address):
         if isinstance(other, LegacyAddress):
             return self.bytes == other.bytes and self.p2sh == other.p2sh and self.params == other.params
         return False
+    
+    def __hash__(self):
+        return hash((self.params, self.bytes, self.p2sh))
