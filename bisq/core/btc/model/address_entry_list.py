@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
+from bisq.common.config.config import Config
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
@@ -73,7 +74,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
                     script_type = ScriptType.P2PKH
                 key = wallet.find_key_from_pub_key_hash(entry.pub_key_hash, script_type)
                 if key:
-                    address_from_key = Address.from_key(key, script_type)
+                    address_from_key = Address.from_key(key, script_type, Config.BASE_CURRENCY_NETWORK_VALUE.parameters)
                     # We want to ensure key and address matches in case we have address in entry available already
                     if entry.is_address_none or address_from_key == entry.get_address():
                         entry.set_deterministic_key(key)
@@ -104,7 +105,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         # incoming txs at blockchain sync to add the rest.
         if self._wallet.get_available_balance() > 0:
             for address in self._wallet.get_issued_receive_addresses():
-                if self.is_address_not_in_entries():
+                if self.is_address_not_in_entries(address):
                     key = self._wallet.find_key_from_address(address)
                     if key:
                         # Address will be derived from key in getAddress method
