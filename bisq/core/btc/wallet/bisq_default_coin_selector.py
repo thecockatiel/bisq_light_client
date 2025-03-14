@@ -7,11 +7,10 @@ from bitcoinj.core.insufficient_money_exception import InsufficientMoneyExceptio
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.wallet.coin_selector import CoinSelector
 from bitcoinj.wallet.coin_selection import CoinSelection
+from bitcoinj.base.coin import Coin
 
 
 if TYPE_CHECKING:
-    from bitcoinj.base.coin import Coin
-    from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
 
 
