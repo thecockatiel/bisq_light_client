@@ -47,7 +47,7 @@ class TransactionOutput:
             ElectrumTxOutput(scriptpubkey=script, value=coin.value),
             parent_tx,
         )
-    
+
     @staticmethod
     def from_coin_and_address(
         coin: Coin, address: Union[Address, str], parent_tx: "Transaction"
@@ -55,7 +55,10 @@ class TransactionOutput:
         if isinstance(address, str):
             address = Address.from_string(address)
         return TransactionOutput(
-            ElectrumTxOutput(scriptpubkey=ScriptBuilder.create_output_script(address).program, value=coin.value),
+            ElectrumTxOutput(
+                scriptpubkey=ScriptBuilder.create_output_script(address).program,
+                value=coin.value,
+            ),
             parent_tx,
         )
 
@@ -87,7 +90,7 @@ class TransactionOutput:
             self._ec_tx_output.value, int
         )  # we don't expend spend max like here
         return self._ec_tx_output.value
-    
+
     @value.setter
     def value(self, value: int) -> None:
         self._ec_tx_output.value = value
@@ -157,16 +160,18 @@ class TransactionOutput:
         if not isinstance(output, ElectrumTxOutput):
             output = output._ec_tx_output
 
-        assert isinstance(output, int)  # we don't expend spend max like here
+        assert isinstance(output.value, int)  # we don't expend spend max like here
 
         if ScriptPattern.is_op_return(Script(output.scriptpubkey)):
             return False
         return output.value < TransactionOutput._get_min_non_dust_value(
-            output.serialize_to_network()
+            len(output.serialize_to_network())
         )
 
     def get_min_non_dust_value(self):
-        return TransactionOutput._get_min_non_dust_value(self._ec_tx_output.serialize_to_network())
+        return TransactionOutput._get_min_non_dust_value(
+            len(self._ec_tx_output.serialize_to_network())
+        )
 
     @staticmethod
     def _get_min_non_dust_value(serialized_size: int):

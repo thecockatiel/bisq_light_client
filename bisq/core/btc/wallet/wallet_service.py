@@ -137,7 +137,7 @@ class WalletService(ABC):
     @staticmethod
     def verify_transaction(transaction: "Transaction") -> None:
         try:
-            transaction.verify()
+            transaction.verify(Config.BASE_CURRENCY_NETWORK_VALUE.parameters)
         except Exception as e:
             logger.error(e, exc_info=e)
             raise TransactionVerificationException(e)

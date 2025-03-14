@@ -17,6 +17,8 @@ from electrum_min.transaction import (
     Transaction as ElectrumTransaction,
     TxInput as ElectrumTxInput,
     TxOutput as ElectrumTxOutput,
+    PartialTxOutput as ElectrumPartialTxOutput,
+    PartialTxInput as ElectrumPartialTxInput,
 )
 from utils.wrappers import LazySequenceWrapper
 from bitcoinj.script.script import Script
@@ -41,11 +43,13 @@ class Transaction:
     def __init__(
         self,
         params: "NetworkParameters",
-        payload_bytes: Optional[bytes] = None,
+        payload_bytes_or_tx: Optional[Union[bytes, ElectrumTransaction]] = None,
     ) -> None:
 
-        if payload_bytes:
-            self._electrum_transaction = ElectrumTransaction(payload_bytes)
+        if isinstance(payload_bytes_or_tx, ElectrumTransaction):
+            self._electrum_transaction = payload_bytes_or_tx
+        elif isinstance(payload_bytes_or_tx, bytes):
+            self._electrum_transaction = ElectrumTransaction(payload_bytes_or_tx)
         else:
             self._electrum_transaction = PartialElectrumTransaction()
 
@@ -64,12 +68,6 @@ class Transaction:
 
         self._tx_mined_info: Optional["TxMinedInfo"] = None
         self._label: Optional[str] = None
-
-    @staticmethod
-    def from_electrum_tx(params: "NetworkParameters", tx: "ElectrumTransaction"):
-        transaction = Transaction(params)
-        transaction._electrum_transaction = tx
-        return transaction
 
     @property
     def update_time(self):
@@ -290,11 +288,12 @@ class Transaction:
                 if tx_in.is_coin_base:
                     raise VerificationException.UnexpectedCoinbaseInput()
 
-    def maybe_finalize(self):
+    def maybe_finalize(self, wallet: "Wallet"):
         if (
             isinstance(self._electrum_transaction, PartialElectrumTransaction)
             and not self._electrum_transaction.is_complete()
         ):
+            wallet.add_info_from_wallet(self._electrum_transaction)
             self._electrum_transaction.finalize_psbt()
 
     def hash_for_witness_signature(
@@ -465,8 +464,8 @@ class Transaction:
             s.append(f"{vsize} virtual bytes, ")
         s.append(f"{size} bytes\n")
 
-        if self.updated_at:
-            s.append(f"{indent}updated: {date_time_format(self.updated_at)}\n")
+        if self.update_time:
+            s.append(f"{indent}updated: {date_time_format(self.update_time)}\n")
         if self.included_in_best_chain_at:
             s.append(
                 f"{indent}included in best chain at: {date_time_format(self.included_in_best_chain_at)}\n"
@@ -588,18 +587,17 @@ class Transaction:
 
     def add_input(self, tx_io: Union["TransactionInput", "TransactionOutput"]):
         if isinstance(tx_io, TransactionOutput):
-            tx_io = TransactionInput.from_output(tx_io)
-        if self._electrum_transaction._inputs is None:
-            self._electrum_transaction._inputs = [tx_io._ec_tx_input]
-        else:
-            self._electrum_transaction._inputs.append(tx_io._ec_tx_input)
+            tx_io = TransactionInput.from_output(tx_io, tx_io.parent)
+        if not isinstance(tx_io._ec_tx_input, ElectrumPartialTxInput):
+            tx_io._ec_tx_input = ElectrumPartialTxInput.from_txin(tx_io._ec_tx_input)
+        self._electrum_transaction.add_inputs([tx_io._ec_tx_input])
         return tx_io
 
     def add_output(self, tx_output: "TransactionOutput"):
-        if self._electrum_transaction._outputs is None:
-            self._electrum_transaction._outputs = [tx_output._ec_tx_output]
-        else:
-            self._electrum_transaction._outputs.append(tx_output._ec_tx_output)
+        electrum_output = tx_output._ec_tx_output
+        if not isinstance(electrum_output, ElectrumPartialTxOutput):
+            electrum_output = ElectrumPartialTxOutput.from_txout(electrum_output)
+        self._electrum_transaction.add_outputs([electrum_output])
 
     def add_output_using_coin_and_address(self, coin: Coin, address: "Address"):
         from bitcoinj.core.transaction_output import TransactionOutput

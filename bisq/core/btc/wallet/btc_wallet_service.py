@@ -1026,7 +1026,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         future.add_done_callback(FutureCallback(on_success, on_error))
         # For better redundancy in case the broadcast via Electrum fails we also
         # publish the tx via mempool nodes.
-        MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
+        # MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
 
         return send_request.tx.get_tx_id()
 
@@ -1059,7 +1059,7 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         # For better redundancy in case the broadcast via Electrum fails we also
         # publish the tx via mempool nodes.
-        MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
+        # MemPoolSpaceTxBroadcaster.broadcast_tx(send_request.tx)
 
         return send_request.tx
 

@@ -43,6 +43,7 @@ from electrum_min.transaction import (
     PartialTransaction,
     PartialTxInput as ElectrumPartialTxInput,
     TxOutput as ElectrumTxOutput,
+    PartialTxOutput as ElectrumPartialTxOutput,
 )
 from electrum_min.network import Network
 from electrum_min.util import EventListener, InvalidPassword, event_listener
@@ -117,13 +118,13 @@ class Wallet(EventListener):
             self.on_wallet_changed()
 
             if self._tx_listeners:
-                wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
+                wrapped_tx = Transaction(self._network_params, tx)
                 wrapped_tx.add_info_from_wallet(self)
                 for listener in self._tx_listeners:
                     listener(wrapped_tx)
 
             if self._tx_changed_listeners:
-                wrapped_tx = Transaction.from_electrum_tx(self._network_params, tx)
+                wrapped_tx = Transaction(self._network_params, tx)
                 wrapped_tx.add_info_from_wallet(self)
                 for listener in self._tx_changed_listeners:
                     listener(wrapped_tx)
@@ -318,7 +319,7 @@ class Wallet(EventListener):
     def get_transaction(self, txid: str) -> Optional["Transaction"]:
         e_tx = self._electrum_wallet.db.get_transaction(txid)
         if e_tx:
-            tx = Transaction.from_electrum_tx(self.network_params, e_tx)
+            tx = Transaction(self.network_params, e_tx)
             tx.add_info_from_wallet(self)
             return tx
         return None
@@ -330,7 +331,7 @@ class Wallet(EventListener):
     def get_transactions(self):
         """return an Generator that returns all transactions in the wallet, newest first"""
         for tx in reversed(self._electrum_wallet.db.transactions.values()):
-            tx = Transaction.from_electrum_tx(self.network_params, tx)
+            tx = Transaction(self.network_params, tx)
             tx.add_info_from_wallet(self)
             yield tx
 
@@ -347,18 +348,20 @@ class Wallet(EventListener):
                 yield tx
 
     def _maybe_broadcast_possibly_not_broadcasted_txs(self):
-        def on_done(f: Future):
+        def on_done(f: Future, tx: "Transaction"):
             try:
                 f.result()
+                logger.info(f"Broadcasting completed for txid: {tx.get_tx_id()} wtxid: {tx.get_wtx_id()}")
             except Exception as e:
                 logger.warning(
                     f"Error when trying to broadcast tx at wallet start: {e}"
                 )
 
         for tx in self._get_possibly_not_broadcasted_txs():
+            logger.info(f"Broadcasting possibly not broadcasted tx: {tx}")
             as_future(
-                self._electrum_network.broadcast_transaction(tx._electrum_transaction)
-            ).add_done_callback(on_done)
+                self.broadcast_tx(tx)
+            ).add_done_callback(lambda f, tx=tx: on_done(f, tx))
 
     def get_tx_mined_info(self, txid: str):
         return self._electrum_wallet.adb.get_tx_height(txid)
@@ -379,8 +382,8 @@ class Wallet(EventListener):
             self._electrum_wallet.set_label(tx.get_tx_id(), tx.memo)
         existing_tx = self._electrum_wallet.db.get_transaction(tx.get_tx_id())
         if existing_tx:
-            return Transaction.from_electrum_tx(self.network_params, existing_tx)
-        Transaction.verify(Wallet.network_params, tx)
+            return Transaction(self.network_params, existing_tx)
+        Transaction.verify(self.network_params, tx)
         self._electrum_wallet.adb.add_unverified_or_unconfirmed_tx(tx.get_tx_id(), 0)
         added = self._electrum_wallet.adb.add_transaction(
             tx._electrum_transaction, allow_unrelated=True, is_new=True
@@ -394,7 +397,7 @@ class Wallet(EventListener):
         if not existing_tx:
             # unlikely, just in case
             raise IllegalStateException("Transaction was not added to wallet history")
-        return Transaction.from_electrum_tx(self.network_params, existing_tx)
+        return Transaction(self.network_params, existing_tx)
 
     def is_transaction_pending(self, tx_id: str):
         return (
@@ -429,6 +432,8 @@ class Wallet(EventListener):
             )
 
     async def broadcast_tx(self, tx: "Transaction", timeout: float = None):
+        tx.maybe_finalize(self)
+        self.maybe_add_transaction(tx)
         await self._electrum_network.broadcast_transaction(
             tx._electrum_transaction, timeout=timeout
         )
@@ -564,7 +569,6 @@ class Wallet(EventListener):
 
             req.tx.memo = req.memo
             req.fee = calculated_fee
-            req.tx._electrum_transaction.finalize_psbt()
             req.completed = True
             logger.info(f"  completed: {req.tx}")
 
@@ -585,12 +589,15 @@ class Wallet(EventListener):
     ):
         """returns partial tx if successful else None"""
         if not isinstance(tx._electrum_transaction, PartialTransaction):
-            tx._electrum_transaction = PartialTransaction.from_tx(tx._electrum_transaction)
+            tx._electrum_transaction = PartialTransaction.from_tx(
+                tx._electrum_transaction
+            )
+        tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         result = self._electrum_wallet.sign_transaction(
             tx._electrum_transaction, password, ignore_warnings=True
         )
         if result:
-            return Transaction.from_electrum_tx(self.network_params, result)
+            return Transaction(self.network_params, result)
         return None
 
     def _calculate_fee(
@@ -689,7 +696,11 @@ class Wallet(EventListener):
                     result.best_change_output = change_output
 
             for selected_output in selection.gathered:
-                input = tx.add_input(TransactionInput.from_output(selected_output, tx))
+                input = tx.add_input(
+                    TransactionInput.from_output(
+                        selected_output, selected_output.parent
+                    )
+                )
                 # If the scriptBytes don't default to none, our size calculations will be thrown off.
                 check_state(not input.script_sig)
                 check_state(not input.has_witness)
@@ -789,8 +800,11 @@ class Wallet(EventListener):
             )
             > 20
         )
-    
+
     def send_coins(self, send_request: "SendRequest"):
-        send_request.tx.maybe_finalize()
-        self.maybe_add_transaction(send_request.tx)
+        self.complete_tx(send_request)
         return as_future(self.broadcast_tx(send_request.tx))
+
+    def add_electrum_info(self, tx: "Transaction"):
+        tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
+        return tx
