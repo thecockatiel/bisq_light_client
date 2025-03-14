@@ -69,13 +69,13 @@ class ChangeParamValidator(ProposalValidator, ConsensusCritical):
         except ProposalValidationException as e:
             raise e
         except Exception as throwable:
-            raise ProposalValidationException(throwable)
+            raise ProposalValidationException(throwable) from throwable
 
     def validate_param_value(self, param: "Param", input_value: str) -> None:
         block_height = self.period_service.chain_height
-        self._validate_param_value(param, input_value, block_height)
+        self._validate_param_value_at_height(param, input_value, block_height)
 
-    def _validate_param_value(
+    def _validate_param_value_at_height(
         self, param: "Param", input_value: str, block_height: int
     ) -> None:
         current_param_value = self.dao_state_service.get_param_value(
@@ -149,9 +149,9 @@ class ChangeParamValidator(ProposalValidator, ConsensusCritical):
         except ValueError as t:
             raise ParamValidationException(
                 Res.get("validation.numberFormatException", str(t).lower())
-            )
+            ) from t
         except Exception as t:
-            raise ParamValidationException(t)
+            raise ParamValidationException(t) from t
 
     def _validate_bsq_value(
         self,
