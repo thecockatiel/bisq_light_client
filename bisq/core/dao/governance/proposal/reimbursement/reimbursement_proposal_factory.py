@@ -54,7 +54,7 @@ class ReimbursementProposalFactory(BaseProposalFactory["ReimbursementProposal"])
     def create_proposal_without_tx_id(
         self,
     ) -> ReimbursementProposal:
-        return ReimbursementProposal(
+        return ReimbursementProposal.from_coin(
             name=self.name,
             link=self.link,
             requested_bsq=self._requested_bsq,

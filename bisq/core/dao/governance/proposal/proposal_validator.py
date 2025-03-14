@@ -39,7 +39,7 @@ class ProposalValidator(ConsensusCritical, ABC):
             return True
         except ProposalValidationException as e:
             logger.warning(
-                f"Proposal data fields are invalid. proposal={proposal}, error={e}",
+                f"Proposal data fields are invalid. proposal={proposal}, error={e}"
             )
             return False
 

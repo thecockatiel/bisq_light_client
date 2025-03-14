@@ -62,7 +62,7 @@ class CompensationProposalFactory(BaseProposalFactory["CompensationProposal"]):
             extra_data_map = {
                 CompensationProposal.BURNING_MAN_RECEIVER_ADDRESS: self._burning_man_receiver_address
             }
-        return CompensationProposal(
+        return CompensationProposal.from_coin(
             name=self.name,
             link=self.link,
             requested_bsq=self._requested_bsq,
