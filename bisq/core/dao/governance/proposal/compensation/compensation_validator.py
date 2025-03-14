@@ -40,7 +40,7 @@ class CompensationValidator(ProposalValidator, ConsensusCritical):
             check_argument(bsq_address.startswith("B"), "bsq_address must start with B")
             proposal.get_address()  # throws AddressFormatException if wrong address
 
-            requested_bsq = proposal.requested_bsq
+            requested_bsq = proposal.get_requested_bsq()
             chain_height = self.get_block_height(proposal)
             max_compensation_request_amount = (
                 CompensationConsensus.get_max_compensation_request_amount(
