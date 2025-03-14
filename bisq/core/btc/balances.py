@@ -27,12 +27,12 @@ class Balances:
         failed_trades_manager: "FailedTradesManager",
         refund_manager: "RefundManager",
     ):
-        self.trade_manager = trade_manager
-        self.btc_wallet_service = btc_wallet_service
-        self.open_offer_manager = open_offer_manager
-        self.closed_tradable_manager = closed_tradable_manager
-        self.failed_trades_manager = failed_trades_manager
-        self.refund_manager = refund_manager
+        self._trade_manager = trade_manager
+        self._btc_wallet_service = btc_wallet_service
+        self._open_offer_manager = open_offer_manager
+        self._closed_tradable_manager = closed_tradable_manager
+        self._failed_trades_manager = failed_trades_manager
+        self._refund_manager = refund_manager
 
         self.available_balance_property = SimpleProperty[Coin]()
         self.reserved_balance_property = SimpleProperty[Coin]()
@@ -51,14 +51,12 @@ class Balances:
         return self.locked_balance_property.get()
 
     def on_all_services_initialized(self):
-        # TODO:
-        pass
-        # self.open_offer_manager.get_observable_list().add_listener(lambda c: self.update_balance())
-        # self.trade_manager.get_observable_list().add_listener(lambda change: self.update_balance())
-        # self.refund_manager.get_disputes_as_observable_list().add_listener(lambda c: self.update_balance())
-        # self.btc_wallet_service.add_balance_listener(lambda balance, tx: self.update_balance())
-        # self.btc_wallet_service.add_new_block_height_listener(lambda height: self.update_balance())
-        # self.update_balance()
+        self._open_offer_manager.get_observable_list().add_listener(lambda *_: self.update_balance())
+        self._trade_manager.get_observable_list().add_listener(lambda *_: self.update_balance())
+        self._refund_manager.get_disputes_as_observable_list().add_listener(lambda *_: self.update_balance())
+        self._btc_wallet_service.add_balance_listener(lambda *_: self.update_balance())
+        self._btc_wallet_service.add_new_block_height_listener(lambda *_: self.update_balance())
+        self.update_balance()
 
     def update_balance(self):
         # Need to delay a bit to get the balances correct
@@ -70,18 +68,18 @@ class Balances:
 
     def update_available_balance(self):
         balance_sum = sum(
-            self.btc_wallet_service.get_balance_for_address(entry.get_address()).value 
-            for entry in self.btc_wallet_service.get_address_entries_for_available_balance_stream()
+            self._btc_wallet_service.get_balance_for_address(entry.get_address()).value 
+            for entry in self._btc_wallet_service.get_address_entries_for_available_balance_stream()
         )
         self.available_balance_property.set(Coin.value_of(balance_sum))
         
     def update_reserved_balance(self):
         balance_sum = sum(
-            self.btc_wallet_service.get_balance_for_address(address).value
+            self._btc_wallet_service.get_balance_for_address(address).value
             for address in distinct_iterator(
                 not_none_iterator(
-                    self.btc_wallet_service.get_address_entry(open_offer.get_id(), AddressEntryContext.RESERVED_FOR_TRADE)
-                    for open_offer in self.open_offer_manager.get_observable_list() 
+                    self._btc_wallet_service.get_address_entry(open_offer.get_id(), AddressEntryContext.RESERVED_FOR_TRADE)
+                    for open_offer in self._open_offer_manager.get_observable_list() 
                 )
             )
         )
@@ -89,14 +87,14 @@ class Balances:
         
     def update_locked_balance(self):
         locked_trades = chain(
-            self.closed_tradable_manager.get_trades_stream_with_funds_locked_in() +
-            self.failed_trades_manager.get_trades_stream_with_funds_locked_in() +
-            self.trade_manager.get_trades_stream_with_funds_locked_in()
+            self._closed_tradable_manager.get_trades_stream_with_funds_locked_in(),
+            self._failed_trades_manager.get_trades_stream_with_funds_locked_in(),
+            self._trade_manager.get_trades_stream_with_funds_locked_in()
         )
         balance_sum = sum(
             entry.coin_locked_in_multi_sig
             for entry in not_none_iterator(
-                self.btc_wallet_service.get_address_entry(trade(), AddressEntryContext.MULTI_SIG)
+                self._btc_wallet_service.get_address_entry(trade(), AddressEntryContext.MULTI_SIG)
                 for trade in locked_trades
             )
         )
