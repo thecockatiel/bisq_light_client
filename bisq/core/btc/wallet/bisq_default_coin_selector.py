@@ -5,16 +5,14 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.network_parameters import NetworkParameters
-from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
-from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.wallet.coin_selector import CoinSelector
+from bitcoinj.wallet.coin_selection import CoinSelection
 
 
 if TYPE_CHECKING:
     from bitcoinj.base.coin import Coin
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
-    from bitcoinj.wallet.coin_selection import CoinSelection
 
 
 class BisqDefaultCoinSelector(CoinSelector, ABC):
