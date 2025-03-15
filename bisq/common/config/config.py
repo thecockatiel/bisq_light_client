@@ -313,7 +313,10 @@ class Config:
         Config.BASE_CURRENCY_NETWORK_VALUE = self.base_currency_network
 
         # set electrum to use the same network parameters as the base currency network
-        ElectrumConstants.set_regtest()
+        if self.base_currency_network.is_regtest():
+            ElectrumConstants.set_regtest()
+        elif self.base_currency_network.is_testnet():
+            ElectrumConstants.set_testnet()
 
     @property
     def network_parameters(self):
