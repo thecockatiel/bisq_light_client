@@ -17,6 +17,7 @@ class ReceiptValidator:
         predicates: "ReceiptPredicates" = None,
     ):
         if predicates is None:
+            from bisq.core.payment.receipt_predicates import ReceiptPredicates
             predicates = ReceiptPredicates()
 
         self.offer = offer
