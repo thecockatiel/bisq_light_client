@@ -113,7 +113,7 @@ class RepublishGovernanceDataHandler:
             (
                 conn
                 for conn in self._network_node.get_confirmed_connections()
-                if self._peer_manager.is_seed_node(conn)
+                if self._peer_manager.is_seed_node(conn.peers_node_address)
             ),
             None,
         )

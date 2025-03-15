@@ -118,7 +118,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
 
         self.network_node.node_address_property.add_listener(self._on_node_address_changed)
 
-    def _on_node_address_changed(self, e: "SimplePropertyChangeEvent"):
+    def _on_node_address_changed(self, e: "SimplePropertyChangeEvent[NodeAddress]"):
         if e.new_value is not None:
             try:
                 self.seed_node_addresses.remove(e.new_value)

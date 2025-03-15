@@ -205,7 +205,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
 
     def request_hashes_from_all_connected_seed_nodes(self, from_height: int) -> None:
         for connection in self._network_node.get_confirmed_connections():
-            if self._peer_manager.is_seed_node(connection):
+            if self._peer_manager.is_seed_node(connection.peers_node_address):
                 peers_node_address = connection.peers_node_address
                 if peers_node_address:
                     self.request_hashes_from_seed_node(from_height, peers_node_address)

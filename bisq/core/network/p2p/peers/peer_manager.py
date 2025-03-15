@@ -187,7 +187,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_connection(self, connection: "Connection"):
-        connection.connection_state.is_seed_node = self.is_seed_node(connection)
+        connection.connection_state.is_seed_node = self.is_seed_node(connection.peers_node_address)
 
         self._do_housekeeping()
 
