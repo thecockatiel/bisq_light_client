@@ -58,6 +58,6 @@ class PasswordAuthInterceptor(ServerInterceptor):
             return self._missing_password_terminator
 
         if actual_password != self.expected_password_value:
-            raise self._wrong_password_terminator
+            return self._wrong_password_terminator
 
         return continuation(handler_call_details)
