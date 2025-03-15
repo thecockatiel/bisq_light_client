@@ -44,7 +44,7 @@ class TxParser:
     ) -> Optional[Tx]:
         if GenesisTxParser.is_genesis(raw_tx, genesis_tx_id, genesis_block_height):
             return GenesisTxParser.get_genesis_tx(
-                raw_tx, genesis_total_supply, self._dao_state_service
+                raw_tx, genesis_total_supply.value, self._dao_state_service
             )
         else:
             return self._find_tx(raw_tx)
