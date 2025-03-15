@@ -116,10 +116,13 @@ class TorNetworkNode(NetworkNode):
         def complete_handler():
             f = None
             try:
+                if self.hidden_service_socket:
+                    self.hidden_service_socket.close()
+                    self.hidden_service_socket = None
                 if self.tor:
                     f = as_future(self.tor.quit())
                     self.tor = None
-                    logger.info(f"Tor shutdown completed at {get_time_ms()}")
+                logger.info(f"Tor shutdown completed at {get_time_ms()}")
             except Exception as e:
                 logger.error("Shutdown torNetworkNode failed with exception", exc_info=e)
             finally:
@@ -133,7 +136,7 @@ class TorNetworkNode(NetworkNode):
                 else:
                     on_finish()
 
-        super().shut_down(complete_handler)
+        super().shut_down(lambda: as_future(complete_handler()))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Create tor and hidden service

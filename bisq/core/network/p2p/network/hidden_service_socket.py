@@ -1,3 +1,5 @@
+from utils.aio import as_future
+
 import os
 from pathlib import Path
 import socket
@@ -5,7 +7,6 @@ from typing import TYPE_CHECKING, Optional, cast
 from twisted.internet import reactor
 from txtorcon import FilesystemOnionService, IOnionService, Tor, TorOnionAddress
 
-from utils.aio import as_future
 from bisq.common.setup.log_setup import get_logger
 
 if TYPE_CHECKING:
@@ -93,7 +94,7 @@ class HiddenServiceSocket:
     def __str__(self) -> str:
         return f"HiddenServiceSocket(local_port={self._local_port}, hidden_service_dir={self._hidden_service_dir}, hidden_service_port={self._hidden_service_port}, onion_uri={self.service_name})"
     
-    async def close(self):
+    def close(self):
         if self._server_socket:
             self._server_socket.shutdown(socket.SHUT_RDWR)
             self._server_socket.close()
