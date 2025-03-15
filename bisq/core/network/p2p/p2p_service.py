@@ -96,14 +96,12 @@ class P2PService(
         self._request_data_manager = request_data_manager
         self._peer_exchange_manager = peer_exchange_manager
 
-        self._network_ready_property = SimpleProperty(False)
-        self._decrypted_direct_message_listeners: ThreadSafeSet[
+        self._network_ready_property: Optional[SimpleProperty] = None
+        self._decrypted_direct_message_listeners = ThreadSafeSet[
             "DecryptedDirectMessageListener"
-        ] = ThreadSafeSet()
-        self._p2p_service_listeners: ThreadSafeSet["P2PServiceListener"] = (
-            ThreadSafeSet()
-        )
-        self._shut_down_result_handlers: ThreadSafeSet["Callable"] = ThreadSafeSet()
+        ]()
+        self._p2p_service_listeners = ThreadSafeSet["P2PServiceListener"]()
+        self._shut_down_result_handlers = ThreadSafeSet[Callable[[], None]]()
         self._hidden_service_published_property = SimpleProperty(False)
         self._preliminary_data_received_property = SimpleProperty(False)
         self._num_connected_peers_property = SimpleProperty(0)
@@ -118,7 +116,9 @@ class P2PService(
 
         #  We need to have both the initial data delivered and the hidden service published
         self._network_ready_property = combine_simple_properties(
-            self._hidden_service_published_property, self._preliminary_data_received_property, transform=all
+            self._hidden_service_published_property,
+            self._preliminary_data_received_property,
+            transform=all,
         )
         self._network_ready_unsubscribe = self._network_ready_property.add_listener(
             lambda e: self.on_network_ready() if e.new_value else None
@@ -136,7 +136,7 @@ class P2PService(
     def on_all_services_initialized(self):
         pass
 
-    def shut_down(self, shut_down_complete_handler: Callable):
+    def shut_down(self, shut_down_complete_handler: Callable[[], None]):
         logger.info("P2PService shutdown started")
         self._shut_down_result_handlers.add(shut_down_complete_handler)
 
@@ -163,7 +163,7 @@ class P2PService(
         if self._keep_alive_manager is not None:
             self._keep_alive_manager.shut_down()
 
-        if self._network_ready_property.value is not None:
+        if self._network_ready_property is not None:
             self._network_ready_property.remove_all_listeners()
 
         if self._network_node is not None:
@@ -298,7 +298,9 @@ class P2PService(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_connection(self, connection: "Connection") -> None:
-        self._num_connected_peers_property.set(len(self._network_node.get_all_connections()))
+        self._num_connected_peers_property.set(
+            len(self._network_node.get_all_connections())
+        )
         # TODO check if still needed and why
         UserThread.run_after(
             lambda: self._num_connected_peers_property.set(
@@ -310,7 +312,9 @@ class P2PService(
     def on_disconnect(
         self, close_connection_reason: "CloseConnectionReason", connection: "Connection"
     ) -> None:
-        self._num_connected_peers_property.set(len(self._network_node.get_all_connections()))
+        self._num_connected_peers_property.set(
+            len(self._network_node.get_all_connections())
+        )
         # TODO check if still needed and why
         UserThread.run_after(
             lambda: self._num_connected_peers_property.set(
@@ -544,11 +548,11 @@ class P2PService(
     @property
     def is_bootstrapped(self):
         return self._is_bootstrapped
-    
+
     @property
     def network_node(self):
         return self._network_node
-    
+
     @property
     def broadcaster(self):
         return self._broadcaster

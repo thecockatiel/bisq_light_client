@@ -107,7 +107,6 @@ class WalletsSetup:
         )
 
     def shut_down(self):
-        self.shut_down_complete_property.set(True)
         logger.info("wallets_setup.shut_down started")
 
         def on_shutdown_complete():
