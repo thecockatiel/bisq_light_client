@@ -74,12 +74,13 @@ class LimitedRunningTor(TorMode):
                     client, _ = await loop.sock_accept(server)
                     client.setblocking(False)
                     request = await loop.sock_recv(client, 1024)
-                    if validation_token.encode() in request:
-                        response = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"
-                        await loop.sock_sendall(client, response)
-                        client.close()
-                        return True
-                    else:
+                    try:
+                        if validation_token.encode() in request:
+                            response = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"
+                            await loop.sock_sendall(client, response)
+                            return True
+                    finally:
+                        client.shutdown(socket.SHUT_RDWR)
                         client.close()
                 except Exception as e:
                     logger.error(f"Error handling validation request: {str(e)}")
@@ -114,6 +115,7 @@ class LimitedRunningTor(TorMode):
                     exception = e
                     await asyncio.sleep(1)
 
+        server.shutdown(socket.SHUT_RDWR)
         server.close()
         if not connected:
             msg = "Couldn't validate already running tor proxy and hidden service after retrying 3 times."

@@ -95,5 +95,6 @@ class HiddenServiceSocket:
     
     async def close(self):
         if self._server_socket:
+            self._server_socket.shutdown(socket.SHUT_RDWR)
             self._server_socket.close()
             self._server_socket = None

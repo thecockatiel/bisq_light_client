@@ -119,6 +119,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 "We might have got a new inbound or outbound connection."
             )
             try:
+                socket.shutdown(socket.SHUT_RDWR)
                 socket.close()
             except Exception as e:
                 if not self.__shut_down_in_progress.get():
