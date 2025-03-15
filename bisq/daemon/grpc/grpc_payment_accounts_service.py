@@ -37,7 +37,7 @@ class GrpcPaymentAccountsService(PaymentAccountsServicer):
             payment_account = self.core_api.create_payment_account(
                 request.payment_account_form
             )
-            return CreatePaymentAccountReply(payment_account=payment_account)
+            return CreatePaymentAccountReply(payment_account=payment_account.to_proto_message())
         except Exception as e:
             self.exception_handler.handle_exception(logger, e, context)
 

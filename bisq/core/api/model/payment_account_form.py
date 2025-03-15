@@ -67,7 +67,8 @@ class PaymentAccountForm:
         "log",
         "id",
         "acceptedCountryCodes",
-        "countryCode",
+        "extraData",
+        # "countryCode",
         "creationDate",
         "excludeFromJsonDataMap",
         "maxTradePeriod",
@@ -81,7 +82,8 @@ class PaymentAccountForm:
         "SALT",  # Will be included, but handled differently.
         # for our python implementation we need to exclude snake cases of them as well
         "accepted_country_codes",
-        "country_code",
+        "extra_data",
+        # "country_code",
         "creation_date",
         "exclude_from_json_data_map",
         "max_trade_period",

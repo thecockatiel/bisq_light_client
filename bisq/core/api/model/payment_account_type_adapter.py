@@ -42,9 +42,13 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
     ):
         self.payment_account_type = payment_account_type
         self.payment_account_payload_type = self._get_payment_account_payload_type()
+        self.payment_account_payload_super_type = self.payment_account_payload_type.__bases__[
+            0
+        ]
         self.excluded_fields = excluded_fields or []
         self.account_fields = dict[str, FieldType]()
         self.account_payload_fields = dict[str, FieldType]()
+        self.account_payload_super_fields = dict[str, FieldType]()
         self.unique_settable_fields = set()
         self.init_account_settable_fields()
 
@@ -63,10 +67,17 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
             for f in get_settable_fields(self.payment_account_payload_type)
             if f[0] not in self.excluded_fields
         }
+        self.account_payload_super_fields = {
+            f[0]: f[1]
+            for f in get_settable_fields(self.payment_account_payload_super_type)
+            if f[0] not in self.excluded_fields
+        }
         self.unique_settable_fields = sorted(
             list(
                 set(self.account_fields.keys()).union(
                     set(self.account_payload_fields.keys())
+                ).union(
+                    set(self.account_payload_super_fields.keys())
                 )
             )
         )
@@ -195,6 +206,13 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
                     getattr(type(account.payment_account_payload), field).fset(
                         account.payment_account_payload, value
                     )
+            elif field in self.account_payload_super_fields:
+                if self.account_payload_super_fields[field] == FieldType.DATA:
+                    setattr(account.payment_account_payload, field, value)
+                elif self.account_payload_super_fields[field] == FieldType.PROPERTY:
+                    getattr(type(account.payment_account_payload), field).fset(
+                        account.payment_account_payload, value
+                    )
             else:
                 raise IllegalStateException(
                     f"programmer error: cannot de-serialize json to a '{account.__class__.__name__}' "
@@ -304,7 +322,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
     def _did_read_country_field(
         self, json_data: dict, account: PaymentAccount, field_name: str
     ) -> bool:
-        if field_name not in ["country"]:
+        if field_name not in ["countryCode", "country_code"]:
             return False
 
         country_code = self._get_string_or_none(json_data, field_name)
