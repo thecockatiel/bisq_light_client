@@ -986,7 +986,7 @@ class CliMain:
         relative_file_name = f"{prefix}_{timestamp}{suffix}"
         try:
             path = Path(relative_file_name)
-            if not path.exists(relative_file_name):
+            if not path.exists():
                 with open(relative_file_name, "w") as file:
                     file.write(text)
                 return str(path.absolute())
