@@ -1,4 +1,7 @@
-class OfferFilterServiceResult:
+from enum import Enum
+
+
+class OfferFilterServiceResult(Enum):
     VALID = True
     API_DISABLED = False
     HAS_NO_PAYMENT_ACCOUNT_VALID_FOR_OFFER = False
