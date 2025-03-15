@@ -9,6 +9,7 @@ from typing import Any, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.config.config_exception import ConfigException
 from bisq.common.config.config_file_reader import ConfigFileReader
+from electrum_min import constants as ElectrumConstants
 from utils.argparse_ext import CustomArgumentParser, parse_bool
 from utils.dir import user_data_dir
 from utils.tor import parse_tor_hidden_service_port
@@ -310,6 +311,9 @@ class Config:
 
         # Assign values to special-case static fields
         Config.BASE_CURRENCY_NETWORK_VALUE = self.base_currency_network
+
+        # set electrum to use the same network parameters as the base currency network
+        ElectrumConstants.set_regtest()
 
     @property
     def network_parameters(self):
