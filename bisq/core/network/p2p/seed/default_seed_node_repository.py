@@ -9,7 +9,6 @@ from bisq.resources import core_resource_readlines
 logger = get_logger(__name__)
 
 # If a new BaseCurrencyNetwork type gets added we need to add the resource file for it as well!
-# Singleton?
 class DefaultSeedNodeRepository(SeedNodeRepository):
     pattern = re.compile(r"^([a-z0-9]+\.onion:\d+)")
     ENDING = ".seednodes"
@@ -26,7 +25,7 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
                 return
 
             self.cache.clear()
-            result = self.get_seed_node_addresses_from_property_file("btc_mainnet") # Note: Hard coded
+            result = self.get_seed_node_addresses_from_property_file(self.config.base_currency_network.name.casefold())
             self.cache.update(result)
 
             filter_provided_seed_nodes = {self.get_node_address(n) for n in self.config.filter_provided_seed_nodes if n}
