@@ -43,6 +43,6 @@ class TxType(ImmutableDaoStateModel, Enum):
     def from_proto(proto: protobuf.TxType) -> "TxType":
         return ProtoUtil.enum_from_proto(TxType, protobuf.TxType, proto)
 
-    @staticmethod
-    def to_proto_message(state: "TxType"):
-        return ProtoUtil.proto_enum_from_enum(protobuf.TxType, state)
+    def to_proto_message(self):
+        return ProtoUtil.proto_enum_from_enum(protobuf.TxType, self)
+
