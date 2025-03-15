@@ -157,13 +157,12 @@ class User(PersistedDataHost):
     def add_payment_account_if_not_exists(self, payment_account: "PaymentAccount"):
         if not self.payment_account_exists(payment_account):
             self.add_payment_account(payment_account)
-            self.request_persistence()
 
     def add_payment_account(self, payment_account: "PaymentAccount"):
         payment_account.on_add_to_user()
         
         changed = self.payment_accounts_observable.add(payment_account)
-        self.set_current_payment_account(payment_account) # NOTE: always request_persistence may be unintended
+        self.set_current_payment_account(payment_account)
         if changed:
             self.request_persistence()
 
