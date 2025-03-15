@@ -6,6 +6,9 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.concurrency import ThreadSafeSet
+from bisq.core.dao.monitoring.network.request_state_hashes_handler import (
+    RequestStateHashesHandler,
+)
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -22,9 +25,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.dao.monitoring.network.messages.new_state_hash_message import (
         NewStateHashMessage,
-    )
-    from bisq.core.dao.monitoring.network.request_state_hashes_handler import (
-        RequestStateHashesHandler,
     )
     from bisq.core.network.p2p.network.connection import Connection
 
