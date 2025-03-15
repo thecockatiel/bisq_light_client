@@ -44,6 +44,6 @@ class ProcessOfferAvailabilityResponse(Task[OfferAvailabilityModel]):
             self.complete()
         except Exception as e:
             offer.error_message = f"An error occurred.\nError message:\n{str(e)}"
-            self.failed(exception=e)
+            self.failed(exc=e)
 
 

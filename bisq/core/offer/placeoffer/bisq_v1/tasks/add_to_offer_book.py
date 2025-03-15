@@ -24,7 +24,7 @@ class AddToOfferBook(Task["PlaceOfferModel"]):
             self.model.offer.error_message = (
                 f"An error occurred.\nError message:\n{str(e)}"
             )
-            self.failed(exception=e)
+            self.failed(exc=e)
 
     def _on_success(self):
         self.model.offer_added_to_offer_book = True

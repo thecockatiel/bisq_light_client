@@ -102,7 +102,7 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
                         offer.error_message = ("An error occurred.\n"
                                                "Error message:\n"
                                                f"{exception}")
-                        self.failed(exception=exception)
+                        self.failed(exc=exception)
 
                 # We use a short timeout as there are issues with BSQ txs. See comment in TxBroadcaster
                 bsq_wallet_service.broadcast_tx(
@@ -120,7 +120,7 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
             else:
                 offer.error_message = f"An error occurred.\nError message:\n{e}"
 
-            self.failed(exception=e)
+            self.failed(exc=e)
 
     def _on_success(self, transaction: "Transaction", bsq = False):
         if transaction is None:
@@ -150,6 +150,6 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
 
     def _on_failure(self, exception: Exception):
         if not self.completed:
-            self.failed(exception=exception)
+            self.failed(exc=exception)
         else:
             logger.warning("Got failure callback after timeout triggered complete()")
