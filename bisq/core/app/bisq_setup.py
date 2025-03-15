@@ -357,6 +357,15 @@ class BisqSetup:
             self._init_wallet, self.display_tor_network_settings_handler
         )
 
+        # We only init wallet service here if not using Tor for bitcoinj.
+        # When using Tor, wallet init must be deferred until Tor is ready.
+        # JAVA TODO encapsulate below conditional inside getUseTorForBitcoinJ
+        if (
+            not self._preferences.get_use_tor_for_bitcoin_j()
+            or self._local_bitcoin_node.should_be_used()
+        ):
+            self._init_wallet()
+
         def transform_p2p_and_wallet_ready(props: list):
             logger.info(f"walletInitialized={props[0]}, p2pNetWorkReady={props[1]}")
             return all(props)
