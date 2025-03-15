@@ -301,7 +301,7 @@ class AccountingLiteNodeNetworkService(
                     f"requestBlocksHandler with outbound connection failed.\n\tnodeAddress={peers_node_address}\n\tErrorMessage={error_message}"
                 )
 
-                self._peer_manager.handle_connection_fault(peers_node_address)
+                self._peer_manager.handle_connection_fault(node_address=peers_node_address)
                 self._request_blocks_handler_map.pop(
                     (peers_node_address, start_block_height), None
                 )
