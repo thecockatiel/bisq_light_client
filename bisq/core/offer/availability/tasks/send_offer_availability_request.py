@@ -20,11 +20,11 @@ class SendOfferAvailabilityRequest(Task[OfferAvailabilityModel]):
             
             burning_man_selection_height = self.model.delayed_payout_tx_receiver_service.get_burning_man_selection_height()
             message = OfferAvailabilityRequest(
-                self.model.offer.id,
-                self.model.pub_key_ring,
-                self.model.get_takers_trade_price(),
-                self.model.is_taker_api_user,
-                burning_man_selection_height
+                offer_id=self.model.offer.id,
+                pub_key_ring=self.model.pub_key_ring,
+                takers_trade_price=self.model.get_takers_trade_price(),
+                is_taker_api_user=self.model.is_taker_api_user,
+                burning_man_selection_height=burning_man_selection_height
             )
             logger.info(f"Send {message.__class__.__name__} with offerId {message.offer_id} and uid {message.uid} to peer {self.model.peer_node_address}")
                 
