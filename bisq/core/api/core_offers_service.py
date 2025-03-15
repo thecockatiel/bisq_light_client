@@ -25,7 +25,7 @@ from bisq.core.util.price_util import PriceUtil
 from bitcoinj.base.coin import Coin
 from bitcoinj.base.utils.fiat import Fiat
 import grpc_pb2
-
+from bisq.core.offer.offer_util import OfferUtil
 
 if TYPE_CHECKING:
     from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.offer.offer_book_service import OfferBookService
     from bisq.core.offer.offer_filter_service import OfferFilterService
-    from bisq.core.offer.offer_util import OfferUtil
     from bisq.core.offer.open_offer import OpenOffer
     from bisq.core.offer.open_offer_manager import OpenOfferManager
     from bisq.core.provider.price.price_feed_service import PriceFeedService
@@ -55,7 +54,7 @@ class CoreOffersService:
         if is_my_offer:
             return self.get_my_offer(id).offer
         else:
-            self.get_offer(id)
+            return self.get_offer(id)
 
     def __init__(
         self,
