@@ -26,10 +26,9 @@ class Res:
         Res.set_base_currency_code(base_currency_network.currency_code)
         Res.set_base_currency_name(base_currency_network.currency_name)
         i18n_dir = core_resource_dir.joinpath("i18n")
-        for file in i18n_dir.glob("*.properties"):
-            parsed = parse_resource_bundle(file)
-            if parsed:
-                Res.resources.update(parse_resource_bundle(file))
+        parsed = parse_resource_bundle(i18n_dir.joinpath("displayStrings.properties")) # english locale
+        if parsed:
+            Res.resources.update(parsed)
 
     @staticmethod
     def set_base_currency_code(base_currency_code: str):
