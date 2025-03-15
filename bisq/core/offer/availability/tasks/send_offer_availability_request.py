@@ -23,7 +23,7 @@ class SendOfferAvailabilityRequest(Task[OfferAvailabilityModel]):
                 self.model.offer.id,
                 self.model.pub_key_ring,
                 self.model.get_takers_trade_price(),
-                self.model.is_taker_api_user(),
+                self.model.is_taker_api_user,
                 burning_man_selection_height
             )
             logger.info(f"Send {message.__class__.__name__} with offerId {message.offer_id} and uid {message.uid} to peer {self.model.peer_node_address}")
