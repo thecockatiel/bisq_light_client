@@ -12,6 +12,13 @@
       "console": "integratedTerminal",
       "args": [
         "--apiPassword=123456",
+        "--genesisBlockHeight=111",
+        "--genesisTxId=30af0050040befd8af25068cc697e418e09c2d8ebd8d411d2240591b9ec203cf",
+        "--baseCurrencyNetwork=BTC_REGTEST",
+        "--useDevPrivilegeKeys=true",
+        "--useLocalhostForP2P=true",
+        "--nodePort=6687",
+        "--appName=bisq_light_python_BTC_REGTEST_steve",
         "--useDevCommands"
         // #################################
         // "--logLevel=DEBUG",
