@@ -266,7 +266,7 @@ class WalletService(ABC):
     def _get_transaction_confidence(
         self, tx: "Transaction", address: "Address"
     ) -> Optional["TransactionConfidence"]:
-        tx.add_info_from_wallet(self.wallet)
+        self.wallet.add_info_from_wallet(tx)
         transaction_confidence_list = [
             self.get_confidence_for_tx_id(output.parent.get_tx_id())
             for output in self._get_outputs_with_connected_outputs(tx)

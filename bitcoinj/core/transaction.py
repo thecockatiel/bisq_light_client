@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Optional, Union
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
+from bitcoinj.core.transaction_confidence import TransactionConfidence
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
@@ -66,8 +68,12 @@ class Transaction:
         self._included_in_best_chain_at: Optional[datetime] = None
         """Date of the block that includes this transaction on the best chain"""
 
-        self._tx_mined_info: Optional["TxMinedInfo"] = None
-        self._label: Optional[str] = None
+        self.memo: Optional[str] = None
+        """
+        it should be retrieved from the wallet
+        it's called "label" in electrum
+        """
+        self.confidence: Optional["TransactionConfidence"] = None
 
     @property
     def update_time(self):
@@ -80,38 +86,17 @@ class Transaction:
             self._update_time = datetime.fromtimestamp(0, tz=timezone.utc)
         return self._update_time
 
-    @property
-    def height(self):
-        return self._tx_mined_info.height if self._tx_mined_info else None
+    @update_time.setter
+    def update_time(self, value: Optional[datetime]):
+        self._update_time = value
 
     @property
     def confirmations(self):
-        return self._tx_mined_info.conf if self._tx_mined_info else None
+        return self.confidence.confirmations if self.confidence else None
 
     @property
     def is_pending(self):
-        if (
-            self._tx_mined_info is not None
-            and self._tx_mined_info.height > 0
-            and self._tx_mined_info.conf == 0
-        ):
-            return True
-        return False
-
-    @property
-    def has_info_from_wallet(self):
-        return self._tx_mined_info is not None
-
-    def add_info_from_wallet(self, wallet: "Wallet"):
-        wallet.add_info_from_wallet(self)
-        txid = self.get_tx_id()
-        self._tx_mined_info = wallet.get_tx_mined_info(txid)
-        if self._tx_mined_info.timestamp:
-            self._update_time = datetime.fromtimestamp(
-                self._tx_mined_info.timestamp, tz=timezone.utc
-            )
-            self._included_in_best_chain_at = self._update_time
-        self._label = wallet.get_label_for_txid(txid)
+        return self.confidence.confidence_type == TransactionConfidenceType.PENDING if self.confidence else False
 
     @property
     def lock_time(self):
@@ -159,6 +144,10 @@ class Transaction:
     @property
     def included_in_best_chain_at(self):
         return self._included_in_best_chain_at
+    
+    @included_in_best_chain_at.setter
+    def included_in_best_chain_at(self, value: Optional[datetime]):
+        self._included_in_best_chain_at = value
 
     def get_sig_op_count(self):
         sig_ops = 0
@@ -205,16 +194,6 @@ class Transaction:
     @property
     def is_time_locked(self):
         return self.lock_time > 0
-
-    @property
-    def memo(self):
-        # it should be retrieved from the wallet
-        # it's called "label" in electrum
-        return self._label
-
-    @memo.setter
-    def memo(self, value: str):
-        self._label = value
 
     @property
     def has_relative_lock_time(self):

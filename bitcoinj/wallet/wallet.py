@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import random
 from threading import Lock
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
@@ -46,7 +47,7 @@ from electrum_min.transaction import (
     PartialTxOutput as ElectrumPartialTxOutput,
 )
 from electrum_min.network import Network
-from electrum_min.util import EventListener, InvalidPassword, event_listener
+from electrum_min.util import EventListener, InvalidPassword, TxMinedInfo, event_listener
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.preconditions import check_argument, check_state
@@ -76,8 +77,10 @@ class Wallet(EventListener):
         self._network_params = network_params
         self._change_listeners = ThreadSafeSet["WalletChangeEventListener"]()
         self._registered_for_callbacks = False
-        self._tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
+        self._new_tx_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
         self._tx_changed_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
+        self._tx_verified_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
+        self._tx_removed_listeners = ThreadSafeSet[Callable[["Transaction"], None]]()
         self.register_electrum_callbacks()
         self._last_balance = 0
         self._available_balance_property = SimpleProperty(Coin.ZERO())
@@ -106,10 +109,18 @@ class Wallet(EventListener):
         if self._electrum_wallet == wallet:
             self.on_wallet_changed()
 
+            wrapped_tx = None
             if self._tx_changed_listeners:
                 wrapped_tx = self.get_transaction(txid)
-                wrapped_tx.add_info_from_wallet(self)
+                self.add_info_from_wallet(wrapped_tx)
                 for listener in self._tx_changed_listeners:
+                    listener(wrapped_tx)
+
+            if self._tx_verified_listeners:
+                if not wrapped_tx:
+                    wrapped_tx = self.get_transaction(txid)
+                    self.add_info_from_wallet(wrapped_tx)
+                for listener in self._tx_verified_listeners:
                     listener(wrapped_tx)
 
     @event_listener
@@ -117,15 +128,15 @@ class Wallet(EventListener):
         if self._electrum_wallet == wallet:
             self.on_wallet_changed()
 
-            if self._tx_listeners:
+            if self._new_tx_listeners:
                 wrapped_tx = Transaction(self._network_params, tx)
-                wrapped_tx.add_info_from_wallet(self)
-                for listener in self._tx_listeners:
+                self.add_info_from_wallet(wrapped_tx)
+                for listener in self._new_tx_listeners:
                     listener(wrapped_tx)
 
             if self._tx_changed_listeners:
                 wrapped_tx = Transaction(self._network_params, tx)
-                wrapped_tx.add_info_from_wallet(self)
+                self.add_info_from_wallet(wrapped_tx)
                 for listener in self._tx_changed_listeners:
                     listener(wrapped_tx)
 
@@ -133,6 +144,12 @@ class Wallet(EventListener):
     def on_event_removed_transaction(self, wallet, tx):
         if self._electrum_wallet == wallet:
             self.on_wallet_changed()
+
+            if self._tx_removed_listeners:
+                wrapped_tx = Transaction(self._network_params, tx)
+                self.add_info_from_wallet(wrapped_tx)
+                for listener in self._tx_removed_listeners:
+                    listener(wrapped_tx)
 
     @event_listener
     def on_event_wallet_updated(self, wallet):
@@ -228,11 +245,11 @@ class Wallet(EventListener):
         return False
 
     def add_new_tx_listener(self, listener: Callable[["Transaction"], None]):
-        self._tx_listeners.add(listener)
+        self._new_tx_listeners.add(listener)
 
     def remove_new_tx_listener(self, listener: Callable[["Transaction"], None]):
-        if listener in self._tx_listeners:
-            self._tx_listeners.discard(listener)
+        if listener in self._new_tx_listeners:
+            self._new_tx_listeners.discard(listener)
             return True
         return False
 
@@ -242,6 +259,24 @@ class Wallet(EventListener):
     def remove_tx_changed_listener(self, listener: Callable[["Transaction"], None]):
         if listener in self._tx_changed_listeners:
             self._tx_changed_listeners.discard(listener)
+            return True
+        return False
+    
+    def add_tx_verified_listener(self, listener: Callable[["Transaction"], None]):
+        self._tx_verified_listeners.add(listener)
+    
+    def remove_tx_verified_listener(self, listener: Callable[["Transaction"], None]):
+        if listener in self._tx_verified_listeners:
+            self._tx_verified_listeners.discard(listener)
+            return True
+        return False
+    
+    def add_tx_removed_listener(self, listener: Callable[["Transaction"], None]):
+        self._tx_removed_listeners.add(listener)
+
+    def remove_tx_removed_listener(self, listener: Callable[["Transaction"], None]):
+        if listener in self._tx_removed_listeners:
+            self._tx_removed_listeners.discard(listener)
             return True
         return False
 
@@ -320,7 +355,7 @@ class Wallet(EventListener):
         e_tx = self._electrum_wallet.db.get_transaction(txid)
         if e_tx:
             tx = Transaction(self.network_params, e_tx)
-            tx.add_info_from_wallet(self)
+            self.add_info_from_wallet(tx)
             return tx
         return None
 
@@ -332,7 +367,7 @@ class Wallet(EventListener):
         """return an Generator that returns all transactions in the wallet, newest first"""
         for tx in reversed(self._electrum_wallet.db.transactions.values()):
             tx = Transaction(self.network_params, tx)
-            tx.add_info_from_wallet(self)
+            self.add_info_from_wallet(tx)
             yield tx
 
     def _get_possibly_not_broadcasted_txs(self):
@@ -351,7 +386,9 @@ class Wallet(EventListener):
         def on_done(f: Future, tx: "Transaction"):
             try:
                 f.result()
-                logger.info(f"Broadcasting completed for txid: {tx.get_tx_id()} wtxid: {tx.get_wtx_id()}")
+                logger.info(
+                    f"Broadcasting completed for txid: {tx.get_tx_id()} wtxid: {tx.get_wtx_id()}"
+                )
             except Exception as e:
                 logger.warning(
                     f"Error when trying to broadcast tx at wallet start: {e}"
@@ -359,9 +396,9 @@ class Wallet(EventListener):
 
         for tx in self._get_possibly_not_broadcasted_txs():
             logger.info(f"Broadcasting possibly not broadcasted tx: {tx}")
-            as_future(
-                self.broadcast_tx(tx)
-            ).add_done_callback(lambda f, tx=tx: on_done(f, tx))
+            as_future(self.broadcast_tx(tx)).add_done_callback(
+                lambda f, tx=tx: on_done(f, tx)
+            )
 
     def get_tx_mined_info(self, txid: str):
         return self._electrum_wallet.adb.get_tx_height(txid)
@@ -372,6 +409,13 @@ class Wallet(EventListener):
         tx.inputs.invalidate()
         tx.outputs.invalidate()
         tx.memo = self.get_label_for_txid(tx.get_tx_id())
+        mined_info = self.get_tx_mined_info(tx.get_tx_id())
+        update_time = datetime.fromtimestamp(
+            mined_info.timestamp, tz=timezone.utc
+        )
+        tx.update_time = update_time
+        tx.included_in_best_chain_at = update_time
+        tx.confidence = self._get_confidence_from_tx_mined_info(tx.get_tx_id(), mined_info)
 
     def get_label_for_txid(self, txid: str):
         return self._electrum_wallet.get_label_for_txid(txid)
@@ -410,20 +454,24 @@ class Wallet(EventListener):
     ) -> Optional["TransactionConfidence"]:
         if not tx_id:
             return None
-
         info = self.get_tx_mined_info(tx_id)
-        if info.conf > 0:
+        return self._get_confidence_from_tx_mined_info(tx_id, info)
+    
+    def _get_confidence_from_tx_mined_info(self, tx_id: str, info: "TxMinedInfo"):
+        if info.conf:
             return TransactionConfidence(
                 tx_id,
                 depth=self.last_block_seen_height - info.height,
                 appeared_at_chain_height=info.height,
                 confidence_type=TransactionConfidenceType.BUILDING,
+                confirmations=info.conf,
             )
         else:
             is_pending = self.is_transaction_pending(tx_id)
             return TransactionConfidence(
                 tx_id,
                 depth=0,
+                appeared_at_chain_height=info.height,
                 confidence_type=(
                     TransactionConfidenceType.PENDING
                     if is_pending

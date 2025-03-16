@@ -106,8 +106,8 @@ class TransactionOutput:
         return self.parent.get_tx_id()
 
     def get_parent_transaction_depth_in_blocks(self) -> int:
-        if self.parent is not None and self.parent.has_info_from_wallet:
-            return self.parent.confirmations
+        if self.parent.confirmations:
+            return self.parent.confidence.depth
         return -1
 
     def is_for_wallet(self, wallet: "Wallet") -> bool:

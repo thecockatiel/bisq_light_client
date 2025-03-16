@@ -1,16 +1,6 @@
-from concurrent.futures import Future
-from typing import TYPE_CHECKING
+from typing import Optional
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
-from utils.concurrency import ThreadSafeSet
-
-if TYPE_CHECKING:
-    from bitcoinj.core.listeners.transaction_confidence_change_reason import (
-        TransactionConfidenceChangeReason,
-    )
-    from bitcoinj.core.listeners.transaction_confidence_changed_listener import (
-        TransactionConfidenceChangedListener,
-    )
 
 
 # TODO
@@ -20,8 +10,9 @@ class TransactionConfidence:
         self,
         tx_id: str,
         *,
-        depth = 0,
-        appeared_at_chain_height = -1,
+        confirmations: Optional[int] = None,
+        depth=0,
+        appeared_at_chain_height=-1,
         confidence_type: "TransactionConfidenceType" = None,
     ) -> None:
         self.depth = depth
@@ -50,3 +41,5 @@ class TransactionConfidence:
         self.confidence_source = TransactionConfidenceSource.NETWORK
         """always Network since we use electrum"""
 
+        self.confirmations = confirmations
+        """None if not confirmed"""
