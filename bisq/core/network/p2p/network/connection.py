@@ -1,6 +1,9 @@
+from utils.aio import as_future
+import asyncio
+from electrum_min.util import wait_for2
 import concurrent.futures
 from datetime import timedelta
-from io import BufferedReader
+from io import IOBase
 import socket as Socket
 import threading
 import time
@@ -108,7 +111,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.connection_statistics = ConnectionStatistics(self, self.connection_state)
         self.peers_node_address: Optional["NodeAddress"] = None
         self.proto_output_stream: Optional["ProtoOutputStream"] = None
-        self.proto_input_stream: Optional["BufferedReader"] = None
+        self.proto_input_stream: Optional["IOBase"] = None
         self.init(peers_node_address)
 
     def init(self, peers_node_address: Optional['NodeAddress']):
@@ -339,41 +342,57 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     try:
                         reason = self.rule_violation.name if close_connection_reason == CloseConnectionReason.RULE_VIOLATION else close_connection_reason.name
                         self.send_message(CloseConnectionMessage(reason=reason))
+                        self.stopped.set(True)
+
+                        time.sleep(0.2)
                     except Exception as e:
                         logger.error(e, exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
                     finally:
                         self.stopped.set(True)
-                        UserThread.run_after(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler), timedelta(milliseconds=200))
+                        UserThread.run_after(lambda: as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler)), timedelta(milliseconds=200))
                 threading.Thread(target=handle_shut_down, name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
             else:
                 self.stopped.set(True)
-                self.do_shut_down(close_connection_reason, shut_down_complete_handler)
+                as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler))
         else:
             logger.debug("stopped was already at shutDown call")
-            UserThread.execute(lambda: self.do_shut_down(close_connection_reason, shut_down_complete_handler))
+            UserThread.execute(lambda: as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler)))
 
-    def do_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
+    async def do_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
         # Use UserThread.execute as it's not clear if that is called from a non-UserThread
         UserThread.execute(lambda: self.connection_listener.on_disconnect(close_connection_reason, self))
-        try:
-            self.proto_output_stream.on_connection_shutdown()
-            self.socket.close()
-        except (Socket.error, ConnectionError, BrokenPipeError) as e:
-            logger.trace(f"SocketException at shutdown might be expected. {e}")
-        except Exception as e:
-            logger.error(f"Exception at shutdown. {e}", exc_info=e)
-        finally:
+        
+        completed = False
+        def close_streams():
+            nonlocal completed
             self.capabilities_listeners.clear()
             try:
-                self.proto_input_stream.close()
+                self.proto_output_stream.on_connection_shutdown()
+                self.socket.shutdown(Socket.SHUT_RDWR)
+                self.socket.close()
+            except (Socket.error, ConnectionError, BrokenPipeError) as e:
+                logger.trace(f"SocketException at shutdown might be expected. {e}")
             except Exception as e:
-                logger.error(str(e), exc_info=e)
-            
-            self.executor.shutdown(wait=True, cancel_futures=True)
-            logger.debug(f"Connection shutdown complete {self}")
+                logger.error(f"Exception at shutdown. {e}", exc_info=e)
+            finally:
+                self.executor.shutdown(wait=True, cancel_futures=True)
+                logger.debug(f"Connection shutdown complete {self}")
+                if completed: return
+                completed = True
 
-            #  Use UserThread.execute as it's not clear if that is called from a non-UserThread
-            if shut_down_complete_handler is not None:
+                #  Use UserThread.execute as it's not clear if that is called from a non-UserThread
+                if shut_down_complete_handler is not None:
+                    UserThread.execute(shut_down_complete_handler)
+
+        thread = threading.Thread(name=f"close streams connection {self.uid}", target=close_streams, daemon=True)
+        thread.start()
+
+        try:
+            await wait_for2(asyncio.Future(), Connection.SHUTDOWN_TIMEOUT_SEC)
+        except asyncio.TimeoutError:
+            if not completed and shut_down_complete_handler is not None:
+                completed = True
+
                 UserThread.execute(shut_down_complete_handler)
 
     def __call__(self, *args, **kwargs):

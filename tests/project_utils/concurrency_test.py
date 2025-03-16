@@ -123,6 +123,11 @@ class TestThreadSafeSet(unittest.TestCase):
         
         # Verify the result contains all values
         self.assertEqual(normal_set, {1, 2, 3, 4, 5, 6})
+    
+    def test_bool_conversion(self):
+        self.assertFalse(bool(self.safe_set))
+        self.safe_set.add(1)
+        self.assertTrue(bool(self.safe_set))
 
 class TestThreadSafeWeakSet(unittest.TestCase):
     def setUp(self):

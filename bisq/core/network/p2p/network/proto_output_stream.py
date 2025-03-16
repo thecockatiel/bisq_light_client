@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from io import BufferedWriter
 
 class ProtoOutputStream:
-    def __init__(self, output_stream: 'BufferedWriter', statistic: 'Statistic'):
+    def __init__(self, output_stream: 'socket.SocketIO', statistic: 'Statistic'):
         self.output_stream = output_stream
         self.statistic = statistic
         self.is_connection_active = AtomicBoolean(True)
@@ -26,7 +26,7 @@ class ProtoOutputStream:
     def write_envelope(self, envelope: 'NetworkEnvelope'):
         with self.lock:
             try:
-                self.write_envelope_or_throw(envelope)
+                self._write_envelope_or_throw(envelope)
             except (IOError, BrokenPipeError, ConnectionError) as e:
                 if not self.is_connection_active.get():
                     # Connection was closed by us.
@@ -37,19 +37,8 @@ class ProtoOutputStream:
 
     def on_connection_shutdown(self):
         self.is_connection_active.set(False)
-        acquired_lock = self.try_to_acquire_lock()
-        if not acquired_lock:
-            return
-        try:
-            self.output_stream.close()
-        except (ConnectionError, BrokenPipeError):
-            pass
-        except Exception as t:
-            logger.error("Failed to close connection", exc_info=t)
-        finally:
-            self.lock.release()
 
-    def write_envelope_or_throw(self, envelope: 'NetworkEnvelope'):
+    def _write_envelope_or_throw(self, envelope: 'NetworkEnvelope'):
         ts = get_time_ms()
         proto = envelope.to_proto_network_envelope()
         write_delimited(self.output_stream, proto)
@@ -61,8 +50,3 @@ class ProtoOutputStream:
         self.statistic.add_sent_message(envelope)
         if not isinstance(envelope, KeepAliveMessage):
             self.statistic.update_last_activity_timestamp()
-
-    def try_to_acquire_lock(self) -> bool:
-        from bisq.core.network.p2p.network.connection import Connection
-        return self.lock.acquire(True, Connection.SHUTDOWN_TIMEOUT_SEC)
-        

@@ -1,5 +1,7 @@
+from utils.aio import as_future, get_asyncio_loop, run_in_thread, wait_future_blocking
+from asyncio import Future
 from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
-from utils.aio import as_future, run_in_thread
+from electrum_min.util import wait_for2
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
@@ -13,6 +15,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.setup_listener import SetupListener
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.utils.utils import Utils
+from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -55,6 +58,7 @@ class TorNetworkNode(NetworkNode):
         self.tor: Optional["Tor"] = None
         self.tor_mode = tor_mode
         self.__shutdown_in_progress = False
+        self.__create_socket_futures = ThreadSafeSet[Future]()
 
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         await run_in_thread(self.tor_mode.do_rolling_backup)
@@ -72,7 +76,7 @@ class TorNetworkNode(NetworkNode):
         check_argument(peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address")
         assert self.socks_proxy, "Tor proxy not ready"
         sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(240) # Connection.SOCKET_TIMEOUT_SEC
+        sock.setblocking(False)
         sock.set_proxy(
             proxy_type=socks.SOCKS5,
             addr="127.0.0.1",
@@ -81,7 +85,18 @@ class TorNetworkNode(NetworkNode):
             username=self.socks_proxy.username,
             password=self.socks_proxy.password,
         )
-        sock.connect((peer_node_address.host_name, peer_node_address.port))
+        f = as_future(
+            wait_for2(
+                get_asyncio_loop().sock_connect(sock, (peer_node_address.host_name, peer_node_address.port)),
+                240
+            )
+        )
+        self.__create_socket_futures.add(f)
+        try:
+            wait_future_blocking(f)
+        finally: 
+            self.__create_socket_futures.discard(f)
+            sock.setblocking(True)
         return sock
     
     @property
@@ -116,6 +131,10 @@ class TorNetworkNode(NetworkNode):
         def complete_handler():
             f = None
             try:
+                if self.__create_socket_futures:
+                    for f in self.__create_socket_futures:
+                        f.cancel()
+                    self.__create_socket_futures.clear()
                 if self.hidden_service_socket:
                     self.hidden_service_socket.close()
                     self.hidden_service_socket = None

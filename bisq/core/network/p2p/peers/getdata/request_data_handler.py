@@ -128,7 +128,7 @@ class RequestDataHandler(MessageListener):
         except Exception as e:
             if not self._stopped:
                 message = (
-                    f"Sending getDataRequest to {node_address}failed. "
+                    f"Sending getDataRequest to {node_address} failed. "
                     f"That is expected if the peer is offline.\n\t"
                     f"getDataRequest={get_data_request}.\n\t"
                     f"Exception={e}"
