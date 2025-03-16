@@ -18,7 +18,7 @@ from utils.data import raise_required
 class AckMessage(NetworkEnvelope):
     TTL: int = 7 * 24 * 60 * 60 * 1000 # 604800000 ms or 7 days
 
-    uid: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
+    uid: str = field(default_factory=lambda: str(uuid.uuid4()))
     sender_node_address: NodeAddress = field(default_factory=raise_required)
     source_type: AckMessageSourceType = field(default_factory=raise_required)
     source_msg_class_name: str = field(default_factory=raise_required)

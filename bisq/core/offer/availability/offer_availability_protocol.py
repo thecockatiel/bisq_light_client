@@ -12,9 +12,9 @@ from bisq.core.offer.availability.tasks.process_offer_availability_response impo
 from bisq.core.offer.availability.tasks.send_offer_availability_request import SendOfferAvailabilityRequest
 from bisq.core.util.validator import Validator
 from bisq.core.offer.offer_state import OfferState
+from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
 
 if TYPE_CHECKING:
-    from bisq.core.offer.availability.messages.offer_availability_response import OfferAvailabilityResponse
     from bisq.core.offer.availability.offer_availability_model import OfferAvailabilityModel
     from bisq.common.handlers.error_message_handler import ErrorMessageHandler
     from bisq.common.handlers.result_handler import ResultHandler

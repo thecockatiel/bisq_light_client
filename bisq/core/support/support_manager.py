@@ -6,9 +6,10 @@ from bisq.common.user_thread import UserThread
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
 from utils.concurrency import ThreadSafeSet
+from bisq.core.support.messages.support_message import SupportMessage
+from bisq.core.network.p2p.ack_message import AckMessage
 
 if TYPE_CHECKING:
-    from bisq.core.network.p2p.ack_message import AckMessage
     from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
     from bisq.core.support.messages.chat_messsage import ChatMessage
     from bisq.core.support.support_type import SupportType
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
         DecryptedMessageWithPubKey,
     )
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.support.messages.support_message import SupportMessage
 
 logger = get_logger(__name__)
 
@@ -236,13 +236,13 @@ class SupportManager(ABC):
         trade_id = support_message.get_trade_id()
         uid = support_message.uid
         ack_message = AckMessage(
-            self.p2p_service.network_node.node_address_property.value,
-            self.get_ack_message_source_type(),
-            support_message.__class__.__name__,
-            uid,
-            trade_id,
-            result,
-            error_message
+            sender_node_address=self.p2p_service.network_node.node_address_property.value,
+            source_type=self.get_ack_message_source_type(),
+            source_msg_class_name=support_message.__class__.__name__,
+            source_uid=uid,
+            source_id=trade_id,
+            success=result, 
+            error_message=error_message,
         )
         peers_node_address = support_message.sender_node_address
         

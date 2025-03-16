@@ -31,18 +31,16 @@ class OfferAvailabilityResponse(OfferMessage, SupportedCapabilitiesMessage):
             offer.uid = self.uid
         
         if self.mediator:
-            offer.mediator = self.mediator.to_proto_message()
+            offer.mediator.CopyFrom(self.mediator.to_proto_message())
         
         if self.refund_agent:
-            offer.refund_agent = self.refund_agent.to_proto_message()
+            offer.refund_agent.CopyFrom(self.refund_agent.to_proto_message())
         
         if self.arbitrator:
-            offer.arbitrator = self.arbitrator.to_proto_message()
+            offer.arbitrator.CopyFrom(self.arbitrator.to_proto_message())
         
         envelope = self.get_network_envelope_builder()
-        envelope.offer_availability_response.CopyFrom(protobuf.OfferAvailabilityResponse(
-            offer=offer
-        ))
+        envelope.offer_availability_response.CopyFrom(offer)
         return envelope
 
     @staticmethod
