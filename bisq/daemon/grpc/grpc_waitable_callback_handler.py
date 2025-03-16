@@ -1,5 +1,6 @@
 import threading
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.offer.availability.availability_result import AvailabilityResult
 from grpc_pb2 import AvailabilityResultWithDescription
 import pb_pb2
@@ -59,7 +60,7 @@ class GrpcWaitableCallbackHandler(Generic[_T]):
         for result in AvailabilityResult:
             if result.name in error_message.upper():
                 return result
-        raise ValueError(
+        raise IllegalArgumentException(
             f"Could not find an AvailabilityResult in error message:\n{error_message}"
         )
 
