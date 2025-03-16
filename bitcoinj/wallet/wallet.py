@@ -282,7 +282,7 @@ class Wallet(EventListener):
         self._electrum_wallet.start_network(self._electrum_network)
         self._maybe_broadcast_possibly_not_broadcasted_txs()
 
-    def get_balances(self):
+    def get_balances_for_display(self):
         """returns a set of balances for display purposes: confirmed and matured, unconfirmed, unmatured"""
         return self._electrum_wallet.get_balance()
 
