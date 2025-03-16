@@ -721,7 +721,7 @@ class CliMain:
             p(
                 row_format.format(
                     CliMethods.createoffer.name,
-                    "--payment-account=<payment-account-id> \\",
+                    "--payment-account-id=<payment-account-id> \\",
                     "Create and place an offer",
                 )
             )
@@ -800,7 +800,7 @@ class CliMain:
                     "Take offer with id",
                 )
             )
-            p(row_format.format("", "[--payment-account=<payment-account-id>]", ""))
+            p(row_format.format("", "[--payment-account-id=<payment-account-id>]", ""))
             p(row_format.format("", "[--fee-currency=<btc|bsq>]", ""))
             p(
                 row_format.format(
