@@ -117,7 +117,7 @@ class UnconfirmedBsqChangeOutputListService(PersistedDataHost):
     def on_transaction_confidence_changed(self, tx: "Transaction"):
         if (
             tx is not None
-            and tx.get_confidence().confidence_type
+            and tx.confidence.confidence_type
             == TransactionConfidenceType.BUILDING
         ):
             self.remove_connected_outputs_of_inputs_of_tx(tx)
