@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, List
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
+from bisq.core.btc.wallet.wallet_transactions_change_listener import WalletTransactionsChangeListener
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from utils.data import SimpleProperty
 from collections import Counter as Multiset
@@ -35,8 +36,10 @@ class BsqSwapTradeManager(PersistedDataHost):
         # Used for listening for notifications in the UI 
         self.completed_bsq_swap_trade_property = SimpleProperty['BsqSwapTrade']()
 
-        bsq_wallet_service.add_wallet_transactions_change_listener(
-            lambda: setattr(self, 'confirmed_bsq_swap_node_address_cache', None))
+        class Listener(WalletTransactionsChangeListener):
+            def on_wallet_transactions_change(self_):
+                self.confirmed_bsq_swap_node_address_cache = None
+        bsq_wallet_service.add_wallet_transactions_change_listener(Listener())
         self.bsq_swap_trades.add_listener(
             lambda c: setattr(self, 'confirmed_bsq_swap_node_address_cache', None))
 
