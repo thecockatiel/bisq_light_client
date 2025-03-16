@@ -37,3 +37,6 @@ class DecryptedMessageWithPubKey(PersistablePayload):
         if not isinstance(other, DecryptedMessageWithPubKey):
             return False
         return self.network_envelope == other.network_envelope and self.signature_pub_key_bytes == other.signature_pub_key_bytes
+
+    def __hash__(self):
+        return hash(self.serialize_for_hash())
