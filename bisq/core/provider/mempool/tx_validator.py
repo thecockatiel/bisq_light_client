@@ -2,6 +2,7 @@ import json
 from typing import TYPE_CHECKING, Any, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.param.param import Param
+from bisq.core.dao.state.model.blockchain.tx import Tx
 from bitcoinj.base.coin import Coin
 from bisq.core.provider.mempool.fee_validation_status import FeeValidationStatus
 
@@ -77,26 +78,24 @@ class TxValidator:
         return self.end_result(status, "Maker tx validation (BTC)")
 
     def validate_bsq_fee_tx(self, is_maker: bool) -> "TxValidator":
-        # TODO: dai_state_service needs to be implemented first
-        raise NotImplementedError("DAO state service not implemented yet")
-        # tx = self.dao_state_service.get_tx(self.tx_id)
-        # status_str = f"{'Maker' if is_maker else 'Taker'} tx validation (BSQ)"
+        tx = self.dao_state_service.get_tx(self.tx_id)
+        status_str = f"{'Maker' if is_maker else 'Taker'} tx validation (BSQ)"
         
-        # if tx is None:
-        #     tx_age = self.chain_height - self.fee_payment_block_height
-        #     if tx_age > 48:
-        #         # still unconfirmed after 8 hours grace period we assume there may be SPV wallet issue.
-        #         # see github.com/bisq-network/bisq/issues/6603
-        #         status_str = f"BSQ tx {self.tx_id} not found, age={tx_age}: FAIL."
-        #         return self.end_result(FeeValidationStatus.NACK_BSQ_FEE_NOT_FOUND, status_str)
-        #     else:
-        #         logger.info(f"DAO does not yet have the tx {self.tx_id} (age={tx_age}), bypassing check of burnt BSQ amount.")
-        #         return self.end_result(FeeValidationStatus.ACK_BSQ_TX_IS_NEW, status_str)
-        # else:
-        #     return self.end_result(
-        #         self._check_fee_amount_bsq(tx, self.amount, is_maker, self.fee_payment_block_height),
-        #         status_str, 
-        #     )
+        if tx is None:
+            tx_age = self.chain_height - self.fee_payment_block_height
+            if tx_age > 48:
+                # still unconfirmed after 8 hours grace period we assume there may be SPV wallet issue.
+                # see github.com/bisq-network/bisq/issues/6603
+                status_str = f"BSQ tx {self.tx_id} not found, age={tx_age}: FAIL."
+                return self.end_result(FeeValidationStatus.NACK_BSQ_FEE_NOT_FOUND, status_str)
+            else:
+                logger.info(f"DAO does not yet have the tx {self.tx_id} (age={tx_age}), bypassing check of burnt BSQ amount.")
+                return self.end_result(FeeValidationStatus.ACK_BSQ_TX_IS_NEW, status_str)
+        else:
+            return self.end_result(
+                self._check_fee_amount_bsq(tx, self.amount, is_maker, self.fee_payment_block_height),
+                status_str, 
+            )
 
     def parse_json_validate_taker_fee_tx(self, json_txt: str, btc_fee_receivers: list[str]) -> "TxValidator":
         self.json_txt = json_txt
@@ -215,8 +214,7 @@ class TxValidator:
         return (FeeValidationStatus.NACK_MAKER_FEE_TOO_LOW if is_maker 
                 else FeeValidationStatus.NACK_TAKER_FEE_TOO_LOW)
 
-    def _check_fee_amount_bsq(self, bsq_tx, trade_amount: Coin, is_maker: bool, block_height: int) -> FeeValidationStatus:
-        # TODO: not reached because self.validate_bsq_fee_tx is not implemented
+    def _check_fee_amount_bsq(self, bsq_tx: "Tx", trade_amount: Coin, is_maker: bool, block_height: int) -> FeeValidationStatus:
         min_fee_param = Param.MIN_MAKER_FEE_BSQ if is_maker else Param.MIN_TAKER_FEE_BSQ
         expected_fee = self._calculate_fee(
             trade_amount,
@@ -225,7 +223,7 @@ class TxValidator:
         )
         expected_fee_as_long = expected_fee.value
 
-        fee_value = bsq_tx.get_burnt_bsq()
+        fee_value = bsq_tx.burnt_bsq
         logger.debug(f"BURNT BSQ maker fee: {fee_value/100.0} BSQ ({fee_value} sats)")
         description = f"Expected fee: {expected_fee_as_long/100.0:.2f} BSQ, actual fee paid: {fee_value/100.0:.2f} BSQ, Trade amount: {trade_amount.to_plain_string()}"
 
@@ -234,7 +232,7 @@ class TxValidator:
             return FeeValidationStatus.ACK_FEE_OK
 
         if expected_fee_as_long < fee_value:
-            logger.info(f"The fee was more than what we expected. {description} Tx:{bsq_tx.get_id()}")
+            logger.info(f"The fee was more than what we expected. {description} Tx:{bsq_tx.id}")
             return FeeValidationStatus.ACK_FEE_OK
 
         leniency_calc = fee_value / expected_fee_as_long
