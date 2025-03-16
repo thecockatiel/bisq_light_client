@@ -8,8 +8,10 @@ class MyBlindVoteList(PersistableList["BlindVote"], ConsensusCritical):
     """List of my own blind votes. Blind votes received from other voters are stored in the BlindVoteStore."""
 
     def to_proto_message(self):
-        return protobuf.MyBlindVoteList(
-            blind_vote=[vote.to_proto_message() for vote in self]
+        return protobuf.PersistableEnvelope(
+            my_blind_vote_list=protobuf.MyBlindVoteList(
+                blind_vote=[vote.to_proto_message() for vote in self]
+            )
         )
 
     @staticmethod
