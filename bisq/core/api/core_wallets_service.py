@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
-from bisq.common.user_thread import UserThread
 from bisq.core.api.exception.failed_precondition_exception import (
     FailedPreconditionException,
 )
@@ -39,6 +38,7 @@ from functools import cache
 from utils.aio import FutureCallback
 
 if TYPE_CHECKING:
+    from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.api.core_context import CoreContext
@@ -363,7 +363,7 @@ class CoreWalletsService:
 
     def get_transaction_confirmations(self, tx_id: str) -> int:
         return (
-            self._get_transaction_with_id(tx_id).get_confidence().depth
+            self._get_transaction_confidence(tx_id).depth
         )
 
     def get_num_confirmations_for_most_recent_transaction(
@@ -558,4 +558,20 @@ class CoreWalletsService:
             logger.error(str(ex))
             raise IllegalStateException(
                 f"could not get transaction with id {tx_id}\ncause: {str(ex).lower()}"
+            )
+
+    def _get_transaction_confidence(self, tx_id: str) -> "TransactionConfidence":
+        if len(tx_id) != 64:
+            raise IllegalArgumentException(f"{tx_id} is not a transaction id")
+
+        self._get_transaction_with_id(tx_id) # raises if not found
+        try:
+            confidence = self.btc_wallet_service.get_confidence_for_tx_id(tx_id)
+            if confidence is None:
+                raise IllegalStateException(f"wallet not initialized yet")
+            return confidence
+        except IllegalArgumentException as ex:
+            logger.error(str(ex))
+            raise IllegalStateException(
+                f"could not get confidence for txid {tx_id}\ncause: {str(ex).lower()}"
             )
