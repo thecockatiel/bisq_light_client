@@ -834,21 +834,6 @@ class Wallet(EventListener):
         output.value = output.value - fee.value
         return not TransactionOutput.is_dust(output)
 
-    def is_unconfirmed_transactions_limit_hit(self) -> bool:
-        """Check if there are more than 20 unconfirmed transactions in the chain right now."""
-        # For published delayed payout transactions we do not receive the tx confidence
-        # so we cannot check if it is confirmed so we ignore it for that check. The check is any arbitrarily
-        # using a limit of 20, so we don't need to be exact here. Should just reduce the likelihood of issues with
-        # the too long chains of unconfirmed transactions.
-        return (
-            sum(
-                1
-                for tx in self.get_transactions()
-                if tx.lock_time == 0 and self.is_transaction_pending(tx.get_tx_id())
-            )
-            > 20
-        )
-
     def send_coins(self, send_request: "SendRequest"):
         self.complete_tx(send_request)
         return as_future(self.broadcast_tx(send_request.tx))
