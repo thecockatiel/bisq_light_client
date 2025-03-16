@@ -40,7 +40,7 @@ class CommonSetup:
             shutdown_initiated = True
             logger.info(f"Received signal {sig}")
             UserThread.execute(
-                lambda: graceful_shut_down_handler.graceful_shut_down(lambda: None)
+                lambda: graceful_shut_down_handler.graceful_shut_down(lambda *_: None)
             )
 
         if platform.system() == "Windows":
@@ -59,7 +59,7 @@ class CommonSetup:
                         except (KeyboardInterrupt, EOFError):
                             UserThread.execute(
                                 lambda: graceful_shut_down_handler.graceful_shut_down(
-                                    lambda: None
+                                    lambda *_: None
                                 )
                             )
                             break

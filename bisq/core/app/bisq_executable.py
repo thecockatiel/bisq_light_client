@@ -173,15 +173,14 @@ class BisqExecutable(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     # This might need to be overwritten in case the application is not using all modules
-    def graceful_shut_down(self, result_handler: Callable[[], None]):
+    def graceful_shut_down(self, result_handler: Callable[[int], None]):
         if self.__is_shutdown_in_progress.get_and_set(True):
             return
         logger.info("Start graceful shutDown")
 
         if self._injector is None:
             logger.info("Shut down called before injector was created")
-            result_handler()
-            return stop_reactor_and_exit(BisqExecutable.EXIT_SUCCESS)
+            result_handler(BisqExecutable.EXIT_SUCCESS)
 
         def timeout_handler():
             logger.warning("Graceful shutdown not completed in 10 sec. Triggering timeout handler.")
@@ -235,12 +234,11 @@ class BisqExecutable(
             logger.info("PersistenceManager flushAllDataToDiskAtShutdown started")
             PersistenceManager.flush_all_data_to_disk_at_shutdown(lambda: self._on_flush_complete(result_handler, status))
         else:
-            UserThread.run_after(lambda: stop_reactor_and_exit(status), timedelta(milliseconds=100))
+            self._on_flush_complete(result_handler, status)
 
     def _on_flush_complete(self, result_handler: Callable[[], None], status: int):
         logger.info("Graceful shutdown completed. Exiting now.")
-        result_handler()
-        UserThread.run_after(lambda: stop_reactor_and_exit(status), timedelta(milliseconds=100))
+        result_handler(status)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // UncaughtExceptionHandler implementation
@@ -250,4 +248,4 @@ class BisqExecutable(
         logger.error(f"Uncaught exception: {exception}", exc_info=exception)
 
         if do_shut_down:
-            self.graceful_shut_down(lambda: logger.info("graceful_shut_down complete"))
+            self.graceful_shut_down(lambda *_: logger.info("graceful_shut_down complete"))

@@ -153,7 +153,7 @@ class BisqHeadlessApp(HeadlessApp):
             logger.warning(
                 "There was a problem with synchronizing the DAO state. A restart of the application is required to fix the issue."
             ),
-            self.__graceful_shut_down_handler.graceful_shut_down(lambda: None),
+            self.__graceful_shut_down_handler.graceful_shut_down(lambda *_: None),
         )
         bisq_setup.tor_address_upgrade_handler = lambda: logger.info(
             "setTorAddressUpgradeHandler"
@@ -171,7 +171,7 @@ class BisqHeadlessApp(HeadlessApp):
         if not self.__shutdown_requested:
             UserThread.run_after(
                 lambda: self.__graceful_shut_down_handler.graceful_shut_down(
-                    lambda: logger.debug("App shutdown complete")
+                    lambda *_: logger.debug("App shutdown complete")
                 ),
                 timedelta(milliseconds=200),
             )

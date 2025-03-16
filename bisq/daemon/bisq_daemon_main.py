@@ -1,4 +1,5 @@
-from utils.aio import as_future
+from collections.abc import Callable
+from utils.aio import as_future, stop_reactor_and_exit
 import asyncio
 from typing import TYPE_CHECKING, Optional
 from bisq.common.user_thread import UserThread
@@ -59,12 +60,14 @@ class BisqDaemonMain(BisqHeadlessAppMain, BisqSetupListener):
         self._grpc_server = self._injector.grpc_server
         self._grpc_server.start()
 
-    def graceful_shut_down(self, result_handler):
-        def on_finished_shutdown():
+    def graceful_shut_down(self, result_handler: "Callable[[int], None]"):
+        def on_finished_shutdown(status: int):
             BisqDaemonMain.stop_keep_running()
             if self._grpc_server:
                 self._grpc_server.shut_down()
-            result_handler()
+            # result_handler passed by keyboard interrupt or grpc stop command
+            result_handler(status)
+            stop_reactor_and_exit(status)
         super().graceful_shut_down(on_finished_shutdown)
 
     _keep_running_future: "asyncio.Future" = None

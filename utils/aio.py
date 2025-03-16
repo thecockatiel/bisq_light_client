@@ -3,6 +3,7 @@ from collections.abc import Callable
 from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 import inspect
+import os
 import platform
 import sys
 import threading
@@ -147,10 +148,12 @@ from twisted.internet import reactor, threads
 def stop_reactor_and_exit(status_code: int = 0):
     try:
         if reactor.running:
+            for delayed_call in reactor.getDelayedCalls():
+                delayed_call.cancel()
             reactor.stop()
     except:
         pass
-    sys.exit(status_code)
+    os._exit(status_code) # we force process exit here. This is necessary because grpc can leave some threads running.
 
 
 def run_in_thread(
