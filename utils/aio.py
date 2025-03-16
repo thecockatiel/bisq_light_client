@@ -73,7 +73,7 @@ def create_event_loop() -> (
 try:
 
     def as_future(
-        d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any, Any, _T]]
+        d: Union[Deferred[_T], ConcurrentFuture[_T], Coroutine[Any, Any, _T]],
     ) -> asyncio.Future[_T]:
         if isinstance(d, Deferred):
             return d.asFuture(get_asyncio_loop())
@@ -90,7 +90,7 @@ try:
 except:
     # for where twisted deferred is not typed yet.
     def as_future(
-        d: Union[Deferred, ConcurrentFuture[_T], Coroutine[Any, Any, _T]]
+        d: Union[Deferred, ConcurrentFuture[_T], Coroutine[Any, Any, _T]],
     ) -> asyncio.Future[_T]:
         if isinstance(d, Deferred):
             return d.asFuture(get_asyncio_loop())
@@ -159,8 +159,18 @@ def run_in_thread(
     """Run a function in a separate thread, and await its completion."""
     return as_future(threads.deferToThread(func, *args, **kwargs))
 
+def wait_future_blocking(
+    future: asyncio.Future[_T], 
+) -> _T:
+    """Wait for an async function to complete."""
+    event = threading.Event()
+    future.add_done_callback(lambda _: event.set())
+    event.wait()
+    return future.result()
 
-class FutureCallback(Generic[_T], Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]):
+class FutureCallback(
+    Generic[_T], Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]
+):
 
     def __init__(
         self,
