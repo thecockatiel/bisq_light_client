@@ -7,6 +7,7 @@ from bisq.core.btc.wallet.wallet_transactions_change_listener import (
     WalletTransactionsChangeListener,
 )
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
+from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.network_parameters import NetworkParameters
@@ -14,6 +15,7 @@ from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.script.script_type import ScriptType
 from electrum_min.elogging import get_logger
 from utils.concurrency import ThreadSafeSet
+from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
@@ -136,7 +138,103 @@ class BsqWalletService(WalletService, DaoStateListener):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def _update_bsq_balance(self):
-        pass
+        ts = get_time_ms()
+        self.unverified_balance = Coin.value_of(
+            sum(
+                # Sum up outputs into BSQ wallet and subtract the inputs using lockup or unlocking
+                # outputs since those inputs will be accounted for in lockupBondsBalance and
+                # unlockingBondsBalance
+                sum(
+                    out_.value
+                    for out_ in tx.outputs
+                    if out_.is_for_wallet(self.wallet) and out_.available_for_spending
+                )
+                -
+                # Account for spending of locked connectedOutputs
+                sum(
+                    in_.value
+                    for in_ in tx.inputs
+                    if in_.connected_output
+                    and (key := TxOutputKey(tx.get_tx_id(), in_.connected_output.index))
+                    and in_.connected_output.is_for_wallet(self.wallet)
+                    and (
+                        self._dao_state_service.is_lockup_output(key)
+                        or self._dao_state_service.is_unlocking_and_unspent_key(key)
+                    )
+                )
+                for tx in self.wallet.get_transactions()
+                if tx.confidence.confidence_type == TransactionConfidenceType.PENDING
+            )
+        )
+
+        confirmed_tx_id_set = {
+            tx.get_tx_id()
+            for tx in self.wallet.get_transactions()
+            if tx.confidence.confidence_type == TransactionConfidenceType.BUILDING
+        }
+
+        self.locked_for_voting_balance = Coin.value_of(
+            sum(
+                tx_output.value
+                for tx_output in self._dao_state_service.get_unspent_blind_vote_stake_tx_outputs()
+                if tx_output.tx_id in confirmed_tx_id_set
+            )
+        )
+
+        self.lockup_bonds_balance = Coin.value_of(
+            sum(
+                tx_output.value
+                for tx_output in self._dao_state_service.get_lockup_tx_outputs()
+                if self._dao_state_service.is_unspent(tx_output.get_key())
+                and not self._dao_state_service.is_confiscated_lockup_tx_output(
+                    tx_output.tx_id
+                )
+                and tx_output.tx_id in confirmed_tx_id_set
+            )
+        )
+
+        self.unlocking_bonds_balance = Coin.value_of(
+            sum(
+                tx_output.value
+                for tx_output in self._dao_state_service.get_unspent_unlocking_tx_outputs_stream()
+                if tx_output.tx_id in confirmed_tx_id_set
+                and not self._dao_state_service.is_confiscated_unlock_tx_output(
+                    tx_output.tx_id
+                )
+            )
+        )
+
+        self.available_balance = self._bsq_coin_selector.select(
+            NetworkParameters.MAX_MONEY, self.wallet.calculate_all_spend_candidates()
+        ).value_gathered
+
+        if self.available_balance.is_negative():
+            self.available_balance = Coin.ZERO()
+
+        self.unconfirmed_change_balance = (
+            self._unconfirmed_bsq_change_output_list_service.get_balance()
+        )
+
+        self.available_non_bsq_balance = self._non_bsq_coin_selector.select(
+            NetworkParameters.MAX_MONEY, self.wallet.calculate_all_spend_candidates()
+        ).value_gathered
+
+        self.verified_balance = self.available_balance.subtract(
+            self.unconfirmed_change_balance
+        )
+
+        for listener in self._bsq_balance_listeners:
+            listener(
+                self.available_balance,
+                self.available_non_bsq_balance,
+                self.unverified_balance,
+                self.unconfirmed_change_balance,
+                self.locked_for_voting_balance,
+                self.lockup_bonds_balance,
+                self.unlocking_bonds_balance,
+            )
+
+        logger.info("updateBsqBalance took {} ms", get_time_ms() - ts)
 
     def add_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self._bsq_balance_listeners.add(listener)
