@@ -353,8 +353,8 @@ class DaoStateMonitoringService(
                         optional_dao_state_block = self._create_dao_state_block(
                             last_block
                         )
-                    else:
-                        pass  # optional_dao_state_block = self._find_dao_state_block(height)
+                        if optional_dao_state_block is None:
+                            optional_dao_state_block = self._find_dao_state_block(height)
 
                 else:
                     # Otherwise, we create a block from the peers daoStateHash

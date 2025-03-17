@@ -1,3 +1,4 @@
+from sortedcontainers import SortedDict
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 import pb_pb2 as protobuf
@@ -52,12 +53,24 @@ class DaoState(PersistablePayload):
         # These maps represent mutual data which can get changed at parsing a transaction
         # We use TreeMaps instead of HashMaps because we need deterministic sorting of the maps for the hashChains
         # used for the DAO monitor.
-        self.unspent_tx_output_map = unspent_tx_output_map or {}
-        self.spent_info_map = spent_info_map or {}
+        self.unspent_tx_output_map: dict["TxOutputKey", "TxOutput"] = (
+            SortedDict(unspent_tx_output_map)
+            if not isinstance(unspent_tx_output_map, SortedDict)
+            else unspent_tx_output_map
+        )
+        self.spent_info_map: dict["TxOutputKey", "SpentInfo"] = (
+            SortedDict(spent_info_map)
+            if not isinstance(spent_info_map, SortedDict)
+            else spent_info_map
+        )
 
         # These maps are related to state change triggered by voting
         self.confiscated_lockup_tx_list = confiscated_lockup_tx_list or []
-        self.issuance_map = issuance_map or {}  #  key is txId
+        self.issuance_map: dict[str, Issuance] = (  #  key is txId
+            SortedDict(issuance_map)
+            if not isinstance(issuance_map, SortedDict)
+            else issuance_map
+        )
         self.param_change_list = param_change_list or []
 
         # Vote result data
@@ -107,19 +120,23 @@ class DaoState(PersistablePayload):
         builder = protobuf.DaoState(
             chain_height=self.chain_height,
             cycles=[cycle.to_proto_message() for cycle in self.cycles],
-            unspent_tx_output_map={
-                str(key): value.to_proto_message()
+            unspent_tx_output_map=[
+                protobuf.StableUnspentTxOutputMap(
+                    key=str(key), value=value.to_proto_message()
+                )
                 for key, value in self.unspent_tx_output_map.items()
-            },
-            spent_info_map={
-                str(key): value.to_proto_message()
+            ],
+            spent_info_map=[
+                protobuf.StableSpentInfoMap(
+                    key=str(key), value=value.to_proto_message()
+                )
                 for key, value in self.spent_info_map.items()
-            },
+            ],
             confiscated_lockup_tx_list=self.confiscated_lockup_tx_list,
-            issuance_map={
-                key: value.to_proto_message()
+            issuance_map=[
+                protobuf.StableIssuanceMap(key=key, value=value.to_proto_message())
                 for key, value in self.issuance_map.items()
-            },
+            ],
             param_change_list=[
                 param_change.to_proto_message()
                 for param_change in self.param_change_list
@@ -144,19 +161,25 @@ class DaoState(PersistablePayload):
             chain_height=proto.chain_height,
             blocks=blocks,
             cycles=[Cycle.from_proto(cycle_proto) for cycle_proto in proto.cycles],
-            unspent_tx_output_map={
-                TxOutputKey.get_key_from_string(key): TxOutput.from_proto(value)
-                for key, value in proto.unspent_tx_output_map.items()
-            },
-            spent_info_map={
-                TxOutputKey.get_key_from_string(key): SpentInfo.from_proto(value)
-                for key, value in proto.spent_info_map.items()
-            },
+            unspent_tx_output_map=SortedDict(
+                (
+                    TxOutputKey.get_key_from_string(item.key),
+                    TxOutput.from_proto(item.value),
+                )
+                for item in proto.unspent_tx_output_map
+            ),
+            spent_info_map=SortedDict(
+                (
+                    TxOutputKey.get_key_from_string(item.key),
+                    SpentInfo.from_proto(item.value),
+                )
+                for item in proto.spent_info_map
+            ),
             confiscated_lockup_tx_list=list(proto.confiscated_lockup_tx_list),
-            issuance_map={
-                key: Issuance.from_proto(value)
-                for key, value in proto.issuance_map.items()
-            },
+            issuance_map=SortedDict(
+                (item.key, Issuance.from_proto(item.value))
+                for item in proto.issuance_map
+            ),
             param_change_list=[
                 ParamChange.from_proto(param_change_proto)
                 for param_change_proto in proto.param_change_list
@@ -196,8 +219,7 @@ class DaoState(PersistablePayload):
         # Using the full blocks list becomes quite heavy. 7000 blocks are
         # about 1.4 MB and creating the hash takes 30 sec. By using just the last block we reduce the time to 7 sec.
         builder = self._get_bsq_state_builder_excluding_blocks()
-        if self._blocks:
-            builder.blocks.append(self.last_block.to_proto_message())
+        builder.blocks.append(self.last_block.to_proto_message())
         return builder.SerializeToString()
 
     def add_to_tx_cache(self, tx: "Tx"):
@@ -228,7 +250,7 @@ class DaoState(PersistablePayload):
         return self._blocks[-1]
 
     def add_block(self, block: "Block"):
-        # The block added here does not have any tx, 
+        # The block added here does not have any tx,
         # so we do not need to update the tx_cache or tx_outputs_by_tx_output_type
         self._blocks.append(block)
         self.blocks_by_height[block.height] = block

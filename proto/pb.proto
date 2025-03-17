@@ -2239,16 +2239,33 @@ message Cycle {
     repeated DaoPhase dao_phase = 2;
 }
 
+// START of new messages
+message StableUnspentTxOutputMap {
+    string key = 1;
+    BaseTxOutput value = 2;
+}
+
+message StableIssuanceMap {
+    string key = 1;
+    Issuance value = 2;
+}
+
+message StableSpentInfoMap {
+    string key = 1;
+    SpentInfo value = 2;
+}
+// END
+
 message DaoState {
     int32 chain_height = 1;
     // Because of the way how PB implements inheritance we need to use the super class as type.
     repeated BaseBlock blocks = 2;
     repeated Cycle cycles = 3;
     // Because of the way how PB implements inheritance we need to use the super class as type.
-    map<string, BaseTxOutput> unspent_tx_output_map = 4;
-    map<string, Issuance> issuance_map = 5;
+    repeated StableUnspentTxOutputMap unspent_tx_output_map = 4;
+    repeated StableIssuanceMap issuance_map = 5;
     repeated string confiscated_lockup_tx_list = 6;
-    map<string, SpentInfo> spent_info_map = 7;
+    repeated StableSpentInfoMap spent_info_map = 7;
     repeated ParamChange param_change_list = 8;
     repeated EvaluatedProposal evaluated_proposal_list = 9;
     repeated DecryptedBallotsWithMerits decrypted_ballots_with_merits_list = 10;

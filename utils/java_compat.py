@@ -99,3 +99,10 @@ def unsigned_compare(list1: list[int], list2: list[int]) -> int:
 def to_unsigned_int(value: int) -> int:
     """Converts a signed int to an unsigned int"""
     return value & 0xFFFFFFFF
+
+def java_string_compare(s1: str, s2: str) -> int:
+    min_len = min(len(s1), len(s2))
+    for i in range(min_len):
+        if s1[i] != s2[i]:
+            return ord(s1[i]) - ord(s2[i])
+    return len(s1) - len(s2)

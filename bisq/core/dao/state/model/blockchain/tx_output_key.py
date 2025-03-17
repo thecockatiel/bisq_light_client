@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from functools import total_ordering
 from typing import Any
 
+from utils.java_compat import java_string_compare
+
 
 @total_ordering
 @dataclass(frozen=True)
@@ -27,10 +29,14 @@ class TxOutputKey:
         """Implements comparison for sorting."""
         if not isinstance(other, TxOutputKey):
             return NotImplemented
-        return str(self) < str(other)
+        return java_string_compare(str(self), str(other)) < 0
 
     def __eq__(self, other: Any) -> bool:
         """Implements equality comparison."""
         if not isinstance(other, TxOutputKey):
             return NotImplemented
-        return str(self) == str(other)
+        return java_string_compare(str(self), str(other)) == 0
+
+    def __hash__(self):
+        return hash((self.tx_id, self.index))
+
