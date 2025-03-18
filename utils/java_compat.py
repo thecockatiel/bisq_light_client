@@ -126,9 +126,13 @@ V = TypeVar("V")
 
 
 class HashMap(Generic[K, V]):
-    """
-    A bucket-based HashMap that mimics Java's HashMap behavior.
-    """
+    __slots__ = ("_capacity", "_load_factor", "_size", "_table")
+
+    def __init__(self, initial_capacity: int = 16, load_factor: float = 0.75) -> None:
+        self._capacity: int = initial_capacity
+        self._load_factor: float = load_factor
+        self._size: int = 0
+        self._table: list[Optional[HashMap.Entry[K, V]]] = [None] * self._capacity
 
     class Entry(Generic[K, V]):
         __slots__ = ("hash", "key", "value")
@@ -139,147 +143,105 @@ class HashMap(Generic[K, V]):
             self.hash = hash
 
         def __repr__(self) -> str:
-            # A simple representation: key:value
             return f"{self.key}:{self.value}"
 
-    def __init__(self, initial_capacity: int = 16, load_factor: float = 0.75) -> None:
-        self._capacity: int = initial_capacity
-        self._load_factor: float = load_factor
-        self._size: int = 0
-        # Initialize a list of empty buckets.
-        self._buckets: list[list[HashMap.Entry[K, V]]] = [
-            [] for _ in range(self._capacity)
-        ]
+    def _hash(self, key: K) -> int:
+        return (
+            (h := hash(key)) ^ (int_unsigned_right_shift(h, 16))
+            if key is not None
+            else 0
+        )
 
-    def _bucket_index(self, key: K) -> int:
-        return (self._hash(key) & 0x7FFFFFFF) % len(self._buckets)
-
-    def _hash(self, key: Any) -> int:
-        if key is None:
-            return 0
-        return (h := hash(key)) ^ (int_unsigned_right_shift(h, 16))
+    def _find_slot(self, key: K, hash_val: int) -> int:
+        index = hash_val & (self._capacity - 1)
+        while True:
+            entry = self._table[index]
+            if entry is None:
+                return index
+            if entry.hash != hash_val or entry.key != key:
+                index = (index + 1) & (self._capacity - 1)
+            return index
 
     def _rehash(self) -> None:
-        """Double the capacity and re-distribute existing entries,
-        preserving the order within each bucket as done in Java's HashMap.
-
-        For each old bucket at index i, the new index is determined by:
-          - if (key.hash & old_capacity) == 0, then index remains i;
-          - else, the new index is i + old_capacity.
-        """
-        old_buckets = self._buckets
-        old_capacity = self._capacity
-        new_capacity = old_capacity * 2
-        new_buckets: list[list[HashMap.Entry[K, V]]] = [[] for _ in range(new_capacity)]
-
-        # Process each bucket from the old table.
-        for i in range(old_capacity):
-            bucket = old_buckets[i]
-            if not bucket:
-                continue
-            lo_list: list[HashMap.Entry[K, V]] = []
-            hi_list: list[HashMap.Entry[K, V]] = []
-            for entry in bucket:
-                # Use the bit mask to decide which new bucket the entry goes to.
-                if entry.hash & old_capacity == 0:
-                    lo_list.append(entry)
-                else:
-                    hi_list.append(entry)
-            new_buckets[i] = lo_list
-            new_buckets[i + old_capacity] = hi_list
-
-        self._buckets = new_buckets
-        self._capacity = new_capacity
-        # Note: _size remains unchanged.
+        old_table = self._table
+        self._capacity *= 2
+        self._table = [None] * self._capacity
+        self._size = 0
+        for entry in old_table:
+            if entry is not None:
+                self.put(entry.key, entry.value)
 
     def put(self, key: K, value: V) -> Optional[V]:
-        """
-        Associates the specified value with the specified key.
-        Returns the previous value if the key existed, or None otherwise.
-        """
-        index = self._bucket_index(key)
-        key_hash = self._hash(key)
-        bucket = self._buckets[index]
-        for entry in bucket:
-            if entry.key == key:
-                old_value = entry.value
-                entry.value = value
-                return old_value
-        # Key not found; append a new entry.
-        bucket.append(HashMap.Entry(key_hash, key, value))
+        hash_val = self._hash(key)
+        slot = self._find_slot(key, hash_val)
+        entry = self._table[slot]
+        if entry is not None and entry.key == key:
+            old_value = entry.value
+            entry.value = value
+            return old_value
+        self._table[slot] = HashMap.Entry(hash_val, key, value)
         self._size += 1
         if self._size > self._capacity * self._load_factor:
             self._rehash()
         return None
 
     def get(self, key: K) -> Optional[V]:
-        """Returns the value associated with the key, or None if not found."""
-        index = self._bucket_index(key)
-        for entry in self._buckets[index]:
-            if entry.key == key:
-                return entry.value
-        return None
+        hash_val = self._hash(key)
+        slot = self._find_slot(key, hash_val)
+        entry = self._table[slot]
+        return entry.value if entry is not None and entry.key == key else None
 
     def remove(self, key: K) -> Optional[V]:
-        """
-        Removes the mapping for a key if present.
-        Returns the removed value or None if the key was not found.
-        """
-        index = self._bucket_index(key)
-        bucket = self._buckets[index]
-        for i, entry in enumerate(bucket):
-            if entry.key == key:
-                removed_value = entry.value
-                del bucket[i]
-                self._size -= 1
-                return removed_value
-        return None
+        hash_val = self._hash(key)
+        slot = self._find_slot(key, hash_val)
+        entry = self._table[slot]
+        if entry is None or entry.key != key:
+            return None
+        removed_value = entry.value
+        self._table[slot] = None
+        self._size -= 1
+        return removed_value
 
     def containsKey(self, key: K) -> bool:
-        """Returns True if the map contains the specified key."""
-        index = self._bucket_index(key)
-        return any(entry.key == key for entry in self._buckets[index])
+        return self.get(key) is not None
 
     def containsValue(self, value: V) -> bool:
-        """Returns True if the map contains one or more keys mapped to the value."""
-        return any(entry.value == value for bucket in self._buckets for entry in bucket)
+        for entry in self._table:
+            if entry is not None and entry.value == value:
+                return True
+        return False
 
     def size(self) -> int:
-        """Returns the number of key-value mappings."""
         return self._size
 
     def clear(self) -> None:
-        """Removes all mappings from the map."""
         self._capacity = 16
-        self._buckets = [[] for _ in range(self._capacity)]
+        self._table = [None] * self._capacity
         self._size = 0
 
     def keys(self) -> Iterator[K]:
-        """Iterate over keys (bucket order)."""
-        for bucket in self._buckets:
-            for entry in bucket:
+        for entry in self._table:
+            if entry is not None:
                 yield entry.key
 
     def values(self) -> Iterator[V]:
-        """Iterate over values (bucket order)."""
-        for bucket in self._buckets:
-            for entry in bucket:
+        for entry in self._table:
+            if entry is not None:
                 yield entry.value
 
     def items(self) -> Iterator[tuple[K, V]]:
-        """Iterate over (key, value) pairs (bucket order)."""
-        for bucket in self._buckets:
-            for entry in bucket:
+        for entry in self._table:
+            if entry is not None:
                 yield (entry.key, entry.value)
 
-    def __iter__(self) -> Iterator[K]:
+    def __iter__(self) -> Iterator[tuple[K, V]]:
         return self.items()
 
     def __getitem__(self, key: K) -> V:
         value = self.get(key)
         if value is None and not self.containsKey(key):
             raise KeyError(key)
-        return value  # type: ignore
+        return value
 
     def __setitem__(self, key: K, value: V) -> None:
         self.put(key, value)
@@ -288,8 +250,8 @@ class HashMap(Generic[K, V]):
         if self.remove(key) is None:
             raise KeyError(key)
 
-    def __contains__(self, key: object) -> bool:
-        return self.containsKey(key)  # type: ignore
+    def __contains__(self, key: K) -> bool:
+        return self.containsKey(key)
 
     def __len__(self) -> int:
         return self._size
