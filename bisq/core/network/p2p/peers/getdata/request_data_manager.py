@@ -162,7 +162,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 # We clone list to avoid mutable change during iterations
                 remaining_node_addresses = list(node_addresses)
                 UserThread.run_after(
-                    lambda: self.request_data(node_address, remaining_node_addresses),
+                    lambda node_address=node_address, remaining_node_addresses=remaining_node_addresses: self.request_data(node_address, remaining_node_addresses),
                     timedelta(milliseconds=i * 200 + 1),
                 )
             self.is_preliminary_data_request = True
