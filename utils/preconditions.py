@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Optional, TypeVar, Union
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 
@@ -16,8 +16,9 @@ def check_state(
     if not expression:
         raise IllegalStateException(str(error_message))
 
+_T = TypeVar("_T")
 
-def check_not_null(reference: Any, error_message: str = "Reference is null") -> Any:
+def check_not_none(reference: Optional[_T], error_message: str = "Reference is none") -> _T:
     if reference is None:
         raise AssertionError(error_message)
     return reference
