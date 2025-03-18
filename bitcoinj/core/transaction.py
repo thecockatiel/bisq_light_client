@@ -96,7 +96,11 @@ class Transaction:
 
     @property
     def is_pending(self):
-        return self.confidence.confidence_type == TransactionConfidenceType.PENDING if self.confidence else False
+        return (
+            self.confidence.confidence_type == TransactionConfidenceType.PENDING
+            if self.confidence
+            else False
+        )
 
     @property
     def lock_time(self):
@@ -138,13 +142,16 @@ class Transaction:
     def get_wtx_id(self) -> "Sha256Hash":
         return self._electrum_transaction.wtxid()
 
-    def bitcoin_serialize(self) -> bytes:
-        return bytes.fromhex(self._electrum_transaction.serialize_to_network())
+    def bitcoin_serialize(self, include_sigs=True) -> bytes:
+        """include_sigs signals whether to include scriptSigs and witnesses"""
+        return bytes.fromhex(
+            self._electrum_transaction.serialize_to_network(include_sigs=include_sigs)
+        )
 
     @property
     def included_in_best_chain_at(self):
         return self._included_in_best_chain_at
-    
+
     @included_in_best_chain_at.setter
     def included_in_best_chain_at(self, value: Optional[datetime]):
         self._included_in_best_chain_at = value
