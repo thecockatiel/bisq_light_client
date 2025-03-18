@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
+from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import PreparedDepositTxAndMakerInputs
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
@@ -87,6 +88,22 @@ class TradeWalletService:
     ) -> "Transaction":
         raise RuntimeError(
             "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
+        )
+
+    def buyer_as_maker_creates_and_signs_deposit_tx(
+        self,
+        maker_input_amount: Coin,
+        ms_output_amount: Coin,
+        taker_raw_transaction_inputs: list["RawTransactionInput"],
+        taker_change_output_value: int,
+        taker_change_address_string: Optional[str],
+        maker_address: "Address",
+        maker_change_address: "Address",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "PreparedDepositTxAndMakerInputs":
+        raise RuntimeError(
+            "TradeWalletService.buyer_as_maker_creates_and_signs_deposit_tx Not implemented yet"
         )
 
     def broadcast_tx(
