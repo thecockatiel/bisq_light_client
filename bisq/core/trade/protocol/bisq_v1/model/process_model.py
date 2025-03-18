@@ -74,7 +74,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.deposit_tx_message_state_property = SimpleProperty(MessageState.UNDEFINED) # transient
         self.deposit_tx: "Transaction" = None # transient
         
-        self._take_offer_fee_tx_id: Optional[str] = None
+        self.take_offer_fee_tx_id: Optional[str] = None
         self.payout_tx_signature: Optional[bytes] = None
         self.prepared_deposit_tx: Optional[bytes] = None
         self._raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
@@ -134,8 +134,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             burning_man_selection_height=self.burning_man_selection_height,
         )
         
-        if self._take_offer_fee_tx_id:
-            builder.take_offer_fee_tx_id = self._take_offer_fee_tx_id
+        if self.take_offer_fee_tx_id:
+            builder.take_offer_fee_tx_id = self.take_offer_fee_tx_id
         if self.payout_tx_signature:
             builder.payout_tx_signature = self.payout_tx_signature
         if self.prepared_deposit_tx:
@@ -170,7 +170,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model.seller_payout_amount_from_mediation = proto.seller_payout_amount_from_mediation
 
         # nullable
-        process_model._take_offer_fee_tx_id = ProtoUtil.string_or_none_from_proto(proto.take_offer_fee_tx_id)
+        process_model.take_offer_fee_tx_id = ProtoUtil.string_or_none_from_proto(proto.take_offer_fee_tx_id)
         process_model.payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.payout_tx_signature)
         process_model.prepared_deposit_tx = ProtoUtil.byte_array_or_none_from_proto(proto.prepared_deposit_tx)
         
@@ -214,7 +214,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     @take_offer_fee_tx.setter
     def take_offer_fee_tx(self, value: "Transaction"):
         self._take_offer_fee_tx = value
-        self._take_offer_fee_tx_id = value.get_tx_id()
+        self.take_offer_fee_tx_id = value.get_tx_id()
     
     def get_payment_account_payload(self, trade: "Trade"):
         if self._payment_account is None:
@@ -230,9 +230,9 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     def resolve_take_offer_fee_tx(self, trade: "Trade"):
         if self._take_offer_fee_tx is None:
             if not trade.is_currency_for_taker_fee_btc:
-                self._take_offer_fee_tx = self.bsq_wallet_service.get_transaction(self._take_offer_fee_tx_id)
+                self._take_offer_fee_tx = self.bsq_wallet_service.get_transaction(self.take_offer_fee_tx_id)
             else:
-                self._take_offer_fee_tx = self.btc_wallet_service.get_transaction(self._take_offer_fee_tx_id)
+                self._take_offer_fee_tx = self.btc_wallet_service.get_transaction(self.take_offer_fee_tx_id)
         return self._take_offer_fee_tx
     
     @property
