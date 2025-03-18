@@ -69,4 +69,4 @@ class SellerSendPayoutTxPublishedMessage(SendMailboxMessageTask):
 
             super().run()
         except Exception as e:
-            self.failed(e)
+            self.failed(exc=e)

@@ -45,4 +45,4 @@ class SellerProcessCounterCurrencyTransferStartedMessage(TradeTask):
 
             self.complete()
         except Exception as e:
-            self.failed(e)
+            self.failed(exc=e)
