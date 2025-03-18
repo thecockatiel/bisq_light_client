@@ -16,6 +16,7 @@ from bisq.core.dao.state.model.governance.evaluated_proposal import (
 )
 from bisq.core.dao.state.model.governance.issuance import Issuance
 from bisq.core.dao.state.model.governance.param_change import ParamChange
+from utils.java_compat import HashMap
 
 
 class DaoState(PersistablePayload):
@@ -124,18 +125,26 @@ class DaoState(PersistablePayload):
                 protobuf.StableUnspentTxOutputMap(
                     key=str(key), value=value.to_proto_message()
                 )
-                for key, value in self.unspent_tx_output_map.items()
+                # HashMap is used in original java, so we have to do this here as well
+                for key, value in HashMap(
+                    (str(txkey), value)
+                    for txkey, value in self.unspent_tx_output_map.items()
+                )
             ],
             spent_info_map=[
                 protobuf.StableSpentInfoMap(
                     key=str(key), value=value.to_proto_message()
                 )
-                for key, value in self.spent_info_map.items()
+                for key, value in HashMap(
+                    (str(txkey), value) for txkey, value in self.spent_info_map.items()
+                )
             ],
             confiscated_lockup_tx_list=self.confiscated_lockup_tx_list,
             issuance_map=[
                 protobuf.StableIssuanceMap(key=key, value=value.to_proto_message())
-                for key, value in self.issuance_map.items()
+                for key, value in HashMap(
+                    (str(txkey), value) for txkey, value in self.issuance_map.items()
+                )
             ],
             param_change_list=[
                 param_change.to_proto_message()
