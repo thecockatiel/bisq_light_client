@@ -2,7 +2,7 @@ from decimal import Decimal
 import math
 from pathlib import Path
 import re
-from typing import Any, Generic, Iterator, Optional, TypeVar
+from typing import Any, Generic, Iterable, Iterator, Optional, TypeVar
 
 INTEGER_MIN_VALUE = 0x80000000
 INTEGER_MAX_VALUE = 0x7FFFFFFF
@@ -128,11 +128,20 @@ V = TypeVar("V")
 class HashMap(Generic[K, V]):
     __slots__ = ("_capacity", "_load_factor", "_size", "_table")
 
-    def __init__(self, initial_capacity: int = 16, load_factor: float = 0.75) -> None:
+    def __init__(
+        self,
+        initial_items: Iterable[tuple[K, V]] = None,
+        *,
+        initial_capacity: int = 16,
+        load_factor: float = 0.75,
+    ) -> None:
         self._capacity: int = initial_capacity
         self._load_factor: float = load_factor
         self._size: int = 0
         self._table: list[Optional[HashMap.Entry[K, V]]] = [None] * self._capacity
+        if initial_items is not None:
+            for key, value in initial_items:
+                self.put(key, value)
 
     class Entry(Generic[K, V]):
         __slots__ = ("hash", "key", "value")
@@ -146,11 +155,12 @@ class HashMap(Generic[K, V]):
             return f"{self.key}:{self.value}"
 
     def _hash(self, key: K) -> int:
-        return (
-            (h := hash(key)) ^ (int_unsigned_right_shift(h, 16))
-            if key is not None
-            else 0
-        )
+        if key is None: return 0
+        if isinstance(key, str):
+            h = java_string_hashcode(key)
+        else:
+            h = hash(key)
+        return h ^ (int_unsigned_right_shift(h, 16))
 
     def _find_slot(self, key: K, hash_val: int) -> int:
         index = hash_val & (self._capacity - 1)
