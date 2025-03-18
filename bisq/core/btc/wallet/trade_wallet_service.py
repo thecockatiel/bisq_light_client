@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
+from bisq.core.btc.model.inputs_and_change_output import InputsAndChangeOutput
 from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
     PreparedDepositTxAndMakerInputs,
 )
@@ -65,6 +66,20 @@ class TradeWalletService:
     ) -> "Transaction":
         raise RuntimeError(
             "TradeWalletService.complete_bsq_trading_fee_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Deposit tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def taker_creates_deposit_tx_inputs(
+        self,
+        take_offer_fee_tx: "Transaction",
+        input_amount: Coin,
+        tx_fee: Coin,
+    ) -> "InputsAndChangeOutput":
+        raise RuntimeError(
+            "TradeWalletService.taker_creates_deposit_tx_inputs Not implemented yet"
         )
 
     def commit_tx(self, tx: "Transaction") -> None:
