@@ -207,7 +207,7 @@ class TradeWalletService:
         buyer_signature: bytes,
         seller_signature: bytes,
         value: Coin,
-    ) -> None:
+    ) -> "Transaction":
         raise RuntimeError(
             "TradeWalletService.finalize_unconnected_delayed_payout_tx Not implemented yet"
         )
