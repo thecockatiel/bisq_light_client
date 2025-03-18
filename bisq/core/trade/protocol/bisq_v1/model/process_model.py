@@ -101,7 +101,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.payment_started_message_state_property = SimpleProperty(MessageState.UNDEFINED)
         
         # Added in v 1.9.7
-        self._burning_man_selection_height: int = 0
+        self.burning_man_selection_height: int = 0
         
         
     def apply_transient(self, provider: "Provider", trade_manager: "TradeManager", offer: "Offer"):
@@ -131,7 +131,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             payment_started_message_state=self.payment_started_message_state_property.value.name,
             buyer_payout_amount_from_mediation=self.buyer_payout_amount_from_mediation,
             seller_payout_amount_from_mediation=self.seller_payout_amount_from_mediation,
-            burning_man_selection_height=self._burning_man_selection_height,
+            burning_man_selection_height=self.burning_man_selection_height,
         )
         
         if self._take_offer_fee_tx_id:
@@ -185,7 +185,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         payment_started_message_state = MessageState.from_string(ProtoUtil.string_or_none_from_proto(proto.payment_started_message_state))
         process_model.set_payment_started_message_state(payment_started_message_state)
         
-        process_model._burning_man_selection_height = proto.burning_man_selection_height
+        process_model.burning_man_selection_height = proto.burning_man_selection_height
 
         if proto.HasField('payment_account'):
             process_model._payment_account = PaymentAccount.from_proto(proto.payment_account, core_proto_resolver)
@@ -210,10 +210,6 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     @property
     def take_offer_fee_tx(self):
         return self._take_offer_fee_tx
-    
-    @property
-    def burning_man_selection_height(self):
-        return self._burning_man_selection_height
     
     @take_offer_fee_tx.setter
     def take_offer_fee_tx(self, value: "Transaction"):
