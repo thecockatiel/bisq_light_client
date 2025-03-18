@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import total_ordering
 from typing import Any
 
-from utils.java_compat import java_string_compare
+from utils.java_compat import java_string_compare, java_string_hashcode
 
 
 @total_ordering
@@ -38,5 +38,9 @@ class TxOutputKey:
         return java_string_compare(str(self), str(other)) == 0
 
     def __hash__(self):
-        return hash((self.tx_id, self.index))
-
+        result = (59 + self.index) * 59
+        if self.tx_id is None:
+            result += 43
+        else:
+            result += java_string_hashcode(self.tx_id)
+        return result
