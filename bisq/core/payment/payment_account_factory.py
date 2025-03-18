@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
+from bisq.core.payment.cash_by_mail_account import CashByMailAccount
+from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.revolute_account import RevolutAccount
@@ -41,8 +43,8 @@ _account_map = {
     PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
     # PaymentMethod.WESTERN_UNION_ID: lambda: WesternUnionAccount(),
     # PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
-    # PaymentMethod.F2F_ID: lambda: F2FAccount(),
-    # PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
+    PaymentMethod.F2F_ID: lambda: F2FAccount(),
+    PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
     # PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
     # PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
     # PaymentMethod.TRANSFERWISE_ID: lambda: TransferwiseAccount(),
