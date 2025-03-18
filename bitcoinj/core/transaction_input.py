@@ -73,7 +73,7 @@ class TransactionInput:
 
     @property
     def connected_transaction(self) -> Optional["Transaction"]:
-        return self.outpoint.from_tx if self.outpoint else None
+        return self.outpoint.connected_tx if self.outpoint else None
 
     @property
     def connected_output(self) -> Optional["TransactionOutput"]:
