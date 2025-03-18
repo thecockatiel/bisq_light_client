@@ -826,6 +826,9 @@ class BtcWalletService(WalletService, DaoStateListener):
             for address_entry in self.get_address_entry_list_as_immutable_list()
             if address_entry.context in ctx_filter
         ]
+    
+    def save_address_entry_list(self):
+        self.address_entry_list.request_persistence()
 
     def get_multi_sig_key_pair(
         self, trade_id: str, pub_key: bytes
