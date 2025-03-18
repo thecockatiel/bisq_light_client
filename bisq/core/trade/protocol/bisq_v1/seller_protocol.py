@@ -156,7 +156,7 @@ class SellerProtocol(DisputeProtocol):
                     ),
                     lambda error_message: (
                         error_message_handler(error_message),
-                        self.handle_task_runner_fault(event, error_message),
+                        self.handle_task_runner_fault(message=event, error_message=error_message),
                     ),
                 )
             )
