@@ -77,7 +77,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.take_offer_fee_tx_id: Optional[str] = None
         self.payout_tx_signature: Optional[bytes] = None
         self.prepared_deposit_tx: Optional[bytes] = None
-        self._raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
+        self.raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
         self._change_output_value: int = 0
         self._change_output_address: Optional[str] = None
         self.use_savings_wallet = False
@@ -140,8 +140,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             builder.payout_tx_signature = self.payout_tx_signature
         if self.prepared_deposit_tx:
             builder.prepared_deposit_tx = self.prepared_deposit_tx
-        if self._raw_transaction_inputs:
-            builder.raw_transaction_inputs.extend(ProtoUtil.collection_to_proto(self._raw_transaction_inputs, protobuf.RawTransactionInput))
+        if self.raw_transaction_inputs:
+            builder.raw_transaction_inputs.extend(ProtoUtil.collection_to_proto(self.raw_transaction_inputs, protobuf.RawTransactionInput))
         if self._change_output_address:
             builder.change_output_address = self._change_output_address
         if self.my_multi_sig_pub_key:
@@ -175,7 +175,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model.prepared_deposit_tx = ProtoUtil.byte_array_or_none_from_proto(proto.prepared_deposit_tx)
         
         raw_transaction_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs] if proto.raw_transaction_inputs else None
-        process_model._raw_transaction_inputs = raw_transaction_inputs
+        process_model.raw_transaction_inputs = raw_transaction_inputs
         
         process_model._change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
         process_model.my_multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.my_multi_sig_pub_key)
