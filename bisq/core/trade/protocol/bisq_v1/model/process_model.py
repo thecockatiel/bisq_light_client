@@ -78,8 +78,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.payout_tx_signature: Optional[bytes] = None
         self.prepared_deposit_tx: Optional[bytes] = None
         self.raw_transaction_inputs: Optional[list["RawTransactionInput"]] = None
-        self._change_output_value: int = 0
-        self._change_output_address: Optional[str] = None
+        self.change_output_value: int = 0
+        self.change_output_address: Optional[str] = None
         self.use_savings_wallet = False
         self.funds_needed_for_trade_as_long: int = 0
         self.my_multi_sig_pub_key: Optional[bytes] = None
@@ -125,7 +125,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             offer_id=self._offer_id,
             account_id=self.account_id,
             pub_key_ring=self.pub_key_ring.to_proto_message(),
-            change_output_value=self._change_output_value,
+            change_output_value=self.change_output_value,
             use_savings_wallet=self.use_savings_wallet,
             funds_needed_for_trade_as_long=self.funds_needed_for_trade_as_long,
             payment_started_message_state=self.payment_started_message_state_property.value.name,
@@ -142,8 +142,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             builder.prepared_deposit_tx = self.prepared_deposit_tx
         if self.raw_transaction_inputs:
             builder.raw_transaction_inputs.extend(ProtoUtil.collection_to_proto(self.raw_transaction_inputs, protobuf.RawTransactionInput))
-        if self._change_output_address:
-            builder.change_output_address = self._change_output_address
+        if self.change_output_address:
+            builder.change_output_address = self.change_output_address
         if self.my_multi_sig_pub_key:
             builder.my_multi_sig_pub_key = self.my_multi_sig_pub_key
         if self.temp_trading_peer_node_address:
@@ -163,7 +163,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         pub_key_ring = PubKeyRing.from_proto(proto.pub_key_ring)
         process_model = ProcessModel(proto.offer_id, proto.account_id, pub_key_ring, trading_peer)
         
-        process_model._change_output_value = proto.change_output_value
+        process_model.change_output_value = proto.change_output_value
         process_model.use_savings_wallet = proto.use_savings_wallet
         process_model.funds_needed_for_trade_as_long = proto.funds_needed_for_trade_as_long
         process_model.buyer_payout_amount_from_mediation = proto.buyer_payout_amount_from_mediation
@@ -177,7 +177,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         raw_transaction_inputs = [RawTransactionInput.from_proto(input) for input in proto.raw_transaction_inputs] if proto.raw_transaction_inputs else None
         process_model.raw_transaction_inputs = raw_transaction_inputs
         
-        process_model._change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
+        process_model.change_output_address = ProtoUtil.string_or_none_from_proto(proto.change_output_address)
         process_model.my_multi_sig_pub_key = ProtoUtil.byte_array_or_none_from_proto(proto.my_multi_sig_pub_key)
         process_model.temp_trading_peer_node_address = NodeAddress.from_proto(proto.temp_trading_peer_node_address) if proto.HasField('temp_trading_peer_node_address') else None
         process_model.mediated_payout_tx_signature = ProtoUtil.byte_array_or_none_from_proto(proto.mediated_payout_tx_signature)
