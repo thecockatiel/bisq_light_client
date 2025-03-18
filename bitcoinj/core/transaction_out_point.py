@@ -27,7 +27,7 @@ class TransactionOutPoint:
     @property
     def connected_output(self):
         return self._connected_output
-    
+
     @property
     def connected_tx(self):
         return self._connected_tx
@@ -36,7 +36,7 @@ class TransactionOutPoint:
     def index(self):
         """Which output of that transaction we are talking about."""
         return self._index
-    
+
     @property
     def hash(self):
         """Hash of the transaction to which we refer."""
@@ -54,10 +54,12 @@ class TransactionOutPoint:
             from_tx=tx_output.parent,
             connected_output=tx_output,
         )
-    
+
     @staticmethod
     def from_tx(tx: "Transaction", index: int):
-        return TransactionOutPoint(index, tx.get_tx_id(), from_tx=tx)
+        return TransactionOutPoint(
+            index, tx.get_tx_id(), from_tx=tx, connected_output=tx.outputs[index]
+        )
 
     def to_electrum_tx_output(self):
         return TxOutpoint(bytes.fromhex(self._hash), self._index)
