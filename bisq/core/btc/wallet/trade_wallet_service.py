@@ -1,15 +1,20 @@
 from typing import TYPE_CHECKING, Optional
 
+from bisq.common.config.config import Config
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.transaction_out_point import TransactionOutPoint
+from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.wallet import Wallet
+from utils.preconditions import check_not_none
+from bitcoinj.core.transaction import Transaction
 
 
 if TYPE_CHECKING:
+    from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
     from bitcoinj.core.address import Address
-    from bitcoinj.core.transaction import Transaction
 
 
 # TODO
@@ -19,6 +24,10 @@ class TradeWalletService:
     def __init__(self):
         self.wallet: Optional["Wallet"] = None
         self.password: Optional[str] = None
+
+    @property
+    def params(self):
+        return Config.BASE_CURRENCY_NETWORK_VALUE.parameters
 
     def get_wallet_tx(self, tx_id: str) -> "Transaction":
         raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
@@ -210,4 +219,21 @@ class TradeWalletService:
     ) -> bytes:
         raise RuntimeError(
             "TradeWalletService.buyer_signs_payout_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Private methods
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def _get_connected_out_point(self, raw_transaction_input: "RawTransactionInput"):
+        return TransactionOutPoint.from_tx(
+            Transaction(self.params, raw_transaction_input.parent_transaction),
+            raw_transaction_input.index,
+        )
+
+    def is_p2wh(self, raw_transaction_input: "RawTransactionInput"):
+        return ScriptPattern.is_p2wh(
+            check_not_none(
+                self._get_connected_out_point(raw_transaction_input).connected_output
+            ).get_script_pub_key()
         )
