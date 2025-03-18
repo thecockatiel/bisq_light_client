@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
-from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import PreparedDepositTxAndMakerInputs
+from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
+    PreparedDepositTxAndMakerInputs,
+)
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
@@ -183,6 +185,18 @@ class TradeWalletService:
     ) -> "Transaction":
         raise RuntimeError(
             "TradeWalletService.create_delayed_unsigned_payout_tx Not implemented yet"
+        )
+
+    def sign_delayed_payout_tx(
+        self,
+        delayed_payout_tx: "Transaction",
+        prepared_deposit_tx: "Transaction",
+        my_multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> bytes:
+        raise RuntimeError(
+            "TradeWalletService.sign_delayed_payout_tx Not implemented yet"
         )
 
     def finalize_unconnected_delayed_payout_tx(
