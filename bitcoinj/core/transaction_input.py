@@ -5,8 +5,7 @@ from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script import Script
-from electrum_min.bitcoin import witness_push
-from electrum_min.transaction import _NEEDS_RECALC, TxOutpoint, PartialTxInput as ElectrumPartialTxInput
+from electrum_min.transaction import TxOutpoint, PartialTxInput as ElectrumPartialTxInput
 
 if TYPE_CHECKING:
     from electrum_min.transaction import TxInput as ElectrumTxInput
@@ -119,6 +118,10 @@ class TransactionInput:
     @property
     def script_sig(self) -> Optional[bytes]:
         return self._ec_tx_input.script_sig
+    
+    @script_sig.setter
+    def script_sig(self, value: bytes) -> None:
+        self._ec_tx_input.script_sig = value
 
     @property
     def script_pub_key(self) -> Optional[bytes]:
