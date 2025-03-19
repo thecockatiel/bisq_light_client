@@ -82,6 +82,22 @@ class TradeWalletService:
             "TradeWalletService.taker_creates_deposit_tx_inputs Not implemented yet"
         )
 
+    def seller_as_maker_creates_deposit_tx(
+        self,
+        maker_input_amount: Coin,
+        ms_output_amount: Coin,
+        taker_raw_transaction_inputs: list["RawTransactionInput"],
+        taker_change_output_value: int,
+        taker_change_address_string: Optional[str],
+        maker_address: "Address",
+        maker_change_address: "Address",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "PreparedDepositTxAndMakerInputs":
+        raise RuntimeError(
+            "TradeWalletService.seller_as_maker_creates_deposit_tx Not implemented yet"
+        )
+
     def commit_tx(self, tx: "Transaction") -> None:
         raise RuntimeError("TradeWalletService.commit_tx Not implemented yet")
 
