@@ -183,9 +183,9 @@ class WalletService(ABC):
         self,
         tx: "Transaction",
         callback: "TxBroadcasterCallback",
-        timeout: float = None,
+        timeout_sec: float = None,
     ):
-        TxBroadcaster.broadcast_tx(self.wallet, tx, callback, timeout)
+        TxBroadcaster.broadcast_tx(self.wallet, tx, callback, timeout_sec)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // TransactionConfidence
