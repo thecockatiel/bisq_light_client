@@ -52,7 +52,7 @@ class SellerProcessShareBuyerPaymentAccountMessage(TradeTask):
                 self.process_model.key_ring.signature_key_pair.private_key,
                 contract_json.encode("utf-8"),
             )
-            self.trade.contract_as_json = contract_json
+            self.trade.contract_as_json = contract_json  # TODO: check contract_as_json is same as in java
 
             if contract.is_buyer_maker_and_seller_taker:
                 self.trade.taker_contract_signature = signature
