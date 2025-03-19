@@ -50,8 +50,10 @@ class Sig:
             raise RuntimeError("Could not create key.") from e
 
     @staticmethod
-    def sign(private_key: DSA.DsaKey, data: bytes):
+    def sign(private_key: DSA.DsaKey, data: Union[bytes, str]):
         try:
+            if isinstance(data, str):
+                data = data.encode('utf-8')
             signer = DSS.new(private_key, 'deterministic-rfc6979', 'der')
             signature = signer.sign(
                 SHA256.new(data),
