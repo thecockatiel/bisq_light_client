@@ -93,7 +93,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.seller_payout_amount_from_mediation: int = 0
         
         # Was added at v1.9.2
-        self._payment_account: Optional["PaymentAccount"] = None
+        self.payment_account: Optional["PaymentAccount"] = None
         
         # We want to indicate the user the state of the message delivery of the
         # CounterCurrencyTransferStartedMessage. As well we do an automatic re-send in case it was not ACKed yet.
@@ -111,9 +111,9 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         
     def apply_payment_account(self, trade: "Trade"):
         if isinstance(trade, MakerTrade):
-            self._payment_account = self.user.get_payment_account(self._offer.maker_payment_account_id)
+            self.payment_account = self.user.get_payment_account(self._offer.maker_payment_account_id)
         else:
-            self._payment_account = self.user.get_payment_account(trade.taker_payment_account_id)
+            self.payment_account = self.user.get_payment_account(trade.taker_payment_account_id)
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PROTO BUFFER
@@ -152,8 +152,8 @@ class ProcessModel(ProtocolModel[TradingPeer]):
             )
         if self.mediated_payout_tx_signature:
             builder.mediated_payout_tx_signature = self.mediated_payout_tx_signature
-        if self._payment_account:
-            builder.payment_account.CopyFrom(self._payment_account.to_proto_message())
+        if self.payment_account:
+            builder.payment_account.CopyFrom(self.payment_account.to_proto_message())
 
         return builder
     
@@ -188,7 +188,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         process_model.burning_man_selection_height = proto.burning_man_selection_height
 
         if proto.HasField('payment_account'):
-            process_model._payment_account = PaymentAccount.from_proto(proto.payment_account, core_proto_resolver)
+            process_model.payment_account = PaymentAccount.from_proto(proto.payment_account, core_proto_resolver)
 
         return process_model
 
@@ -217,12 +217,12 @@ class ProcessModel(ProtocolModel[TradingPeer]):
         self.take_offer_fee_tx_id = value.get_tx_id()
     
     def get_payment_account_payload(self, trade: "Trade"):
-        if self._payment_account is None:
+        if self.payment_account is None:
             # Persisted trades pre v 1.9.2 have no paymentAccount set, so it will be null.
             # We do not need to persist it (though it would not hurt as well).
             self.apply_payment_account(trade)
             
-        return self._payment_account.payment_account_payload
+        return self.payment_account.payment_account_payload
     
     def get_funds_needed_for_trade(self):
         return Coin.value_of(self.funds_needed_for_trade_as_long)
