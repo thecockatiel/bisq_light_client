@@ -192,6 +192,24 @@ class TradeWalletService:
             if not tx_input.witness and witness_from_buyer:
                 tx_input.witness = witness_from_buyer
 
+    def taker_signs_deposit_tx(
+        self,
+        taker_is_seller: bool,
+        makers_deposit_tx_serialized: bytes,
+        ms_output_amount: Coin,
+        buyer_inputs: list["RawTransactionInput"],
+        seller_inputs: list["RawTransactionInput"],
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.taker_signs_deposit_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Delayed payout tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
     def create_delayed_unsigned_payout_tx(
         self,
         deposit_tx: "Transaction",
