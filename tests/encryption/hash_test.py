@@ -3,7 +3,6 @@ from bisq.common.crypto.hash import (
     get_keccak1600_hash,
     get_sha256_hash,
     get_sha256_hash_from_integer,
-    get_sha256_hash_from_string,
     get_sha256_ripemd160_hash,
     get_ripemd160_hash,
 )
@@ -23,7 +22,7 @@ class TestFormatting(unittest.TestCase):
         self.keccak1600_hex = "1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8"
 
     def test_sha256_str(self):
-        self.assertEqual(get_sha256_hash_from_string(self.str_message).hex(), self.sha256_str_hex)
+        self.assertEqual(get_sha256_hash(self.str_message).hex(), self.sha256_str_hex)
     
     def test_sha256_bytes(self):
         self.assertEqual(get_sha256_hash(self.str_message.encode()).hex(), self.sha256_bytes_hex)
