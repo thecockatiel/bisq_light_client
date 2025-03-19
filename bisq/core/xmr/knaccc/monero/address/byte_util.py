@@ -3,7 +3,7 @@ class ByteUtil:
     @staticmethod
     def byte_to_hex(v: int):
         # make sure v is a byte int value
-        return hex(v & 0xFF)
+        return hex(v & 0xFF)[2:]
 
     @staticmethod
     def long_to_little_endian_uint32_byte_array(value: int):
