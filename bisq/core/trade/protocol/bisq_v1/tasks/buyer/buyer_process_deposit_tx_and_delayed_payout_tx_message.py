@@ -90,7 +90,7 @@ class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
                 # As we have added the payment accounts we need to update the json. We also update the signature
                 # thought that has less relevance with the changes of 1.7.0
                 contract_as_json = JsonUtil.object_to_json(contract)  # TODO: check contract_as_json is same as in java
-                signature = Sig.sign(
+                signature = Sig.sign_message(
                     self.process_model.key_ring.signature_key_pair.private_key,
                     contract_as_json,
                 )

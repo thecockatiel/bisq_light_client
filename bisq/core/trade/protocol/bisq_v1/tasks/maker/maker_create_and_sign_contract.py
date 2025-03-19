@@ -88,9 +88,9 @@ class MakerCreateAndSignContract(TradeTask):
                 taker_payment_method_id=takers_payment_method_id,
             )
             contract_as_json = JsonUtil.object_to_json(contract)  # TODO: check contract_as_json is same as in java
-            signature = Sig.sign(
+            signature = Sig.sign_message(
                 self.process_model.key_ring.signature_key_pair.private_key,
-                contract_as_json.encode("utf-8"),
+                contract_as_json,
             )
 
             self.trade.contract = contract

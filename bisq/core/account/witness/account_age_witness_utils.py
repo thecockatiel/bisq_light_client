@@ -168,7 +168,7 @@ class AccountAgeWitnessUtils:
             
         message = profile_id + hash_as_hex + str(date)
         signature_key_pair = key_ring.signature_key_pair
-        signature_base64 = Sig.sign(signature_key_pair.private_key, message)
+        signature_base64 = Sig.sign_message(signature_key_pair.private_key, message)
         pub_key_base64 = base64.b64encode(Sig.get_public_key_bytes(signature_key_pair.public_key)).decode('utf-8')
         
         dto = AccountAgeWitnessDto(
