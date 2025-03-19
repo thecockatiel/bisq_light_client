@@ -1,0 +1,2 @@
+class InvalidWalletAddressException(Exception):
+    pass
