@@ -164,3 +164,29 @@ class XmrAccountDelegate:
     @property
     def _map(self):
         return self.account.get_or_create_extra_data()
+
+    # payment acccount delegates
+
+    @property
+    def id(self):
+        return self.account.id
+
+    @id.setter
+    def id(self, id: str):
+        self.account.id = id
+
+    @property
+    def creation_date(self):
+        return self.account.creation_date
+
+    @creation_date.setter
+    def creation_date(self, creation_date: int):
+        self.account.creation_date = creation_date
+
+    @property
+    def account_name(self):
+        return self.account.account_name
+
+    @account_name.setter
+    def account_name(self, account_name: str):
+        self.account.account_name = account_name
