@@ -115,8 +115,10 @@ class MakerProcessesInputsForDepositTxRequest(TradeTask):
                 self.trade.price_as_long = takers_trade_price
             except TradePriceOutOfToleranceException as e:
                 self.failed(str(e))
+                return
             except Exception as e:
                 self.failed(exc=e)
+                return
 
             check_argument(request.trade_amount > 0)
             self.trade.set_amount(Coin.value_of(request.trade_amount))
