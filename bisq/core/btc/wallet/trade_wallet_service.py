@@ -222,6 +222,16 @@ class TradeWalletService:
             "TradeWalletService.taker_signs_deposit_tx Not implemented yet"
         )
 
+    def seller_as_maker_finalizes_deposit_tx(
+        self,
+        my_deposit_tx: "Transaction",
+        takers_deposit_tx: "Transaction",
+        num_takers_inputs: int,
+    ) -> None:
+        raise RuntimeError(
+            "TradeWalletService.seller_as_maker_finalizes_deposit_tx Not implemented yet"
+        )
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Delayed payout tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
