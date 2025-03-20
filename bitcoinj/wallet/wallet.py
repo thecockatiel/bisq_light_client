@@ -648,7 +648,7 @@ class Wallet(EventListener):
             tx._electrum_transaction, password, ignore_warnings=True
         )
         if result:
-            return Transaction(self.network_params, result)
+            return tx
         return None
 
     def _calculate_fee(
