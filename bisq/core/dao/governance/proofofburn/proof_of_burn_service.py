@@ -141,24 +141,19 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
         return bytes()
 
     def sign(self, proof_of_burn_tx_id: str, message: str) -> Optional[str]:
-        # TODO: implement after wallet is implemented
-        raise RuntimeError("ProofOfBurnService.sign not implemented yet")
-        # pub_key = self.get_pub_key(proof_of_burn_tx_id)
-        # key = self._bsq_wallet_service.find_key_from_pub_key(pub_key)
-        # if key is None:
-        #     return None
+        pub_key = self.get_pub_key(proof_of_burn_tx_id)
+        key = self._bsq_wallet_service.find_key_from_pub_key(pub_key)
+        if key is None:
+            return None
 
-        # try:
-        #     if self._bsq_wallet_service.is_encrypted():
-        #         signature_base64 = key.signs_message(
-        #             message, self._bsq_wallet_service.aes_key
-        #         )
-        #     else:
-        #         signature_base64 = key.sign_message(message)
-        #     return signature_base64
-        # except Exception as e:
-        #     logger.error(str(e), exc_info=e)
-        #     return None
+        try:
+            signature_base64 = key.sign_message(
+                message, self._bsq_wallet_service.password
+            )
+            return signature_base64
+        except Exception as e:
+            logger.error(str(e), exc_info=e)
+            return None
 
     def verify(self, message: str, pub_key: str, signature_base64: str) -> bool:
         # TODO: check if works correctly
