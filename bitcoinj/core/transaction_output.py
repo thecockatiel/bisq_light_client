@@ -122,7 +122,7 @@ class TransactionOutput:
                     is not None
                 )
             elif ScriptPattern.is_p2sh(script):
-                raise NotImplementedError("P2SH support is not implemented yet")
+                return wallet.is_mine(self._ec_tx_output.address) # TODO isn't this enough for all types ?
             elif ScriptPattern.is_p2pkh(script):
                 return (
                     wallet.find_key_from_pub_key_hash(
