@@ -1,28 +1,37 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
+from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.model.inputs_and_change_output import InputsAndChangeOutput
 from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
     PreparedDepositTxAndMakerInputs,
 )
 from bisq.core.btc.setup.wallet_config import WalletConfig
 from bisq.core.btc.setup.wallets_setup import WalletsSetup
+from bisq.core.btc.wallet.btc_coin_selector import BtcCoinSelector
+from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
+from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
 from utils.preconditions import check_not_none
 from bitcoinj.core.transaction import Transaction
+from bitcoinj.core.address import Address
 
 
 if TYPE_CHECKING:
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
-    from bitcoinj.core.address import Address
+
+
+logger = get_logger(__name__)
 
 
 # TODO
@@ -67,10 +76,72 @@ class TradeWalletService:
         do_broadcast: bool,
         callback: "TxBroadcasterCallback",
     ) -> "Transaction":
+        trading_fee_tx = Transaction(self.params)
+        send_request = None
+        try:
+            trading_fee_tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    trading_fee,
+                    Address.from_string(self.params, fee_receiver_address),
+                    trading_fee_tx,
+                )
+            )
+            # the reserved amount we need for the trade we send to our trade reservedForTradeAddress
+            trading_fee_tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    reserved_funds_for_offer,
+                    reserved_for_trade_address,
+                    trading_fee_tx,
+                )
+            )
 
-        raise RuntimeError(
-            "TradeWalletService.create_btc_trading_fee_tx Not implemented yet"
-        )
+            # we allow spending of unconfirmed tx (double spend risk is low and usability would suffer if we need to
+            # wait for 1 confirmation)
+            # In case of double spend we will detect later in the trade process and use a ban score to penalize bad behaviour (not impl. yet)
+            send_request = SendRequest.for_tx(trading_fee_tx)
+            send_request.shuffle_outputs = False
+            send_request.password = self._password
+            if use_savings_wallet:
+                send_request.coin_selector = BtcCoinSelector(
+                    self._wallets_setup.get_addresses_by_context(
+                        AddressEntryContext.AVAILABLE
+                    ),
+                    self._preferences.get_ignore_dust_threshold(),
+                )
+            else:
+                send_request.coin_selector = BtcCoinSelector(
+                    funding_address,
+                    self._preferences.get_ignore_dust_threshold(),
+                )
+            # We use a fixed fee
+            send_request.fee = tx_fee
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+
+            # Change is optional in case of overpay or use of funds from savings wallet
+            send_request.change_address = change_address
+
+            check_not_none(self._wallet, "Wallet must not be None")
+            self._wallet.complete_tx(send_request)
+
+            if self._remove_dust(trading_fee_tx):
+                self._wallet.sign_tx(self._password, trading_fee_tx)
+
+            WalletService.print_tx("trading_fee_tx", trading_fee_tx)
+
+            if do_broadcast and callback:
+                self.broadcast_tx(trading_fee_tx, callback)
+
+            return trading_fee_tx
+        except Exception as e:
+            if self._wallet and send_request and send_request.coin_selector:
+                logger.error(
+                    f"Balance for coin selector at create_btc_trading_fee_tx = {self._wallet.get_coin_selector_balance(send_request.coin_selector).to_friendly_string()}"
+                )
+            logger.error(
+                f"create_btc_trading_fee_tx failed: trading_fee_tx={trading_fee_tx}, tx_outputs={trading_fee_tx.outputs}"
+            )
+            raise e
 
     def complete_bsq_trading_fee_tx(
         self,
@@ -386,3 +457,35 @@ class TradeWalletService:
                 self._get_connected_out_point(raw_transaction_input).connected_output
             ).get_script_pub_key()
         )
+
+    # BISQ issue #4039: prevent dust outputs from being created.
+    # check all the outputs in a proposed transaction, if any are below the dust threshold
+    # remove them, noting the details in the log. returns 'true' to indicate if any dust was
+    # removed.
+    def _remove_dust(self, transaction: "Transaction") -> bool:
+        original_transaction_outputs = transaction.outputs
+        keep_transaction_outputs = []
+
+        for transaction_output in original_transaction_outputs:
+            if transaction_output.get_value().is_less_than(
+                Restrictions.get_min_non_dust_output()
+            ):
+                logger.info(
+                    f"Your transaction would have contained a dust output of {transaction_output}",
+                )
+            else:
+                keep_transaction_outputs.append(transaction_output)
+
+        # If dust was detected, keep_transaction_outputs will have fewer elements than original_transaction_outputs
+        # Set the transaction outputs to what we saved in keep_transaction_outputs, thus discarding dust.
+        if len(keep_transaction_outputs) != len(original_transaction_outputs):
+            logger.info(
+                "Dust output was detected and removed, the new output is as follows:"
+            )
+            transaction.clear_outputs()
+            for transaction_output in keep_transaction_outputs:
+                transaction.add_output(transaction_output)
+                logger.info(f"{transaction_output}")
+            return True  # Dust was removed
+
+        return False  # No action necessary
