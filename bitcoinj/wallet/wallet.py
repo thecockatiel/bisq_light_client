@@ -47,7 +47,12 @@ from electrum_min.transaction import (
     PartialTxOutput as ElectrumPartialTxOutput,
 )
 from electrum_min.network import Network
-from electrum_min.util import EventListener, InvalidPassword, TxMinedInfo, event_listener
+from electrum_min.util import (
+    EventListener,
+    InvalidPassword,
+    TxMinedInfo,
+    event_listener,
+)
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.preconditions import check_argument, check_state
@@ -263,16 +268,16 @@ class Wallet(EventListener):
             self._tx_changed_listeners.discard(listener)
             return True
         return False
-    
+
     def add_tx_verified_listener(self, listener: Callable[["Transaction"], None]):
         self._tx_verified_listeners.add(listener)
-    
+
     def remove_tx_verified_listener(self, listener: Callable[["Transaction"], None]):
         if listener in self._tx_verified_listeners:
             self._tx_verified_listeners.discard(listener)
             return True
         return False
-    
+
     def add_tx_removed_listener(self, listener: Callable[["Transaction"], None]):
         self._tx_removed_listeners.add(listener)
 
@@ -413,12 +418,12 @@ class Wallet(EventListener):
         tx.memo = self.get_label_for_txid(tx.get_tx_id())
         mined_info = self.get_tx_mined_info(tx.get_tx_id())
         if mined_info.timestamp:
-            update_time = datetime.fromtimestamp(
-                mined_info.timestamp, tz=timezone.utc
-            )
+            update_time = datetime.fromtimestamp(mined_info.timestamp, tz=timezone.utc)
             tx.update_time = update_time
             tx.included_in_best_chain_at = update_time
-        tx.confidence = self._get_confidence_from_tx_mined_info(tx.get_tx_id(), mined_info)
+        tx.confidence = self._get_confidence_from_tx_mined_info(
+            tx.get_tx_id(), mined_info
+        )
 
     def get_label_for_txid(self, txid: str):
         return self._electrum_wallet.get_label_for_txid(txid)
@@ -459,7 +464,7 @@ class Wallet(EventListener):
             return None
         info = self.get_tx_mined_info(tx_id)
         return self._get_confidence_from_tx_mined_info(tx_id, info)
-    
+
     def _get_confidence_from_tx_mined_info(self, tx_id: str, info: "TxMinedInfo"):
         if info.conf:
             return TransactionConfidence(
