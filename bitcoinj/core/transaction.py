@@ -596,3 +596,8 @@ class Transaction:
             ),
         )
         self.add_output(output)
+
+    def clear_outputs(self):
+        self._electrum_transaction._outputs = None
+        self._electrum_transaction._cached_network_ser = None
+        self.outputs.invalidate()
