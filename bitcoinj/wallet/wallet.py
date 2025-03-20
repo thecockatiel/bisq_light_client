@@ -7,6 +7,7 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_exception import ScriptException
 from bitcoinj.script.script_pattern import ScriptPattern
+from bitcoinj.wallet.coin_selector import CoinSelector
 from bitcoinj.wallet.exceptions.could_not_adjust_downwards import (
     CouldNotAdjustDownwards,
 )
@@ -55,7 +56,7 @@ from electrum_min.util import (
 )
 from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty
-from utils.preconditions import check_argument, check_state
+from utils.preconditions import check_argument, check_not_none, check_state
 
 if TYPE_CHECKING:
     from bitcoinj.wallet.coin_selection import CoinSelection
@@ -341,6 +342,18 @@ class Wallet(EventListener):
             utxo.value_sats()
             for utxo in self._electrum_wallet.get_spendable_coins([address])
         )
+
+    def get_coin_selector_balance(self, coin_selector: "CoinSelector"):
+        with self._lock:
+            check_not_none(
+                coin_selector,
+                "coin_selector cannot be None at get_coin_selector_balance",
+            )
+            candidates = self.calculate_all_spend_candidates()
+            selection = coin_selector.select(
+                self.network_params.get_max_money(), candidates
+            )
+            return selection.value_gathered
 
     def get_issued_receive_addresses(self) -> list["Address"]:
         return [
