@@ -1,14 +1,12 @@
 from bisq.common.config.config import Config
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sig import Sig
-from bisq.core.btc.wallet.restrictions import Restrictions
+from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.model.bisq_v1.buyer_as_maker_trade import BuyerAsMakerTrade
 from bisq.core.trade.model.bisq_v1.contract import Contract
 from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
-from bisq.core.util.coin.coin_util import CoinUtil
 from bisq.core.util.json_util import JsonUtil
-from pb_pb2 import AddressEntry
 from utils.preconditions import check_argument, check_not_none
 from bisq.common.setup.log_setup import get_logger
 
@@ -39,12 +37,12 @@ class MakerCreateAndSignContract(TradeTask):
             offer = self.process_model.offer
             offer_id = offer.id
             maker_address_entry = wallet_service.get_or_create_address_entry(
-                offer_id, AddressEntry.Context.MULTI_SIG
+                offer_id, AddressEntryContext.MULTI_SIG
             )
             maker_multi_sig_pub_key = maker_address_entry.pub_key
 
             taker_address_entry = wallet_service.get_or_create_address_entry(
-                offer_id, AddressEntry.Context.TRADE_PAYOUT
+                offer_id, AddressEntryContext.TRADE_PAYOUT
             )
 
             hash_of_makers_payment_account_payload = (
@@ -87,7 +85,9 @@ class MakerCreateAndSignContract(TradeTask):
                 maker_payment_method_id=makers_payment_method_id,
                 taker_payment_method_id=takers_payment_method_id,
             )
-            contract_as_json = JsonUtil.object_to_json(contract)  # TODO: check contract_as_json is same as in java
+            contract_as_json = JsonUtil.object_to_json(
+                contract
+            )  # TODO: check contract_as_json is same as in java
             signature = Sig.sign_message(
                 self.process_model.key_ring.signature_key_pair.private_key,
                 contract_as_json,
