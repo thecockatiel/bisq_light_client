@@ -5,7 +5,10 @@ from bisq.core.btc.model.inputs_and_change_output import InputsAndChangeOutput
 from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
     PreparedDepositTxAndMakerInputs,
 )
+from bisq.core.btc.setup.wallet_config import WalletConfig
+from bisq.core.btc.setup.wallets_setup import WalletsSetup
 from bisq.core.btc.wallet.wallet_service import WalletService
+from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.script.script_pattern import ScriptPattern
@@ -25,13 +28,26 @@ if TYPE_CHECKING:
 class TradeWalletService:
     MIN_DELAYED_PAYOUT_TX_FEE = Coin.value_of(1000)
 
-    def __init__(self):
-        self.wallet: Optional["Wallet"] = None
-        self.password: Optional[str] = None
+    def __init__(self, wallets_setup: "WalletsSetup", preferences: "Preferences"):
+        self._wallets_setup = wallets_setup
+        self._preferences = preferences
+        self._wallet_config: Optional["WalletConfig"] = None
+        self._wallet: Optional["Wallet"] = None
+        self._password: Optional[str] = None
+
+        self._wallets_setup.add_setup_completed_handler(
+            lambda: (
+                setattr(self, "_wallet_config", self._wallets_setup.wallet_config),
+                setattr(self, "_wallet", self._wallets_setup.btc_wallet),
+            )
+        )
 
     @property
     def params(self):
         return Config.BASE_CURRENCY_NETWORK_VALUE.parameters
+
+    def set_password(self, password: str):
+        self._password = password
 
     def get_wallet_tx(self, tx_id: str) -> "Transaction":
         raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
@@ -289,7 +305,7 @@ class TradeWalletService:
             input.get_value(),
         )
 
-        WalletService.check_wallet_consistency(self.wallet)
+        WalletService.check_wallet_consistency(self._wallet)
         assert (
             input.connected_output is not None
         ), "input.connected_output must not be None"

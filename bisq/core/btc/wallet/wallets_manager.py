@@ -44,10 +44,10 @@ class WalletsManager:
     def set_password(self, password: str):
         self.btc_wallet_service.password = password
         self.bsq_wallet_service.password = password
-        self.trade_wallet_service.password = password
+        self.trade_wallet_service.set_password(password)
 
     def maybe_add_segwit_keychains(self, aes_key: bytes):
-        pass # no need to implement
+        pass  # no need to implement
 
     # A bsq tx has miner fees in btc included. Thus we need to handle it on both wallets.
     def publish_and_commit_bsq_tx(

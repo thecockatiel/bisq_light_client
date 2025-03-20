@@ -1981,7 +1981,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
                 self.preferences,
                 self.fee_service,
                 self.dao_kill_switch,
-                self.bsq_formatter
+                self.bsq_formatter,
             )
 
         return GlobalContainer._bsq_wallet_service
@@ -2004,10 +2004,13 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
         if GlobalContainer._trade_wallet_service is None:
             from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 
-            GlobalContainer._trade_wallet_service = TradeWalletService()
+            GlobalContainer._trade_wallet_service = TradeWalletService(
+                self.wallets_setup,
+                self.preferences,
+            )
 
         return GlobalContainer._trade_wallet_service
-    
+
     @property
     def bsq_coin_selector(self):
         if GlobalContainer._bsq_coin_selector is None:
@@ -2019,7 +2022,7 @@ class GlobalContainer(metaclass=DynamicAttributesMeta):
             )
 
         return GlobalContainer._bsq_coin_selector
-    
+
     @property
     def non_bsq_coin_selector(self):
         if GlobalContainer._non_bsq_coin_selector is None:
