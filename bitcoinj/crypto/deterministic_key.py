@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence, Union
 
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 
@@ -10,10 +10,16 @@ if TYPE_CHECKING:
 class DeterministicKey:
     # A wrapper for KeyStoreWithMPK of electrum
 
-    def __init__(self, pubkey: bytes, keystore: "BIP32_KeyStore"):
+    def __init__(
+        self,
+        pubkey: bytes,
+        keystore: "BIP32_KeyStore",
+        derivation_suffix: Sequence[int],
+    ):
         self._keystore = keystore
         self._pubkey = pubkey
         self._pubkey_hash = None
+        self._derivation_suffix = derivation_suffix
         assert (
             self._keystore.is_deterministic()
         ), "Keystore provided must be deterministic at DeterministicKey"
@@ -29,3 +35,6 @@ class DeterministicKey:
 
     def get_pub_key_as_hex(self) -> str:
         return self._pubkey.hex()
+
+    def sign_message(self, message: Union[bytes, str], password: str = None) -> str:
+        return self._keystore.sign_message(self._derivation_suffix, message, password)

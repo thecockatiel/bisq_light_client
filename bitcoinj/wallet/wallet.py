@@ -182,7 +182,8 @@ class Wallet(EventListener):
                 first_item = next(iter(keys.items()))
                 pubkey = first_item[0]
                 keystore = first_item[1][0]
-                return DeterministicKey(pubkey, keystore)
+                derivation_suffix = first_item[1][1]
+                return DeterministicKey(pubkey, keystore, derivation_suffix)
         return None
 
     def find_key_from_pub_key_hash(
@@ -218,7 +219,8 @@ class Wallet(EventListener):
             first_item = next(iter(keys.items()))
             pubkey = first_item[0]
             keystore = first_item[1][0]
-            return DeterministicKey(pubkey, keystore)
+            derivation_suffix = first_item[1][1]
+            return DeterministicKey(pubkey, keystore, derivation_suffix)
         return None
 
     def find_key_from_pub_key(
