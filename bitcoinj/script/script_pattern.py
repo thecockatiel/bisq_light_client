@@ -102,7 +102,7 @@ class ScriptPattern:
         chunks = script.decoded
         return len(chunks) > 0 and chunks[0][0] == opcodes.OP_RETURN
 
-    def extract_key_from_p2pk(script: "Script"):
+    def extract_key_from_p2pk(script: "Script") -> bytes:
         """
         Extract the pubkey from a P2SH scriptPubKey.
         It's important that the script is in the correct form,
@@ -110,7 +110,7 @@ class ScriptPattern:
         """
         return script.decoded[0][1]
 
-    def extract_hash_from_p2pkh(script: "Script"):
+    def extract_hash_from_p2pkh(script: "Script") -> bytes:
         """
         Extract the pubkey hash from a P2PKH scriptPubKey.
         It's important that the script is in the correct form,
@@ -118,7 +118,7 @@ class ScriptPattern:
         """
         return script.decoded[2][1]
 
-    def extract_hash_from_p2wpkh(script: "Script"):
+    def extract_hash_from_p2wpkh(script: "Script") -> bytes:
         """
         Extract the pubkey hash from a P2WPKH or the script hash from a P2WSH scriptPubKey.
         It's important that the script is in the correct form,

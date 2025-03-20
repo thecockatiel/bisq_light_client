@@ -122,7 +122,9 @@ class TransactionOutput:
                     is not None
                 )
             elif ScriptPattern.is_p2sh(script):
-                return wallet.is_mine(self._ec_tx_output.address) # TODO isn't this enough for all types ?
+                return wallet.is_mine(
+                    self._ec_tx_output.address
+                )  # TODO isn't this enough for all types ?
             elif ScriptPattern.is_p2pkh(script):
                 return (
                     wallet.find_key_from_pub_key_hash(
@@ -183,3 +185,35 @@ class TransactionOutput:
         fee_per_kb = 3000  # REFERENCE_DEFAULT_MIN_TX_FEE * 3
         size = serialized_size + 148
         return fee_per_kb * size // 1000
+
+    def __str__(self):
+        try:
+            script = self.get_script_pub_key()
+            buf = ["TxOut of "]
+            buf.append(Coin.value_of(self.value).to_friendly_string())
+            if (
+                ScriptPattern.is_p2pkh(script)
+                or ScriptPattern.is_p2wpkh(script)
+                or ScriptPattern.is_p2sh(script)
+            ):
+                buf.append(" to ")
+                buf.append(script.get_to_address(self.parent.params))
+            elif ScriptPattern.is_p2pk(script):
+                buf.append(" to pubkey ")
+                buf.append(ScriptPattern.extract_key_from_p2pk(script).hex())
+            elif ScriptPattern.is_sent_to_multi_sig(script):
+                buf.append(" to multisig")
+            else:
+                buf.append(" (unknown type)")
+            buf.append(" script:")
+            buf.append(str(script))
+            return "".join(buf)
+        except Exception as e:
+            raise RuntimeError(e) from e
+
+    def __eq__(self, value):
+        if isinstance(value, ElectrumTxOutput):
+            return self._ec_tx_output == value
+        if isinstance(value, TransactionOutput):
+            return self._ec_tx_output == value._ec_tx_output
+        return False
