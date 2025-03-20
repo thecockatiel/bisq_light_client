@@ -7,6 +7,7 @@ from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
 )
 from bisq.core.btc.setup.wallet_config import WalletConfig
 from bisq.core.btc.setup.wallets_setup import WalletsSetup
+from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
@@ -49,8 +50,9 @@ class TradeWalletService:
     def set_password(self, password: str):
         self._password = password
 
-    def get_wallet_tx(self, tx_id: str) -> "Transaction":
-        raise RuntimeError("TradeWalletService.get_wallet_tx Not implemented yet")
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Trade fee
+    # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def create_btc_trading_fee_tx(
         self,
@@ -114,31 +116,6 @@ class TradeWalletService:
             "TradeWalletService.seller_as_maker_creates_deposit_tx Not implemented yet"
         )
 
-    def commit_tx(self, tx: "Transaction") -> None:
-        raise RuntimeError("TradeWalletService.commit_tx Not implemented yet")
-
-    def get_cloned_transaction(self, tx: "Transaction") -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.get_cloned_transaction Not implemented yet"
-        )
-
-    def trader_sign_and_finalize_disputed_payout_tx(
-        self,
-        deposit_tx_serialized: bytes,
-        arbitrator_signature: bytes,
-        buyer_payout_amount: Coin,
-        seller_payout_amount: Coin,
-        buyer_address_string: str,
-        seller_address_string: str,
-        traders_multi_sig_key_pair: "DeterministicKey",
-        buyer_pub_key: bytes,
-        seller_pub_key: bytes,
-        arbitrator_pub_key: bytes,
-    ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
-        )
-
     def buyer_as_maker_creates_and_signs_deposit_tx(
         self,
         maker_input_amount: Coin,
@@ -154,75 +131,6 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.buyer_as_maker_creates_and_signs_deposit_tx Not implemented yet"
         )
-
-    def broadcast_tx(
-        self,
-        tx: "Transaction",
-        callback: "TxBroadcasterCallback",
-        timeout_sec: Optional[int] = None,
-    ) -> None:
-        raise RuntimeError("TradeWalletService.broadcast_tx Not implemented yet")
-
-    def seller_signs_and_finalizes_payout_tx(
-        self,
-        deposit_tx: "Transaction",
-        buyer_signature: bytes,
-        buyer_payout_amount: Coin,
-        seller_payout_amount: Coin,
-        buyer_payout_address_string: str,
-        seller_payout_address_string: str,
-        multi_sig_key_pair: "DeterministicKey",
-        buyer_pub_key: bytes,
-        seller_pub_key: bytes,
-    ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.seller_signs_and_finalizes_payout_tx Not implemented yet"
-        )
-
-    def sign_mediated_payout_tx(
-        self,
-        deposit_tx: "Transaction",
-        buyer_payout_amount: Coin,
-        seller_payout_amount: Coin,
-        buyer_payout_address_string: str,
-        seller_payout_address_string: str,
-        my_multi_sig_key_pair: "DeterministicKey",
-        buyer_pub_key: bytes,
-        seller_pub_key: bytes,
-    ) -> "bytes":
-        raise RuntimeError(
-            "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
-        )
-
-    def finalize_mediated_payout_tx(
-        self,
-        deposit_tx: "Transaction",
-        buyer_signature: bytes,
-        seller_signature: bytes,
-        buyer_payout_amount: Coin,
-        seller_payout_amount: Coin,
-        buyer_payout_address: str,
-        seller_payout_address: str,
-        multi_sig_key_pair: "DeterministicKey",
-        buyer_multi_sig_pub_key: bytes,
-        seller_multi_sig_pub_key: bytes,
-    ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.finalize_mediated_payout_tx Not implemented yet"
-        )
-
-    def seller_adds_buyer_witnesses_to_deposit_tx(
-        self,
-        my_deposit_tx: "Transaction",
-        buyers_deposit_tx_with_witness: "Transaction",
-    ) -> None:
-        number_inputs = len(my_deposit_tx.inputs)
-        for i in range(number_inputs):
-            tx_input = my_deposit_tx.inputs[i]
-            witness_from_buyer = buyers_deposit_tx_with_witness.inputs[i].witness
-
-            if not tx_input.witness and witness_from_buyer:
-                tx_input.witness = witness_from_buyer
 
     def taker_signs_deposit_tx(
         self,
@@ -247,6 +155,19 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.seller_as_maker_finalizes_deposit_tx Not implemented yet"
         )
+
+    def seller_adds_buyer_witnesses_to_deposit_tx(
+        self,
+        my_deposit_tx: "Transaction",
+        buyers_deposit_tx_with_witness: "Transaction",
+    ) -> None:
+        number_inputs = len(my_deposit_tx.inputs)
+        for i in range(number_inputs):
+            tx_input = my_deposit_tx.inputs[i]
+            witness_from_buyer = buyers_deposit_tx_with_witness.inputs[i].witness
+
+            if not tx_input.witness and witness_from_buyer:
+                tx_input.witness = witness_from_buyer
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Delayed payout tx
@@ -312,6 +233,10 @@ class TradeWalletService:
         input.verify(input.connected_output)
         return delayed_payout_tx
 
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Standard payout tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
     def buyer_signs_payout_tx(
         self,
         deposit_tx: "Transaction",
@@ -326,6 +251,124 @@ class TradeWalletService:
         raise RuntimeError(
             "TradeWalletService.buyer_signs_payout_tx Not implemented yet"
         )
+
+    def seller_signs_and_finalizes_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address_string: str,
+        seller_payout_address_string: str,
+        multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.seller_signs_and_finalizes_payout_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Mediated payoutTx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def sign_mediated_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address_string: str,
+        seller_payout_address_string: str,
+        my_multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "bytes":
+        raise RuntimeError(
+            "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
+        )
+
+    def finalize_mediated_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_signature: bytes,
+        seller_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_payout_address: str,
+        seller_payout_address: str,
+        multi_sig_key_pair: "DeterministicKey",
+        buyer_multi_sig_pub_key: bytes,
+        seller_multi_sig_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.finalize_mediated_payout_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Arbitrated payoutTx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def trader_sign_and_finalize_disputed_payout_tx(
+        self,
+        deposit_tx_serialized: bytes,
+        arbitrator_signature: bytes,
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_address_string: str,
+        seller_address_string: str,
+        traders_multi_sig_key_pair: "DeterministicKey",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+        arbitrator_pub_key: bytes,
+    ) -> "Transaction":
+        raise RuntimeError(
+            "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
+        )
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Emergency payoutTx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // BsqSwap tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Broadcast tx
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def broadcast_tx(
+        self,
+        tx: "Transaction",
+        callback: "TxBroadcasterCallback",
+        timeout_sec: Optional[int] = None,
+    ) -> None:
+        check_not_none(
+            self._wallet_config,
+            "WalletConfig must not be None at TradeWalletService.broadcast_tx",
+        )
+        TxBroadcaster.broadcast_tx(self._wallet, tx, callback, timeout_sec)
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // Misc
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def get_wallet_tx(self, tx_id: str) -> "Transaction":
+        check_not_none(
+            self._wallet,
+            "Wallet must not be None at TradeWalletService.get_wallet_tx",
+        )
+        return self._wallet.get_transaction(tx_id)
+
+    def commit_tx(self, tx: "Transaction") -> None:
+        check_not_none(
+            self._wallet,
+            "Wallet must not be None at TradeWalletService.commit_tx",
+        )
+        self._wallet.maybe_add_transaction(tx)
+
+    def get_cloned_transaction(self, tx: "Transaction") -> "Transaction":
+        return Transaction(self.params, tx.bitcoin_serialize())
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private methods
