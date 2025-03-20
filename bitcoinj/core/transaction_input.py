@@ -168,3 +168,33 @@ class TransactionInput:
             pub_key,
             Script.ALL_VERIFY_FLAGS,
         )
+
+    def __str__(self):
+        s = ["TxIn"]
+        try:
+            if self.is_coin_base:
+                s.append(": COINBASE")
+            else:
+                s.append(f" for [{self.outpoint}]: {self.get_script_sig()}")
+                flags = ", ".join(
+                    filter(
+                    None,
+                    [
+                        "witness" if self.has_witness else None,
+                        f"sequence: {hex(self.nsequence)}" if self.has_sequence else None,
+                        "opts into full RBF" if self.is_opt_in_full_rbf else None,
+                    ],
+                    )
+                )
+                if flags:
+                    s.append(f" ({flags})")
+                return "".join(s)
+        except Exception as e:
+            raise RuntimeError(e)
+
+    def __eq__(self, value):
+        if isinstance(value, ElectrumTxInput):
+            return self._ec_tx_input == value
+        if isinstance(value, TransactionInput):
+            return self._ec_tx_input == value._ec_tx_input
+        return False
