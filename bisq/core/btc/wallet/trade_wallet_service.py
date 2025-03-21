@@ -25,6 +25,8 @@ from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
+from bitcoinj.crypto.transaction_signature import TransactionSignature
+from bitcoinj.script.script import Script
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
@@ -733,11 +735,43 @@ class TradeWalletService:
         seller_pub_key: bytes,
         buyer_signature: bytes,
         seller_signature: bytes,
-        value: Coin,
+        input_value: Coin,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.finalize_unconnected_delayed_payout_tx Not implemented yet"
+        redeem_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
         )
+        witness = self._wallet.get_witness_for_redeem_script(
+            redeem_script,
+            {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
+        )
+        input = delayed_payout_tx.inputs[0]
+        input.script_sig = b""
+        input.witness = witness
+
+        WalletService.print_tx("finalizeDelayedPayoutTx", delayed_payout_tx)
+        WalletService.verify_transaction(delayed_payout_tx)
+
+        if check_not_none(input_value).is_less_than(
+            delayed_payout_tx.get_output_sum().add(
+                TradeWalletService.MIN_DELAYED_PAYOUT_TX_FEE
+            )
+        ):
+            raise TransactionVerificationException(
+                "Delayed payout tx is paying less than the minimum allowed tx fee"
+            )
+
+        script_pub_key = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+        )
+        input.get_script_sig().correctly_spends(
+            delayed_payout_tx,
+            0,
+            input.witness_elements,
+            input_value,
+            script_pub_key,
+            Script.ALL_VERIFY_FLAGS,
+        )
+        return delayed_payout_tx
 
     def finalize_delayed_payout_tx(
         self,

@@ -21,12 +21,13 @@ from bitcoinj.wallet.exceptions.multiple_op_return_requested import (
     MultipleOpReturnRequested,
 )
 from bitcoinj.wallet.fee_calculation import FeeCalculation
+from electrum_min import bitcoin
 from utils.aio import as_future
 from bisq.common.setup.log_setup import get_logger
 from asyncio import Future
 from collections.abc import Callable
 import time
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Mapping, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -862,3 +863,17 @@ class Wallet(EventListener):
     def add_electrum_info(self, tx: "Transaction"):
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         return tx
+
+    def get_witness_for_redeem_script(
+        self,
+        redeem_script: bytes,
+        sigdata: Mapping[bytes, bytes],  # pubkey -> sig
+    ):
+        address = bitcoin.redeem_script_to_address(
+            self._electrum_wallet.txin_type, redeem_script
+        )
+        return (
+            self._electrum_wallet.get_script_descriptor_for_address(address)
+            .satisfy(sigdata=sigdata)
+            .witness
+        )
