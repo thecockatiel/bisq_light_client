@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.exceptions.transaction_verification_exception import (
+    TransactionVerificationException,
+)
 from bisq.core.btc.exceptions.wallet_exception import WalletException
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.model.inputs_and_change_output import InputsAndChangeOutput
@@ -465,8 +468,8 @@ class TradeWalletService:
                 )
 
         # Add MultiSig output
-        multisig_script_bytes = multisig_script(
-            sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2
+        multisig_script_bytes = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
         )
 
         # Tx fee for deposit tx will be paid by buyer.
@@ -530,9 +533,93 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.taker_signs_deposit_tx Not implemented yet"
+        makers_deposit_tx = Transaction(self.params, makers_deposit_tx_serialized)
+
+        check_argument(buyer_inputs, "buyer_inputs must not be empty")
+        check_argument(seller_inputs, "seller_inputs must not be empty")
+
+        # Check if maker's MultiSig script is identical to the taker's
+        hashed_multi_sig_output_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
         )
+        if (
+            not makers_deposit_tx.outputs[0].script_pub_key
+            == hashed_multi_sig_output_script
+        ):
+            raise TransactionVerificationException(
+                "Maker's hashed_multi_sig_output_script does not match taker's hashed_multi_sig_output_script"
+            )
+
+        # Check if maker's MultiSig output value is identical to the taker's
+        if not makers_deposit_tx.outputs[0].get_value() == ms_output_amount:
+            raise TransactionVerificationException(
+                "Maker's MultiSig output amount does not match taker's MultiSig output amount"
+            )
+
+        # The outpoints are not available from the serialized makers_deposit_tx, so we cannot use that tx directly, but we use it to construct a new deposit_tx
+        deposit_tx = Transaction(self.params)
+
+        if taker_is_seller:
+            # Add buyer inputs and apply signature
+            # We grab the signature from the makersDepositTx and apply it to the new tx input
+            for i, buyer_input in enumerate(buyer_inputs):
+                makers_input = makers_deposit_tx.inputs[i]
+                makers_script_sig_program = makers_input.script_sig
+                input = self._get_transaction_input(
+                    deposit_tx, makers_script_sig_program, buyer_input
+                )
+                script_pub_key = check_not_none(
+                    input.connected_output
+                ).get_script_pub_key()
+                if len(makers_script_sig_program) == 0 and not ScriptPattern.is_p2wh(
+                    script_pub_key
+                ):
+                    raise TransactionVerificationException(
+                        "Non-segwit inputs from maker not signed."
+                    )
+                if makers_input.witness:
+                    input.witness = makers_input.witness
+                deposit_tx.add_input(input)
+
+            # Add seller inputs
+            for seller_input in seller_inputs:
+                deposit_tx.add_input(
+                    self._get_transaction_input(deposit_tx, b"", seller_input)
+                )
+        else:
+            # Taker is buyer
+            # Add buyer inputs
+            for buyer_input in buyer_inputs:
+                deposit_tx.add_input(
+                    self._get_transaction_input(deposit_tx, b"", buyer_input)
+                )
+
+            # Add seller inputs
+            # We grab the signature from the makersDepositTx and apply it to the new tx input
+            for i, seller_input in enumerate(seller_inputs, start=len(buyer_inputs)):
+                deposit_tx.add_input(
+                    self._get_transaction_input(deposit_tx, b"", seller_input)
+                )
+
+        # Add all outputs from makers_deposit_tx to deposit_tx
+        for output in makers_deposit_tx.outputs:
+            deposit_tx.add_output(output)
+
+        WalletService.print_tx("makersDepositTx", makers_deposit_tx)
+
+        # Sign inputs
+        start = len(buyer_inputs) if taker_is_seller else 0
+        end = len(deposit_tx.inputs) if taker_is_seller else len(buyer_inputs)
+        self._wallet.sign_tx(self._password, deposit_tx)
+        for i in range(start, end):
+            WalletService.check_script_sig(deposit_tx, deposit_tx.inputs[i], i)
+
+        WalletService.print_tx("takerSignsDepositTx", deposit_tx)
+
+        WalletService.verify_transaction(deposit_tx)
+        WalletService.check_wallet_consistency(self._wallet)
+
+        return deposit_tx
 
     def seller_as_maker_finalizes_deposit_tx(
         self,
