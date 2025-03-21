@@ -158,7 +158,7 @@ class WalletService(ABC):
             input.get_script_sig().correctly_spends(
                 transaction,
                 input_index,
-                input.witness,
+                input.witness_elements,
                 input.get_value(),
                 input.connected_output.script_pub_key,
                 Script.ALL_VERIFY_FLAGS,

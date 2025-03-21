@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from functools import cached_property
 from typing import TYPE_CHECKING, Optional, Union
 
+from bisq.common.util.utilities import bytes_as_hex_string
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.block import Block
 from bitcoinj.core.sha_256_hash import Sha256Hash
@@ -499,7 +500,7 @@ class Transaction:
                         s.append(f"  {value.to_friendly_string()} ({value})")
                     s.append("\n")
                     if tx_in.has_witness:
-                        s.append(f"{indent}        witness:{tx_in.witness}\n")
+                        s.append(f"{indent}        witness:{bytes_as_hex_string(tx_in.witness)}\n")
 
                     outpoint = tx_in.outpoint
                     connected_output = outpoint.connected_output

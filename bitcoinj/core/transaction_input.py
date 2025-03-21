@@ -87,13 +87,12 @@ class TransactionInput:
         return self.nsequence != TransactionInput.NO_SEQUENCE
 
     @property
-    def witness(self) -> Optional[str]:
-        return self._ec_tx_input.witness.hex() if self.has_witness else None
+    def witness(self) -> Optional[bytes]:
+        return self._ec_tx_input.witness
 
     @witness.setter
-    def witness(self, value: str) -> None:
-        # TODO: used by trade_wallet_service.seller_adds_buyer_witness_to_deposit_tx. needs to be investigated
-        raise NotImplementedError("TransactionInput.witness.setter Not implemented yet")
+    def witness(self, value: Optional[bytes]) -> None:
+        self._ec_tx_input.witness = value
 
     @property
     def witness_elements(self):
