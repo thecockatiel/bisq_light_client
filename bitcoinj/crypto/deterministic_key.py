@@ -36,5 +36,5 @@ class DeterministicKey:
     def get_pub_key_as_hex(self) -> str:
         return self._pubkey.hex()
 
-    def sign_message(self, message: Union[bytes, str], password: str = None) -> str:
+    def sign_message(self, message: Union[bytes, str], password: str = None):
         return self._keystore.sign_message(self._derivation_suffix, message, password)

@@ -140,7 +140,7 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
             return bytes.fromhex(tx.tx_inputs[0].pub_key)
         return bytes()
 
-    def sign(self, proof_of_burn_tx_id: str, message: str) -> Optional[str]:
+    def sign(self, proof_of_burn_tx_id: str, message: str) -> Optional[bytes]:
         pub_key = self.get_pub_key(proof_of_burn_tx_id)
         key = self._bsq_wallet_service.find_key_from_pub_key(pub_key)
         if key is None:

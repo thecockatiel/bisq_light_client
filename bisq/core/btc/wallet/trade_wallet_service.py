@@ -24,6 +24,7 @@ from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
@@ -707,9 +708,23 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> bytes:
-        raise RuntimeError(
-            "TradeWalletService.sign_delayed_payout_tx Not implemented yet"
+        redeem_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
         )
+        delayed_payout_tx_input_value = prepared_deposit_tx.outputs[0].get_value()
+        sig_hash = delayed_payout_tx.hash_for_witness_signature(
+            0,
+            redeem_script,
+            delayed_payout_tx_input_value,
+            TransactionSigHash.ALL,
+            False,
+        )
+        check_not_none(my_multi_sig_key_pair, "my_multi_sig_key_pair must not be None")
+        # TODO: check LowRSigningKey
+        my_signature = my_multi_sig_key_pair.sign_message(sig_hash, self._password)
+        WalletService.print_tx("delayedPayoutTx for sig creation", delayed_payout_tx)
+        WalletService.verify_transaction(delayed_payout_tx)
+        return my_signature
 
     def finalize_unconnected_delayed_payout_tx(
         self,
