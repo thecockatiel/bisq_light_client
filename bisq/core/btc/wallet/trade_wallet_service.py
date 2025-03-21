@@ -16,18 +16,21 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.locale.res import Res
 from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.segwit_address import SegwitAddress
+from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
+from electrum_min.ecc import ECPrivkey
 from utils.preconditions import check_argument, check_not_none
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
+from bisq.core.btc.raw_transaction_input import RawTransactionInput
 
 
 if TYPE_CHECKING:
-    from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 
@@ -273,9 +276,72 @@ class TradeWalletService:
         input_amount: Coin,
         tx_fee: Coin,
     ) -> "InputsAndChangeOutput":
-        raise RuntimeError(
-            "TradeWalletService.taker_creates_deposit_tx_inputs Not implemented yet"
+        # We add the mining fee 2 times to the deposit tx:
+        # 1. Will be spent when publishing the deposit tx (paid by buyer)
+        # 2. Will be added to the MS amount, so when publishing the payout tx the fee is already there and the outputs are not changed by fee reduction
+        # The fee for the payout will be paid by the seller.
+
+        """
+        The tx we create has that structure:
+
+            IN[0]  input from taker fee tx > inputAmount (including tx fee) (unsigned)
+            OUT[0] dummyOutputAmount (inputAmount - tx fee)
+
+            We are only interested in the inputs.
+            We get the exact input value from the taker fee tx so we don't create a change output.
+        """
+
+        # inputAmount includes the tx fee. So we subtract the fee to get the dummyOutputAmount.
+        dummy_output_amount = input_amount.subtract(tx_fee)
+
+        dummy_tx = Transaction(self.params)
+        # The output is just used to get the right inputs and change outputs, so we use an anonymous ECKey, as it will never be used for anything.
+        # We don't care about fee calculation differences between the real tx and that dummy tx as we use a static tx fee.
+        dummy_address = SegwitAddress.from_key(
+            ECPrivkey.generate_random_key(), self.params
         )
+        dummy_output = TransactionOutput.from_coin_and_address(
+            dummy_output_amount, dummy_address, dummy_tx
+        )
+        dummy_tx.add_output(dummy_output)
+
+        # Find the needed inputs to pay the output, optionally add 1 change output.
+        # Normally only 1 input and no change output is used, but we support multiple inputs and 1 change output.
+        # Our spending transaction output is from the create offer fee payment.
+
+        # We created the take offer fee tx in the structure that the second output is for the funds for the deposit tx.
+        reserved_for_trade_output = take_offer_fee_tx.outputs[1]
+        check_argument(
+            reserved_for_trade_output.get_value() == input_amount,
+            "Reserve amount does not equal input amount",
+        )
+        dummy_tx.add_input(reserved_for_trade_output)
+
+        WalletService.verify_transaction(dummy_tx)
+
+        # WalletService.print_tx("dummyTx", dummy_tx)
+
+        raw_transaction_input_list = [
+            self._get_raw_input_from_transaction_input(tx_input)
+            for tx_input in dummy_tx.inputs
+            if check_not_none(
+                tx_input.connected_output, "tx_input.connected_output must not be None"
+            )
+            and check_not_none(
+                tx_input.connected_output.parent,
+                "tx_input.connected_output.parent must not be None",
+            )
+            and check_not_none(
+                tx_input.get_value(), "tx_input.get_value() must not be None"
+            )
+        ]
+
+        # JAVA TODO changeOutputValue and changeOutputAddress is not used as taker spends exact amount from fee tx.
+        # Change is handled already at the fee tx creation so the handling of a change output for the deposit tx
+        # can be removed here. We still keep it atm as we prefer to not introduce a larger
+        # refactoring. When new trade protocol gets implemented this can be cleaned.
+        # The maker though can have a change output if the taker takes less as the max. offer amount!
+        return InputsAndChangeOutput(raw_transaction_input_list, 0, None)
 
     def seller_as_maker_creates_deposit_tx(
         self,
@@ -550,6 +616,34 @@ class TradeWalletService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private methods
     # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    # JAVA NOTE:
+    # This method might be replace by RawTransactionInput constructor taking the TransactionInput as param.
+    # As we used segwit=false for the bitcoinSerialize method here we still keep it to not risk to break anything,
+    # though it very likely should be fine to replace it with the RawTransactionInput constructor call.
+    # DEPRECATED
+    def _get_raw_input_from_transaction_input(
+        self, input: "TransactionInput"
+    ) -> "RawTransactionInput":
+        check_not_none(input, "input must not be None")
+        check_not_none(
+            input.connected_output, "input.connected_output must not be None"
+        )
+        check_not_none(
+            input.connected_output.parent,
+            "input.connected_output.parent transaction must not be None",
+        )
+        check_not_none(input.get_value(), "input.get_value() must not be None")
+
+        # bitcoin_serialize(False) is used just in case the serialized tx is parsed by a Bisq node still using
+        # bitcoinj 0.14. This is not supposed to happen ever since Version.TRADE_PROTOCOL_VERSION was set to 3,
+        # but it costs nothing to be on the safe side.
+        # The serialized tx is just used to obtain its hash, so the witness data is not relevant.
+        return RawTransactionInput(
+            input.outpoint.index,
+            input.connected_output.parent.bitcoin_serialize(False),
+            input.get_value().value,
+        )
 
     def _get_connected_out_point(self, raw_transaction_input: "RawTransactionInput"):
         return TransactionOutPoint.from_tx(
