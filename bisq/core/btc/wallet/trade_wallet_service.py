@@ -1061,9 +1061,85 @@ class TradeWalletService:
         seller_pub_key: bytes,
         arbitrator_pub_key: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.trader_sign_and_finalize_disputed_payout_tx Not implemented yet"
+        deposit_tx = Transaction(self.params, deposit_tx_serialized)
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        payout_tx = Transaction(self.params)
+        payout_tx.add_input(hashed_multi_sig_output)
+
+        if buyer_payout_amount.is_positive():
+            payout_tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    buyer_payout_amount,
+                    Address.from_string(buyer_address_string, self.params),
+                    payout_tx,
+                )
+            )
+
+        if seller_payout_amount.is_positive():
+            payout_tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    seller_payout_amount,
+                    Address.from_string(seller_address_string, self.params),
+                    payout_tx,
+                )
+            )
+
+        # order of sigs matter
+        redeem_script = bytes.fromhex(
+            multisig_script(
+                [arbitrator_pub_key.hex(), seller_pub_key.hex(), buyer_pub_key.hex()],
+                2,
+            )
         )
+        hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
+            hashed_multi_sig_output.get_script_pub_key()
+        )
+
+        if hashed_multi_sig_output_is_legacy:
+            sig_hash = payout_tx.hash_for_signature(
+                0, redeem_script, TransactionSigHash.ALL, False
+            )
+        else:
+            input_value = hashed_multi_sig_output.get_value()
+            sig_hash = payout_tx.hash_for_witness_signature(
+                0, redeem_script, input_value, TransactionSigHash.ALL, False
+            )
+
+        check_not_none(
+            traders_multi_sig_key_pair, "traders_multi_sig_key_pair must not be None"
+        )
+        # TODO LowRSigningKey
+        traders_signature = traders_multi_sig_key_pair.sign_message(
+            sig_hash, self._password
+        )
+
+        input = payout_tx.inputs[0]
+        # order of signatures matters: arbitrator, seller, buyer
+        if hashed_multi_sig_output_is_legacy:
+            raise IllegalStateException(
+                "We don't support legacy multi sig output at the moment"
+            )
+        else:
+            input.script_sig = None
+            # TODO check correctness
+            input.witness = self._wallet.get_witness_for_redeem_script(
+                redeem_script,
+                {
+                    arbitrator_pub_key: arbitrator_signature,
+                    buyer_pub_key: traders_signature,
+                },
+            )
+
+        WalletService.print_tx("disputed payoutTx", payout_tx)
+        WalletService.verify_transaction(payout_tx)
+        WalletService.check_wallet_consistency(self._wallet)
+        WalletService.check_script_sig(payout_tx, input, 0)
+        check_not_none(
+            input.connected_output, "input.connected_output must not be None"
+        )
+        input.verify(input.connected_output)
+
+        return payout_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Emergency payoutTx
