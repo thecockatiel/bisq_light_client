@@ -26,7 +26,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.script.script_type import ScriptType
 from bitcoinj.wallet.send_request import SendRequest
 from utils.aio import FutureCallback
-from utils.preconditions import check_argument, check_state
+from utils.preconditions import check_argument, check_not_none, check_state
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
 
@@ -123,6 +123,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         # Copy inputs from BSQ fee tx
         for tx_input in fee_tx.inputs:
             prepared_tx.add_input(tx_input)
+        index_of_btc_first_input = len(fee_tx.inputs)
 
         # Need to be first because issuance is not guaranteed to be valid and would otherwise burn change output!
         # BSQ change outputs from BSQ fee inputs.
@@ -214,8 +215,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             )
 
         # Sign all BTC inputs
-        # TODO: Check if this is correct
-        result_tx = self.wallet.sign_tx(self.password, result_tx)
+        result_tx = self._sign_all_btc_inputs(index_of_btc_first_input, result_tx)
 
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(result_tx)
@@ -251,10 +251,11 @@ class BtcWalletService(WalletService, DaoStateListener):
     def _complete_prepared_bsq_tx_with_btc_fee(
         self, prepared_tx: "Transaction", op_return_data: bytes
     ) -> "Transaction":
+        # Remember index for first BTC input
+        index_of_btc_first_input = len(prepared_tx.inputs)
+
         tx = self._add_inputs_for_miner_fee(prepared_tx, op_return_data)
-        # Sign all BTC inputs
-        # TODO: Check if this is correct
-        tx = self.wallet.sign_tx(self.password, tx)
+        tx = self._sign_all_btc_inputs(index_of_btc_first_input, tx)
 
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(tx)
@@ -343,6 +344,25 @@ class BtcWalletService(WalletService, DaoStateListener):
             )
 
         return result_tx
+
+    def _sign_all_btc_inputs(
+        self, index_of_btc_first_input: int, tx: "Transaction"
+    ) -> None:
+        # TODO: Check if this works correctly
+        tx = check_not_none(
+            self.wallet.sign_tx(self.password, tx),
+            "failed to sign tx at sign_all_btc_inputs",
+        )
+        for i in range(index_of_btc_first_input, len(tx.inputs)):
+            tx_input = tx.inputs[i]
+            connected_output = tx_input.connected_output
+            check_argument(
+                connected_output is not None
+                and connected_output.is_for_wallet(self.wallet),
+                "tx_input.connected_output is not in our wallet. That must not happen.",
+            )
+            self.check_script_sig(tx, tx_input, i)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Vote reveal tx
@@ -530,8 +550,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             )
 
         # Sign all BTC inputs
-        # TODO: Check if this is correct
-        result_tx = self.wallet.sign_tx(self.password, result_tx)
+        result_tx = self._sign_all_btc_inputs(len(prepared_bsq_tx_inputs), result_tx)
 
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(result_tx)
@@ -826,7 +845,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             for address_entry in self.get_address_entry_list_as_immutable_list()
             if address_entry.context in ctx_filter
         ]
-    
+
     def save_address_entry_list(self):
         self.address_entry_list.request_persistence()
 
