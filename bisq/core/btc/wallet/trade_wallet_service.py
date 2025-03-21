@@ -540,9 +540,17 @@ class TradeWalletService:
         takers_deposit_tx: "Transaction",
         num_takers_inputs: int,
     ) -> None:
-        raise RuntimeError(
-            "TradeWalletService.seller_as_maker_finalizes_deposit_tx Not implemented yet"
-        )
+        # We add takers signature from his inputs and add it to out tx which was already signed earlier.
+        for i in range(num_takers_inputs):
+            takers_input = takers_deposit_tx.inputs[i]
+            takers_script_sig = takers_input.script_sig
+            tx_input = my_deposit_tx.inputs[i]
+            tx_input.script_sig = takers_script_sig
+            if takers_input.witness:
+                tx_input.witness = takers_input.witness
+
+        WalletService.print_tx("seller_as_maker_finalizes_deposit_tx", my_deposit_tx)
+        WalletService.verify_transaction(my_deposit_tx)
 
     def seller_adds_buyer_witnesses_to_deposit_tx(
         self,
