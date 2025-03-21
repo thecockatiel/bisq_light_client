@@ -13,6 +13,7 @@ from bisq.core.btc.wallet.btc_coin_selector import BtcCoinSelector
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bisq.core.btc.wallet.wallet_service import WalletService
+from bisq.core.locale.res import Res
 from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
@@ -20,7 +21,7 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
-from utils.preconditions import check_not_none
+from utils.preconditions import check_argument, check_not_none
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
 
@@ -125,6 +126,7 @@ class TradeWalletService:
             self._wallet.complete_tx(send_request)
 
             if self._remove_dust(trading_fee_tx):
+                # TODO check if works as expected
                 self._wallet.sign_tx(self._password, trading_fee_tx)
 
             WalletService.print_tx("trading_fee_tx", trading_fee_tx)
@@ -153,9 +155,113 @@ class TradeWalletService:
         use_savings_wallet: bool,
         tx_fee: Coin,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.complete_bsq_trading_fee_tx Not implemented yet"
-        )
+        try:
+            # preparedBsqTx has following structure:
+            # inputs [1-n] BSQ inputs
+            # outputs [0-1] BSQ change output
+            # mining fee: burned BSQ fee
+
+            # We add BTC mining fee. Result tx looks like:
+            # inputs [1-n] BSQ inputs
+            # inputs [1-n] BTC inputs
+            # outputs [0-1] BSQ change output
+            # outputs [1] BTC reservedForTrade output
+            # outputs [0-1] BTC change output
+            # mining fee: BTC mining fee + burned BSQ fee
+
+            # In case all BSQ were burnt as fees we have no receiver output and it might be that there are no change outputs
+            # We need to guarantee that min. 1 valid output is added (OP_RETURN does not count). So we use a higher input
+            # for BTC to force an additional change output.
+
+            prepared_bsq_tx_inputs_size = len(prepared_bsq_tx.inputs)
+            has_bsq_outputs = len(prepared_bsq_tx.outputs) > 0
+
+            # If there are no BSQ change outputs, an output larger than the burnt BSQ amount has to be added as the first
+            # output to make sure the reserved funds are in output 1. Deposit tx input creation depends on the reserve
+            # being output 1. The amount has to be larger than the BSQ input to ensure the inputs get burnt.
+            # The BTC change_address is used, so it might get used for both output 0 and output 2.
+            if not has_bsq_outputs:
+                bsq_input_value = Coin.value_of(
+                    sum(
+                        (tx_input.value for tx_input in prepared_bsq_tx.inputs),
+                        0,
+                    )
+                )
+                prepared_bsq_tx.add_output(
+                    TransactionOutput.from_coin_and_address(
+                        bsq_input_value.add(Coin.value_of(1)),
+                        change_address,
+                        prepared_bsq_tx,
+                    )
+                )
+
+            # The reserved amount we need for the trade we send to our trade reserved_for_trade_address
+            prepared_bsq_tx.add_output(
+                reserved_funds_for_offer, reserved_for_trade_address
+            )
+
+            # We allow spending of unconfirmed tx (double spend risk is low and usability would suffer if we need to
+            # wait for 1 confirmation).
+            # In case of double spend, we will detect later in the trade process and use a ban score to penalize bad behavior (not implemented yet). (JAVA TODO?)
+
+            send_request = SendRequest.for_tx(prepared_bsq_tx)
+            send_request.shuffle_outputs = False
+            send_request.password = self._password
+
+            if use_savings_wallet:
+                send_request.coin_selector = BtcCoinSelector(
+                    self._wallets_setup.get_addresses_by_context(
+                        AddressEntryContext.AVAILABLE
+                    ),
+                    self._preferences.get_ignore_dust_threshold(),
+                )
+            else:
+                send_request.coin_selector = BtcCoinSelector(
+                    funding_address,
+                    self._preferences.get_ignore_dust_threshold(),
+                )
+
+            # We use a fixed fee
+            send_request.fee = tx_fee
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+
+            send_request.sign_inputs = False
+
+            # Change is optional in case of overpay or use of funds from savings wallet
+            send_request.change_address = change_address
+
+            check_not_none(self._wallet, "Wallet must not be None")
+            self._wallet.complete_tx(send_request)
+            result_tx = send_request.tx
+            self._remove_dust(result_tx)
+
+            # Sign all BTC inputs # TODO check if works as expected
+            result_tx = check_not_none(
+                self._wallet.sign_tx(self._password, result_tx),
+                "Failed to sign tx at complete_bsq_trading_fee_tx",
+            )
+            for i in range(prepared_bsq_tx_inputs_size, len(result_tx.inputs)):
+                tx_input = result_tx.inputs[i]
+                check_argument(
+                    tx_input.connected_output is not None
+                    and tx_input.connected_output.is_for_wallet(self._wallet),
+                    "tx_input.connected_output is not in our wallet. That must not happen.",
+                )
+                WalletService.check_script_sig(result_tx, tx_input, i)
+
+            WalletService.check_wallet_consistency(self._wallet)
+            WalletService.verify_transaction(result_tx)
+
+            WalletService.print_tx(
+                f"{Res.base_currency_code} wallet: Signed tx", result_tx
+            )
+            return result_tx
+        except Exception as e:
+            logger.error(
+                f"complete_bsq_trading_fee_tx errored: prepared_bsq_tx={prepared_bsq_tx}"
+            )
+            raise e
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Deposit tx
