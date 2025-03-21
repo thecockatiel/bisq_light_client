@@ -17,6 +17,7 @@ from bisq.core.btc.wallet.btc_coin_selector import BtcCoinSelector
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bisq.core.btc.wallet.wallet_service import WalletService
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.res import Res
 from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
@@ -466,7 +467,7 @@ class TradeWalletService:
             for raw_transaction_input in taker_raw_transaction_inputs:
                 prepared_deposit_tx.add_input(
                     self._get_transaction_input(
-                        prepared_deposit_tx, b"", raw_transaction_input
+                        prepared_deposit_tx, None, raw_transaction_input
                     )
                 )
         else:
@@ -477,7 +478,7 @@ class TradeWalletService:
             for raw_transaction_input in taker_raw_transaction_inputs:
                 prepared_deposit_tx.add_input(
                     self._get_transaction_input(
-                        prepared_deposit_tx, b"", raw_transaction_input
+                        prepared_deposit_tx, None, raw_transaction_input
                     )
                 )
 
@@ -605,21 +606,21 @@ class TradeWalletService:
             # Add seller inputs
             for seller_input in seller_inputs:
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, b"", seller_input)
+                    self._get_transaction_input(deposit_tx, None, seller_input)
                 )
         else:
             # Taker is buyer
             # Add buyer inputs
             for buyer_input in buyer_inputs:
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, b"", buyer_input)
+                    self._get_transaction_input(deposit_tx, None, buyer_input)
                 )
 
             # Add seller inputs
             # We grab the signature from the makersDepositTx and apply it to the new tx input
             for i, seller_input in enumerate(seller_inputs, start=len(buyer_inputs)):
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, b"", seller_input)
+                    self._get_transaction_input(deposit_tx, None, seller_input)
                 )
 
         # Add all outputs from makers_deposit_tx to deposit_tx
@@ -740,12 +741,15 @@ class TradeWalletService:
         redeem_script = bytes.fromhex(
             multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
         )
-        witness = self._wallet.get_witness_for_redeem_script(
-            redeem_script,
-            {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
+        witness = check_not_none(
+            self._wallet.get_witness_for_redeem_script(
+                redeem_script,
+                {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
+            ),
+            "Failed to get witness for redeem script",
         )
         input = delayed_payout_tx.inputs[0]
-        input.script_sig = b""
+        input.script_sig = None
         input.witness = witness
 
         WalletService.print_tx("finalizeDelayedPayoutTx", delayed_payout_tx)
@@ -813,9 +817,38 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> bytes:
-        raise RuntimeError(
-            "TradeWalletService.buyer_signs_payout_tx Not implemented yet"
+        prepared_payout_tx = self._create_payout_tx(
+            deposit_tx,
+            buyer_payout_amount,
+            seller_payout_amount,
+            buyer_payout_address_string,
+            seller_payout_address_string,
         )
+
+        # MultiSig redeem script
+        redeem_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+        )
+
+        # MultiSig output from previous transaction is at index 0
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        if ScriptPattern.is_p2sh(hashed_multi_sig_output.get_script_pub_key()):
+            sig_hash = prepared_payout_tx.hash_for_signature(
+                0, redeem_script, TransactionSigHash.ALL, False
+            )
+        else:
+            input_value = hashed_multi_sig_output.get_value()
+            sig_hash = prepared_payout_tx.hash_for_witness_signature(
+                0, redeem_script, input_value, TransactionSigHash.ALL, False
+            )
+
+        check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
+        buyer_signature = multi_sig_key_pair.sign_message(sig_hash, self._password)
+
+        WalletService.print_tx("prepared payoutTx", prepared_payout_tx)
+        WalletService.verify_transaction(prepared_payout_tx)
+
+        return buyer_signature
 
     def seller_signs_and_finalizes_payout_tx(
         self,
@@ -829,9 +862,65 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.seller_signs_and_finalizes_payout_tx Not implemented yet"
+        payout_tx = self._create_payout_tx(
+            deposit_tx,
+            buyer_payout_amount,
+            seller_payout_amount,
+            buyer_payout_address_string,
+            seller_payout_address_string,
         )
+
+        # MultiSig redeem script
+        redeem_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+        )
+
+        # MultiSig output from previous transaction is at index 0
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
+            hashed_multi_sig_output.get_script_pub_key()
+        )
+
+        if hashed_multi_sig_output_is_legacy:
+            sig_hash = payout_tx.hash_for_signature(
+                0, redeem_script, TransactionSigHash.ALL, False
+            )
+        else:
+            input_value = hashed_multi_sig_output.get_value()
+            sig_hash = payout_tx.hash_for_witness_signature(
+                0, redeem_script, input_value, TransactionSigHash.ALL, False
+            )
+
+        check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
+        seller_signature = multi_sig_key_pair.sign_message(sig_hash, self._password)
+
+        # Take care of order of signatures. Need to be reversed here.
+        input = payout_tx.inputs[0]
+        if hashed_multi_sig_output_is_legacy:
+            # TODO
+            raise IllegalStateException(
+                "We don't support legacy multi sig output at the moment"
+            )
+        else:
+            input.script_sig = None
+            input.witness = check_not_none(
+                self._wallet.get_witness_for_redeem_script(
+                    redeem_script,
+                    {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
+                ),
+                "Failed to get witness for redeem script",
+            )
+
+        WalletService.print_tx("payout_tx", payout_tx)
+        WalletService.verify_transaction(payout_tx)
+        WalletService.check_wallet_consistency(self._wallet)
+        WalletService.check_script_sig(payout_tx, input, 0)
+        check_not_none(
+            input.connected_output, "input.connected_output must not be None"
+        )
+        input.verify(input.connected_output)
+
+        return payout_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Mediated payoutTx
@@ -848,9 +937,44 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> "bytes":
-        raise RuntimeError(
-            "TradeWalletService.sign_mediated_payout_tx Not implemented yet"
+        prepared_payout_tx = self._create_payout_tx(
+            deposit_tx,
+            buyer_payout_amount,
+            seller_payout_amount,
+            buyer_payout_address_string,
+            seller_payout_address_string,
         )
+
+        # MultiSig redeem script
+        redeem_script = bytes.fromhex(
+            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+        )
+
+        # MultiSig output from previous transaction is at index 0
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
+            hashed_multi_sig_output.get_script_pub_key()
+        )
+
+        if hashed_multi_sig_output_is_legacy:
+            sig_hash = prepared_payout_tx.hash_for_signature(
+                0, redeem_script, TransactionSigHash.ALL, False
+            )
+        else:
+            input_value = hashed_multi_sig_output.get_value()
+            sig_hash = prepared_payout_tx.hash_for_witness_signature(
+                0, redeem_script, input_value, TransactionSigHash.ALL, False
+            )
+
+        check_not_none(my_multi_sig_key_pair, "my_multi_sig_key_pair must not be None")
+        my_signature = my_multi_sig_key_pair.sign_message(sig_hash, self._password)
+
+        WalletService.print_tx(
+            "prepared mediated payoutTx for sig creation", prepared_payout_tx
+        )
+        WalletService.verify_transaction(prepared_payout_tx)
+
+        return my_signature
 
     def finalize_mediated_payout_tx(
         self,
@@ -865,9 +989,60 @@ class TradeWalletService:
         buyer_multi_sig_pub_key: bytes,
         seller_multi_sig_pub_key: bytes,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.finalize_mediated_payout_tx Not implemented yet"
+        payout_tx = self._create_payout_tx(
+            deposit_tx,
+            buyer_payout_amount,
+            seller_payout_amount,
+            buyer_payout_address,
+            seller_payout_address,
         )
+
+        # MultiSig redeem script
+        redeem_script = bytes.fromhex(
+            multisig_script(
+                sorted([buyer_multi_sig_pub_key.hex(), seller_multi_sig_pub_key.hex()]),
+                2,
+            )
+        )
+
+        # MultiSig output from previous transaction is at index 0
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
+            hashed_multi_sig_output.get_script_pub_key()
+        )
+
+        check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
+
+        # Take care of order of signatures. Need to be reversed here.
+        input = payout_tx.inputs[0]
+        if hashed_multi_sig_output_is_legacy:
+            # TODO
+            raise IllegalStateException(
+                "We don't support legacy multi sig output at the moment"
+            )
+        else:
+            input.script_sig = None
+            input.witness = check_not_none(
+                self._wallet.get_witness_for_redeem_script(
+                    redeem_script,
+                    {
+                        buyer_multi_sig_pub_key: buyer_signature,
+                        seller_multi_sig_pub_key: seller_signature,
+                    },
+                ),
+                "Failed to get witness for redeem script",
+            )
+
+        WalletService.print_tx("mediated payoutTx", payout_tx)
+        WalletService.verify_transaction(payout_tx)
+        WalletService.check_wallet_consistency(self._wallet)
+        WalletService.check_script_sig(payout_tx, input, 0)
+        check_not_none(
+            input.connected_output, "input.connected_output must not be None"
+        )
+        input.verify(input.connected_output)
+
+        return payout_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Arbitrated payoutTx
@@ -970,7 +1145,7 @@ class TradeWalletService:
     def _get_transaction_input(
         self,
         parent_transaction: "Transaction",
-        script_program: bytes,
+        script_program: Optional[bytes],
         raw_transaction_input: "RawTransactionInput",
     ) -> "TransactionInput":
         outpoint = self._get_connected_out_point(raw_transaction_input)
@@ -999,6 +1174,39 @@ class TradeWalletService:
                 self._get_connected_out_point(raw_transaction_input).connected_output
             ).get_script_pub_key()
         )
+
+    def _create_payout_tx(
+        self,
+        deposit_tx: "Transaction",
+        buyer_payout_amount: Coin,
+        seller_payout_amount: Coin,
+        buyer_address_string: str,
+        seller_address_string: str,
+    ) -> "Transaction":
+        hashed_multi_sig_output = deposit_tx.outputs[0]
+        transaction = Transaction(self.params)
+        transaction.add_input(hashed_multi_sig_output)
+
+        if buyer_payout_amount.is_positive():
+            transaction.add_output(
+                TransactionOutput.from_coin_and_address(
+                    buyer_payout_amount,
+                    Address.from_string(buyer_address_string, self.params),
+                    transaction,
+                )
+            )
+
+        if seller_payout_amount.is_positive():
+            transaction.add_output(
+                TransactionOutput.from_coin_and_address(
+                    seller_payout_amount,
+                    Address.from_string(seller_address_string, self.params),
+                    transaction,
+                )
+            )
+
+        check_argument(len(transaction.outputs) >= 1, "We need at least one output.")
+        return transaction
 
     def _add_available_inputs_and_change_outputs(
         self, transaction: "Transaction", address: "Address", change_address: "Address"
