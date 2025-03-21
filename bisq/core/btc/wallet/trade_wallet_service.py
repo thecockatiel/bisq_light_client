@@ -364,8 +364,17 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> "PreparedDepositTxAndMakerInputs":
-        raise RuntimeError(
-            "TradeWalletService.seller_as_maker_creates_deposit_tx Not implemented yet"
+        return self._maker_creates_deposit_tx(
+            maker_is_buyer=False,
+            maker_input_amount=maker_input_amount,
+            ms_output_amount=ms_output_amount,
+            taker_raw_transaction_inputs=taker_raw_transaction_inputs,
+            taker_change_output_value=taker_change_output_value,
+            taker_change_address_string=taker_change_address_string,
+            maker_address=maker_address,
+            maker_change_address=maker_change_address,
+            buyer_pub_key=buyer_pub_key,
+            seller_pub_key=seller_pub_key,
         )
 
     def buyer_as_maker_creates_and_signs_deposit_tx(
@@ -380,11 +389,20 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> "PreparedDepositTxAndMakerInputs":
-        raise RuntimeError(
-            "TradeWalletService.buyer_as_maker_creates_and_signs_deposit_tx Not implemented yet"
+        return self._maker_creates_deposit_tx(
+            maker_is_buyer=True,
+            maker_input_amount=maker_input_amount,
+            ms_output_amount=ms_output_amount,
+            taker_raw_transaction_inputs=taker_raw_transaction_inputs,
+            taker_change_output_value=taker_change_output_value,
+            taker_change_address_string=taker_change_address_string,
+            maker_address=maker_address,
+            maker_change_address=maker_change_address,
+            buyer_pub_key=buyer_pub_key,
+            seller_pub_key=seller_pub_key,
         )
 
-    def maker_creates_deposit_tx(
+    def _maker_creates_deposit_tx(
         self,
         maker_is_buyer: bool,
         maker_input_amount: Coin,
@@ -662,9 +680,24 @@ class TradeWalletService:
         receivers: list[tuple[int, str]],
         lock_time: int,
     ) -> "Transaction":
-        raise RuntimeError(
-            "TradeWalletService.create_delayed_unsigned_payout_tx Not implemented yet"
+        deposit_tx_output = deposit_tx.outputs[0]
+        delayed_payout_tx = Transaction(self.params)
+        delayed_payout_tx.add_input(deposit_tx_output)
+        self._apply_lock_time(lock_time, delayed_payout_tx)
+        check_argument(receivers, "receivers must not be empty")
+        for receiver in receivers:
+            delayed_payout_tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    Coin.value_of(receiver[0]),
+                    Address.from_string(receiver[1], self.params),
+                    delayed_payout_tx,
+                )
+            )
+        WalletService.print_tx(
+            "Unsigned delayedPayoutTx ToDonationAddress", delayed_payout_tx
         )
+        WalletService.verify_transaction(delayed_payout_tx)
+        return delayed_payout_tx
 
     def sign_delayed_payout_tx(
         self,
@@ -949,6 +982,15 @@ class TradeWalletService:
                     f"add_available_inputs_and_change_outputs: send_request.tx={send_request.tx}, send_request.tx.outputs={send_request.tx.outputs}"
                 )
             raise WalletException(e) from e
+
+    def _apply_lock_time(self, lock_time: int, transaction: "Transaction") -> None:
+        check_argument(
+            transaction.inputs,
+            f"The transaction must have inputs. transaction={transaction}",
+        )
+        for tx_input in transaction.inputs:
+            tx_input.nsequence = TransactionInput.NO_SEQUENCE - 1
+        transaction.lock_time = lock_time
 
     # BISQ issue #4039: prevent dust outputs from being created.
     # check all the outputs in a proposed transaction, if any are below the dust threshold

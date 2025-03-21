@@ -81,6 +81,10 @@ class TransactionInput:
     @property
     def nsequence(self) -> int:
         return self._ec_tx_input.nsequence
+    
+    @nsequence.setter
+    def nsequence(self, value: int) -> None:
+        self._ec_tx_input.nsequence = value
 
     @property
     def has_sequence(self) -> bool:
