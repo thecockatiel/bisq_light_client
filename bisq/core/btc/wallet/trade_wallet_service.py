@@ -491,7 +491,7 @@ class TradeWalletService:
 
         # Add MultiSig output
         multisig_script_bytes = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
 
         # Tx fee for deposit tx will be paid by buyer.
@@ -562,7 +562,7 @@ class TradeWalletService:
 
         # Check if maker's MultiSig script is identical to the taker's
         hashed_multi_sig_output_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
         if (
             not makers_deposit_tx.outputs[0].script_pub_key
@@ -712,7 +712,7 @@ class TradeWalletService:
         seller_pub_key: bytes,
     ) -> bytes:
         redeem_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
         delayed_payout_tx_input_value = prepared_deposit_tx.outputs[0].get_value()
         sig_hash = delayed_payout_tx.hash_for_witness_signature(
@@ -739,7 +739,7 @@ class TradeWalletService:
         input_value: Coin,
     ) -> "Transaction":
         redeem_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
         witness = check_not_none(
             self._wallet.get_witness_for_redeem_script(
@@ -765,7 +765,7 @@ class TradeWalletService:
             )
 
         script_pub_key = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
         input.get_script_sig().correctly_spends(
             delayed_payout_tx,
@@ -827,7 +827,7 @@ class TradeWalletService:
 
         # MultiSig redeem script
         redeem_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -872,7 +872,7 @@ class TradeWalletService:
 
         # MultiSig redeem script
         redeem_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -947,7 +947,7 @@ class TradeWalletService:
 
         # MultiSig redeem script
         redeem_script = bytes.fromhex(
-            multisig_script(sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2)
+            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -1000,7 +1000,7 @@ class TradeWalletService:
         # MultiSig redeem script
         redeem_script = bytes.fromhex(
             multisig_script(
-                sorted([buyer_multi_sig_pub_key.hex(), seller_multi_sig_pub_key.hex()]),
+                [seller_multi_sig_pub_key.hex(), buyer_multi_sig_pub_key.hex()],
                 2,
             )
         )
