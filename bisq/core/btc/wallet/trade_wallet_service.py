@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.btc.exceptions.wallet_exception import WalletException
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.model.inputs_and_change_output import InputsAndChangeOutput
 from bisq.core.btc.model.prepared_deposit_tx_and_maker_inputs import (
@@ -23,11 +24,16 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
-from electrum_min.ecc import ECPrivkey
 from utils.preconditions import check_argument, check_not_none
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
+from electrum_min.ecc import ECPrivkey
+from electrum_min.transaction import (
+    PartialTxInput as ElectrumPartialTxInput,
+    TxOutpoint as ElectrumTxOutpoint,
+    multisig_script,
+)
 
 
 if TYPE_CHECKING:
@@ -86,7 +92,7 @@ class TradeWalletService:
             trading_fee_tx.add_output(
                 TransactionOutput.from_coin_and_address(
                     trading_fee,
-                    Address.from_string(self.params, fee_receiver_address),
+                    Address.from_string(fee_receiver_address, self.params),
                     trading_fee_tx,
                 )
             )
@@ -375,6 +381,145 @@ class TradeWalletService:
             "TradeWalletService.buyer_as_maker_creates_and_signs_deposit_tx Not implemented yet"
         )
 
+    def maker_creates_deposit_tx(
+        self,
+        maker_is_buyer: bool,
+        maker_input_amount: Coin,
+        ms_output_amount: Coin,
+        taker_raw_transaction_inputs: list["RawTransactionInput"],
+        taker_change_output_value: int,
+        taker_change_address_string: Optional[str],
+        maker_address: "Address",
+        maker_change_address: "Address",
+        buyer_pub_key: bytes,
+        seller_pub_key: bytes,
+    ) -> "PreparedDepositTxAndMakerInputs":
+        check_argument(
+            taker_raw_transaction_inputs,
+            "taker_raw_transaction_inputs must not be empty",
+        )
+
+        # First we construct a dummy TX to get the inputs and outputs we want to use for the real deposit tx.
+        # Similar to the way we did in the taker_creates_deposit_tx_inputs method.
+        dummy_tx = Transaction(self.params)
+        # The output is just used to get the right inputs and change outputs, so we use an anonymous ECKey, as it will never be used for anything.
+        # We don't care about fee calculation differences between the real tx and that dummy tx as we use a static tx fee.
+        dummy_address = SegwitAddress.from_key(
+            ECPrivkey.generate_random_key(), self.params
+        )
+        dummy_output = TransactionOutput.from_coin_and_address(
+            maker_input_amount, dummy_address, dummy_tx
+        )
+        dummy_tx.add_output(dummy_output)
+        self._add_available_inputs_and_change_outputs(
+            dummy_tx, maker_address, maker_change_address
+        )
+        # Normally we have only 1 input but we support multiple inputs if the user has paid in with several transactions.
+        maker_inputs = dummy_tx.inputs
+        maker_output = None
+
+        # We don't support more than 1 optional change output
+        check_argument(len(dummy_tx.outputs) < 3, "len(dummy_tx.outputs) >= 3")
+
+        # Only save change outputs, the dummy output is ignored (that's why we start with index 1)
+        if len(dummy_tx.outputs) > 1:
+            maker_output = dummy_tx.outputs[1]
+
+        # Now we construct the real deposit tx
+        prepared_deposit_tx = Transaction(self.params)
+
+        maker_raw_transaction_inputs = []
+        if maker_is_buyer:
+            # Add buyer inputs
+            for input in maker_inputs:
+                prepared_deposit_tx.add_input(input)
+                maker_raw_transaction_inputs.append(
+                    self._get_raw_input_from_transaction_input(input)
+                )
+
+            # Add seller inputs
+            # The seller's input is not signed, so we attach empty script bytes
+            for raw_transaction_input in taker_raw_transaction_inputs:
+                prepared_deposit_tx.add_input(
+                    self._get_transaction_input(
+                        prepared_deposit_tx, b"", raw_transaction_input
+                    )
+                )
+        else:
+            # Taker is buyer role
+
+            # Add buyer inputs
+            # The seller's input is not signed, so we attach empty script bytes
+            for raw_transaction_input in taker_raw_transaction_inputs:
+                prepared_deposit_tx.add_input(
+                    self._get_transaction_input(
+                        prepared_deposit_tx, b"", raw_transaction_input
+                    )
+                )
+
+            # Add seller inputs
+            for input in maker_inputs:
+                prepared_deposit_tx.add_input(input)
+                maker_raw_transaction_inputs.append(
+                    self._get_raw_input_from_transaction_input(input)
+                )
+
+        # Add MultiSig output
+        multisig_script_bytes = multisig_script(
+            sorted([buyer_pub_key.hex(), seller_pub_key.hex()]), 2
+        )
+
+        # Tx fee for deposit tx will be paid by buyer.
+        hashed_multi_sig_output = TransactionOutput.from_coin_and_script(
+            ms_output_amount,
+            multisig_script_bytes,
+            prepared_deposit_tx,
+        )
+        prepared_deposit_tx.add_output(hashed_multi_sig_output)
+
+        taker_transaction_output = None
+        if taker_change_output_value > 0 and taker_change_address_string is not None:
+            taker_transaction_output = TransactionOutput.from_coin_and_address(
+                Coin.value_of(taker_change_output_value),
+                Address.from_string(taker_change_address_string, self.params),
+                prepared_deposit_tx,
+            )
+
+        if maker_is_buyer:
+            # Add optional buyer outputs
+            if maker_output:
+                prepared_deposit_tx.add_output(maker_output)
+
+            # Add optional seller outputs
+            if taker_transaction_output:
+                prepared_deposit_tx.add_output(taker_transaction_output)
+        else:
+            # Taker is buyer role
+
+            # Add optional seller outputs
+            if taker_transaction_output:
+                prepared_deposit_tx.add_output(taker_transaction_output)
+
+            # Add optional buyer outputs
+            if maker_output:
+                prepared_deposit_tx.add_output(maker_output)
+
+        start = 0 if maker_is_buyer else len(taker_raw_transaction_inputs)
+        end = len(maker_inputs) if maker_is_buyer else len(prepared_deposit_tx.inputs)
+        # TODO: check sign
+        self._wallet.sign_tx(self._password, prepared_deposit_tx)
+        for i in range(start, end):
+            tx_input = prepared_deposit_tx.inputs[i]
+            WalletService.check_script_sig(prepared_deposit_tx, tx_input, i)
+
+        WalletService.print_tx("maker_creates_deposit_tx", prepared_deposit_tx)
+        WalletService.verify_transaction(prepared_deposit_tx)
+
+        return PreparedDepositTxAndMakerInputs(
+            raw_maker_inputs=maker_raw_transaction_inputs,
+            deposit_transaction=prepared_deposit_tx.bitcoin_serialize(),
+        )
+
     def taker_signs_deposit_tx(
         self,
         taker_is_seller: bool,
@@ -645,6 +790,26 @@ class TradeWalletService:
             input.get_value().value,
         )
 
+    def _get_transaction_input(
+        self,
+        parent_transaction: "Transaction",
+        script_program: bytes,
+        raw_transaction_input: "RawTransactionInput",
+    ) -> "TransactionInput":
+        outpoint = self._get_connected_out_point(raw_transaction_input)
+        tx_in = ElectrumPartialTxInput(
+            prevout=ElectrumTxOutpoint(outpoint.hash, outpoint.index),
+            script_sig=script_program,
+            nsequence=TransactionInput.NO_SEQUENCE,
+        )
+        tx_in.utxo = parent_transaction._electrum_transaction
+        return TransactionInput(
+            tx_in,
+            parent_transaction,
+            script_program,
+            outpoint,
+        )
+
     def _get_connected_out_point(self, raw_transaction_input: "RawTransactionInput"):
         return TransactionOutPoint.from_tx(
             Transaction(self.params, raw_transaction_input.parent_transaction),
@@ -657,6 +822,38 @@ class TradeWalletService:
                 self._get_connected_out_point(raw_transaction_input).connected_output
             ).get_script_pub_key()
         )
+
+    def _add_available_inputs_and_change_outputs(
+        self, transaction: "Transaction", address: "Address", change_address: "Address"
+    ) -> None:
+        send_request = None
+        try:
+            # Let the framework do the work to find the right inputs
+            send_request = SendRequest.for_tx(transaction)
+            send_request.shuffle_outputs = False
+            send_request.password = self._password
+            # We use a fixed fee
+            send_request.fee = Coin.ZERO()
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+            # TODO: double check if following comment is True for our impl
+            # We allow spending of unconfirmed tx (double spend risk is low and usability would suffer if we need to wait for 1 confirmation)
+            send_request.coin_selector = BtcCoinSelector(
+                address, self._preferences.get_ignore_dust_threshold()
+            )
+            # We use the same address in a trade for all transactions
+            send_request.change_address = change_address
+            # With the usage of complete_tx() we get all the work done with fee calculation, validation, and coin selection.
+            # We don't commit that tx to the wallet as it will be changed later and it's not signed yet.
+            # So it will not change the wallet balance.
+            check_not_none(self._wallet, "Wallet must not be None")
+            self._wallet.complete_tx(send_request)
+        except Exception as e:
+            if send_request and send_request.tx:
+                logger.warning(
+                    f"add_available_inputs_and_change_outputs: send_request.tx={send_request.tx}, send_request.tx.outputs={send_request.tx.outputs}"
+                )
+            raise WalletException(e) from e
 
     # BISQ issue #4039: prevent dust outputs from being created.
     # check all the outputs in a proposed transaction, if any are below the dust threshold
