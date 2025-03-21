@@ -53,7 +53,9 @@ class TransactionOutput:
         coin: Coin, address: Union[Address, str], parent_tx: "Transaction"
     ) -> "TransactionOutput":
         if isinstance(address, str):
-            address = Address.from_string(address)
+            address = Address.from_string(
+                address, parent_tx.params if parent_tx else None
+            )
         return TransactionOutput(
             ElectrumTxOutput(
                 scriptpubkey=ScriptBuilder.create_output_script(address).program,
