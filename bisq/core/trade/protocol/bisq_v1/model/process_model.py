@@ -122,7 +122,7 @@ class ProcessModel(ProtocolModel[TradingPeer]):
     def to_proto_message(self) -> protobuf.ProcessModel:
         builder = protobuf.ProcessModel(
             trading_peer=self._trading_peer.to_proto_message(),
-            offer_id=self._offer_id,
+            offer_id=self.offer_id,
             account_id=self.account_id,
             pub_key_ring=self.pub_key_ring.to_proto_message(),
             change_output_value=self.change_output_value,
