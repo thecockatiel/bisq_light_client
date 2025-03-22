@@ -21,11 +21,11 @@ class ProtoUtil:
 
     @staticmethod
     def string_or_none_from_proto(proto: str) -> Optional[str]:
-        return None if proto == "" else proto
+        return None if not proto else proto
 
     @staticmethod
     def byte_array_or_none_from_proto(proto: Any) -> Optional[bytes]:
-        return None if not proto.ByteSize() else proto.SerializeToString()
+        return None if not proto else proto.SerializeToString()
 
     @staticmethod
     def enum_from_proto(enum_type: Type[T], proto_enum_type: "EnumTypeWrapper", proto_enum_value: Optional[Any] = None) -> Optional[T]:
