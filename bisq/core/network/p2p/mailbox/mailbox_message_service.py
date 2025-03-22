@@ -218,7 +218,7 @@ class MailboxMessageService:
  
         assert peer is not None, "peer node address must not be None (send_encrypted_mailbox_message)"
         assert self.network_node.node_address_property.value is not None, "My node address must not be None at send_encrypted_mailbox_message"
-        check_argument(self.key_ring.pub_key_ring == peers_pub_key_ring, "We got own keyring instead of that from peer")
+        check_argument(self.key_ring.pub_key_ring != peers_pub_key_ring, "We got own keyring instead of that from peer")
 
         if not self.is_bootstrapped:
             raise NetworkNotReadyException()
