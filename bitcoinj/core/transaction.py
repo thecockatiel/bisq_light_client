@@ -117,7 +117,7 @@ class Transaction:
 
         return LazySequenceWrapper(
             self._electrum_transaction.inputs,
-            lambda tx_input, idx: TransactionInput.from_electrum_input(tx_input, self),
+            lambda tx_input, idx: TransactionInput.from_electrum_input(self.params, tx_input, self),
         )
 
     @cached_property

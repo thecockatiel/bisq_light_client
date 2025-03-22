@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
@@ -28,7 +29,13 @@ class TransactionInput:
     ):
         self.parent = parent_tx
         self._ec_tx_input = ec_tx_input
-        self.outpoint = outpoint
+        if outpoint:
+            self.outpoint = outpoint
+        elif ec_tx_input.prevout:
+            self.outpoint = TransactionOutPoint(
+                ec_tx_input.prevout.out_idx,
+                ec_tx_input.prevout.txid.hex(),
+            )
 
     @property
     def value(self):
@@ -38,13 +45,25 @@ class TransactionInput:
         return Coin.value_of(self.value)
 
     @staticmethod
-    def from_electrum_input(ec_tx_input: "ElectrumTxInput", parent_tx: Optional["Transaction"]):
+    def from_electrum_input(params: "NetworkParameters", ec_tx_input: "ElectrumTxInput", parent_tx: Optional["Transaction"]):
+        from bitcoinj.core.transaction import Transaction
+
+        if ec_tx_input.utxo:
+            tx = Transaction(params, ec_tx_input.utxo.serialize_as_bytes())
+            outpoint = TransactionOutPoint.from_tx(
+                tx,
+                ec_tx_input.prevout.out_idx, 
+            )
+        elif ec_tx_input.prevout:
+            outpoint = TransactionOutPoint(
+                ec_tx_input.prevout.out_idx,
+                ec_tx_input.prevout.txid.hex(),
+            )
+        
         return TransactionInput(
             ec_tx_input,
             parent_tx,
-            TransactionOutPoint(
-                ec_tx_input.prevout.out_idx, ec_tx_input.prevout.txid.hex()
-            ),
+            outpoint,
         )
     
     @staticmethod

@@ -800,7 +800,7 @@ class Wallet(EventListener):
         self, tx: "Transaction", original_inputs: list["ElectrumPartialTxInput"]
     ):
         for input in original_inputs:
-            tx.add_input(TransactionInput.from_electrum_input(input, tx))
+            tx.add_input(TransactionInput.from_electrum_input(tx.params, input, tx))
 
     def _estimate_virtual_bytes_for_signing(self, selection: "CoinSelection"):
         vsize = 0

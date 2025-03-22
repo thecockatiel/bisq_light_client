@@ -61,9 +61,6 @@ class TransactionOutPoint:
             index, tx.get_tx_id(), from_tx=tx, connected_output=tx.outputs[index]
         )
 
-    def to_electrum_tx_output(self):
-        return TxOutpoint(bytes.fromhex(self._hash), self._index)
-
     def __str__(self):
         return f"{self._hash}:{self._index}"
 
