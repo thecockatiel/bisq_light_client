@@ -275,7 +275,7 @@ class Contract(NetworkPayload):
             "offerPayload": self.offer_payload,
             "tradeAmount": self.trade_amount,
             "tradePrice": self.trade_price,
-            "takerFeeTxId": self.taker_fee_tx_id,
+            "takerFeeTxID": self.taker_fee_tx_id,
             "buyerNodeAddress": self.buyer_node_address,
             "sellerNodeAddress": self.seller_node_address,
             "mediatorNodeAddress": self.mediator_node_address,
