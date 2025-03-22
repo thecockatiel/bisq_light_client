@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 from bisq.common.handlers.result_handler import ResultHandler
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.protocol.bisq_v1.buyer_protocol import BuyerProtocol
+from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response import InputsForDepositTxResponse
 from bisq.core.trade.protocol.bisq_v1.messages.payout_tx_published_message import (
     PayoutTxPublishedMessage,
 )
@@ -117,7 +118,7 @@ class BuyerAsTakerProtocol(BuyerProtocol, TakerProtocol):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def _handle_inputs_for_deposit_tx_response(
-        self, message: "InputsForDepositTxRequest", peer: "NodeAddress"
+        self, message: "InputsForDepositTxResponse", peer: "NodeAddress"
     ):
         self.expect(
             self.add_phase(TradePhase.INIT).with_message(message).from_peer(peer)
@@ -185,7 +186,7 @@ class BuyerAsTakerProtocol(BuyerProtocol, TakerProtocol):
     def on_trade_message(self, message, peer: "NodeAddress"):
         super().on_trade_message(message, peer)
 
-        if isinstance(message, InputsForDepositTxRequest):
+        if isinstance(message, InputsForDepositTxResponse):
             self._handle_inputs_for_deposit_tx_response(message, peer)
 
     def get_verify_peers_fee_payment_class(self):
