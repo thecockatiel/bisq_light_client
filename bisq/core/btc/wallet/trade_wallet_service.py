@@ -1222,11 +1222,11 @@ class TradeWalletService:
     ) -> "TransactionInput":
         outpoint = self._get_connected_out_point(raw_transaction_input)
         tx_in = ElectrumPartialTxInput(
-            prevout=ElectrumTxOutpoint(outpoint.hash, outpoint.index),
+            prevout=ElectrumTxOutpoint(bytes.fromhex(outpoint.hash), outpoint.index),
             script_sig=script_program,
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        tx_in.utxo = parent_transaction._electrum_transaction
+        tx_in.utxo = outpoint.connected_tx._electrum_transaction
         return TransactionInput(
             tx_in,
             parent_transaction,
