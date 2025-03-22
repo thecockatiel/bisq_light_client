@@ -217,7 +217,7 @@ class Contract(NetworkPayload):
     def payment_method_id(self) -> str:
         # Either makerPaymentMethodId is set or available in offerPayload
         return self.maker_payment_method_id if self.maker_payment_method_id is not None else \
-               OfferPayload(self.get_offer_payload().get_currency_code()).payment_method_id
+               OfferPayload(self.offer_payload.get_currency_code()).payment_method_id
 
     def get_trade_amount(self) -> 'Coin':
         return Coin.value_of(self.trade_amount)
@@ -227,7 +227,7 @@ class Contract(NetworkPayload):
         
         if self.payment_method_id == PaymentMethod.HAL_CASH_ID:
             volume_by_amount = VolumeUtil.get_adjusted_volume_for_hal_cash(volume_by_amount)
-        elif is_fiat_currency(self.get_offer_payload().get_currency_code()):
+        elif is_fiat_currency(self.offer_payload.get_currency_code()):
             volume_by_amount = VolumeUtil.get_rounded_fiat_volume(volume_by_amount)
         
         return volume_by_amount
