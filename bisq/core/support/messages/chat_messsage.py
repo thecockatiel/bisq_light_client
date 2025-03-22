@@ -51,7 +51,7 @@ class ChatMessage(SupportMessage):
     message: str = field(default_factory=raise_required)
     attachments: List[Attachment] = field(default_factory=list)
     sender_node_address: NodeAddress = field(default_factory=raise_required)
-    date: float = field(default_factory=get_time_ms)
+    date: int = field(default_factory=get_time_ms)
 
     is_system_message: bool = field(default=False)
 
@@ -100,9 +100,9 @@ class ChatMessage(SupportMessage):
             acknowledged=self.acknowledged_property.value,
             was_displayed=self.was_displayed,
             send_message_error=(
-                self.send_message_error_property.value if self.send_message_error_property.value else None
+                self.send_message_error_property.value if self.send_message_error_property else None
             ),
-            ack_error=self.ack_error_property.value if self.ack_error_property.value else None,
+            ack_error=self.ack_error_property.value if self.ack_error_property else None,
         )
         envelope = self.get_network_envelope_builder()
         envelope.chat_message.CopyFrom(message)

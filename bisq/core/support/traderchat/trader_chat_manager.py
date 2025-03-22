@@ -6,11 +6,11 @@ from bisq.core.support.support_manager import SupportManager
 from bisq.core.support.support_type import SupportType
 from bisq.core.support.messages.chat_messsage import ChatMessage
 from utils.data import ObservableList
+from bisq.core.network.p2p.node_address import NodeAddress
 
 if TYPE_CHECKING:
     from bisq.core.support.messages.support_message import SupportMessage
     from bisq.core.trade.model.bisq_v1.trade import Trade 
-    from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.common.crypto.pub_key_ring import PubKeyRing
@@ -104,7 +104,7 @@ class TraderChatManager(SupportManager):
             sender_is_trader=False,
             message=Res.get("tradeChat.rules"),
             sender_node_address=NodeAddress.from_full_address("null:0000"),
-            date=trade.get_date().timestamp(),
+            date=int(trade.get_date().timestamp() * 1000),
             is_system_message=True
         )
         trade.chat_messages.append(chat_message)
