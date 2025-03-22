@@ -46,12 +46,12 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
                     if change == 0 or change >= Restrictions.get_min_non_dust_output().value:
                         break
 
-            if (output.parent is not None and
-                # no need because we only pass spendable outputs to coin selector
-                # self.is_tx_spendable(output.parent) and 
-                self.is_tx_output_spendable(output)):
-                selected.append(output)
-                total += output.value
+                if (output.parent is not None and
+                    # no need because we only pass spendable outputs to coin selector
+                    # self.is_tx_spendable(output.parent) and 
+                    self.is_tx_output_spendable(output)):
+                    selected.append(output)
+                    total += output.value
 
         # Total may be lower than target here, if the given candidates were insufficient to create the requested
         # transaction.
