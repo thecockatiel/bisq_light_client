@@ -13,6 +13,12 @@ class NodeAddress(PersistablePayload, NetworkPayload, UsedForTradeContractJson):
     port: int
     address_prefix_hash: bytes = field(init=False, default=None)
 
+    def get_json_dict(self):
+        return {
+            "hostName": self.host_name,
+            "port": self.port,
+        }
+
     @staticmethod
     def from_full_address(full_address: str) -> "NodeAddress":
         # Handle IPv6 addresses
