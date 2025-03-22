@@ -99,7 +99,7 @@ class TxBroadcaster:
 
         # For better redundancy in case the broadcast via Electrum fails we also
         # publish the tx via mempool nodes.
-        as_future(MemPoolSpaceTxBroadcaster.broadcast_tx(tx))
+        # as_future(MemPoolSpaceTxBroadcaster.broadcast_tx(tx, wallet))
 
     @staticmethod
     def _stop_and_remove_timer(tx_id: str):

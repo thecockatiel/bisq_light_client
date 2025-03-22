@@ -5,6 +5,7 @@ from bisq.core.btc.wallet.http.tx_broadcast_http_client import TxBroadcastHttpCl
 from bisq.core.network.http.http_response_error import HttpResponseError
 
 if TYPE_CHECKING:
+    from bitcoinj.wallet.wallet import Wallet
     from bitcoinj.core.transaction import Transaction
     from bisq.common.config.config import Config
     from bisq.core.btc.nodes.local_bitcoin_node import LocalBitcoinNode
@@ -33,8 +34,8 @@ class MemPoolSpaceTxBroadcaster:
         cls.config = config
 
     @classmethod
-    async def broadcast_tx(cls, tx: "Transaction") -> None:
-        tx.maybe_finalize()
+    async def broadcast_tx(cls, tx: "Transaction", wallet: "Wallet") -> None:
+        tx.maybe_finalize(wallet)
 
         if not cls.config.base_currency_network.is_mainnet():
             logger.info("MemPoolSpaceTxBroadcaster only supports mainnet")
