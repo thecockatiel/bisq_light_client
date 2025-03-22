@@ -96,7 +96,7 @@ class FluentProtocolCondition:
             all_pre_conditions_met = all(self.pre_conditions)
             if not all_pre_conditions_met:
                 info = f"PreConditions not met. preConditions={self.pre_conditions}, this={self}, tradeId={self.trade_model.id}"
-                self.result = FluentProtocolConditionResult.INVALID_PRE_CONDITION.info(info)
+                self.result = FluentProtocolConditionResult.INVALID_PRE_CONDITION.with_info(info)
 
                 if self.pre_conditions_failed_handler is not None:
                     self.pre_conditions_failed_handler()
@@ -118,14 +118,14 @@ class FluentProtocolCondition:
         if is_phase_valid:
             info = f"We received a {trigger} at phase {self.trade_model.get_trade_phase()} and state {self.trade_model.get_trade_state()}, tradeId={self.trade_model.get_id()}"
             logger.info(info)
-            return FluentProtocolConditionResult.VALID.info(info)
+            return FluentProtocolConditionResult.VALID.with_info(info)
         else:
             info = (f"We received a {trigger} but we are are not in the expected phase.\n"
                    f"This can be an expected case if we get a repeated CounterCurrencyTransferStartedMessage "
                    f"after we have already received one as the peer re-sends that message at each startup.\n"
                    f"Expected phases={self.expected_phases},\nTrade phase={self.trade_model.get_trade_phase()},"
                    f"\nTrade state={self.trade_model.get_trade_state()},\ntradeId={self.trade_model.get_id()}")
-            return FluentProtocolConditionResult.INVALID_PHASE.info(info)
+            return FluentProtocolConditionResult.INVALID_PHASE.with_info(info)
 
     def get_state_result(self) -> "FluentProtocolConditionResult":
         if not self.expected_states:
@@ -139,9 +139,9 @@ class FluentProtocolCondition:
         if is_state_valid:
             info = f"We received a {trigger} at state {self.trade_model.get_trade_state()}, tradeId={self.trade_model.get_id()}"
             logger.info(info)
-            return FluentProtocolConditionResult.VALID.info(info)
+            return FluentProtocolConditionResult.VALID.with_info(info)
         else:
             info = (f"We received a {trigger} but we are are not in the expected state. "
                    f"Expected states={self.expected_states}, Trade state={self.trade_model.get_trade_state()}, "
                    f"tradeId={self.trade_model.get_id()}")
-            return FluentProtocolConditionResult.INVALID_STATE.info(info)
+            return FluentProtocolConditionResult.INVALID_STATE.with_info(info)
