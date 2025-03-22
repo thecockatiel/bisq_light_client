@@ -536,7 +536,8 @@ class Transaction:
             try:
                 script_pub_key = tx_out.get_script_pub_key()
                 if script_pub_key.program:
-                    s.append(f"({script_pub_key.hex()})")
+                    s.append(f"{script_pub_key}")
+                    s.append(f" ({script_pub_key.program.hex()})")
                 else:
                     s.append("<no scriptPubKey>")
                 s.append(
