@@ -22,15 +22,15 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from utils.data import ObservableList, SimpleProperty, SimplePropertyChangeEvent
 from utils.time import get_time_ms
 import pb_pb2 as protobuf
+from bisq.core.network.p2p.node_address import NodeAddress
+from bisq.core.support.messages.chat_messsage import ChatMessage
+from bisq.core.trade.model.bisq_v1.contract import Contract
+from bisq.common.crypto.pub_key_ring import PubKeyRing
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
-    from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.support.messages.chat_messsage import ChatMessage
     from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
-    from bisq.core.trade.model.bisq_v1.contract import Contract
-    from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bitcoinj.core.transaction import Transaction
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.trade.protocol.bisq_v1.model.trading_peer import TradingPeer
