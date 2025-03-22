@@ -68,7 +68,7 @@ class CoreApi:
         self.network_node = network_node
 
     def get_version(self) -> str:
-        return Version.VERSION
+        return Version.VERSION + "p"
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Dispute Agents
