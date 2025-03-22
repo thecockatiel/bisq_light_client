@@ -79,8 +79,8 @@ class Trade(TradeModel, ABC):
         # Persistable 
         # Immutable
         self._is_currency_for_taker_fee_btc = is_currency_for_taker_fee_btc
-        self._trade_tx_fee_as_long = trade_tx_fee
-        self._taker_fee_as_long = taker_fee
+        self._trade_tx_fee_as_long = trade_tx_fee.value
+        self._taker_fee_as_long = taker_fee.value
 
         # Mutable
         self._process_model = process_model
