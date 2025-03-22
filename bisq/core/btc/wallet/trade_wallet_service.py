@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
@@ -41,7 +41,7 @@ from electrum_min.transaction import (
     TxOutpoint as ElectrumTxOutpoint,
     multisig_script,
 )
-
+from electrum_min import bitcoin
 
 if TYPE_CHECKING:
     from bitcoinj.crypto.deterministic_key import DeterministicKey
@@ -490,8 +490,8 @@ class TradeWalletService:
                 )
 
         # Add MultiSig output
-        multisig_script_bytes = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        multisig_script_bytes = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
 
         # Tx fee for deposit tx will be paid by buyer.
@@ -561,12 +561,14 @@ class TradeWalletService:
         check_argument(seller_inputs, "seller_inputs must not be empty")
 
         # Check if maker's MultiSig script is identical to the taker's
-        hashed_multi_sig_output_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        hashed_multi_sig_output_script = (
+            self._get_x_of_threshold_multi_sig_output_script(
+                (seller_pub_key, buyer_pub_key), 2, False
+            )
         )
         if (
-            not makers_deposit_tx.outputs[0].script_pub_key
-            == hashed_multi_sig_output_script
+            makers_deposit_tx.outputs[0].script_pub_key
+            != hashed_multi_sig_output_script
         ):
             raise TransactionVerificationException(
                 "Maker's hashed_multi_sig_output_script does not match taker's hashed_multi_sig_output_script"
@@ -711,8 +713,8 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> bytes:
-        redeem_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
         delayed_payout_tx_input_value = prepared_deposit_tx.outputs[0].get_value()
         sig_hash = delayed_payout_tx.hash_for_witness_signature(
@@ -738,8 +740,8 @@ class TradeWalletService:
         seller_signature: bytes,
         input_value: Coin,
     ) -> "Transaction":
-        redeem_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
         witness = check_not_none(
             self._wallet.get_witness_for_redeem_script(
@@ -764,8 +766,8 @@ class TradeWalletService:
                 "Delayed payout tx is paying less than the minimum allowed tx fee"
             )
 
-        script_pub_key = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        script_pub_key = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
         input.get_script_sig().correctly_spends(
             delayed_payout_tx,
@@ -826,8 +828,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -871,8 +873,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -946,8 +948,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = bytes.fromhex(
-            multisig_script([seller_pub_key.hex(), buyer_pub_key.hex()], 2)
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_pub_key, buyer_pub_key), 2, False
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -998,11 +1000,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = bytes.fromhex(
-            multisig_script(
-                [seller_multi_sig_pub_key.hex(), buyer_multi_sig_pub_key.hex()],
-                2,
-            )
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (seller_multi_sig_pub_key, buyer_multi_sig_pub_key), 2, False
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -1085,11 +1084,8 @@ class TradeWalletService:
             )
 
         # order of sigs matter
-        redeem_script = bytes.fromhex(
-            multisig_script(
-                [arbitrator_pub_key.hex(), seller_pub_key.hex(), buyer_pub_key.hex()],
-                2,
-            )
+        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
+            (arbitrator_pub_key, seller_pub_key, buyer_pub_key), 2, False
         )
         hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
             hashed_multi_sig_output.get_script_pub_key()
@@ -1250,6 +1246,18 @@ class TradeWalletService:
                 self._get_connected_out_point(raw_transaction_input).connected_output
             ).get_script_pub_key()
         )
+
+    def _get_x_of_threshold_multi_sig_output_script(
+        self, pubkeys: Iterable[bytes], threshold: int, legacy: bool = False
+    ):
+        redeem_script = multisig_script([key.hex() for key in pubkeys], threshold)
+        if legacy:
+            # p2sh
+            raise IllegalStateException("legacy p2sh is not supported")
+            # return bytes.fromhex(redeem_script)
+        else:
+            # p2wsh
+            return bytes.fromhex(bitcoin.p2wsh_nested_script(redeem_script))
 
     def _create_payout_tx(
         self,
