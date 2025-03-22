@@ -371,7 +371,7 @@ class CoreWalletsService:
     ) -> int:
         address = self._get_address_entry(address_string).get_address()
         confidence = self.btc_wallet_service.get_confidence_for_address(address)
-        return 0 if confidence is None else confidence.depth
+        return 0 if confidence is None else confidence.confirmations
 
     def set_wallet_password(self, password: str, new_password: str = None) -> None:
         self.verify_wallets_are_available()
