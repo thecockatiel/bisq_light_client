@@ -23,7 +23,7 @@ class TradeDetailTableBuilder(AbstractTradeListBuilder):
         trade = self.protos[0]
         self._populate_columns(trade)
         columns = self._define_column_list(trade)
-        return Table(columns)
+        return Table(*columns)
 
     def _populate_columns(self, trade: grpc_pb2.TradeInfo):
         if self.is_bsq_swap_trade(trade):
