@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.core.trade.model.bisq_v1.trade import Trade
 import pb_pb2 as protobuf
 from bisq.core.trade.model.bisq_v1.seller_trade import SellerTrade
 from bisq.core.trade.model.maker_trade import MakerTrade
@@ -74,7 +75,7 @@ class SellerAsMakerTrade(SellerTrade, MakerTrade):
         trade.price_as_long = trade_proto.trade_price
         trade.trading_peer_node_address = NodeAddress.from_proto(trade_proto.trading_peer_node_address) if trade_proto.HasField('trading_peer_node_address') else None
         
-        return super().from_proto(trade, trade_proto, core_proto_resolver)
+        return Trade.from_proto(trade, trade_proto, core_proto_resolver)
 
     def get_tx_fee(self) -> "Coin":
         return self._offer.tx_fee

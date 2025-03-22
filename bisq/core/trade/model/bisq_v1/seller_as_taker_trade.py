@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.core.trade.model.bisq_v1.trade import Trade
 from bisq.core.trade.model.taker_trade import TakerTrade
 import pb_pb2 as protobuf
 from bisq.core.trade.model.bisq_v1.seller_trade import SellerTrade
@@ -79,7 +80,7 @@ class SellerAsTakerTrade(SellerTrade, TakerTrade):
             uid=uid
         )
         
-        return super().from_proto(trade, trade_proto, core_proto_resolver)
+        return Trade.from_proto(trade, trade_proto, core_proto_resolver)
 
     # The tx fee the user has paid. Not to be confused to the tradeTxFee which is the takers txFee and used for
     # all trade txs
