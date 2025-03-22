@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Optional, Type, TypeVar
+from bisq.core.trade.protocol.trade_task_runner import TradeTaskRunner
 
 if TYPE_CHECKING:
     from bisq.core.trade.protocol.fluent_protocol_event import FluentProtocolEvent
     from bisq.core.trade.protocol.trade_message import TradeMessage
-    from bisq.core.trade.protocol.trade_task_runner import TradeTaskRunner
     from bisq.common.taskrunner.task import Task
     from bisq.core.trade.model.trade_model import TradeModel
     from bisq.core.trade.protocol.trade_protocol import TradeProtocol
