@@ -75,7 +75,7 @@ class TakerSendInputsForDepositTxRequest(TradeTask):
             # This is used for verifying the peers account age witness
             signature_of_nonce = Sig.sign(
                 self.process_model.key_ring.signature_key_pair.private_key,
-                id.encode("utf-8"),
+                offer_id.encode("utf-8"),
             )
 
             burning_man_selection_height = (
@@ -89,7 +89,7 @@ class TakerSendInputsForDepositTxRequest(TradeTask):
                 self.process_model.get_payment_account_payload(self.trade)
             ).payment_method_id
             request = InputsForDepositTxRequest(
-                trade_id=id,
+                trade_id=offer_id,
                 sender_node_address=self.process_model.my_node_address,
                 trade_amount=trade_amount.value,
                 trade_price=self.trade.get_price().get_value(),
