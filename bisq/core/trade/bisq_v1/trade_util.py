@@ -8,6 +8,7 @@ from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.locale.res import Res
 from bisq.core.trade.model.bsq_swap.bsq_swap_trade import BsqSwapTrade
 from bisq.core.trade.model.bisq_v1.trade import Trade
+from utils.preconditions import check_not_none
 
 if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
@@ -16,13 +17,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.trade_model import TradeModel
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
-
-
-def _assert_not_none(value, message: str):
-    """Asserts that the given value is not None."""
-    if value is None:
-        raise ValueError(message)
-    return True
 
 
 # TODO: implement rest?
@@ -214,7 +208,7 @@ class TradeUtil:
                 f"Currency is banned.\n"
                 f"Currency code={trade_model.get_offer().currency_code}"
             )
-        elif _assert_not_none(
+        elif check_not_none(
             trade_model.get_offer()
         ) and filter_manager.is_payment_method_banned(
             trade_model.get_offer().payment_method
