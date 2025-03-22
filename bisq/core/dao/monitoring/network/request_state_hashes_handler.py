@@ -111,7 +111,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 f"on peersNodeAddress: {self._node_address}"
             )
             logger.debug(f"{error_message} / RequestStateHashesHandler={self}")
-            self._handle_fault(error_message, self._node_address, "SEND_MSG_TIMEOUT")
+            self._handle_fault(error_message, self._node_address, CloseConnectionReason.SEND_MSG_TIMEOUT)
         else:
             logger.trace(
                 "We have stopped already. We ignore that timeout_timer.run call. "
