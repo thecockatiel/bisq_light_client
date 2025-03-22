@@ -1,5 +1,7 @@
+from enum import Enum
 import json
 from typing import Any
+from ctypes import c_int8
 
 # TODO: check against java implementation
 class JsonUtil:
@@ -25,9 +27,21 @@ class JsonUtil:
             if isinstance(value, dict):
                 resolved_dict[key] = JsonUtil.recursively_resolve_dict(value)
             elif hasattr(value, "get_json_dict"):
-                resolved_dict[key] = value.get_json_dict()
+                resolved_dict[key] = JsonUtil.recursively_resolve_dict(value.get_json_dict())
+            elif isinstance(value, Enum):
+                resolved_dict[key] = value.name
+            elif isinstance(value, (list, tuple)):
+                resolved_dict[key] = [
+                    JsonUtil.recursively_resolve_dict(item) for item in value
+                ]
+            elif isinstance(value, (bytes, bytearray)):
+                resolved_dict[key] = [
+                    c_int8(b).value for b in value
+                ]
             else:
                 resolved_dict[key] = value
+        # filter out null values, as does Gson by default
+        resolved_dict = {k: v for k, v in resolved_dict.items() if v is not None}
         return resolved_dict
     
     @staticmethod
