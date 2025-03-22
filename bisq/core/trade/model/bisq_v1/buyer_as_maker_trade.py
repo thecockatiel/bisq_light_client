@@ -44,7 +44,7 @@ class BuyerAsMakerTrade(BuyerTrade, MakerTrade):
         
     def to_proto_message(self):
         return protobuf.Tradable(
-            protobuf.BuyerAsMakerTrade(
+            buyer_as_maker_trade=protobuf.BuyerAsMakerTrade(
                 trade=super().to_proto_message(),
             )
         )

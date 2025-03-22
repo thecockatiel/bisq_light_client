@@ -50,7 +50,7 @@ class SellerAsTakerTrade(SellerTrade, TakerTrade):
         
     def to_proto_message(self):
         return protobuf.Tradable(
-            protobuf.SellerAsTakerTrade(
+           seller_as_taker_trade=protobuf.SellerAsTakerTrade(
                 trade=super().to_proto_message(),
             )
         )
