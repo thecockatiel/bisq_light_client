@@ -52,16 +52,15 @@ from bisq.core.trade.protocol.bisq_v1.tasks.process_peer_published_delayed_payou
 )
 from bisq.core.trade.protocol.trade_protocol import TradeProtocol
 from bisq.core.trade.protocol.trade_task_runner import TradeTaskRunner
+from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import (
+    MediatedPayoutTxPublishedMessage,
+)
 
 if TYPE_CHECKING:
     from bisq.core.trade.protocol.trade_message import TradeMessage
     from bisq.core.network.p2p.ack_message import AckMessage
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.trade.model.bisq_v1.trade import Trade
-    from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
-    from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_published_message import (
-        MediatedPayoutTxPublishedMessage,
-    )
 
 logger = get_logger(__name__)
 
