@@ -71,7 +71,7 @@ class PaymentAccountPayloadInfo(Payload):
             proto.payment_details,
         )
 
-    def to_proto(self) -> grpc_pb2.PaymentAccountPayloadInfo:
+    def to_proto_message(self) -> grpc_pb2.PaymentAccountPayloadInfo:
         return grpc_pb2.PaymentAccountPayloadInfo(
             id=self.id,
             payment_method_id=self.payment_method_id,
