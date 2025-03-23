@@ -19,6 +19,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from utils.concurrency import AtomicReference, ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
 from bitcoinj.core.transaction import Transaction
+from utils.preconditions import check_not_none
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
@@ -137,7 +138,9 @@ class WalletService(ABC):
     @staticmethod
     def verify_transaction(transaction: "Transaction") -> None:
         try:
-            Transaction.verify(Config.BASE_CURRENCY_NETWORK_VALUE.parameters, transaction)
+            Transaction.verify(
+                Config.BASE_CURRENCY_NETWORK_VALUE.parameters, transaction
+            )
         except Exception as e:
             logger.error(e, exc_info=e)
             raise TransactionVerificationException(e)
@@ -152,15 +155,14 @@ class WalletService(ABC):
         transaction: "Transaction", input: "TransactionInput", input_index: int
     ):
         try:
-            assert (
-                input.connected_output is not None
-            ), "input.connected_output must not be None"
             input.get_script_sig().correctly_spends(
                 transaction,
                 input_index,
                 input.witness_elements,
                 input.get_value(),
-                input.connected_output.script_pub_key,
+                check_not_none(
+                    input.connected_output, "input.connected_output must not be None"
+                ).get_script_pub_key(),
                 Script.ALL_VERIFY_FLAGS,
             )
         except Exception as e:
@@ -415,7 +417,8 @@ class WalletService(ABC):
             sum(
                 1
                 for tx in self.get_transactions()
-                if tx.lock_time == 0 and self.wallet.is_transaction_pending(tx.get_tx_id())
+                if tx.lock_time == 0
+                and self.wallet.is_transaction_pending(tx.get_tx_id())
             )
             > 20
         )
