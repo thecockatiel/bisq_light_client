@@ -1,12 +1,18 @@
 from bitcoinj.core.signature_decode_exception import SignatureDecodeException
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.verification_exception import VerificationException
-from electrum_min.ecc import CURVE_ORDER, der_sig_from_r_and_s, get_r_and_s_from_der_sig
+from electrum_min.ecc import (
+    CURVE_ORDER,
+    der_sig_from_r_and_s,
+    get_r_and_s_from_der_sig,
+)
 
 HALF_CURVE_ORDER = CURVE_ORDER // 2
 
+
 def _is_s_canonical(s: int) -> bool:
     return s <= HALF_CURVE_ORDER
+
 
 # TODO
 class TransactionSignature:
@@ -18,7 +24,10 @@ class TransactionSignature:
 
     def to_der(self):
         return der_sig_from_r_and_s(self.r, self.s)
-    
+
+    def encode_to_bitcoin(self):
+        return self.to_der() + bytes([self.sig_hash_flags])
+
     @property
     def sig_hash_mode(self) -> "TransactionSigHash":
         mode = self.sig_hash_flags & 0x1F
@@ -61,11 +70,11 @@ class TransactionSignature:
         # Where R and S are not negative (their first byte has its highest bit not set), and not
         # excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
         # in which case a single 0 byte is necessary and even required).
-        
+
         # Empty signatures, while not strictly DER encoded, are allowed.
         if len(signature) == 0:
             return True
-        
+
         if len(signature) < 9 or len(signature) > 73:
             return False
 
@@ -113,7 +122,11 @@ class TransactionSignature:
 
     @staticmethod
     def decode_from_bitcoin(
-        bytes_: bytes, require_canonical_encoding: bool, require_canonical_s_value: bool
+        bytes_: bytes,
+        require_canonical_encoding: bool,
+        require_canonical_s_value: bool,
+        flags: int = None,
+        anyone_can_pay: bool = False,
     ) -> "TransactionSignature":
         """
         Returns a decoded signature.
@@ -145,4 +158,12 @@ class TransactionSignature:
 
         # In Bitcoin, any value of the final byte is valid, but not necessarily canonical. See docs for
         # isEncodingCanonical to learn more about this. So we must store the exact byte found.
-        return TransactionSignature(r, s, bytes_[-1])
+        return TransactionSignature(
+            r,
+            s,
+            (
+                TransactionSignature.calc_sig_hash_value(flags, anyone_can_pay)
+                if flags
+                else bytes_[-1]
+            ),
+        )

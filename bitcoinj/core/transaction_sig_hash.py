@@ -20,5 +20,5 @@ class TransactionSigHash(Enum):
         obj._value_ = value
         return obj
     
-    def byte_value(self) -> bytes:
-        return self.int_value.to_bytes()
+    def byte_value(self) -> int:
+        return self.int_value
