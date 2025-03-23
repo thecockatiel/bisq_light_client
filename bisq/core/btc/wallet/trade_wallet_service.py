@@ -1230,7 +1230,6 @@ class TradeWalletService:
         return TransactionInput(
             tx_in,
             parent_transaction,
-            script_program,
             outpoint,
         )
 
