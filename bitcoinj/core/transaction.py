@@ -579,14 +579,21 @@ class Transaction:
             tx_io = TransactionInput.from_output(tx_io, tx_io.parent)
         if not isinstance(tx_io._ec_tx_input, ElectrumPartialTxInput):
             tx_io._ec_tx_input = ElectrumPartialTxInput.from_txin(tx_io._ec_tx_input)
-        self._electrum_transaction.add_inputs([tx_io._ec_tx_input])
+        # we manually manage inputs and outputs because electrums sorts them by default (BIP69)
+        if self._electrum_transaction._inputs is None:
+            self._electrum_transaction._inputs = []
+        self._electrum_transaction._inputs.append(tx_io._ec_tx_input)
+        self._electrum_transaction.invalidate_ser_cache()
         return tx_io
 
     def add_output(self, tx_output: "TransactionOutput"):
         electrum_output = tx_output._ec_tx_output
         if not isinstance(electrum_output, ElectrumPartialTxOutput):
             electrum_output = ElectrumPartialTxOutput.from_txout(electrum_output)
-        self._electrum_transaction.add_outputs([electrum_output])
+        if self._electrum_transaction._outputs is None:
+            self._electrum_transaction._outputs = []
+        self._electrum_transaction._outputs.append(electrum_output)
+        self._electrum_transaction.invalidate_ser_cache()
 
     def add_output_using_coin_and_address(self, coin: Coin, address: "Address"):
         from bitcoinj.core.transaction_output import TransactionOutput
