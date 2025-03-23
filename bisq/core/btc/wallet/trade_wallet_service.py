@@ -143,7 +143,10 @@ class TradeWalletService:
 
             if self._remove_dust(trading_fee_tx):
                 # TODO check if works as expected
-                self._wallet.sign_tx(self._password, trading_fee_tx)
+                trading_fee_tx = check_not_none(
+                    self._wallet.sign_tx(self._password, trading_fee_tx),
+                    "Failed to sign trading_fee_tx",
+                )
 
             WalletService.print_tx("trading_fee_tx", trading_fee_tx)
 
@@ -532,7 +535,10 @@ class TradeWalletService:
         start = 0 if maker_is_buyer else len(taker_raw_transaction_inputs)
         end = len(maker_inputs) if maker_is_buyer else len(prepared_deposit_tx.inputs)
         # TODO: check sign
-        self._wallet.sign_tx(self._password, prepared_deposit_tx)
+        prepared_deposit_tx = check_not_none(
+            self._wallet.sign_tx(self._password, prepared_deposit_tx),
+            "Failed to sign prepared_deposit_tx",
+        )
         for i in range(start, end):
             tx_input = prepared_deposit_tx.inputs[i]
             WalletService.check_script_sig(prepared_deposit_tx, tx_input, i)
@@ -620,9 +626,13 @@ class TradeWalletService:
 
             # Add seller inputs
             # We grab the signature from the makersDepositTx and apply it to the new tx input
-            for i, seller_input in enumerate(seller_inputs, start=len(buyer_inputs)):
+            for i, k in zip(
+                range(len(buyer_inputs), len(makers_deposit_tx.inputs)),
+                range(len(makers_deposit_tx.inputs) - len(buyer_inputs)),
+            ):
+                # We get the deposit tx unsigned if maker is seller
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, None, seller_input)
+                    self._get_transaction_input(deposit_tx, None, seller_inputs[k])
                 )
 
         # Add all outputs from makers_deposit_tx to deposit_tx
@@ -634,7 +644,10 @@ class TradeWalletService:
         # Sign inputs
         start = len(buyer_inputs) if taker_is_seller else 0
         end = len(deposit_tx.inputs) if taker_is_seller else len(buyer_inputs)
-        self._wallet.sign_tx(self._password, deposit_tx)
+        deposit_tx = check_not_none(
+            self._wallet.sign_tx(self._password, deposit_tx),
+            "Failed to sign deposit_tx",
+        )
         for i in range(start, end):
             WalletService.check_script_sig(deposit_tx, deposit_tx.inputs[i], i)
 

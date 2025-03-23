@@ -658,15 +658,12 @@ class Wallet(EventListener):
         tx: "Transaction",
     ):
         """returns partial tx if successful else None"""
-        if not isinstance(tx._electrum_transaction, PartialTransaction):
-            tx._electrum_transaction = PartialTransaction.from_tx(
-                tx._electrum_transaction
-            )
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         result = self._electrum_wallet.sign_transaction(
             tx._electrum_transaction, password, ignore_warnings=True
         )
         if result:
+            result.finalize_psbt()
             return tx
         return None
 
