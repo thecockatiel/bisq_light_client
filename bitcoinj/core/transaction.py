@@ -53,6 +53,7 @@ class Transaction:
             self._electrum_transaction = payload_bytes_or_tx
         elif isinstance(payload_bytes_or_tx, bytes):
             self._electrum_transaction = ElectrumTransaction(payload_bytes_or_tx)
+            self._electrum_transaction.deserialize()
         else:
             self._electrum_transaction = PartialElectrumTransaction()
 
@@ -238,6 +239,7 @@ class Transaction:
     def verify(network: "NetworkParameters", tx: "Transaction") -> None:
         # since we use electrum under the hood, the first check is to run deserialize on it.
         try:
+            tx._electrum_transaction.invalidate_ser_cache()
             tx._electrum_transaction.deserialize()
         except Exception as e:
             raise VerificationException(e) from e
@@ -605,6 +607,11 @@ class Transaction:
             ),
         )
         self.add_output(output)
+
+    def clear_inputs(self):
+        self._electrum_transaction._inputs = None
+        self._electrum_transaction._cached_network_ser = None
+        self.inputs.invalidate()
 
     def clear_outputs(self):
         self._electrum_transaction._outputs = None
