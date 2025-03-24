@@ -1,3 +1,4 @@
+from python_socks import ProxyType
 from utils.aio import as_future, get_asyncio_loop, run_in_thread, wait_future_blocking
 from asyncio import Future
 from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
@@ -5,7 +6,6 @@ from electrum_min.util import wait_for2
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
-import socks
 import socket
 
 from bisq.common.setup.log_setup import get_logger
@@ -19,6 +19,7 @@ from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.core.network.p2p.node_address import NodeAddress
+from python_socks.async_.asyncio import Proxy
 
 if TYPE_CHECKING:
     from txtorcon import Tor
@@ -75,28 +76,30 @@ class TorNetworkNode(NetworkNode):
     def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
         check_argument(peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address")
         assert self.socks_proxy, "Tor proxy not ready"
-        sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(False)
-        sock.set_proxy(
-            proxy_type=socks.SOCKS5,
-            addr="127.0.0.1",
-            port=self.socks_proxy.port,
-            rdns=True,
+
+        proxy = Proxy(
+            ProxyType.SOCKS5,
+            self.socks_proxy.host,
+            self.socks_proxy.port,
             username=self.socks_proxy.username,
             password=self.socks_proxy.password,
+            rdns=True,
+            loop=get_asyncio_loop(),
         )
-        f = as_future(
+
+        f: Future[socket.socket] = as_future(
             wait_for2(
-                get_asyncio_loop().sock_connect(sock, (peer_node_address.host_name, peer_node_address.port)),
+                proxy.connect(peer_node_address.host_name, peer_node_address.port, 240),
                 240
             )
         )
         self.__create_socket_futures.add(f)
+        sock = None
         try:
-            wait_future_blocking(f)
-        finally: 
+            sock = wait_future_blocking(f)
+        finally:
             self.__create_socket_futures.discard(f)
-            sock.setblocking(True)
+        sock.setblocking(True)
         return sock
     
     @property
