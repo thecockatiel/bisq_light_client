@@ -43,7 +43,7 @@ class MyVote(PersistablePayload):
         builder = protobuf.MyVote(
             height=self.height,
             blind_vote=self.blind_vote.to_proto_message(),
-            ballot_list=self.ballot_list.to_proto_message(),
+            ballot_list=self.ballot_list.get_builder(),
             secret_key_encoded=self.secret_key_encoded,
             date=self.date,
             reveal_tx_id=self.reveal_tx_id,

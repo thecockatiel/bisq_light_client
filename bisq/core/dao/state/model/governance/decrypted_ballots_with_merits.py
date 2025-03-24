@@ -38,7 +38,7 @@ class DecryptedBallotsWithMerits(PersistablePayload, ImmutableDaoStateModel):
             blind_vote_tx_id=self.blind_vote_tx_id,
             vote_reveal_tx_id=self.vote_reveal_tx_id,
             stake=self.stake,
-            ballot_list=self.ballot_list.to_proto_message(),
+            ballot_list=self.ballot_list.get_builder(),
             merit_list=self.merit_list.to_proto_message(),
         )
 

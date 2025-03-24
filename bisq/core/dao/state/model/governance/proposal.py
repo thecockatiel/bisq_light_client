@@ -142,7 +142,7 @@ class Proposal(
             f"     txId='{self.tx_id}',\n"
             f"     name='{self.name}',\n"
             f"     link='{self.link}',\n"
-            f"     extraDataMap='{self.extra_data_map}',\n"
+            f"     extraDataMap={self.extra_data_map},\n"
             f"     version={self.version},\n"
             f"     creationDate={self.get_creation_date_as_date()}\n"
             f"}}"

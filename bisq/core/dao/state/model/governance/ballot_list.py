@@ -9,10 +9,11 @@ class BallotList(PersistableList[Ballot], ConsensusCritical, ImmutableDaoStateMo
     """PersistableEnvelope wrapper for list of ballots."""
 
     def to_proto_message(self):
-        return protobuf.PersistableEnvelope(
-            ballot_list=protobuf.BallotList(
-                ballot=[ballot.to_proto_message() for ballot in self]
-            )
+        return protobuf.PersistableEnvelope(ballot_list=self.get_builder())
+
+    def get_builder(self):
+        return protobuf.BallotList(
+            ballot=[ballot.to_proto_message() for ballot in self]
         )
 
     @staticmethod
@@ -23,10 +24,10 @@ class BallotList(PersistableList[Ballot], ConsensusCritical, ImmutableDaoStateMo
 
     def __str__(self):
         return "BallotList: " + str([ballot.info() for ballot in self])
-    
+
     def __eq__(self, value):
         return isinstance(value, BallotList) and self.list == value.list
-    
+
     def __hash__(self):
         # wrong but we do it anyway
         return hash(tuple(self.list))
