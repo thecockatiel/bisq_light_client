@@ -158,7 +158,7 @@ class TorNetworkNode(NetworkNode):
                 else:
                     on_finish()
 
-        super().shut_down(lambda: as_future(complete_handler()))
+        super().shut_down(lambda: complete_handler())
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Create tor and hidden service
