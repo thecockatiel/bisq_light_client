@@ -36,7 +36,9 @@ class LazySequenceWrapper(Generic[_T, _R]):
         del self._sequence[index]
     
     def __len__(self) -> int: 
-        return len(self._check_and_get_sequence())
+        if seq := self._check_and_get_sequence():
+            return len(seq)
+        return 0
     
     def __iter__(self) -> Iterator[_R]: 
         for index, _ in enumerate(self._check_and_get_sequence()):

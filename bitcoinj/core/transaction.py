@@ -242,7 +242,7 @@ class Transaction:
         except Exception as e:
             raise VerificationException(e) from e
 
-        if len(tx.inputs) == 0 or len(tx.outputs) == 0:
+        if not tx.inputs or not tx.outputs:
             raise VerificationException.EmptyInputsOrOutputs()
 
         if tx.get_message_size() > Block.MAX_BLOCK_SIZE:
