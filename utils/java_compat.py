@@ -131,7 +131,7 @@ V = TypeVar("V")
 
 
 class HashMap(Generic[K, V]):
-    __slots__ = ("_capacity", "_load_factor", "_size", "_table")
+    __slots__ = ("_capacity", "_load_factor", "_size", "_table", "_mod_count")
 
     def __init__(
         self,
@@ -143,18 +143,20 @@ class HashMap(Generic[K, V]):
         self._capacity: int = initial_capacity
         self._load_factor: float = load_factor
         self._size: int = 0
-        self._table: list[Optional[HashMap.Entry[K, V]]] = [None] * self._capacity
+        self._mod_count: int = 0
+        self._table: list[Optional[HashMap.Node[K, V]]] = [None] * self._capacity
         if initial_items is not None:
             for key, value in initial_items:
                 self.put(key, value)
 
-    class Entry(Generic[K, V]):
-        __slots__ = ("hash", "key", "value")
+    class Node(Generic[K, V]):
+        __slots__ = ("hash", "key", "value", "next")
 
-        def __init__(self, hash: int, key: K, value: V) -> None:
+        def __init__(self, hash: int, key: K, value: V, next_node=None) -> None:
             self.key = key
             self.value = value
             self.hash = hash
+            self.next = next_node
 
         def __repr__(self) -> str:
             return f"{self.key}:{self.value}"
@@ -167,88 +169,192 @@ class HashMap(Generic[K, V]):
         else:
             h = hash(key)
         return h ^ (int_unsigned_right_shift(h, 16))
+    
+    def _index_for(self, hash_val: int) -> int:
+        return hash_val & (self._capacity - 1)
 
-    def _find_slot(self, key: K, hash_val: int) -> int:
-        index = hash_val & (self._capacity - 1)
-        while True:
-            entry = self._table[index]
-            if entry is None:
-                return index
-            if entry.hash != hash_val or entry.key != key:
-                index = (index + 1) & (self._capacity - 1)
-            return index
+    def _get_node(self, key: K) -> Optional["HashMap.Node[K, V]"]:
+        hash_val = self._hash(key)
+        index = self._index_for(hash_val)
+        node = self._table[index]
+        
+        while node is not None:
+            if node.hash == hash_val and (node.key == key or (key is not None and key == node.key)):
+                return node
+            node = node.next
+        return None
 
-    def _rehash(self) -> None:
+    def _resize(self) -> None:
+        old_capacity = self._capacity
+        if old_capacity >= 0x40000000:  # MAXIMUM_CAPACITY in Java (2^30)
+            return
+        
+        new_capacity = old_capacity * 2
         old_table = self._table
-        self._capacity *= 2
-        self._table = [None] * self._capacity
-        self._size = 0
-        for entry in old_table:
-            if entry is not None:
-                self.put(entry.key, entry.value)
+        self._capacity = new_capacity
+        self._table = [None] * new_capacity
+        
+        if self._size > 0:
+            for j in range(old_capacity):
+                node = old_table[j]
+                if node is not None:
+                    old_table[j] = None  # Help GC
+                    if node.next is None:
+                        # No collision, just copy node to new table
+                        self._table[node.hash & (new_capacity - 1)] = node
+                    else:
+                        # Handle collision by rebuilding the chain
+                        lo_head = lo_tail = hi_head = hi_tail = None
+                        while node is not None:
+                            next_node = node.next
+                            
+                            # Determine which bucket the node goes in new table
+                            if (node.hash & old_capacity) == 0:
+                                # Low bucket
+                                if lo_tail is None:
+                                    lo_head = node
+                                else:
+                                    lo_tail.next = node
+                                lo_tail = node
+                            else:
+                                # High bucket
+                                if hi_tail is None:
+                                    hi_head = node
+                                else:
+                                    hi_tail.next = node
+                                hi_tail = node
+                            
+                            node = next_node
+                        
+                        # Place the chains in their new locations
+                        if lo_tail is not None:
+                            lo_tail.next = None
+                            self._table[j] = lo_head
+                        if hi_tail is not None:
+                            hi_tail.next = None
+                            self._table[j + old_capacity] = hi_head
 
     def put(self, key: K, value: V) -> Optional[V]:
         hash_val = self._hash(key)
-        slot = self._find_slot(key, hash_val)
-        entry = self._table[slot]
-        if entry is not None and entry.key == key:
-            old_value = entry.value
-            entry.value = value
-            return old_value
-        self._table[slot] = HashMap.Entry(hash_val, key, value)
+        index = self._index_for(hash_val)
+        
+        node = self._table[index]
+        if node is None:
+            # Create new node at the beginning of the bucket
+            self._table[index] = self.Node(hash_val, key, value)
+            self._size += 1
+            self._mod_count += 1
+            if self._size > self._capacity * self._load_factor:
+                self._resize()
+            return None
+        
+        # Check existing nodes in the bucket
+        prev = None
+        while node is not None:
+            k = node.key
+            if node.hash == hash_val and (k == key or (key is not None and key == k)):
+                # Key exists, replace value
+                old_value = node.value
+                node.value = value
+                return old_value
+            prev = node
+            node = node.next
+        
+        # Add new node to end of bucket chain
+        prev.next = self.Node(hash_val, key, value)
         self._size += 1
+        self._mod_count += 1
         if self._size > self._capacity * self._load_factor:
-            self._rehash()
+            self._resize()
         return None
 
     def get(self, key: K) -> Optional[V]:
-        hash_val = self._hash(key)
-        slot = self._find_slot(key, hash_val)
-        entry = self._table[slot]
-        return entry.value if entry is not None and entry.key == key else None
+        node = self._get_node(key)
+        return node.value if node else None
 
     def remove(self, key: K) -> Optional[V]:
         hash_val = self._hash(key)
-        slot = self._find_slot(key, hash_val)
-        entry = self._table[slot]
-        if entry is None or entry.key != key:
-            return None
-        removed_value = entry.value
-        self._table[slot] = None
-        self._size -= 1
-        return removed_value
+        index = self._index_for(hash_val)
+        
+        node = self._table[index]
+        prev = None
+        
+        while node is not None:
+            if node.hash == hash_val and (node.key == key or (key is not None and key == node.key)):
+                # Found node to remove
+                if prev is None:
+                    self._table[index] = node.next
+                else:
+                    prev.next = node.next
+                
+                self._size -= 1
+                self._mod_count += 1
+                return node.value
+            
+            prev = node
+            node = node.next
+        
+        return None
 
     def containsKey(self, key: K) -> bool:
-        return self.get(key) is not None
+        return self._get_node(key) is not None
 
     def containsValue(self, value: V) -> bool:
-        for entry in self._table:
-            if entry is not None and entry.value == value:
-                return True
+        if value is None:
+            for i in range(self._capacity):
+                node = self._table[i]
+                while node is not None:
+                    if node.value is None:
+                        return True
+                    node = node.next
+        else:
+            for i in range(self._capacity):
+                node = self._table[i]
+                while node is not None:
+                    if value == node.value:
+                        return True
+                    node = node.next
         return False
 
     def size(self) -> int:
         return self._size
+    
+    def isEmpty(self) -> bool:
+        return self._size == 0
 
     def clear(self) -> None:
-        self._capacity = 16
-        self._table = [None] * self._capacity
+        tab = self._table
+        for i in range(self._capacity):
+            tab[i] = None
         self._size = 0
+        self._mod_count += 1
+
+    def keySet(self) -> set[K]:
+        result = set()
+        for k in self.keys():
+            result.add(k)
+        return result
 
     def keys(self) -> Iterator[K]:
-        for entry in self._table:
-            if entry is not None:
-                yield entry.key
+        for i in range(self._capacity):
+            node = self._table[i]
+            while node is not None:
+                yield node.key
+                node = node.next
 
     def values(self) -> Iterator[V]:
-        for entry in self._table:
-            if entry is not None:
-                yield entry.value
+        for i in range(self._capacity):
+            node = self._table[i]
+            while node is not None:
+                yield node.value
+                node = node.next
 
     def items(self) -> Iterator[tuple[K, V]]:
-        for entry in self._table:
-            if entry is not None:
-                yield (entry.key, entry.value)
+        for i in range(self._capacity):
+            node = self._table[i]
+            while node is not None:
+                yield (node.key, node.value)
+                node = node.next
 
     def __iter__(self) -> Iterator[tuple[K, V]]:
         return self.items()
