@@ -1,6 +1,7 @@
-from utils.aio import as_future, run_in_thread
+from python_socks import ProxyType
+from utils.aio import as_future, get_asyncio_loop, run_in_thread, wait_future_blocking
+from asyncio import Future
 from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
-import socks
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from datetime import timedelta
@@ -17,6 +18,7 @@ from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 from bisq.core.network.p2p.node_address import NodeAddress
+from python_socks.async_.asyncio import Proxy
 
 if TYPE_CHECKING:
     from txtorcon import Tor
@@ -56,7 +58,7 @@ class TorNetworkNode(NetworkNode):
         self.tor: Optional["Tor"] = None
         self.tor_mode = tor_mode
         self.__shutdown_in_progress = False
-        self.__pending_create_sockets = ThreadSafeSet[socket.socket]()
+        self.__create_socket_futures = ThreadSafeSet[Future]()
 
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         await run_in_thread(self.tor_mode.do_rolling_backup)
@@ -73,18 +75,29 @@ class TorNetworkNode(NetworkNode):
     def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
         check_argument(peer_node_address.host_name.endswith(".onion"), "PeerAddress is not an onion address")
         assert self.socks_proxy, "Tor proxy not ready"
-        sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__pending_create_sockets.add(sock)
-        sock.set_proxy(
-            proxy_type=socks.SOCKS5,
-            addr="127.0.0.1",
-            port=self.socks_proxy.port,
-            rdns=True,
+
+        proxy = Proxy(
+            ProxyType.SOCKS5,
+            self.socks_proxy.host,
+            self.socks_proxy.port,
             username=self.socks_proxy.username,
             password=self.socks_proxy.password,
+            rdns=True,
+            loop=get_asyncio_loop(),
         )
-        # TODO: fix by making the stack async
-        sock.connect((peer_node_address.host_name, peer_node_address.port))
+
+        f: Future[socket.socket] = as_future(
+            proxy.connect(peer_node_address.host_name, peer_node_address.port, 240)
+        )
+        self.__create_socket_futures.add(f)
+        sock = None
+        try:
+            sock = wait_future_blocking(f)
+        except BaseException as e:
+            raise Exception(f"Failed to create socket to {peer_node_address}") from e
+        finally:
+            self.__create_socket_futures.discard(f)
+        sock.setblocking(True)
         return sock
     
     @property
@@ -119,10 +132,10 @@ class TorNetworkNode(NetworkNode):
         def complete_handler():
             f = None
             try:
-                if self.__pending_create_sockets:
-                    for s in self.__pending_create_sockets:
-                        s.close()
-                    self.__pending_create_sockets.clear()
+                if self.__create_socket_futures:
+                    for f in self.__create_socket_futures:
+                        f.cancel()
+                    self.__create_socket_futures.clear()
                 if self.hidden_service_socket:
                     self.hidden_service_socket.close()
                     self.hidden_service_socket = None
