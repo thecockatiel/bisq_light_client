@@ -57,7 +57,7 @@ class ChangeParamValidator(ProposalValidator, ConsensusCritical):
                     raise ProposalValidationException(
                         "Proposal must be of type ChangeParamProposal"
                     )
-                self._validate_param_value(
+                self._validate_param_value_at_height(
                     proposal.param,
                     proposal.param_value,
                     self.get_block_height(proposal),
