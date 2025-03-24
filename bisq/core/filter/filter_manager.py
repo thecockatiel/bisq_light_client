@@ -646,7 +646,7 @@ class FilterManager:
 
     def get_signature(self, filter_without_signature: "Filter"):
         hash_bytes = self.get_filter_sha256_hash(filter_without_signature)
-        signature = self.filter_signing_key.sign(hash_bytes)
+        signature = self.filter_signing_key.ecdsa_sign_recoverable(hash_bytes)
         return base64.b64encode(signature).decode("utf-8")
 
     def is_filter_public_key_in_list(self, filter: "Filter") -> bool:
@@ -682,7 +682,7 @@ class FilterManager:
             pubkey = Encryption.get_ec_public_key_from_bytes(
                 bytes.fromhex(filter.signer_pub_key_as_hex)
             )
-            return pubkey.verify_message_hash(sigdata, hash_bytes)
+            return pubkey.ecdsa_verify(sigdata, hash_bytes)
         except Exception as e:
             logger.warning(f"verify_signature failed. filter={filter}")
             return False

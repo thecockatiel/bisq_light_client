@@ -15,7 +15,7 @@ from .segwit_addr import bech32_encode, bech32_decode, CHARSET, CHARSET_INVERSE,
 from . import segwit_addr
 from . import constants
 from .constants import AbstractNet
-from . import ecc
+import electrum_ecc as ecc
 from .bitcoin import COIN
 
 if TYPE_CHECKING:
@@ -243,7 +243,7 @@ def lnencode(addr: 'LnAddr', privkey) -> str:
     # We actually sign the hrp, then data (padded to 8 bits with zeroes).
     msg = hrp.encode("ascii") + bytes(convertbits(data5, 5, 8))
     privkey = ecc.ECPrivkey(privkey)
-    sig = privkey.sign_message(msg, is_compressed=False, algo=lambda x:sha256(x).digest())
+    sig = privkey.ecdsa_sign_recoverable(msg, is_compressed=False)
     recovery_flag = bytes([sig[0] - 27])
     sig = bytes(sig[1:]) + recovery_flag
     sig = bytes(convertbits(sig, 8, 5, False))
@@ -560,7 +560,7 @@ def lndecode(invoice: str, *, verbose=False, net=None) -> LnAddr:
         #
         # A reader MUST use the `n` field to validate the signature instead of
         # performing signature recovery if a valid `n` field is provided.
-        if not ecc.ECPubkey(addr.pubkey).verify_message_hash(sigdecoded[:64], hrp_hash):
+        if not ecc.ECPubkey(addr.pubkey).ecdsa_verify(sigdecoded[:64], hrp_hash):
             raise LnDecodeException("bad signature")
         pubkey_copy = addr.pubkey
         class WrappedBytesKey:

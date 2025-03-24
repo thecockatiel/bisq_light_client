@@ -17,7 +17,7 @@ from bitcoinj.script.script_type import ScriptType
 from bitcoinj.script.script_verify_flag import ScriptVerifyFlag
 from electrum_min.bitcoin import opcodes
 from electrum_min.crypto import hash_160, ripemd, sha256, sha256d
-from electrum_min.ecc import ECPubkey
+from electrum_ecc import ECPubkey
 from electrum_min.transaction import (
     MalformedBitcoinScript,
     OPPushDataGeneric,
@@ -134,7 +134,7 @@ class Script:
             pubkey = ECPubkey(witness_elements[1])
             script_code = ScriptBuilder.create_p2pkh_output_script(pubkey.get_public_key_bytes())
             sig_hash = tx_containing_this.hash_for_witness_signature(script_sig_index, script_code, value, signature.sig_hash_mode, False)
-            valid_sig = pubkey.verify_message_hash(signature.to_der(), sig_hash)
+            valid_sig = pubkey.ecdsa_verify(signature.to_sig64(), sig_hash)
             if not valid_sig:
                 raise ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature")
         elif ScriptPattern.is_p2pkh(script_pub_key):
@@ -149,7 +149,7 @@ class Script:
                 raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", e)
             pubkey = ECPubkey(self.decoded[1][1]) # self.decoded[1][1] ~= chunks.get(1).data
             sig_hash = tx_containing_this.hash_for_signature(script_sig_index, script_pub_key, signature.sig_hash_mode, False)
-            valid_sig = pubkey.verify_message_hash(signature.to_der(), sig_hash)
+            valid_sig = pubkey.ecdsa_verify(signature.to_sig64(), sig_hash)
             if not valid_sig:
                 raise ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature")
         else:
@@ -693,7 +693,7 @@ class Script:
         try:
             signature = TransactionSignature.decode_from_bitcoin(sig_bytes, require_canonical, ScriptVerifyFlag.LOW_S in verify_flags)
             sig_hash = tx_containing_this.hash_for_signature(index, connected_script, signature.sig_hash_flags)
-            sig_valid = ECPubkey(pub_key).verify_message_hash(signature.to_der(), sig_hash)
+            sig_valid = ECPubkey(pub_key).ecdsa_verify(signature.to_sig64(), sig_hash)
         except VerificationException.NoncanonicalSignature as e:
             raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Script contains non-canonical signature")
         except Exception as e:
@@ -759,7 +759,7 @@ class Script:
             try:
                 sig = TransactionSignature.decode_from_bitcoin(sigs[0], require_canonical, False)
                 sig_hash = tx_containing_this.hash_for_signature(index, connected_script, sig.sig_hash_flags)
-                if ECPubkey(pub_key).verify_message_hash(sig.to_der(), sig_hash):
+                if ECPubkey(pub_key).ecdsa_verify(sig.to_sig64(), sig_hash):
                     sigs.pop(0)
             except:
                 # There is (at least) one exception that could be hit here (EOFException, if the sig is too short)

@@ -164,10 +164,11 @@ todo
 
 playground.py
 
-electrum_min/*.so
-electrum_min/*.so.*
-electrum_min/*.dll
-electrum_min/*.dylib
+# shared objects
+**/*.so
+**/*.so.*
+**/*.dll
+**/*.dylib
 
 .testdata
 testdata

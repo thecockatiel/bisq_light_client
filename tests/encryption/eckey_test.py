@@ -1,6 +1,7 @@
 import unittest
 
 from bisq.common.crypto.encryption import Encryption, ECPubkey, ECPrivkey
+from electrum_ecc.ecdsa_sigformat import ecdsa_sig64_from_der_sig, ecdsa_sig64_from_r_and_s
 
 
 class EcKeyTest(unittest.TestCase):
@@ -18,13 +19,13 @@ class EcKeyTest(unittest.TestCase):
 
     def test_eckey(self):
         privkey = Encryption.get_ec_private_key_from_int_hex_string("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19")
-        output_signature = privkey.sign(self.ZERO_HASH_BYTES)
-        self.assertTrue(privkey.verify_message_hash(output_signature, self.ZERO_HASH_BYTES))
-        another_signature = bytes.fromhex("3045022100cfd454a1215fdea463201a7a32c146c1cec54b60b12d47e118a2add41366cec602203e7875d23cc80f958e45298bb8369d4422acfbc1c317353eebe02c89206b3e73")
-        self.assertTrue(privkey.verify_message_hash(another_signature, self.ZERO_HASH_BYTES))
+        output_signature = privkey.ecdsa_sign(self.ZERO_HASH_BYTES, sigencode=ecdsa_sig64_from_r_and_s)
+        self.assertTrue(privkey.ecdsa_verify(output_signature, self.ZERO_HASH_BYTES))
+        another_signature = ecdsa_sig64_from_der_sig(bytes.fromhex("3045022100cfd454a1215fdea463201a7a32c146c1cec54b60b12d47e118a2add41366cec602203e7875d23cc80f958e45298bb8369d4422acfbc1c317353eebe02c89206b3e73"))
+        self.assertTrue(privkey.ecdsa_verify(another_signature, self.ZERO_HASH_BYTES))
         
-        java_signature = bytes.fromhex("3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d")
-        self.assertTrue(privkey.verify_message_hash(java_signature, self.ZERO_HASH_BYTES))
+        java_signature = ecdsa_sig64_from_der_sig(bytes.fromhex("3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d"))
+        self.assertTrue(privkey.ecdsa_verify(java_signature, self.ZERO_HASH_BYTES))
         
     def test_eckey_pubkey_import(self):
         pubkey = Encryption.get_ec_public_key_from_bytes(bytes.fromhex("0358d47858acdc41910325fce266571540681ef83a0d6fedce312bef9810793a27"))

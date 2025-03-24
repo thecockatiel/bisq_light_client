@@ -199,7 +199,7 @@ class ScriptTest(unittest.TestCase):
     
     so the function would look like this in ecc file:
     
-    def get_r_and_s_from_der_sig(der_sig: bytes) -> Tuple[int, int]:
+    def get_r_and_s_from_ecdsa_der_sig(der_sig: bytes) -> Tuple[int, int]:
         assert isinstance(der_sig, bytes)
         sig = create_string_buffer(64)
         ret = _libsecp256k1.ecdsa_signature_parse_der_lax(_libsecp256k1.ctx, sig, der_sig, len(der_sig))

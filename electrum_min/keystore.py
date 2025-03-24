@@ -32,7 +32,8 @@ from typing import Tuple, TYPE_CHECKING, Union, Sequence, Optional, Dict, List, 
 from functools import lru_cache, wraps
 from abc import ABC, abstractmethod
 
-from . import bitcoin, ecc, constants, bip32
+from . import bitcoin, constants, bip32
+import electrum_ecc as ecc
 from .bitcoin import deserialize_privkey, serialize_privkey, BaseDecodeError
 from .transaction import Transaction, PartialTransaction, PartialTxInput, PartialTxOutput, TxInput
 from .bip32 import (convert_bip32_strpath_to_intpath, BIP32_PRIME,
@@ -40,8 +41,8 @@ from .bip32 import (convert_bip32_strpath_to_intpath, BIP32_PRIME,
                     convert_bip32_intpath_to_strpath, is_xkey_consistent_with_key_origin_info,
                     KeyOriginInfo)
 from .descriptor import PubkeyProvider
-from .ecc import string_to_number
-from .crypto import (pw_decode, pw_encode, sha256, sha256d, PW_HASH_VERSION_LATEST,
+from electrum_ecc import string_to_number
+from .crypto import (pw_decode, pw_encode, sha256, sha256d, PW_HASH_VERSION_LATEST, ecies_decrypt_message,
                      SUPPORTED_PW_HASH_VERSIONS, UnsupportedPasswordHashVersion, hash_160,
                      CiphertextFormatError)
 from .util import (InvalidPassword, WalletFileException,
@@ -223,12 +224,12 @@ class Software_KeyStore(KeyStore):
     def sign_message(self, sequence, message, password, *, script_type=None) -> bytes:
         privkey, compressed = self.get_private_key(sequence, password)
         key = ecc.ECPrivkey(privkey)
-        return key.sign_message(message, compressed)
+        return bitcoin.ecdsa_sign_usermessage(key, message, is_compressed=compressed)
 
     def decrypt_message(self, sequence, message, password) -> bytes:
         privkey, compressed = self.get_private_key(sequence, password)
         ec = ecc.ECPrivkey(privkey)
-        decrypted = ec.decrypt_message(message)
+        decrypted = ecies_decrypt_message(ec, message)
         return decrypted
 
     def sign_transaction(self, tx, password):

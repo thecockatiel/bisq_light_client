@@ -14,7 +14,7 @@ from functools import cached_property
 from .crypto import sha256, hmac_oneshot, chacha20_poly1305_encrypt, chacha20_poly1305_decrypt
 from .lnutil import (get_ecdh, privkey_to_pubkey, LightningPeerConnectionClosed,
                      HandshakeFailed, LNPeerAddr)
-from . import ecc
+import electrum_ecc as ecc
 from .util import MySocksProxy
 
 

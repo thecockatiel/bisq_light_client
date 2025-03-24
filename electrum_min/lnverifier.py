@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Dict, Set
 import aiorpcx
 
 from . import bitcoin
-from . import ecc
+import electrum_ecc as ecc
 from . import constants
 from .util import bfh, NetworkJobOnDefaultServer
 from .lnutil import funding_output_script_from_keys, ShortChannelID
@@ -183,6 +183,6 @@ def verify_sig_for_channel_update(chan_upd: dict, node_id: bytes) -> bool:
     pre_hash = msg_bytes[2+64:]
     h = sha256d(pre_hash)
     sig = chan_upd['signature']
-    if not ecc.verify_signature(node_id, sig, h):
+    if not ecc.ECPubkey(node_id).ecdsa_verify(sig, h):
         return False
     return True

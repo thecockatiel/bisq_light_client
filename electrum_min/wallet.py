@@ -69,7 +69,8 @@ from .keystore import (load_keystore, Hardware_KeyStore, KeyStore, KeyStoreWithM
 from .util import multisig_type, parse_max_spend
 from .storage import StorageEncryptionVersion, WalletStorage
 from .wallet_db import WalletDB
-from . import transaction, bitcoin, coinchooser, paymentrequest, ecc, bip32
+from . import transaction, bitcoin, coinchooser, paymentrequest, bip32
+import electrum_ecc as ecc
 from .transaction import (Transaction, TxInput, UnknownTxinType, TxOutput,
                           PartialTransaction, PartialTxInput, PartialTxOutput, TxOutpoint, Sighash)
 from .plugin import run_hook

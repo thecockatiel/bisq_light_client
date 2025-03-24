@@ -7,6 +7,7 @@ from bisq.core.alert.alert import Alert
 from bisq.core.network.p2p.storage.hash_map_changed_listener import (
     HashMapChangedListener,
 )
+from electrum_min.bitcoin import ecdsa_sign_usermessage
 from utils.data import SimpleProperty
 from bisq.common.crypto.encryption import ECPrivkey, Encryption
 
@@ -124,9 +125,10 @@ class AlertManager:
     def _sign_and_add_signature_to_alert_message(self, alert: "Alert") -> None:
         alert_message_as_hex = alert.message.encode("utf-8").hex()
         signature_as_base64 = base64.b64encode(
-            self.alert_signing_key.sign_message(
+            ecdsa_sign_usermessage(
+                self.alert_signing_key,
                 alert_message_as_hex,
-                True,
+                is_compressed=True,
             )
         ).decode("utf-8")
         alert.set_sig_and_pub_key(

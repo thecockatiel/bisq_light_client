@@ -1,11 +1,12 @@
 from bitcoinj.core.signature_decode_exception import SignatureDecodeException
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.verification_exception import VerificationException
-from electrum_min.ecc import (
+from electrum_ecc import (
     CURVE_ORDER,
-    der_sig_from_r_and_s,
-    get_r_and_s_from_der_sig,
-)
+    ecdsa_der_sig_from_r_and_s,
+    ecdsa_sig64_from_r_and_s,
+    get_r_and_s_from_ecdsa_der_sig,
+) 
 
 HALF_CURVE_ORDER = CURVE_ORDER // 2
 
@@ -23,7 +24,10 @@ class TransactionSignature:
         self.sig_hash_flags = sig_hash_flags
 
     def to_der(self):
-        return der_sig_from_r_and_s(self.r, self.s)
+        return ecdsa_der_sig_from_r_and_s(self.r, self.s)
+    
+    def to_sig64(self):
+        return ecdsa_sig64_from_r_and_s(self.r, self.s)
 
     def encode_to_bitcoin(self):
         return self.to_der() + bytes([self.sig_hash_flags])
@@ -149,7 +153,7 @@ class TransactionSignature:
             raise VerificationException.NoncanonicalSignature()
 
         try:
-            r, s = get_r_and_s_from_der_sig(bytes_)
+            r, s = get_r_and_s_from_ecdsa_der_sig(bytes_[:-1])
         except Exception as e:
             raise SignatureDecodeException(e)
         if require_canonical_s_value and not _is_s_canonical(s):

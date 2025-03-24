@@ -87,7 +87,7 @@ class MeritConsensus:
             pub_key = Encryption.get_ec_public_key_from_bytes(
                 bytes.fromhex(pub_key_as_hex)
             )
-            result = pub_key.verify_message_hash(
+            result = pub_key.ecdsa_verify(
                 signature_from_merit, bytes.fromhex(blind_vote_tx_id)
             )
         except Exception as e:

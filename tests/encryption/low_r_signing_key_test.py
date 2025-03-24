@@ -1,5 +1,11 @@
 import unittest
-from electrum_min.ecc import ECPrivkey, ECPubkey, get_r_and_s_from_sig_string, string_to_number
+from electrum_ecc import (
+    ECPrivkey,
+    ECPubkey, 
+    ecdsa_sig64_from_r_and_s,
+    get_r_and_s_from_ecdsa_sig64,
+    string_to_number,
+) 
 
 
 class LowRSigningKeyTest(unittest.TestCase):
@@ -75,15 +81,17 @@ class LowRSigningKeyTest(unittest.TestCase):
             priv_key = ECPrivkey.from_secret_scalar(
                 string_to_number(bytes.fromhex(priv_key_hex))
             )
-            signature = priv_key.sign(msg_hash)
+            signature = priv_key.ecdsa_sign(
+                msg_hash, sigencode=ecdsa_sig64_from_r_and_s
+            )
 
             # Extract r and s components from signature
             # r, s = decode_dss_signature(signature)
-            r, s = get_r_and_s_from_sig_string(signature)
+            r, s = get_r_and_s_from_ecdsa_sig64(signature)
 
             # Verify signature
             pub_key = ECPubkey(priv_key.get_public_key_bytes())
-            self.assertTrue(pub_key.verify_message_hash(signature, msg_hash))
+            self.assertTrue(pub_key.ecdsa_verify(signature, msg_hash))
 
             # Check if r component is low (less than 2^256)
             self.assertTrue(r.bit_length() < 256)

@@ -14,6 +14,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
+from electrum_min.bitcoin import ecdsa_sign_usermessage
 from utils.data import ObservableMap
 
 if TYPE_CHECKING:
@@ -216,7 +217,7 @@ class DisputeAgentManager(Generic[T], ABC):
     # Other users will check the signature with the list of public keys hardcoded in the app.
     def sign_storage_signature_pub_key(self, key: ECPrivkey):
         key_to_sign= Sig.get_public_key_bytes(self.key_ring.pub_key_ring.signature_pub_key)
-        return key.sign_message(key_to_sign) # passes LowRSigningKey tests.
+        return ecdsa_sign_usermessage(key, key_to_sign, is_compressed=True) # passes LowRSigningKey tests.
     
     def get_registration_key(self, priv_key_big_int_string: str):
         try:

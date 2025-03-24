@@ -21,8 +21,8 @@ from .util import format_short_id as format_short_channel_id
 from .crypto import sha256, pw_decode_with_version_and_mac
 from .transaction import (Transaction, PartialTransaction, PartialTxInput, TxOutpoint,
                           PartialTxOutput, opcodes, TxOutput)
-from .ecc import CURVE_ORDER, sig_string_from_der_sig, ECPubkey, string_to_number
-from . import ecc, bitcoin, crypto, transaction
+import electrum_ecc as ecc
+from . import bitcoin, crypto, transaction
 from . import descriptor
 from .bitcoin import (push_script, redeem_script_to_address, address_to_script,
                       construct_witness, construct_script)
@@ -574,7 +574,7 @@ def derive_privkey(secret: int, per_commitment_point: bytes) -> int:
     assert type(secret) is int
     basepoint_bytes = secret_to_pubkey(secret)
     basepoint = secret + ecc.string_to_number(sha256(per_commitment_point + basepoint_bytes))
-    basepoint %= CURVE_ORDER
+    basepoint %= ecc.CURVE_ORDER
     return basepoint
 
 def derive_blinded_pubkey(basepoint: bytes, per_commitment_point: bytes) -> bytes:
@@ -1084,7 +1084,7 @@ def make_commitment_output_to_remote_address(remote_payment_pubkey: bytes) -> st
 def sign_and_get_sig_string(tx: PartialTransaction, local_config, remote_config):
     tx.sign({local_config.multisig_key.pubkey.hex(): (local_config.multisig_key.privkey, True)})
     sig = tx.inputs()[0].part_sigs[local_config.multisig_key.pubkey]
-    sig_64 = sig_string_from_der_sig(sig[:-1])
+    sig_64 = ecc.ecdsa_sig64_from_der_sig(sig[:-1])
     return sig_64
 
 def funding_output_script(local_config, remote_config) -> str:
@@ -1115,7 +1115,7 @@ def extract_ctn_from_tx_and_chan(tx: Transaction, chan: 'AbstractChannel') -> in
                                fundee_payment_basepoint=fundee_conf.payment_basepoint.pubkey)
 
 def get_ecdh(priv: bytes, pub: bytes) -> bytes:
-    pt = ECPubkey(pub) * string_to_number(priv)
+    pt = ecc.ECPubkey(pub) * ecc.string_to_number(priv)
     return sha256(pt.get_public_key_bytes())
 
 

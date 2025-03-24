@@ -32,7 +32,7 @@ from .util import bfh, BitcoinException, assert_bytes, to_bytes, inv_dict, is_he
 from . import version
 from . import segwit_addr
 from . import constants
-from . import ecc
+import electrum_ecc as ecc
 from .crypto import sha256d, sha256, hash_160, hmac_oneshot
 
 if TYPE_CHECKING:
@@ -780,3 +780,50 @@ class DummyAddress:
 
 
 class DummyAddressUsedInTxException(Exception): pass
+
+
+def var_int_bytes(i: int) -> bytes:
+    # https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
+    # https://github.com/bitcoin/bitcoin/blob/efe1ee0d8d7f82150789f1f6840f139289628a2b/src/serialize.h#L247
+    # "CompactSize"
+    assert i >= 0, i
+    if i < 0xfd:
+        return int.to_bytes(i, length=1, byteorder="little", signed=False)
+    elif i <= 0xffff:
+        return b"\xfd" + int.to_bytes(i, length=2, byteorder="little", signed=False)
+    elif i <= 0xffffffff:
+        return b"\xfe" + int.to_bytes(i, length=4, byteorder="little", signed=False)
+    else:
+        return b"\xff" + int.to_bytes(i, length=8, byteorder="little", signed=False)
+    
+# user message signing
+def usermessage_magic(message: bytes) -> bytes:
+    length = var_int_bytes(len(message))
+    return b"\x18Bitcoin Signed Message:\n" + length + message
+
+def ecdsa_sign_usermessage(ec_privkey, message: Union[bytes, str], *, is_compressed: bool) -> bytes:
+    message = to_bytes(message, 'utf8')
+    msg32 = sha256d(usermessage_magic(message))
+    return ec_privkey.ecdsa_sign_recoverable(msg32, is_compressed=is_compressed)
+
+def verify_usermessage_with_address(address: str, sig65: bytes, message: bytes, *, net=None) -> bool:
+    from electrum_ecc import ECPubkey
+    assert_bytes(sig65, message)
+    if net is None: net = constants.net
+    h = sha256d(usermessage_magic(message))
+    try:
+        public_key, compressed, txin_type_guess = ECPubkey.from_ecdsa_sig65(sig65, h)
+    except Exception as e:
+        return False
+    # check public key using the address
+    pubkey_hex = public_key.get_public_key_hex(compressed)
+    txin_types = (txin_type_guess,) if txin_type_guess else ('p2pkh', 'p2wpkh', 'p2wpkh-p2sh')
+    for txin_type in txin_types:
+        addr = pubkey_to_address(txin_type, pubkey_hex, net=net)
+        if address == addr:
+            break
+    else:
+        return False
+    # check message
+    # note: `$ bitcoin-cli verifymessage` does NOT enforce the low-S rule for ecdsa sigs
+    return public_key.ecdsa_verify(sig65[1:], h, enforce_low_s=False)

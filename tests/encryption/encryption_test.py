@@ -4,6 +4,9 @@ import unittest
 from bisq.common.crypto.encryption import Encryption, ECPrivkey, rsa
 from bisq.common.crypto.sig import Sig
 from bisq.core.alert.alert import Alert
+from electrum_ecc.ecdsa_sigformat import ecdsa_sig64_from_r_and_s
+from electrum_min.bitcoin import ecdsa_sign_usermessage, usermessage_magic
+from electrum_min.crypto import sha256d
 
 class TestEncryption(unittest.TestCase):
     def setUp(self):
@@ -76,7 +79,7 @@ class TestEncryption(unittest.TestCase):
         alert = Alert("foo bar", False, False, "1")
         alert_msg_as_hex = alert.message.encode().hex()
         signing_key = ECPrivkey.from_secret_scalar(10)
-        signature_as_base64 = base64.b64encode(signing_key.sign_message(alert_msg_as_hex, True)).decode("utf-8")
+        signature_as_base64 = base64.b64encode(ecdsa_sign_usermessage(signing_key, alert_msg_as_hex, is_compressed=True)).decode("utf-8")
         # check that it's same procedure as java as we expect
         self.assertEqual(signature_as_base64, "Hyd8jbtqZS9WsAxJI8YOpZZFNoYiihN97pupWEVJoOKXXeRvE3+4u7kn0UkKwUxuAvvvROMarma9uKAV7U7QTnY=")
         
@@ -94,6 +97,7 @@ class TestEncryption(unittest.TestCase):
             verified = True
         except Exception as e:
             verified = False
+            raise e
         self.assertTrue(verified)
 
 if __name__ == '__main__':

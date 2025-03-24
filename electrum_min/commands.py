@@ -40,7 +40,8 @@ from decimal import Decimal, InvalidOperation
 from typing import Optional, TYPE_CHECKING, Dict, List
 import os
 
-from .import util, ecc
+from .import util
+import electrum_ecc as ecc
 from .util import (bfh, format_satoshis, json_decode, json_normalize,
                    is_hash256_str, is_hex_str, to_bytes, parse_max_spend, to_decimal,
                    UserFacingException, InvalidPassword)
@@ -623,7 +624,7 @@ class Commands:
         # Add shared libs (.so/.dll), and non-pure-python dependencies.
         # Such deps can be installed in various ways - often via the Linux distro's pkg manager,
         # instead of using pip, hence it is useful to list them for debugging.
-        from . import ecc_fast
+        from electrum_ecc import ecc_fast
         ret.update(ecc_fast.version_info())
         from . import qrscanner
         ret.update(qrscanner.version_info())
@@ -718,7 +719,7 @@ class Commands:
         """Verify a signature."""
         sig = base64.b64decode(signature)
         message = util.to_bytes(message)
-        return ecc.verify_message_with_address(address, sig, message)
+        return bitcoin.verify_usermessage_with_address(address, sig, message)
 
     @command('wp')
     async def payto(self, destination, amount, fee=None, feerate=None, from_addr=None, from_coins=None, change_addr=None,
@@ -912,7 +913,7 @@ class Commands:
         except TypeError:
             raise UserFacingException(f"message must be a string-like object instead of {repr(message)}")
         public_key = ecc.ECPubkey(bfh(pubkey))
-        encrypted = public_key.encrypt_message(message)
+        encrypted = crypto.ecies_encrypt_message(message)
         return encrypted.decode('utf-8')
 
     @command('wp')

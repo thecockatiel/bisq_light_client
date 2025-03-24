@@ -11,7 +11,7 @@ import aiohttp
 
 from . import lnutil
 from .crypto import sha256, hash_160
-from .ecc import ECPrivkey
+import electrum_ecc as ecc
 from .bitcoin import (script_to_p2wsh, opcodes, p2wsh_nested_script, push_script,
                       is_segwit_address, construct_witness)
 from .transaction import PartialTxInput, PartialTxOutput, PartialTransaction, Transaction, TxInput, TxOutpoint
@@ -418,7 +418,7 @@ class SwapManager(Logger):
         assert lightning_amount_sat
         locktime = self.network.get_local_height() + LOCKTIME_DELTA_REFUND
         our_privkey = os.urandom(32)
-        our_pubkey = ECPrivkey(our_privkey).get_public_key_bytes(compressed=True)
+        our_pubkey = ecc.ECPrivkey(our_privkey).get_public_key_bytes(compressed=True)
         onchain_amount_sat = self._get_recv_amount(lightning_amount_sat, is_reverse=True) # what the client is going to receive
         redeem_script = construct_script(
             WITNESS_TEMPLATE_REVERSE_SWAP,

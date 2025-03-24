@@ -238,7 +238,6 @@ class Transaction:
     def verify(network: "NetworkParameters", tx: "Transaction") -> None:
         # since we use electrum under the hood, the first check is to run deserialize on it.
         try:
-            tx._electrum_transaction.invalidate_ser_cache()
             tx._electrum_transaction.deserialize()
         except Exception as e:
             raise VerificationException(e) from e

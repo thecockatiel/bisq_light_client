@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from bisq.common.config.config import Config
+from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
@@ -35,13 +36,13 @@ from utils.preconditions import check_argument, check_not_none
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
 from bisq.core.btc.raw_transaction_input import RawTransactionInput
-from electrum_min.ecc import ECPrivkey
 from electrum_min.transaction import (
     PartialTxInput as ElectrumPartialTxInput,
     TxOutpoint as ElectrumTxOutpoint,
     multisig_script,
 )
 from electrum_min import bitcoin
+
 
 if TYPE_CHECKING:
     from bitcoinj.crypto.deterministic_key import DeterministicKey

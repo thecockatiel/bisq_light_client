@@ -10,6 +10,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
+from electrum_ecc.ecdsa_sigformat import ecdsa_der_sig_from_r_and_s
 from utils.time import get_time_ms
 
 
@@ -181,7 +182,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
     @staticmethod
     def get_signature(sha256hash: bytes, priv_key: ECPrivkey) -> bytes:
         # TODO: check if works same as java
-        return priv_key.sign(sha256hash)
+        return priv_key.ecdsa_sign(sha256hash, sigencode=ecdsa_der_sig_from_r_and_s)
 
     @staticmethod
     def is_valid_pub_key_and_signature(
@@ -194,7 +195,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
 
         try:
             ec_pub_key = Encryption.get_ec_public_key_from_bytes(bytes.fromhex(pub_key))
-            return ec_pub_key.verify_message_hash(signature, sha256_hash)
+            return ec_pub_key.ecdsa_verify(signature, sha256_hash)
         except Exception as e:
             logger.warning("Signature verification failed.")
             return False

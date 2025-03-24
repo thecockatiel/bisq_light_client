@@ -14,6 +14,7 @@ from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
 from bisq.core.network.p2p.send_mailbox_message_listener import (
     SendMailboxMessageListener,
 )
+from electrum_min.bitcoin import ecdsa_sign_usermessage
 from utils.data import SimpleProperty
 from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.core.network.p2p.network.message_listener import MessageListener
@@ -144,9 +145,12 @@ class PrivateNotificationManager(MessageListener):
     ):
         message_as_hex = private_notification.message.encode("utf-8").hex()
         # TODO: check later for correctness
-        signature = self.private_notification_signing_key.sign_message(
-            message_as_hex, True
+        signature = ecdsa_sign_usermessage(
+            self.private_notification_signing_key,
+            message_as_hex,
+            is_compressed=True,
         )
+        
         private_notification.set_sig_and_pub_key(
             signature, self.key_ring.signature_key_pair.public_key
         )

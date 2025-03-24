@@ -21,7 +21,7 @@ from . import bitcoin
 from .bitcoin import construct_script, opcodes, construct_witness
 from . import constants
 from .crypto import hash_160, sha256
-from . import ecc
+import electrum_ecc as ecc
 from . import segwit_addr
 from .util import bfh
 

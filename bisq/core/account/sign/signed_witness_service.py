@@ -5,6 +5,7 @@ from bisq.common.crypto.hash import get_ripemd160_hash
 from bisq.common.crypto.sig import Sig
 from bisq.core.network.p2p.persistence.append_only_data_store_listener import AppendOnlyDataStoreListener
 from bisq.core.offer.offer_restrictions import OfferRestrictions
+from electrum_min.bitcoin import ecdsa_sign_usermessage
 from utils.time import get_time_ms
 from typing import TYPE_CHECKING, Collection, Optional, Union
 from bisq.common.setup.log_setup import get_logger
@@ -211,7 +212,7 @@ class SignedWitnessService:
                 return err
             
             account_age_witness_hash = account_age_witness.get_hash()
-            signature_base64 = base64.b64encode(ec_key.sign_message(account_age_witness_hash, True))
+            signature_base64 = base64.b64encode(ecdsa_sign_usermessage(ec_key, account_age_witness_hash, is_compressed=True))
             signed_witness = SignedWitness(
                 SignedWitnessVerificationMethod.ARBITRATOR,
                 account_age_witness_hash=account_age_witness.get_hash(),
@@ -280,7 +281,7 @@ class SignedWitnessService:
             signature_base64 = base64.b64encode(signed_witness.signature)
             ec_key = ECPubkey(signed_witness.signer_pub_key)
             if self.arbitrator_manager.is_public_key_in_list(ec_key.get_public_key_hex()):
-                is_verified = ec_key.verify_message_hash(signature_base64, message)
+                is_verified = ec_key.ecdsa_verify(signature_base64, message)
                 if not is_verified:
                     raise Exception("Signature verification failed at _verify_signature_with_ec_key")
                 self.verify_signature_with_ec_key_result_cache[_hash] = True

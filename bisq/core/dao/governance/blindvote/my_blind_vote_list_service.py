@@ -35,6 +35,7 @@ from bisq.core.dao.state.model.governance.issuance_type import IssuanceType
 from bisq.core.dao.state.model.governance.merit import Merit
 from bisq.core.dao.state.model.governance.merit_list import MeritList
 from bitcoinj.base.coin import Coin
+from electrum_ecc.ecdsa_sigformat import ecdsa_der_sig_from_ecdsa_sig64
 from utils.data import SimplePropertyChangeEvent
 from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
@@ -297,13 +298,9 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
                 # Java Implementation uses BitcoinJ EC keys
                 # We need to use a compatible way to sign the txId
                 signature = (
-                    key.sign(bytes.fromhex(blind_vote_tx_id))
-                    if not self.bsq_wallet_service.is_encrypted
-                    else key.sign(
-                        bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.password
-                    )
+                    key.sign_message(bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.password)
                 )
-                signature_as_bytes = signature.to_canonicalised().encode_to_der()
+                signature_as_bytes = ecdsa_der_sig_from_ecdsa_sig64(signature[1:])
             else:
                 # In case we use it for requesting the currently available merit we don't apply a signature
                 signature_as_bytes = b""

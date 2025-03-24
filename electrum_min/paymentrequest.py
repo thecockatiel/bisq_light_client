@@ -39,7 +39,8 @@ try:
 except ImportError:
     sys.exit("Error: could not find paymentrequest_pb2.py. Create it with 'contrib/generate_payreqpb2.sh'")
 
-from . import bitcoin, constants, ecc, util, transaction, x509, rsakey
+from . import bitcoin, constants, util, transaction, x509, rsakey
+import electrum_ecc as ecc
 from .util import bfh, make_aiohttp_session, error_text_bytes_to_safe_str, get_running_loop
 from .invoices import Invoice, get_id_from_onchain_outputs
 from .crypto import sha256
@@ -236,7 +237,7 @@ class PaymentRequest:
             address = info.get('address')
             pr.signature = b''
             message = pr.SerializeToString()
-            if ecc.verify_message_with_address(address, sig, message):
+            if bitcoin.verify_usermessage_with_address(address, sig, message):
                 self._verified_success_msg = 'Verified with DNSSEC'
                 self._verified_success = True
                 return True
@@ -357,7 +358,7 @@ def sign_request_with_alias(pr, alias, alias_privkey):
     message = pr.SerializeToString()
     ec_key = ecc.ECPrivkey(alias_privkey)
     compressed = bitcoin.is_compressed_privkey(alias_privkey)
-    pr.signature = ec_key.sign_message(message, compressed)
+    pr.signature = bitcoin.ecdsa_sign_usermessage(ec_key, message, is_compressed=compressed)
 
 
 def verify_cert_chain(chain):

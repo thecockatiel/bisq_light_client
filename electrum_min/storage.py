@@ -31,7 +31,7 @@ import zlib
 from enum import IntEnum
 from typing import Optional
 
-from electrum_min import ecc
+import electrum_min as ecc
 from electrum_min.util import (InvalidPassword, WalletFileException, bfh, standardize_path,
                    test_read_write_permissions, os_chmod)
 
