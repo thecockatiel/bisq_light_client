@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timedelta
 import logging
-from socket import socket as Socket
+from socket import socket as Socket, SHUT_RDWR
 import threading
 from typing import TYPE_CHECKING, Optional, Union
 from collections.abc import Callable
@@ -119,7 +119,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 "We might have got a new inbound or outbound connection."
             )
             try:
-                socket.shutdown(socket.SHUT_RDWR)
+                socket.shutdown(SHUT_RDWR)
                 socket.close()
             except Exception as e:
                 if not self.__shut_down_in_progress.get():
