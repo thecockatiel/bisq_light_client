@@ -12,6 +12,20 @@ from bisq.resources import p2p_resource_dir
 
 logger = get_logger(__name__)
 
+def unlink(path: Path):
+    if path.is_file():
+        try:
+            path.unlink(missing_ok=True)
+            return True
+        except Exception as e:
+            return False
+    else:
+        try:
+            path.rmdir()
+            return True
+        except Exception as e:
+            return False
+
 def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) -> None:
     
     if dir_path.exists():
@@ -62,7 +76,7 @@ def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
                 
                 if file_to_delete.is_file():
                     try:
-                        file_to_delete.unlink(missing_ok=True)
+                        unlink(file_to_delete)
                         deleted = True
                     except:
                         deleted = False
@@ -94,7 +108,7 @@ def delete_file_if_exists(file: Path, ignore_locked_files = True) -> None:
         if platform.system().lower() == "windows":
             file = file.resolve()
 
-        if file.exists() and not file.unlink(missing_ok=True):
+        if file.exists() and not unlink(file):
             if ignore_locked_files:
                 # We check if file is locked. On Windows all open files are locked by the OS
                 if is_file_locked(file):
@@ -139,7 +153,7 @@ def rename_file(file: Path, new_file: Path) -> None:
     try:
         # Work around an issue on Windows whereby you can't rename over existing files.
         if (platform.system().lower() == "windows" and canonical.exists()):
-            canonical.unlink(missing_ok=True)
+            unlink(canonical)
         file.rename(canonical)
     except Exception as e:
         logger.error(f"Failed to rename {file} to {new_file}: {str(e)}")
