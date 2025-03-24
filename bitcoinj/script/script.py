@@ -118,8 +118,11 @@ class Script:
         else:
             return None
 
-    def correctly_spends(self, tx_containing_this: "Transaction", script_sig_index: int, witness_elements: Sequence[bytes], value: Coin, script_pub_key: "Script", verify_flags: set["ScriptVerifyFlag"]) -> bool:
+    def correctly_spends(self, tx_containing_this: "Transaction", script_sig_index: int, witness_elements: Sequence[bytes], value: Coin, script_pub_key: Union["Script", bytes], verify_flags: set["ScriptVerifyFlag"]) -> bool:
         from bitcoinj.script.script_builder import ScriptBuilder
+        if isinstance(script_pub_key, bytes):
+            script_pub_key = Script(script_pub_key)
+        
         if ScriptPattern.is_p2wpkh(script_pub_key):
             # For SegWit, full validation isn't implemented. So we simply check the signature. P2SH_P2WPKH is handled
             # by the P2SH code for now.
