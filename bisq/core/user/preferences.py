@@ -33,6 +33,7 @@ from bisq.core.user.preferences_const import (
 from bisq.core.user.block_chain_explorer import BlockChainExplorer
 from bisq.core.user.preferences_payload import PreferencesPayload 
 from utils.data import ObservableChangeEvent, ObservableList, ObservableMap, SimpleProperty, SimplePropertyChangeEvent
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -104,14 +105,14 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         def on_fiat_currencies_change(e):
             self.pref_payload.fiat_currencies.clear()
             self.pref_payload.fiat_currencies.extend(self.fiat_currencies_as_observable)
-            self.pref_payload.fiat_currencies.sort(key=lambda x: x.name)
+            self.pref_payload.fiat_currencies.sort(key=lambda x: java_cmp_str(x.name))
             self.request_persistence()
         self.fiat_currencies_as_observable.add_listener(on_fiat_currencies_change)
         
         def on_crypto_currencies_change(e):
             self.pref_payload.crypto_currencies.clear()
             self.pref_payload.crypto_currencies.extend(self.crypto_currencies_as_observable)
-            self.pref_payload.crypto_currencies.sort(key=lambda x: x.name)
+            self.pref_payload.crypto_currencies.sort(key=lambda x: java_cmp_str(x.name))
             self.request_persistence()
         self.crypto_currencies_as_observable.add_listener(on_crypto_currencies_change)
         

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, List
 from datetime import datetime, timezone
 
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
+from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 from bisq.core.dao.burningman.burning_man_service import BurningManService
@@ -172,7 +173,7 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
             if min_output_amount <= amount <= max_output_amount:
                 receivers.append(tuple(amount, receiver_address))
 
-        receivers.sort(key=lambda x: (x[0], x[1]))
+        receivers.sort(key=lambda x: (x[0], java_cmp_str(x[1])))
 
         total_output_value = sum(r[0] for r in receivers)
         if total_output_value < spendable_amount:

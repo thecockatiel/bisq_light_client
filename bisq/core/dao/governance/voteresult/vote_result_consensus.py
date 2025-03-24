@@ -11,6 +11,7 @@ from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
+from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
@@ -60,7 +61,7 @@ class VoteResultConsensus:
 
         # Sort by stake (descending) and then by hex encoded hash
         # TODO: check if sort is correct
-        hash_with_stake_list.sort(key=lambda x: (-x.stake, x.hash.hex()))
+        hash_with_stake_list.sort(key=lambda x: (-x.stake, java_cmp_str(x.hash.hex())))
 
         # If there are conflicting data views (multiple hashes) we only consider the voting round as valid if
         # the majority is a super majority with > 80%.

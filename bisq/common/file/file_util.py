@@ -9,6 +9,7 @@ from typing import Optional, Union
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
 from bisq.common.setup.log_setup import get_logger
 from bisq.resources import p2p_resource_dir
+from utils.java_compat import java_cmp_str
 
 logger = get_logger(__name__)
 
@@ -71,7 +72,7 @@ def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
         
         if files:
             if len(files) > num_max_backup_files:
-                files.sort(key=lambda x: x.name)
+                files.sort(key=lambda x: java_cmp_str(x.name))
                 file_to_delete = files[0]
                 
                 if file_to_delete.is_file():

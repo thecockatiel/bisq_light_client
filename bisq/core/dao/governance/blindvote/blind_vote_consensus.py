@@ -13,6 +13,8 @@ from bisq.core.dao.state.model.governance.ballot_list import BallotList
 from bitcoinj.base.coin import Coin
 from io import BytesIO
 
+from utils.java_compat import java_cmp_str
+
 if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.model.governance.merit_list import MeritList
@@ -37,7 +39,7 @@ class BlindVoteConsensus:
         ballot_list_service: "BallotListService",
     ) -> "BallotList":
         ballot_list = ballot_list_service.get_valid_ballots_of_cycle()
-        sorted_list = sorted(ballot_list, key=lambda ballot: ballot.tx_id)
+        sorted_list = sorted(ballot_list, key=lambda ballot: java_cmp_str(ballot.tx_id))
         logger.info(f"Sorted ballotList: {sorted_list}")
         return BallotList(sorted_list)
 
@@ -52,7 +54,7 @@ class BlindVoteConsensus:
     def _get_sorted_blind_vote_list_of_cycle(
         blind_vote_list: list["BlindVote"],
     ) -> list["BlindVote"]:
-        sorted_list = sorted(blind_vote_list, key=lambda vote: vote.tx_id)
+        sorted_list = sorted(blind_vote_list, key=lambda vote: java_cmp_str(vote.tx_id))
         logger.debug(
             f"Sorted blindVote txId list: {[vote.tx_id for vote in sorted_list]}"
         )

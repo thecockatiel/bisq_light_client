@@ -6,6 +6,7 @@ from bisq.core.payment.payload.country_based_payment_account_payload import (
 )
 from bisq.core.payment.payload.payload_with_holder_name import PayloadWithHolderName
 import pb_pb2 as protobuf
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from bisq.core.locale.country import Country
@@ -33,7 +34,7 @@ class SepaAccountPayload(CountryBasedPaymentAccountPayload, PayloadWithHolderNam
             )
         if accepted_countries is not None:
             accepted_country_codes = sorted(
-                list(set(country.code for country in accepted_countries))
+                list(set(java_cmp_str(country.code) for country in accepted_countries))
             )
         super().__init__(
             payment_method_name,

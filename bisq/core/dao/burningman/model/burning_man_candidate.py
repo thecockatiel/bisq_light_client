@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.date_util import DateUtil
 from bisq.core.util.validation.btc_address_validator import BtcAddressValidator
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from bisq.core.dao.burningman.model.burn_output_model import BurnOutputModel
@@ -104,7 +105,7 @@ class BurningManCandidate:
             # a tie). This helps to avoid change of address with every new comp. request.
             self.receiver_address = min(
                 self.compensation_models,
-                key=lambda model: (model.height, model.address),
+                key=lambda model: (model.height, java_cmp_str(model.address)),
             ).address
 
         # For backward compatibility reasons we need to maintain the old buggy version.

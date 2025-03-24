@@ -85,6 +85,7 @@ from bisq.core.network.p2p.storage.sequence_number_map import SequenceNumberMap
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import (
     ProtectedMailboxStorageEntry,
 )
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from utils.clock import Clock
@@ -1406,7 +1407,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 ).get_hex()
                 temp_list.append((hash_hex, entry))
 
-            temp_list.sort(key=lambda x: x[0])
+            temp_list.sort(key=lambda x: java_cmp_str(x[0]))
 
             for hash_hex, storage_entry in temp_list:
                 protected_storage_payload = storage_entry.protected_storage_payload

@@ -12,6 +12,7 @@ from bitcoinj.base.coin import Coin
 from utils.concurrency import ThreadSafeSet
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
+from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
@@ -1030,7 +1031,7 @@ class DaoStateService(DaoSetupService):
                 self.dao_state.evaluated_proposal_list.append(proposal)
 
         # We need deterministic order for the hash chain
-        self.dao_state.evaluated_proposal_list.sort(key=lambda e: e.proposal_tx_id)
+        self.dao_state.evaluated_proposal_list.sort(key=lambda e: java_cmp_str(e.proposal_tx_id))
 
     def get_decrypted_ballots_with_merits_list(
         self,
@@ -1048,7 +1049,7 @@ class DaoStateService(DaoSetupService):
 
         # We need deterministic order for the hash chain
         self.dao_state.decrypted_ballots_with_merits_list.sort(
-            key=lambda e: e.blind_vote_tx_id
+            key=lambda e: java_cmp_str(e.blind_vote_tx_id)
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

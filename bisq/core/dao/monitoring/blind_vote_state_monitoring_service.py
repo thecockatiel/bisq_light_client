@@ -14,6 +14,7 @@ from bisq.core.dao.monitoring.network.blind_vote_state_network_service import (
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from utils.concurrency import AtomicBoolean, ThreadSafeSet
+from utils.java_compat import java_cmp_str
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -248,7 +249,7 @@ class BlindVoteStateMonitoringService(
                         blind_vote.tx_id, DaoPhase.Phase.BLIND_VOTE, block_height
                     )
                 ),
-                key=lambda blind_vote: blind_vote.tx_id,
+                key=lambda blind_vote: java_cmp_str(blind_vote.tx_id),
             )
 
             # We use MyBlindVoteList to get the serialized bytes from the blindVotes list

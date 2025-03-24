@@ -12,6 +12,7 @@ from bisq.core.locale.currency_util import (
 )
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payment_account_factory import PaymentAccountFactory
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from bisq.core.payment.asset_account import AssetAccount
@@ -61,7 +62,7 @@ class CorePaymentAccountsService:
         payment_methods = PaymentMethod.get_payment_methods()
         return sorted(
             (method for method in payment_methods if method.is_fiat()),
-            key=lambda method: method.id,
+            key=lambda method: java_cmp_str(method.id),
         )
 
     def get_payment_account_form_as_string(self, payment_method_id: str) -> str:
@@ -120,7 +121,7 @@ class CorePaymentAccountsService:
         payment_methods = PaymentMethod.get_payment_methods()
         return sorted(
             (method for method in payment_methods if method.is_altcoin()),
-            key=lambda method: method.id,
+            key=lambda method: java_cmp_str(method.id),
         )
 
     def _verify_crypto_currency_address(self, crypto_currency_code: str, address: str):

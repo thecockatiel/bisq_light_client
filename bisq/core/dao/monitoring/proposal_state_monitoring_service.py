@@ -14,6 +14,7 @@ from bisq.core.dao.monitoring.network.proposal_state_network_service import (
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
 from utils.concurrency import AtomicBoolean, ThreadSafeSet
+from utils.java_compat import java_cmp_str
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -246,7 +247,7 @@ class ProposalStateMonitoringService(
                         proposal.tx_id, DaoPhase.Phase.PROPOSAL, block_height
                     )
                 ),
-                key=lambda proposal: proposal.tx_id,
+                key=lambda proposal: java_cmp_str(proposal.tx_id),
             )
 
             # We use MyProposalList to get the serialized bytes from the proposals list

@@ -48,6 +48,7 @@ from bisq.core.dao.state.model.governance.decrypted_ballots_with_merits import (
 from bisq.core.dao.state.model.governance.evaluated_proposal import (
     EvaluatedProposal,
 )
+from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
 
@@ -493,7 +494,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 ballots.append(Ballot(ballot.proposal, Vote(False)))
 
         # Let's keep the data more deterministic by sorting it by txId. Though we are not using the sorting.
-        ballots.sort(key=lambda b: b.tx_id)
+        ballots.sort(key=lambda b: java_cmp_str(b.tx_id))
         return BallotList(ballots)
 
     def _get_stake_by_hash_of_blind_vote_list_map(

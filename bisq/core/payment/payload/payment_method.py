@@ -9,6 +9,7 @@ from bisq.core.payment.trade_limits import TradeLimits
 import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bitcoinj.base.coin import Coin
+from utils.java_compat import java_cmp_str
 
 if TYPE_CHECKING:
     from bisq.core.locale.trade_currency import TradeCurrency
@@ -520,6 +521,6 @@ PaymentMethod.PAYMENT_METHODS = tuple(sorted([
     PaymentMethod.BLOCK_CHAINS_INSTANT,
     # BsqSwap
     PaymentMethod.BSQ_SWAP,
-], key=lambda m: "ZELLE" if m.id == PaymentMethod.CLEAR_X_CHANGE_ID else m.id))
+], key=lambda m: java_cmp_str("ZELLE" if m.id == PaymentMethod.CLEAR_X_CHANGE_ID else m.id)))
 
 PaymentMethod.PAYMENT_METHOD_MAP = MappingProxyType({m.id: m for m in PaymentMethod.PAYMENT_METHODS})

@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 import re
 from typing import Any, Generic, Iterable, Iterator, Optional, TypeVar
+from functools import cmp_to_key
 
 INTEGER_MIN_VALUE = 0x80000000
 INTEGER_MAX_VALUE = 0x7FFFFFFF
@@ -120,6 +121,10 @@ def java_string_compare(s1: str, s2: str) -> int:
             return ord(s1[i]) - ord(s2[i])
     return len(s1) - len(s2)
 
+def java_cmp_str(s: str) -> Any:
+    pass # hack to colorize the function and trigger auto import
+
+java_cmp_str = cmp_to_key(java_string_compare)
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -155,7 +160,8 @@ class HashMap(Generic[K, V]):
             return f"{self.key}:{self.value}"
 
     def _hash(self, key: K) -> int:
-        if key is None: return 0
+        if key is None:
+            return 0
         if isinstance(key, str):
             h = java_string_hashcode(key)
         else:

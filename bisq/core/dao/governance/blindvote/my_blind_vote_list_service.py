@@ -36,6 +36,7 @@ from bisq.core.dao.state.model.governance.merit import Merit
 from bisq.core.dao.state.model.governance.merit_list import MeritList
 from bitcoinj.base.coin import Coin
 from utils.data import SimplePropertyChangeEvent
+from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 from bisq.core.dao.governance.blindvote.blind_vote import BlindVote
 from utils.time import get_time_ms
@@ -309,7 +310,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
 
             merits.append(Merit(issuance, signature_as_bytes))
 
-        return MeritList(sorted(merits, key=lambda merit: merit.issuance.tx_id))
+        return MeritList(sorted(merits, key=lambda merit: java_cmp_str(merit.issuance.tx_id)))
 
     def _publish_tx(
         self,
