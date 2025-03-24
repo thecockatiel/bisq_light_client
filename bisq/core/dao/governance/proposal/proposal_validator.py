@@ -54,7 +54,7 @@ class ProposalValidator(ConsensusCritical, ABC):
 
             ExtraDataMapValidator.validate(proposal.extra_data_map)
         except Exception as e:
-            raise ProposalValidationException(e)
+            raise ProposalValidationException(e) from e
 
     def is_valid_or_unconfirmed(self, proposal: "Proposal") -> bool:
         return self._is_valid(proposal, True)
