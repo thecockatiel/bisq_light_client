@@ -94,8 +94,11 @@ class HiddenServiceSocket:
     def __str__(self) -> str:
         return f"HiddenServiceSocket(local_port={self._local_port}, hidden_service_dir={self._hidden_service_dir}, hidden_service_port={self._hidden_service_port}, onion_uri={self.service_name})"
     
-    def close(self):
-        if self._server_socket:
-            self._server_socket.shutdown(socket.SHUT_RDWR)
+    def close(self): 
+        if self._server_socket: 
+            try:
+                self._server_socket.shutdown(socket.SHUT_RDWR)
+            except:
+                pass
             self._server_socket.close()
-            self._server_socket = None
+            self._server_socket = None 
