@@ -241,13 +241,16 @@ class Transaction:
         try:
             tx._electrum_transaction.invalidate_ser_cache()
             tx._electrum_transaction.deserialize()
+            message_size = tx.get_message_size()
         except Exception as e:
+            if "negative int to unsigned" in str(e):
+                raise VerificationException.NegativeValueOutput() from e
             raise VerificationException(e) from e
 
         if not tx.inputs or not tx.outputs:
             raise VerificationException.EmptyInputsOrOutputs()
 
-        if tx.get_message_size() > Block.MAX_BLOCK_SIZE:
+        if message_size > Block.MAX_BLOCK_SIZE:
             raise VerificationException.LargerThanMaxBlockSize()
 
         outpoints = set()
