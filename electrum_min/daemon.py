@@ -42,6 +42,7 @@ from aiohttp import web, client_exceptions
 from aiorpcx import timeout_after, TaskTimeout, ignore_after
 
 from . import util
+from . import network
 from .network import Network
 from .util import (json_decode, to_bytes, to_string, profiler, standardize_path, constant_time_compare, InvalidPassword)
 from .invoices import PR_PAID, PR_EXPIRED
@@ -421,7 +422,7 @@ class Daemon(Logger):
         self._plugins = None  # type: Optional[Plugins]
         self.asyncio_loop = util.get_asyncio_loop()
         if not self.config.NETWORK_OFFLINE:
-            self.network = Network(config, daemon=self)
+            self.network = network._INSTANCE or Network(config, daemon=self)
         self.fx = FxThread(config=config)
         # wallet_key -> wallet
         self._wallets = {}  # type: Dict[str, Abstract_Wallet]
