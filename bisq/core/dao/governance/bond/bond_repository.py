@@ -146,7 +146,11 @@ class BondRepository(
 
     def _update_bond_state_from_unconfirmed_unlock_txs(self):
         for bonded_asset in self.get_bonded_asset_stream():
-            if self.is_unlock_tx_unconfirmed(self._bsq_wallet_service, bonded_asset):
+            if BondRepository.is_unlock_tx_unconfirmed(
+                self._bsq_wallet_service,
+                self._dao_state_service,
+                bonded_asset,
+            ):
                 bond = self._bond_by_uid_map.get(bonded_asset.uid, None)
                 if bond and bond.bond_state == BondState.LOCKUP_TX_CONFIRMED:
                     bond.bond_state = (
