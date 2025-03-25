@@ -6,7 +6,7 @@ from electrum_ecc import (
     ecdsa_der_sig_from_r_and_s,
     ecdsa_sig64_from_r_and_s,
     get_r_and_s_from_ecdsa_der_sig,
-) 
+)
 
 HALF_CURVE_ORDER = CURVE_ORDER // 2
 
@@ -25,7 +25,7 @@ class TransactionSignature:
 
     def to_der(self):
         return ecdsa_der_sig_from_r_and_s(self.r, self.s)
-    
+
     def to_sig64(self):
         return ecdsa_sig64_from_r_and_s(self.r, self.s)
 
@@ -171,3 +171,13 @@ class TransactionSignature:
                 else bytes_[-1]
             ),
         )
+
+    @staticmethod
+    def decode_from_der(bytes_: bytes, mode: TransactionSigHash, anyone_can_pay: bool):
+        try:
+            r, s = get_r_and_s_from_ecdsa_der_sig(bytes_)
+            return TransactionSignature(
+                r, s, TransactionSignature.calc_sig_hash_value(mode, anyone_can_pay)
+            )
+        except:
+            raise SignatureDecodeException("Invalid DER signature")
