@@ -1,3 +1,4 @@
+from ctypes import c_int32, c_int8
 from decimal import Decimal
 import math
 from pathlib import Path
@@ -113,6 +114,15 @@ def to_unsigned_int(value: int) -> int:
     """Converts a signed int to an unsigned int"""
     return value & 0xFFFFFFFF
 
+def java_bytes_hashcode(array: bytes) -> int:
+    if array is None:
+        return 0
+    
+    result = 1
+    for element in array:
+        result = 31 * result + c_int8(element).value
+    
+    return c_int32(result).value
 
 def java_string_compare(s1: str, s2: str) -> int:
     min_len = min(len(s1), len(s2))
