@@ -69,9 +69,7 @@ class Transaction:
                 res = PartialElectrumTransaction()
                 for txin in tx.inputs():
                     ptx = ElectrumPartialTxInput.from_txin(txin, strip_witness=False)
-                    res._inputs.append(
-                        ptx
-                    )
+                    res._inputs.append(ptx)
                 res._outputs = [
                     ElectrumPartialTxOutput.from_txout(txout) for txout in tx.outputs()
                 ]
@@ -529,9 +527,13 @@ class Transaction:
                         s.append(f"  {value.to_friendly_string()} ({value})")
                     s.append("\n")
                     if tx_in.has_witness:
-                        s.append(
-                            f"{indent}        witness:{bytes_as_hex_string(tx_in.witness)}\n"
-                        )
+                        s.append(f"{indent}        witness: ")
+                        for e in tx_in.witness_elements:
+                            h = bytes_as_hex_string(e)
+                            if not h:
+                                h = "EMPTY"
+                            s.append(f"{h} ")
+                        s.append("\n")
 
                     outpoint = tx_in.outpoint
                     connected_output = outpoint.connected_output
