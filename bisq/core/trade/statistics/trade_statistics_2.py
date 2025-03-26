@@ -253,7 +253,7 @@ class TradeStatistics2(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_trade_date(self):
-        return datetime.fromtimestamp((self.trade_date / 1000), timezone.utc)
+        return datetime.fromtimestamp((self.trade_date / 1000))
 
     def get_trade_price(self):
         return Price.value_of(self.get_currency_code(), self.trade_price)

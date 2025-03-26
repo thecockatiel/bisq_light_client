@@ -13,25 +13,25 @@ if TYPE_CHECKING:
 class OfferRestrictions:
     # The date when the tolerated small trade amount will be changed.
     TOLERATED_SMALL_TRADE_AMOUNT_CHANGE_ACTIVATION_DATE = datetime(
-        2025, 2, 17, tzinfo=timezone.utc
+        2025, 2, 17
     )
     # The date when traders who have not upgraded to a Tor v3 Node Address cannot take offers and their offers become
     # invisible.
-    REQUIRE_TOR_NODE_ADDRESS_V3_DATE = datetime(2021, 8, 10, tzinfo=timezone.utc)
+    REQUIRE_TOR_NODE_ADDRESS_V3_DATE = datetime(2021, 8, 10)
 
     @staticmethod
     def requires_node_address_update():
         from global_container import GLOBAL_CONTAINER
 
         return (
-            datetime.now(timezone.utc)
+            datetime.now()
             > OfferRestrictions.REQUIRE_TOR_NODE_ADDRESS_V3_DATE
             and not GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest()
         )
 
     TOLERATED_SMALL_TRADE_AMOUNT = (
         Coin.parse_coin("0.002")
-        if datetime.now(timezone.utc)
+        if datetime.now()
         > TOLERATED_SMALL_TRADE_AMOUNT_CHANGE_ACTIVATION_DATE
         else Coin.parse_coin("0.01")
     )

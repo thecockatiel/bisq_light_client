@@ -15,7 +15,7 @@ class Iso8601DateTimeColumn(NumberColumn[int]):
     def get_row_as_formatted_string(self, row_index: int) -> str:
         time = self.get_row(row_index) # time is in ms
         iso_formatted = (
-            datetime.fromtimestamp(time/1000, tz=timezone.utc)
+            datetime.fromtimestamp(time/1000)
             .isoformat(timespec="seconds")
             .rstrip("+00:00")
             .rstrip("Z")

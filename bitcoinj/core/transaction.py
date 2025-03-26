@@ -108,7 +108,7 @@ class Transaction:
         """
         if self._update_time is None:
             # Older wallets did not store this field. Set to the epoch.
-            self._update_time = datetime.fromtimestamp(0, tz=timezone.utc)
+            self._update_time = datetime.fromtimestamp(0)
         return self._update_time
 
     @update_time.setter
@@ -504,7 +504,7 @@ class Transaction:
             else:
                 s.append(
                     date_time_format(
-                        datetime.fromtimestamp(self.lock_time, tz=timezone.utc)
+                        datetime.fromtimestamp(self.lock_time)
                     )
                 )
             s.append("\n")

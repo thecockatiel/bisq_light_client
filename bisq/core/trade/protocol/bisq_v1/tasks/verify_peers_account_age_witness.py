@@ -32,7 +32,7 @@ class VerifyPeersAccountAgeWitness(TradeTask):
 
             current_date = trading_peer.current_date
             # In case the peer has an older version we get 0, so we use our time instead
-            peers_current_date = datetime.fromtimestamp(current_date/1000, tz=timezone.utc) if current_date > 0 else datetime.now()
+            peers_current_date = datetime.fromtimestamp(current_date/1000) if current_date > 0 else datetime.now()
 
             error_msg = []
             is_valid = account_age_witness_service.verify_account_age_witness(

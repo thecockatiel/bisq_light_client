@@ -5,7 +5,7 @@ from bitcoinj.base.coin import Coin
 
 class Restrictions:
     MIN_SECURITY_DEPOSIT_CHANGE_ACTIVATION_DATE = datetime(
-        2025, 2, 17, tzinfo=timezone.utc
+        2025, 2, 17
     )
 
     MIN_TRADE_AMOUNT: "Coin" = None
@@ -59,7 +59,7 @@ class Restrictions:
     # So 0.0005 BTC is the min. buyer security deposit even with amount of 0.0001 BTC and 0.05% percentage value.
     @staticmethod
     def get_min_buyer_security_deposit_as_coin():
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         if now > Restrictions.MIN_SECURITY_DEPOSIT_CHANGE_ACTIVATION_DATE:
             if (
                 Restrictions.MIN_BUYER_SECURITY_DEPOSIT is None
@@ -85,7 +85,7 @@ class Restrictions:
 
     @staticmethod
     def get_min_seller_security_deposit_as_coin():
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         if now > Restrictions.MIN_SECURITY_DEPOSIT_CHANGE_ACTIVATION_DATE:
             if (
                 Restrictions.MIN_SELLER_SECURITY_DEPOSIT is None

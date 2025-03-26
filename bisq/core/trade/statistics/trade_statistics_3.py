@@ -57,7 +57,7 @@ class TradeStatistics3(
     """
 
     STRICT_FILTER_DATE = int(
-        datetime(2021, 11, 1, tzinfo=timezone.utc).timestamp() * 1000
+        datetime(2021, 11, 1).timestamp() * 1000
     )
 
     def __init__(
@@ -91,7 +91,7 @@ class TradeStatistics3(
         else:
             self.hash = hash
             
-        self._date_obj = datetime.fromtimestamp(self.date / 1000, tz=timezone.utc) # transient
+        self._date_obj = datetime.fromtimestamp(self.date / 1000) # transient
         self._price_obj: Price = None # transient
         self._volume: Volume = None # Fiat or altcoin volume # transient
         

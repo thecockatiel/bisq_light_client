@@ -52,8 +52,8 @@ logger = get_logger(__name__)
 
 
 class AccountAgeWitnessService:
-    RELEASE = datetime(2017, 11, 11, tzinfo=timezone.utc)
-    SAFE_ACCOUNT_AGE_DATE_MS = int(datetime(2019, 3, 1, tzinfo=timezone.utc).timestamp() * 1000)
+    RELEASE = datetime(2017, 11, 11)
+    SAFE_ACCOUNT_AGE_DATE_MS = int(datetime(2019, 3, 1).timestamp() * 1000)
     #
     THIRTY_DAYS_MS = int(timedelta(days=30).total_seconds() * 1000)
     SIXTY_DAYS_MS = int(timedelta(days=60).total_seconds() * 1000)
@@ -549,7 +549,7 @@ class AccountAgeWitnessService:
     ) -> bool:
         # Release date minus 1 day as tolerance for not synced clocks
         release_date_with_tolerance = age_witness_release_date - timedelta(days=1)
-        witness_date = datetime.fromtimestamp(witness_date_as_long / 1000, tz=timezone.utc)
+        witness_date = datetime.fromtimestamp(witness_date_as_long / 1000)
         result = witness_date > release_date_with_tolerance
         
         if not result:

@@ -432,7 +432,7 @@ class Wallet(EventListener):
         tx.memo = self.get_label_for_txid(tx.get_tx_id())
         mined_info = self.get_tx_mined_info(tx.get_tx_id())
         if mined_info.timestamp:
-            update_time = datetime.fromtimestamp(mined_info.timestamp, tz=timezone.utc)
+            update_time = datetime.fromtimestamp(mined_info.timestamp)
             tx.update_time = update_time
             tx.included_in_best_chain_at = update_time
         tx.confidence = self._get_confidence_from_tx_mined_info(
