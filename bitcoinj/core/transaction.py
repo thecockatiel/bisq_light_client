@@ -525,7 +525,7 @@ class Transaction:
                 try:
                     s.append(f"{tx_in.get_script_sig()}")
                     value = tx_in.get_value()
-                    if value is not None:
+                    if tx_in._ec_tx_input.value_sats() is not None:
                         s.append(f"  {value.to_friendly_string()} ({value})")
                     s.append("\n")
                     if tx_in.has_witness:
