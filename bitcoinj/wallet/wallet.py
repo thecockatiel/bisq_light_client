@@ -27,7 +27,7 @@ from bisq.common.setup.log_setup import get_logger
 from asyncio import Future
 from collections.abc import Callable
 import time
-from typing import TYPE_CHECKING, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Literal, Mapping, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -763,11 +763,7 @@ class Wallet(EventListener):
                     result.best_change_output = change_output
 
             for selected_output in selection.gathered:
-                input = tx.add_input(
-                    TransactionInput.from_output(
-                        selected_output
-                    )
-                )
+                input = tx.add_input(TransactionInput.from_output(selected_output))
                 # If the scriptBytes don't default to none, our size calculations will be thrown off.
                 check_state(not input.script_sig)
                 check_state(not input.has_witness)
@@ -863,11 +859,14 @@ class Wallet(EventListener):
 
     def get_witness_for_redeem_script(
         self,
-        redeem_script: bytes,
+        redeem_script: Union[str, bytes],
+        txin_type: Union[Literal["p2sh"], Literal["p2wsh"], Literal["p2wsh-p2sh"]],
         sigdata: Mapping[bytes, bytes],  # pubkey -> sig
     ):
+        if isinstance(redeem_script, bytes):
+            redeem_script = redeem_script.hex()
         address = bitcoin.redeem_script_to_address(
-            self._electrum_wallet.txin_type, redeem_script
+            txin_type, redeem_script
         )
         return (
             self._electrum_wallet.get_script_descriptor_for_address(address)

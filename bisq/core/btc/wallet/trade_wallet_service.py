@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 
 from bisq.common.config.config import Config
 from bisq.common.crypto.encryption import ECPrivkey
+from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
@@ -29,9 +30,11 @@ from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script import Script
+from bitcoinj.script.script_builder import ScriptBuilder
 from bitcoinj.script.script_pattern import ScriptPattern
 from bitcoinj.wallet.send_request import SendRequest
 from bitcoinj.wallet.wallet import Wallet
+from electrum_min.crypto import hash_160
 from utils.preconditions import check_argument, check_not_none
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.address import Address
@@ -544,6 +547,9 @@ class TradeWalletService:
             tx_input = prepared_deposit_tx.inputs[i]
             WalletService.check_script_sig(prepared_deposit_tx, tx_input, i)
 
+        # TODO: FIXME: hack
+        prepared_deposit_tx.version = 1
+
         WalletService.print_tx("maker_creates_deposit_tx", prepared_deposit_tx)
         WalletService.verify_transaction(prepared_deposit_tx)
 
@@ -713,6 +719,8 @@ class TradeWalletService:
                     delayed_payout_tx,
                 )
             )
+        # TODO: FIXME: hack
+        delayed_payout_tx.version = 1
         WalletService.print_tx(
             "Unsigned delayedPayoutTx ToDonationAddress", delayed_payout_tx
         )
@@ -760,6 +768,7 @@ class TradeWalletService:
         witness = check_not_none(
             self._wallet.get_witness_for_redeem_script(
                 redeem_script,
+                "p2wsh",
                 {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
             ),
             "Failed to get witness for redeem script",
@@ -922,6 +931,7 @@ class TradeWalletService:
             input.witness = check_not_none(
                 self._wallet.get_witness_for_redeem_script(
                     redeem_script,
+                    "p2wsh",
                     {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
                 ),
                 "Failed to get witness for redeem script",
@@ -1038,6 +1048,7 @@ class TradeWalletService:
             input.witness = check_not_none(
                 self._wallet.get_witness_for_redeem_script(
                     redeem_script,
+                    "p2wsh",
                     {
                         buyer_multi_sig_pub_key: buyer_signature,
                         seller_multi_sig_pub_key: seller_signature,
@@ -1134,6 +1145,7 @@ class TradeWalletService:
             # TODO check correctness
             input.witness = self._wallet.get_witness_for_redeem_script(
                 redeem_script,
+                "p2wsh",
                 {
                     arbitrator_pub_key: arbitrator_signature,
                     buyer_pub_key: traders_signature,
@@ -1263,14 +1275,15 @@ class TradeWalletService:
     def _get_x_of_threshold_multi_sig_output_script(
         self, pubkeys: Iterable[bytes], threshold: int, legacy: bool = False
     ):
-        redeem_script = multisig_script([key.hex() for key in pubkeys], threshold)
+        redeem_script = bytes.fromhex(multisig_script([key.hex() for key in pubkeys], threshold))
         if legacy:
             # p2sh
-            raise IllegalStateException("legacy p2sh is not supported")
-            # return bytes.fromhex(redeem_script)
+            redeem_script = hash_160(redeem_script)
+            return ScriptBuilder.create_p2sh_output_script(redeem_script).program
         else:
             # p2wsh
-            return bytes.fromhex(bitcoin.p2wsh_nested_script(redeem_script))
+            redeem_script = get_sha256_hash(redeem_script)
+            return ScriptBuilder.create_p2wsh_output_script(redeem_script).program
 
     def _create_payout_tx(
         self,
@@ -1303,6 +1316,8 @@ class TradeWalletService:
             )
 
         check_argument(len(transaction.outputs) >= 1, "We need at least one output.")
+        # TODO: FIXME: hack
+        transaction.version = 1
         return transaction
 
     def _add_available_inputs_and_change_outputs(

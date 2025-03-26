@@ -29,13 +29,7 @@ class ScriptBuilder:
         elif isinstance(to, LegacyAddress):
             script_type = to.output_script_type
             if script_type == ScriptType.P2SH:
-                return Script(
-                    bytes.fromhex(
-                        construct_script(
-                            [opcodes.OP_HASH160, to.hash, opcodes.OP_EQUAL]
-                        )
-                    )
-                )
+                return ScriptBuilder.create_p2sh_output_script(to.hash)
             elif script_type == ScriptType.P2PKH:
                 return ScriptBuilder.create_p2pkh_output_script(to.hash)
             else:
@@ -57,6 +51,26 @@ class ScriptBuilder:
     def create_p2pk_output_script(pub_key: bytes) -> Script:
         """Creates a scriptPubKey that encodes payment to the given raw public key."""
         return Script(bytes.fromhex(public_key_to_p2pk_script(pub_key)))
+
+    @staticmethod
+    def create_p2sh_output_script(pub_key_hash: bytes) -> Script:
+        """Creates a scriptPubKey that sends to the given script hash."""
+        check_argument(len(pub_key_hash) == 20, "pub_key_hash must be 20 bytes (hash160)")
+        return Script(
+            bytes.fromhex(
+                construct_script([opcodes.OP_HASH160, pub_key_hash, opcodes.OP_EQUAL])
+            )
+        )
+    
+    @staticmethod
+    def create_p2wsh_output_script(pub_key_hash: bytes) -> Script:
+        """Creates a segwit scriptPubKey that sends to the given script hash."""
+        check_argument(len(pub_key_hash) == 32, "pub_key_hash must be 32 bytes (sha256)")
+        return Script(
+            bytes.fromhex(
+                construct_script([opcodes.OP_HASH160, pub_key_hash, opcodes.OP_EQUAL])
+            )
+        )
 
     @staticmethod
     def create_op_return_script(data: bytes):
