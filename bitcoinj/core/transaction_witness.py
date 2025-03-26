@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from bitcoinj.crypto.ec_utils import is_compressed_pubkey
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script import Script
@@ -42,15 +42,17 @@ class TransactionWitness:
         return witness
 
     @staticmethod
-    def redeem_p2wsh(witness_script: "Script", *signatures: TransactionSignature):
+    def redeem_p2wsh(witness_script: Union["Script", bytes], *signatures: TransactionSignature):
         """
         Creates the stack pushes necessary to redeem a P2WSH output.
         """
+        if isinstance(witness_script, Script):
+            witness_script = witness_script.program
         witness = TransactionWitness(len(signatures) + 2)
         witness.set_push(0, bytes())
         for i, signature in enumerate(signatures):
             witness.set_push(i + 1, signature.encode_to_bitcoin())
-        witness.set_push(len(signatures) + 1, witness_script.program)
+        witness.set_push(len(signatures) + 1, witness_script)
         return witness
 
     def get_push(self, index: int):

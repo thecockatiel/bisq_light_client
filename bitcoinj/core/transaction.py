@@ -223,7 +223,7 @@ class Transaction:
 
         for output in self.outputs:
             if output.value is not None:
-                total_out = total_out.add(output.value)
+                total_out = total_out.add(output.get_value())
 
         return total_out
 

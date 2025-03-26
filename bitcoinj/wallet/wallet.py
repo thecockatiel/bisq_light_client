@@ -856,20 +856,3 @@ class Wallet(EventListener):
     def add_electrum_info(self, tx: "Transaction"):
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         return tx
-
-    def get_witness_for_redeem_script(
-        self,
-        redeem_script: Union[str, bytes],
-        txin_type: Union[Literal["p2sh"], Literal["p2wsh"], Literal["p2wsh-p2sh"]],
-        sigdata: Mapping[bytes, bytes],  # pubkey -> sig
-    ):
-        if isinstance(redeem_script, bytes):
-            redeem_script = redeem_script.hex()
-        address = bitcoin.redeem_script_to_address(
-            txin_type, redeem_script
-        )
-        return (
-            self._electrum_wallet.get_script_descriptor_for_address(address)
-            .satisfy(sigdata=sigdata)
-            .witness
-        )

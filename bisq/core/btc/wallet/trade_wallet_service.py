@@ -28,6 +28,7 @@ from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
+from bitcoinj.core.transaction_witness import TransactionWitness
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_builder import ScriptBuilder
@@ -747,8 +748,8 @@ class TradeWalletService:
             False,
         )
         check_not_none(my_multi_sig_key_pair, "my_multi_sig_key_pair must not be None")
-        # TODO: check LowRSigningKey
-        my_signature = my_multi_sig_key_pair.sign_message(sig_hash, self._password)
+        # LowRSigningKey is enabled in electrum_ecc by default
+        my_signature = my_multi_sig_key_pair.ecdsa_sign(sig_hash, self._password)
         WalletService.print_tx("delayedPayoutTx for sig creation", delayed_payout_tx)
         WalletService.verify_transaction(delayed_payout_tx)
         return my_signature
@@ -765,14 +766,15 @@ class TradeWalletService:
         redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
             (seller_pub_key, buyer_pub_key), 2
         )
-        witness = check_not_none(
-            self._wallet.get_witness_for_redeem_script(
-                redeem_script,
-                "p2wsh",
-                {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
-            ),
-            "Failed to get witness for redeem script",
+        buyer_tx_signature = TransactionSignature.decode_from_der(
+            buyer_signature, TransactionSigHash.ALL, False
         )
+        seller_tx_signature = TransactionSignature.decode_from_der(
+            seller_signature, TransactionSigHash.ALL, False
+        )
+        witness = TransactionWitness.redeem_p2wsh(
+            redeem_script, seller_tx_signature, buyer_tx_signature
+        ).construct_witness()
         input = delayed_payout_tx.inputs[0]
         input.script_sig = None
         input.witness = witness
@@ -868,7 +870,7 @@ class TradeWalletService:
             )
 
         check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
-        buyer_signature = multi_sig_key_pair.sign_message(sig_hash, self._password)
+        buyer_signature = multi_sig_key_pair.ecdsa_sign(sig_hash, self._password)
 
         WalletService.print_tx("prepared payoutTx", prepared_payout_tx)
         WalletService.verify_transaction(prepared_payout_tx)
@@ -917,7 +919,14 @@ class TradeWalletService:
             )
 
         check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
-        seller_signature = multi_sig_key_pair.sign_message(sig_hash, self._password)
+        seller_signature = multi_sig_key_pair.ecdsa_sign(sig_hash, self._password)
+
+        buyer_tx_signature = TransactionSignature.decode_from_der(
+            buyer_signature, TransactionSigHash.ALL, False
+        )
+        seller_tx_signature = TransactionSignature.decode_from_der(
+            seller_signature, TransactionSigHash.ALL, False
+        )
 
         # Take care of order of signatures. Need to be reversed here.
         input = payout_tx.inputs[0]
@@ -928,14 +937,10 @@ class TradeWalletService:
             )
         else:
             input.script_sig = None
-            input.witness = check_not_none(
-                self._wallet.get_witness_for_redeem_script(
-                    redeem_script,
-                    "p2wsh",
-                    {buyer_pub_key: buyer_signature, seller_pub_key: seller_signature},
-                ),
-                "Failed to get witness for redeem script",
-            )
+            witness = TransactionWitness.redeem_p2wsh(
+                redeem_script, seller_tx_signature, buyer_tx_signature
+            ).construct_witness()
+            input.witness = witness
 
         WalletService.print_tx("payout_tx", payout_tx)
         WalletService.verify_transaction(payout_tx)
@@ -993,7 +998,7 @@ class TradeWalletService:
             )
 
         check_not_none(my_multi_sig_key_pair, "my_multi_sig_key_pair must not be None")
-        my_signature = my_multi_sig_key_pair.sign_message(sig_hash, self._password)
+        my_signature = my_multi_sig_key_pair.ecdsa_sign(sig_hash, self._password)
 
         WalletService.print_tx(
             "prepared mediated payoutTx for sig creation", prepared_payout_tx
@@ -1036,6 +1041,13 @@ class TradeWalletService:
 
         check_not_none(multi_sig_key_pair, "multi_sig_key_pair must not be None")
 
+        buyer_tx_signature = TransactionSignature.decode_from_der(
+            buyer_signature, TransactionSigHash.ALL, False
+        )
+        seller_tx_signature = TransactionSignature.decode_from_der(
+            seller_signature, TransactionSigHash.ALL, False
+        )
+
         # Take care of order of signatures. Need to be reversed here.
         input = payout_tx.inputs[0]
         if hashed_multi_sig_output_is_legacy:
@@ -1045,17 +1057,10 @@ class TradeWalletService:
             )
         else:
             input.script_sig = None
-            input.witness = check_not_none(
-                self._wallet.get_witness_for_redeem_script(
-                    redeem_script,
-                    "p2wsh",
-                    {
-                        buyer_multi_sig_pub_key: buyer_signature,
-                        seller_multi_sig_pub_key: seller_signature,
-                    },
-                ),
-                "Failed to get witness for redeem script",
-            )
+            witness = TransactionWitness.redeem_p2wsh(
+                redeem_script, seller_tx_signature, buyer_tx_signature
+            ).construct_witness()
+            input.witness = witness
 
         WalletService.print_tx("mediated payoutTx", payout_tx)
         WalletService.verify_transaction(payout_tx)
@@ -1110,7 +1115,7 @@ class TradeWalletService:
 
         # order of sigs matter
         redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
-            (arbitrator_pub_key, seller_pub_key, buyer_pub_key), 2 
+            (arbitrator_pub_key, seller_pub_key, buyer_pub_key), 2
         )
         hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
             hashed_multi_sig_output.get_script_pub_key()
@@ -1129,8 +1134,8 @@ class TradeWalletService:
         check_not_none(
             traders_multi_sig_key_pair, "traders_multi_sig_key_pair must not be None"
         )
-        # TODO LowRSigningKey
-        traders_signature = traders_multi_sig_key_pair.sign_message(
+        # LowRSigningKey is enabled in electrum_ecc by default
+        traders_signature = traders_multi_sig_key_pair.ecdsa_sign(
             sig_hash, self._password
         )
 
@@ -1141,16 +1146,11 @@ class TradeWalletService:
                 "We don't support legacy multi sig output at the moment"
             )
         else:
-            input.script_sig = None
-            # TODO check correctness
-            input.witness = self._wallet.get_witness_for_redeem_script(
-                redeem_script,
-                "p2wsh",
-                {
-                    arbitrator_pub_key: arbitrator_signature,
-                    buyer_pub_key: traders_signature,
-                },
-            )
+            input.script_sig = None 
+            witness = TransactionWitness.redeem_p2wsh(
+                redeem_script, arbitrator_signature, traders_signature
+            ).construct_witness()
+            input.witness = witness
 
         WalletService.print_tx("disputed payoutTx", payout_tx)
         WalletService.verify_transaction(payout_tx)
