@@ -49,16 +49,19 @@ class GrpcWaitableCallbackHandler(Generic[_T]):
         """
         if not self.error_message:
             return None
-        proto = self._get_availability_result(self.error_message)
-        description = self._get_availability_result_description(proto)
+        result = self._get_availability_result(self.error_message) 
+        description = result.description
         return AvailabilityResultWithDescription(
-            availability_result=proto, description=description
+            availability_result=result.to_proto_message(), description=description
         )
 
     @staticmethod
     def _get_availability_result(error_message: str):
         for result in AvailabilityResult:
-            if result.name in error_message.upper():
+            if (
+                result.name in error_message.upper()
+                or result.description in error_message
+            ):
                 return result
         raise IllegalArgumentException(
             f"Could not find an AvailabilityResult in error message:\n{error_message}"

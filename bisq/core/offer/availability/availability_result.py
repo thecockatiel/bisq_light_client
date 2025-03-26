@@ -29,9 +29,8 @@ class AvailabilityResult(Enum):
             AvailabilityResult, protobuf.AvailabilityResult, proto
         )
 
-    @staticmethod
-    def to_proto_message(result: "AvailabilityResult"):
-        return ProtoUtil.proto_enum_from_enum(protobuf.AvailabilityResult, result)
+    def to_proto_message(self):
+        return ProtoUtil.proto_enum_from_enum(protobuf.AvailabilityResult, self)
 
     def __init__(self, description: str):
         self.description = description
