@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
+from bisq.core.btc.listeners.tx_confidence_listener import TxConfidenceListener
 from bisq.core.monetary.price import Price
 from bisq.core.monetary.volume import Volume
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -20,6 +21,7 @@ from bitcoinj.base.coin import Coin
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bisq.common.protocol.proto_util import ProtoUtil
 from utils.data import ObservableList, SimpleProperty, SimplePropertyChangeEvent
+from utils.preconditions import check_not_none
 from utils.time import get_time_ms
 import pb_pb2 as protobuf
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -657,22 +659,17 @@ class Trade(TradeModel, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def setup_confidence_listener(self):
-        # TODO: fix to get confidence from wallet
         if self.get_deposit_tx() is not None:
-            transaction_confidence = self.get_deposit_tx().get_confidence()
-            if transaction_confidence.confidence_type == TransactionConfidenceType.BUILDING:
-                self.set_confirmed_state()
-            else:   
-                def on_done(f: Future["TransactionConfidence"]):
-                    try:
-                        f.result()
-                        self.set_confirmed_state()
-                    except Exception as e:
-                        logger.error(str(e), exc_info=e)
-                        raise RuntimeError(e)
-                    
-                future = transaction_confidence.get_depth_future(1)
-                future.add_done_callback(on_done)
+            class Listener(TxConfidenceListener):
+                    def on_transaction_confidence_changed(self_,  confidence: "TransactionConfidence"):
+                        if confidence.confidence_type == TransactionConfidenceType.BUILDING:
+                            self.set_confirmed_state()
+                            self.process_model.btc_wallet_service.remove_tx_confidence_listener(self_)
+
+            listener = Listener(check_not_none(self.deposit_tx_id, "deposit_tx_id cannot be None at setup_confidence_listener"))
+            self.process_model.btc_wallet_service.add_tx_confidence_listener(listener)
+            if self.get_deposit_tx().confidence:
+                listener.on_transaction_confidence_changed(self.get_deposit_tx().confidence)
         else:
             logger.error("depositTx is None. That must not happen.")
 

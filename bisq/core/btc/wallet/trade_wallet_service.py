@@ -99,6 +99,8 @@ class TradeWalletService:
         callback: "TxBroadcasterCallback",
     ) -> "Transaction":
         trading_fee_tx = Transaction(self.params)
+        # TODO: FIXME: hack
+        trading_fee_tx.version = 1
         send_request = None
         try:
             trading_fee_tx.add_output(
@@ -460,6 +462,8 @@ class TradeWalletService:
 
         # Now we construct the real deposit tx
         prepared_deposit_tx = Transaction(self.params)
+        # TODO: FIXME: hack
+        prepared_deposit_tx.version = 1
 
         maker_raw_transaction_inputs = []
         if maker_is_buyer:
@@ -548,9 +552,6 @@ class TradeWalletService:
             tx_input = prepared_deposit_tx.inputs[i]
             WalletService.check_script_sig(prepared_deposit_tx, tx_input, i)
 
-        # TODO: FIXME: hack
-        prepared_deposit_tx.version = 1
-
         WalletService.print_tx("maker_creates_deposit_tx", prepared_deposit_tx)
         WalletService.verify_transaction(prepared_deposit_tx)
 
@@ -596,6 +597,8 @@ class TradeWalletService:
 
         # The outpoints are not available from the serialized makers_deposit_tx, so we cannot use that tx directly, but we use it to construct a new deposit_tx
         deposit_tx = Transaction(self.params)
+        # TODO: FIXME: hack
+        deposit_tx.version = 1
 
         if taker_is_seller:
             # Add buyer inputs and apply signature
@@ -622,14 +625,14 @@ class TradeWalletService:
             # Add seller inputs
             for seller_input in seller_inputs:
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, None, seller_input)
+                    self._get_transaction_input(deposit_tx, b"", seller_input)
                 )
         else:
             # Taker is buyer
             # Add buyer inputs
             for buyer_input in buyer_inputs:
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, None, buyer_input)
+                    self._get_transaction_input(deposit_tx, b"", buyer_input)
                 )
 
             # Add seller inputs
@@ -640,7 +643,7 @@ class TradeWalletService:
             ):
                 # We get the deposit tx unsigned if maker is seller
                 deposit_tx.add_input(
-                    self._get_transaction_input(deposit_tx, None, seller_inputs[k])
+                    self._get_transaction_input(deposit_tx, b"", seller_inputs[k])
                 )
 
         # Add all outputs from makers_deposit_tx to deposit_tx
@@ -709,6 +712,8 @@ class TradeWalletService:
     ) -> "Transaction":
         deposit_tx_output = deposit_tx.outputs[0]
         delayed_payout_tx = Transaction(self.params)
+        # TODO: FIXME: hack
+        delayed_payout_tx.version = 1
         delayed_payout_tx.add_input(deposit_tx_output)
         self._apply_lock_time(lock_time, delayed_payout_tx)
         check_argument(receivers, "receivers must not be empty")
@@ -720,8 +725,6 @@ class TradeWalletService:
                     delayed_payout_tx,
                 )
             )
-        # TODO: FIXME: hack
-        delayed_payout_tx.version = 1
         WalletService.print_tx(
             "Unsigned delayedPayoutTx ToDonationAddress", delayed_payout_tx
         )
@@ -1093,6 +1096,8 @@ class TradeWalletService:
         deposit_tx = Transaction(self.params, deposit_tx_serialized)
         hashed_multi_sig_output = deposit_tx.outputs[0]
         payout_tx = Transaction(self.params)
+        # TODO: FIXME: hack
+        payout_tx.version = 1
         payout_tx.add_input(hashed_multi_sig_output)
 
         if buyer_payout_amount.is_positive():
@@ -1252,7 +1257,7 @@ class TradeWalletService:
             script_sig=script_program,
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        tx_in.utxo = outpoint.connected_tx._electrum_transaction
+        self._wallet._electrum_wallet.add_input_info(tx_in)
         return TransactionInput(
             tx_in,
             parent_transaction,
@@ -1304,6 +1309,8 @@ class TradeWalletService:
     ) -> "Transaction":
         hashed_multi_sig_output = deposit_tx.outputs[0]
         transaction = Transaction(self.params)
+        # TODO: FIXME: hack
+        transaction.version = 1
         transaction.add_input(hashed_multi_sig_output)
 
         if buyer_payout_amount.is_positive():
@@ -1325,8 +1332,6 @@ class TradeWalletService:
             )
 
         check_argument(len(transaction.outputs) >= 1, "We need at least one output.")
-        # TODO: FIXME: hack
-        transaction.version = 1
         return transaction
 
     def _add_available_inputs_and_change_outputs(

@@ -262,10 +262,19 @@ class Transaction:
 
     @staticmethod
     def verify(network: "NetworkParameters", tx: "Transaction") -> None:
-        # since we use electrum under the hood, the first check is to run deserialize on it.
+        """
+        Checks the transaction contents for sanity, in ways that can be done in a standalone manner.
+
+        Does **not** perform all checks on a transaction such as whether the inputs are already spent.
+
+        Specifically this method verifies:
+        - That there is at least one input and output.
+        - That the serialized size is not larger than the max block size.
+        - That no outputs have negative value.
+        - That the outputs do not sum to larger than the max allowed quantity of coin in the system.
+        - If the tx is a coinbase tx, the coinbase scriptSig size is within range. Otherwise that there are no coinbase inputs in the tx.
+        """
         try:
-            tx._electrum_transaction.invalidate_ser_cache()
-            tx._electrum_transaction.deserialize()
             message_size = tx.get_message_size()
         except Exception as e:
             if "negative int to unsigned" in str(e):
