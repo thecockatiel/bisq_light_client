@@ -1,18 +1,26 @@
 import unittest
 from dataclasses import dataclass
 
+from bisq.common.crypto.hash import get_sha256_hash
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
 from bitcoinj.core.block import Block
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.core.transaction_witness import TransactionWitness
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.params.test_net3_params import TestNet3Params
 from bitcoinj.params.main_net_params import MainNetParams
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.script.script import Script
+from electrum_min.crypto import hash_160
 from electrum_min.transaction import PartialTxInput, TxInput, TxOutpoint
+from bitcoinj.script.script_builder import ScriptBuilder
+from bitcoinj.core.transaction_sig_hash import TransactionSigHash
+from bitcoinj.crypto.transaction_signature import TransactionSignature
+from electrum_ecc import ECPrivkey
+
 TESTNET = TestNet3Params()
 MAINNET = MainNetParams()
 
@@ -66,7 +74,9 @@ class TransactionTest(unittest.TestCase):
 
         tx.add_output(
             TransactionOutput.from_coin_and_address(
-                Coin.value_of(1), "tb1qglzsh2l7t3ufhtakjcfulv7jhy8plnhvwd28pu", tx # random address
+                Coin.value_of(1),
+                "tb1qglzsh2l7t3ufhtakjcfulv7jhy8plnhvwd28pu",
+                tx,  # random address
             ),
         )
 
@@ -98,7 +108,9 @@ class TransactionTest(unittest.TestCase):
 
         tx.add_output(
             TransactionOutput.from_coin_and_address(
-                Coin.value_of(-1), "tb1qglzsh2l7t3ufhtakjcfulv7jhy8plnhvwd28pu", tx # random address
+                Coin.value_of(-1),
+                "tb1qglzsh2l7t3ufhtakjcfulv7jhy8plnhvwd28pu",
+                tx,  # random address
             ),
         )
 
@@ -115,7 +127,7 @@ class TransactionTest(unittest.TestCase):
             ),
             tx,
         )
- 
+
         tx.add_input(original_input)
 
         # Verify should raise an exception due to duplicate inputs
@@ -158,6 +170,164 @@ class TransactionTest(unittest.TestCase):
         )
         self.assertNotEqual(tx.get_wtx_id(), tx.get_tx_id())
         self.assertEqual(len(hex_str) // 2, tx.get_message_size())
+
+    def test_witness_signature_p2wpkh(self):
+        # Test vector P2WPKH from:
+        # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+
+        # Create the unsigned transaction
+        tx_hex = (
+            "01000000"  # version
+            + "02"  # num txIn
+            + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f"
+            + "00000000"
+            + "00"
+            + "eeffffff"  # txIn
+            + "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a"
+            + "01000000"
+            + "00"
+            + "ffffffff"  # txIn
+            + "02"  # num txOut
+            + "202cb20600000000"
+            + "1976a914"
+            + "8280b37df378db99f66f85c95a783a76ac7a6d59"
+            + "88ac"  # txOut
+            + "9093510d00000000"
+            + "1976a914"
+            + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159"
+            + "88ac"  # txOut
+            + "11000000"
+        )  # nLockTime
+        tx = Transaction(MAINNET, bytes.fromhex(tx_hex))
+
+        self.assertEqual(tx_hex, tx.bitcoin_serialize().hex())
+        self.assertEqual(len(tx_hex) // 2, tx.get_message_size())
+        self.assertEqual(2, len(tx.inputs))
+        self.assertEqual(2, len(tx.outputs))
+        tx_in0 = tx.inputs[0]
+        tx_in1 = tx.inputs[1]
+
+        key0 = ECPrivkey(
+            bytes.fromhex(
+                "bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"
+            )
+        )
+        script_pub_key0 = ScriptBuilder.create_p2pk_output_script(
+            key0.get_public_key_bytes()
+        )
+        self.assertEqual(
+            "2103c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432ac",
+            script_pub_key0.program.hex(),
+        )
+
+        # Second key/script - P2WPKH
+        key1 = ECPrivkey(
+            bytes.fromhex(
+                "619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"
+            )
+        )
+        self.assertEqual(
+            "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
+            key1.get_public_key_hex(),
+        )
+        script_pub_key1 = ScriptBuilder.create_p2wpkh_output_script(
+            hash_160(key1.get_public_key_bytes())
+        )
+        self.assertEqual(
+            "00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1",
+            script_pub_key1.program.hex(),
+        )
+
+        dummy_tx = Transaction(MAINNET)
+        output = dummy_tx.add_output(
+            TransactionOutput.from_coin_and_script(
+                Coin.COIN().multiply(6), script_pub_key1, dummy_tx
+            )
+        )
+        tx_in1._connect(output)
+
+        self.assertEqual(
+            "63cec688ee06a91e913875356dd4dea2f8e0f2a2659885372da2a37e32c7532e",
+            tx.hash_for_signature(
+                0, script_pub_key0, TransactionSigHash.ALL, False
+            ).hex(),
+        )
+
+        # tx_sig0 = tx.calculate_signature(
+        #     tx, 0, key0, script_pub_key0, TransactionSigHash.ALL, False
+        # )
+        # self.assertEqual(
+        #     "30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
+        #     tx_sig0.encode_to_bitcoin().hex(),
+        # )
+
+        witness_script = ScriptBuilder.create_p2pkh_output_script(
+            hash_160(key1.get_public_key_bytes())
+        )
+        self.assertEqual(
+            "76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
+            witness_script.program.hex(),
+        )
+
+        self.assertEqual(
+            "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670",
+            tx.hash_for_witness_signature(
+                1, witness_script, tx_in1.get_value(), TransactionSigHash.ALL, False
+            ).hex(),
+        )
+        # tx_sig1 = tx.calculate_witness_signature(
+        #     tx, 1, key1, witness_script, TransactionSigHash.ALL, False
+        # )
+        # self.assertEqual(
+        #     "304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee01",
+        #     tx_sig1.encode_to_bitcoin().hex(),
+        # )
+
+        # self.assertFalse(self.correctly_spends(tx_in0, script_pub_key0, 0))
+        # tx_in0.script_sig = (
+        #     ScriptBuilder().data(tx_sig0.encode_to_bitcoin()).build().program
+        # )
+        # self.assertTrue(self.correctly_spends(tx_in0, script_pub_key0, 0))
+
+        # self.assertFalse(self.correctly_spends(tx_in1, script_pub_key1, 1))
+        # tx_in1.witness = TransactionWitness.redeem_p2wpkh(
+        #     tx_sig1, key1
+        # ).construct_witness()
+        # self.assertTrue(self.correctly_spends(tx_in1, script_pub_key1, 1))
+
+        # Check the final signed transaction
+        # signed_tx_hex = (
+        #     "01000000"  # version
+        #     + "00"  # marker
+        #     + "01"  # flag
+        #     + "02"  # num txIn
+        #     + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f"
+        #     + "00000000"
+        #     + "494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01"
+        #     + "eeffffff"  # txIn
+        #     + "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a"
+        #     + "01000000"
+        #     + "00"
+        #     + "ffffffff"  # txIn
+        #     + "02"  # num txOut
+        #     + "202cb20600000000"
+        #     + "1976a914"
+        #     + "8280b37df378db99f66f85c95a783a76ac7a6d59"
+        #     + "88ac"  # txOut
+        #     + "9093510d00000000"
+        #     + "1976a914"
+        #     + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159"
+        #     + "88ac"  # txOut
+        #     + "00"  # witness (empty)
+        #     + "02"  # witness (2 pushes)
+        #     + "47"  # push length
+        #     + "304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee01"  # push
+        #     + "21"  # push length
+        #     + "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357"  # push
+        #     + "11000000"
+        # )  # nLockTime
+        # self.assertEqual(signed_tx_hex, tx.bitcoin_serialize().hex())
+        # self.assertEqual(len(signed_tx_hex) // 2, tx.get_message_size())
 
     def correctly_spends(
         self, tx_in: "TransactionInput", script_pub_key: "Script", input_index: int
