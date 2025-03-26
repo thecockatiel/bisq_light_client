@@ -68,7 +68,7 @@ class ScriptBuilder:
         check_argument(len(pub_key_hash) == 32, "pub_key_hash must be 32 bytes (sha256)")
         return Script(
             bytes.fromhex(
-                construct_script([opcodes.OP_HASH160, pub_key_hash, opcodes.OP_EQUAL])
+                construct_script([0, pub_key_hash])
             )
         )
 
