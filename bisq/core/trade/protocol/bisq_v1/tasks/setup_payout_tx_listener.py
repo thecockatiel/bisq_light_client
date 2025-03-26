@@ -39,11 +39,11 @@ class SetupPayoutTxListener(TradeTask):
                 trade_id = self.process_model.offer.id
                 address = wallet_service.get_or_create_address_entry(trade_id, AddressEntryContext.TRADE_PAYOUT).get_address()
 
-                deposit_tx = check_not_none(self.trade.get_deposit_tx(), "deposit_tx must not be None")
+                deposit_tx_confidence = check_not_none(wallet_service.get_confidence_for_tx_id(self.trade.deposit_tx_id), "deposit_tx_confidence must not be None")
                 # check if the payout already happened (ensuring it was > deposit block height, see GH #5725)
                 confidence = wallet_service.get_confidence_for_address_from_block_height(
                     address,
-                    deposit_tx.confidence.appeared_at_chain_height
+                    deposit_tx_confidence.appeared_at_chain_height
                 )
                 
                 if self._is_in_network(confidence):
