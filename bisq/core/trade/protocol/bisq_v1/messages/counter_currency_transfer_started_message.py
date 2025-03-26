@@ -20,7 +20,7 @@ class CounterCurrencyTransferStartedMessage(TradeMailboxMessage):
             trade_id=self.trade_id,
             buyer_payout_address=self.buyer_payout_address,
             sender_node_address=self.sender_node_address.to_proto_message(),
-            buyer_signature=protobuf(value=self.buyer_signature),
+            buyer_signature=self.buyer_signature,
             uid=self.uid,
         )
 
