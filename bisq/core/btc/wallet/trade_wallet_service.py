@@ -735,8 +735,8 @@ class TradeWalletService:
         buyer_pub_key: bytes,
         seller_pub_key: bytes,
     ) -> bytes:
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_pub_key, buyer_pub_key), 2
         )
         delayed_payout_tx_input_value = prepared_deposit_tx.outputs[0].get_value()
         sig_hash = delayed_payout_tx.hash_for_witness_signature(
@@ -762,8 +762,8 @@ class TradeWalletService:
         seller_signature: bytes,
         input_value: Coin,
     ) -> "Transaction":
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_pub_key, buyer_pub_key), 2
         )
         witness = check_not_none(
             self._wallet.get_witness_for_redeem_script(
@@ -851,8 +851,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_pub_key, buyer_pub_key), 2
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -896,8 +896,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_pub_key, buyer_pub_key), 2
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -972,8 +972,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_pub_key, buyer_pub_key), 2
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -1024,8 +1024,8 @@ class TradeWalletService:
         )
 
         # MultiSig redeem script
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (seller_multi_sig_pub_key, buyer_multi_sig_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (seller_multi_sig_pub_key, buyer_multi_sig_pub_key), 2
         )
 
         # MultiSig output from previous transaction is at index 0
@@ -1109,8 +1109,8 @@ class TradeWalletService:
             )
 
         # order of sigs matter
-        redeem_script = self._get_x_of_threshold_multi_sig_output_script(
-            (arbitrator_pub_key, seller_pub_key, buyer_pub_key), 2, False
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            (arbitrator_pub_key, seller_pub_key, buyer_pub_key), 2 
         )
         hashed_multi_sig_output_is_legacy = ScriptPattern.is_p2sh(
             hashed_multi_sig_output.get_script_pub_key()
@@ -1272,10 +1272,19 @@ class TradeWalletService:
             ).get_script_pub_key()
         )
 
+    def _get_x_of_threshold_multi_sig_redeem_script(
+        self,
+        pubkeys: Iterable[bytes],
+        threshold: int,
+    ):
+        return bytes.fromhex(multisig_script([key.hex() for key in pubkeys], threshold))
+
     def _get_x_of_threshold_multi_sig_output_script(
         self, pubkeys: Iterable[bytes], threshold: int, legacy: bool = False
     ):
-        redeem_script = bytes.fromhex(multisig_script([key.hex() for key in pubkeys], threshold))
+        redeem_script = self._get_x_of_threshold_multi_sig_redeem_script(
+            pubkeys, threshold
+        )
         if legacy:
             # p2sh
             redeem_script = hash_160(redeem_script)
