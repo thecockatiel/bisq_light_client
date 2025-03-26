@@ -10,11 +10,11 @@ from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from utils.preconditions import check_not_none
+from bisq.core.btc.listeners.address_confidence_listener import AddressConfidenceListener
 
 if TYPE_CHECKING:
     from utils.data import SimplePropertyChangeEvent
     from bitcoinj.core.transaction_confidence import TransactionConfidence
-    from bisq.core.btc.listeners.address_confidence_listener import AddressConfidenceListener
     from bisq.common.taskrunner.task_runner import TaskRunner
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
@@ -53,7 +53,6 @@ class SetupPayoutTxListener(TradeTask):
                         def on_transaction_confidence_changed(self_, conf: "TransactionConfidence"):
                             if self._is_in_network(conf):
                                 self._apply_confidence(conf)
-                        
                     
                     self.confidence_listener = ConfidenceListener(address)
                     
