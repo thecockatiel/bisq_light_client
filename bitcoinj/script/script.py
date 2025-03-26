@@ -135,7 +135,7 @@ class Script:
             except Exception as e:
                 raise ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", e)
             pubkey = ECPubkey(witness_elements[1])
-            script_code = ScriptBuilder.create_p2pkh_output_script(pubkey.get_public_key_bytes())
+            script_code = ScriptBuilder.create_p2pkh_output_script(hash_160(pubkey.get_public_key_bytes()))
             sig_hash = tx_containing_this.hash_for_witness_signature(script_sig_index, script_code, value, signature.sig_hash_mode, False)
             valid_sig = pubkey.ecdsa_verify(signature.to_sig64(), sig_hash)
             if not valid_sig:

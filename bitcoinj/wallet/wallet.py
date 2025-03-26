@@ -765,7 +765,7 @@ class Wallet(EventListener):
             for selected_output in selection.gathered:
                 input = tx.add_input(
                     TransactionInput.from_output(
-                        selected_output, selected_output.parent
+                        selected_output
                     )
                 )
                 # If the scriptBytes don't default to none, our size calculations will be thrown off.

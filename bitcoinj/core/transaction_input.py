@@ -6,10 +6,15 @@ from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script import Script
-from electrum_min.transaction import TxOutpoint, PartialTxInput as ElectrumPartialTxInput
+from electrum_min.transaction import (
+    TxOutpoint as ElectrumTxOutpoint,
+    PartialTxInput as ElectrumPartialTxInput,
+    TxInput as ElectrumTxInput,
+)
+import electrum_min.transaction as etx_mod
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
-    from electrum_min.transaction import TxInput as ElectrumTxInput
     from bitcoinj.core.transaction import Transaction
 
 
@@ -31,52 +36,63 @@ class TransactionInput:
         self._ec_tx_input = ec_tx_input
         if outpoint:
             self.outpoint = outpoint
-        elif ec_tx_input.prevout:
+        elif self._ec_tx_input.prevout:
             self.outpoint = TransactionOutPoint(
-                ec_tx_input.prevout.out_idx,
-                ec_tx_input.prevout.txid.hex(),
+                self._ec_tx_input.prevout.out_idx,
+                self._ec_tx_input.prevout.txid.hex(),
             )
+
+    def _connect(self, output: "TransactionOutput"):
+        # seems wrong but thats what bitcoinj does. no change to the prevout of input
+        self.parent = output.parent
+        setattr(self._ec_tx_input, "_TxInput__value_sats", output.value)
 
     @property
     def value(self):
         return self._ec_tx_input.value_sats() or 0
-    
-    def get_value(self): 
+
+    def get_value(self):
         return Coin.value_of(self.value)
 
     @staticmethod
-    def from_electrum_input(params: "NetworkParameters", ec_tx_input: "ElectrumTxInput", parent_tx: Optional["Transaction"]):
+    def from_electrum_input(
+        params: "NetworkParameters",
+        ec_tx_input: "ElectrumTxInput",
+        parent_tx: Optional["Transaction"],
+    ):
         from bitcoinj.core.transaction import Transaction
 
         if ec_tx_input.utxo:
             tx = Transaction(params, ec_tx_input.utxo.serialize_as_bytes())
             outpoint = TransactionOutPoint.from_tx(
                 tx,
-                ec_tx_input.prevout.out_idx, 
+                ec_tx_input.prevout.out_idx,
             )
         elif ec_tx_input.prevout:
             outpoint = TransactionOutPoint(
                 ec_tx_input.prevout.out_idx,
                 ec_tx_input.prevout.txid.hex(),
             )
-        
+
         return TransactionInput(
             ec_tx_input,
             parent_tx,
             outpoint,
         )
-    
+
     @staticmethod
-    def from_output(tx_output: "TransactionOutput", parent_tx: Optional["Transaction"] = None):
+    def from_output(tx_output: "TransactionOutput"):
+        check_argument(tx_output.parent, "Output must be connected to a transaction.")
         input = ElectrumPartialTxInput(
-            prevout=TxOutpoint(bytes.fromhex(tx_output.parent.get_tx_id()), tx_output.index),
+            prevout=ElectrumTxOutpoint(
+                bytes.fromhex(tx_output.parent.get_tx_id()), tx_output.index
+            ),
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        if parent_tx:
-            input.utxo = parent_tx._electrum_transaction
+        input.utxo = tx_output.parent._electrum_transaction
         return TransactionInput(
             input,
-            parent_tx,
+            tx_output.parent,
             TransactionOutPoint.from_tx_output(tx_output),
         )
 
@@ -100,7 +116,7 @@ class TransactionInput:
     @property
     def nsequence(self) -> int:
         return self._ec_tx_input.nsequence
-    
+
     @nsequence.setter
     def nsequence(self, value: int) -> None:
         self._ec_tx_input.nsequence = value
@@ -140,7 +156,7 @@ class TransactionInput:
     @property
     def script_sig(self) -> Optional[bytes]:
         return self._ec_tx_input.script_sig
-    
+
     @script_sig.setter
     def script_sig(self, value: bytes) -> None:
         self._ec_tx_input.script_sig = value
@@ -200,12 +216,16 @@ class TransactionInput:
                 s.append(f" for [{self.outpoint}]: {self.get_script_sig()}")
                 flags = ", ".join(
                     filter(
-                    None,
-                    [
-                        "witness" if self.has_witness else None,
-                        f"sequence: {hex(self.nsequence)}" if self.has_sequence else None,
-                        "opts into full RBF" if self.is_opt_in_full_rbf else None,
-                    ],
+                        None,
+                        [
+                            "witness" if self.has_witness else None,
+                            (
+                                f"sequence: {hex(self.nsequence)}"
+                                if self.has_sequence
+                                else None
+                            ),
+                            "opts into full RBF" if self.is_opt_in_full_rbf else None,
+                        ],
                     )
                 )
                 if flags:

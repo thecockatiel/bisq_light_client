@@ -46,14 +46,39 @@ class Transaction:
     def __init__(
         self,
         params: "NetworkParameters",
-        payload_bytes_or_tx: Optional[Union[bytes, ElectrumTransaction]] = None,
+        payload_bytes_or_tx: Optional[Union[bytes, ElectrumTransaction, str]] = None,
+        *,
+        psbt=False,
     ) -> None:
+        if isinstance(payload_bytes_or_tx, str):
+            payload_bytes_or_tx = bytes.fromhex(payload_bytes_or_tx)
 
         if isinstance(payload_bytes_or_tx, ElectrumTransaction):
             self._electrum_transaction = payload_bytes_or_tx
         elif isinstance(payload_bytes_or_tx, bytes):
-            self._electrum_transaction = ElectrumTransaction(payload_bytes_or_tx)
-            self._electrum_transaction.deserialize()
+
+            if psbt:
+                self._electrum_transaction = PartialElectrumTransaction.from_raw_psbt(
+                    payload_bytes_or_tx
+                )
+            else:
+                self._electrum_transaction = ElectrumTransaction(payload_bytes_or_tx)
+                self._electrum_transaction.deserialize()
+                tx = self._electrum_transaction
+                # init partial tx from tx but keep witnesses
+                res = PartialElectrumTransaction()
+                for txin in tx.inputs():
+                    ptx = ElectrumPartialTxInput.from_txin(txin, strip_witness=False)
+                    res._inputs.append(
+                        ptx
+                    )
+                res._outputs = [
+                    ElectrumPartialTxOutput.from_txout(txout) for txout in tx.outputs()
+                ]
+                res.version = tx.version
+                res.locktime = tx.locktime
+                res._cached_network_ser = tx._cached_network_ser
+                self._electrum_transaction = res
         else:
             self._electrum_transaction = PartialElectrumTransaction()
 
@@ -118,7 +143,9 @@ class Transaction:
 
         return LazySequenceWrapper(
             self._electrum_transaction.inputs,
-            lambda tx_input, idx: TransactionInput.from_electrum_input(self.params, tx_input, self),
+            lambda tx_input, idx: TransactionInput.from_electrum_input(
+                self.params, tx_input, self
+            ),
         )
 
     @cached_property
@@ -379,8 +406,7 @@ class Transaction:
 
         tx = None
         try:
-            tx = Transaction(self.params, self.bitcoin_serialize())
-            tx._electrum_transaction.deserialize()
+            tx = Transaction(self.params, self.bitcoin_serialize(include_sigs=False))
             tx = tx._electrum_transaction
         except:
             # Should not happen unless we were given a totally broken transaction.
@@ -389,7 +415,7 @@ class Transaction:
         for i, tx_in in enumerate(tx.inputs()):
             tx_in.script_sig = b""
             setattr(tx_in, "_TxInput__scriptpubkey", None)
-            tx_in.witness = None
+            tx_in.witness = b""
 
         connected_script = Script.remove_all_instances_of_op(
             connected_script, opcodes.OP_CODESEPARATOR
@@ -430,9 +456,7 @@ class Transaction:
             tx._inputs.append(input)
 
         tx.invalidate_ser_cache()
-        bos = bytes.fromhex(
-            tx.serialize_to_network(include_sigs=True, force_legacy=True)
-        )
+        bos = bytes.fromhex(tx.serialize_to_network(include_sigs=True))
         bos = bos + (0x000000FF & sig_hash_type).to_bytes(4, "little")
         return Sha256Hash.twice_of(bos).hash_bytes
 
@@ -505,7 +529,9 @@ class Transaction:
                         s.append(f"  {value.to_friendly_string()} ({value})")
                     s.append("\n")
                     if tx_in.has_witness:
-                        s.append(f"{indent}        witness:{bytes_as_hex_string(tx_in.witness)}\n")
+                        s.append(
+                            f"{indent}        witness:{bytes_as_hex_string(tx_in.witness)}\n"
+                        )
 
                     outpoint = tx_in.outpoint
                     connected_output = outpoint.connected_output
@@ -580,7 +606,7 @@ class Transaction:
 
     def add_input(self, tx_io: Union["TransactionInput", "TransactionOutput"]):
         if isinstance(tx_io, TransactionOutput):
-            tx_io = TransactionInput.from_output(tx_io, tx_io.parent)
+            tx_io = TransactionInput.from_output(tx_io)
         if not isinstance(tx_io._ec_tx_input, ElectrumPartialTxInput):
             tx_io._ec_tx_input = ElectrumPartialTxInput.from_txin(tx_io._ec_tx_input)
         # we manually manage inputs and outputs because electrums sorts them by default (BIP69)
@@ -598,6 +624,7 @@ class Transaction:
             self._electrum_transaction._outputs = []
         self._electrum_transaction._outputs.append(electrum_output)
         self._electrum_transaction.invalidate_ser_cache()
+        return tx_output
 
     def add_output_using_coin_and_address(self, coin: Coin, address: "Address"):
         from bitcoinj.core.transaction_output import TransactionOutput
