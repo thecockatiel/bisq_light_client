@@ -128,7 +128,7 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
                 1, input_amount, tx_fee_per_vbyte
             )
             return [
-                tuple(
+                (
                     spendable_amount,
                     self.burning_man_service.get_legacy_burning_man_address(
                         burning_man_selection_height
@@ -171,7 +171,7 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
             amount = round(capped_burn_amount_share * spendable_amount)
 
             if min_output_amount <= amount <= max_output_amount:
-                receivers.append(tuple(amount, receiver_address))
+                receivers.append((amount, receiver_address))
 
         receivers.sort(key=lambda x: (x[0], java_cmp_str(x[1])))
 
@@ -182,7 +182,7 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
             # Otherwise we use it as miner fee
             if available > DelayedPayoutTxReceiverService.DPT_MIN_REMAINDER_TO_LEGACY_BM:
                 receivers.append(
-                    tuple(
+                    (
                         available,
                         self.burning_man_service.get_legacy_burning_man_address(
                             burning_man_selection_height
