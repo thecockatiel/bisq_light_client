@@ -94,7 +94,7 @@ class Balances:
         balance_sum = sum(
             entry.coin_locked_in_multi_sig
             for entry in not_none_iterator(
-                self._btc_wallet_service.get_address_entry(trade(), AddressEntryContext.MULTI_SIG)
+                self._btc_wallet_service.get_address_entry(trade.get_id(), AddressEntryContext.MULTI_SIG)
                 for trade in locked_trades
             )
         )
