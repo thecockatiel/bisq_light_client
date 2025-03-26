@@ -9,6 +9,7 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
+from utils.preconditions import check_not_none
 
 if TYPE_CHECKING:
     from utils.data import SimplePropertyChangeEvent
@@ -38,12 +39,11 @@ class SetupPayoutTxListener(TradeTask):
                 trade_id = self.process_model.offer.id
                 address = wallet_service.get_or_create_address_entry(trade_id, AddressEntryContext.TRADE_PAYOUT).get_address()
 
-                deposit_tx = self.trade.get_deposit_tx()
-                assert deposit_tx is not None
+                deposit_tx = check_not_none(self.trade.get_deposit_tx(), "deposit_tx must not be None")
                 # check if the payout already happened (ensuring it was > deposit block height, see GH #5725)
                 confidence = wallet_service.get_confidence_for_address_from_block_height(
                     address,
-                    deposit_tx.get_confidence().appeared_at_chain_height
+                    deposit_tx.confidence.appeared_at_chain_height
                 )
                 
                 if self._is_in_network(confidence):
