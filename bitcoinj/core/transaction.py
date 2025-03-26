@@ -523,7 +523,7 @@ class Transaction:
             for i, tx_in in enumerate(self.inputs):
                 s.append(f"{indent}   in   ")
                 try:
-                    s.append(f"{bytes_as_hex_string(tx_in.script_sig)}")
+                    s.append(f"{tx_in.get_script_sig()}")
                     value = tx_in.get_value()
                     if value is not None:
                         s.append(f"  {value.to_friendly_string()} ({value})")
