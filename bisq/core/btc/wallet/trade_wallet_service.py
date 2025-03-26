@@ -776,7 +776,7 @@ class TradeWalletService:
             redeem_script, seller_tx_signature, buyer_tx_signature
         ).construct_witness()
         input = delayed_payout_tx.inputs[0]
-        input.script_sig = None
+        input.script_sig = b""
         input.witness = witness
 
         WalletService.print_tx("finalizeDelayedPayoutTx", delayed_payout_tx)
@@ -936,7 +936,7 @@ class TradeWalletService:
                 "We don't support legacy multi sig output at the moment"
             )
         else:
-            input.script_sig = None
+            input.script_sig = b""
             witness = TransactionWitness.redeem_p2wsh(
                 redeem_script, seller_tx_signature, buyer_tx_signature
             ).construct_witness()
@@ -1056,7 +1056,7 @@ class TradeWalletService:
                 "We don't support legacy multi sig output at the moment"
             )
         else:
-            input.script_sig = None
+            input.script_sig = b""
             witness = TransactionWitness.redeem_p2wsh(
                 redeem_script, seller_tx_signature, buyer_tx_signature
             ).construct_witness()
@@ -1146,7 +1146,7 @@ class TradeWalletService:
                 "We don't support legacy multi sig output at the moment"
             )
         else:
-            input.script_sig = None 
+            input.script_sig = b""
             witness = TransactionWitness.redeem_p2wsh(
                 redeem_script, arbitrator_signature, traders_signature
             ).construct_witness()
