@@ -472,7 +472,7 @@ class Transaction:
         s.append("\n")
 
         weight = self.get_weight()
-        size = len(self.bitcoin_serialize())
+        size = self.get_message_size()
         vsize = self.get_vsize()
 
         s.append(f"{indent}weight: {weight} wu, ")
@@ -509,8 +509,8 @@ class Transaction:
 
         if self.is_coin_base:
             try:
-                script = self.inputs[0].script_sig.hex()
-                script2 = self.outputs[0].script_pub_key.hex()
+                script = bytes_as_hex_string(self.inputs[0].script_sig)
+                script2 = bytes_as_hex_string(self.outputs[0].script_pub_key)
             except Exception:
                 script = "???"
                 script2 = "???"
@@ -523,7 +523,7 @@ class Transaction:
             for i, tx_in in enumerate(self.inputs):
                 s.append(f"{indent}   in   ")
                 try:
-                    s.append(f"{tx_in.script_sig.hex()}")
+                    s.append(f"{bytes_as_hex_string(tx_in.script_sig)}")
                     value = tx_in.get_value()
                     if value is not None:
                         s.append(f"  {value.to_friendly_string()} ({value})")
