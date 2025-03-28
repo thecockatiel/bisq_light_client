@@ -8,10 +8,10 @@ from bisq.core.trade.model.bisq_v1.seller_trade import SellerTrade
 from bitcoinj.base.coin import Coin
 from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.network.p2p.node_address import NodeAddress
+from bisq.core.offer.offer import Offer
 
 if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
-    from bisq.core.offer.offer import Offer
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.trade.model.tradable import Tradable
     
