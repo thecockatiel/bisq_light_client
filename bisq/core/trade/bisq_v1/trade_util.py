@@ -135,7 +135,7 @@ class TradeUtil:
             raise ValueError(f"Unknown trade type to get_role: {type(trade)}")
 
     def get_role_res(
-        is_buyer_maker_and_seller_taker: bool, is_maker: bool, currency_code: str
+        self, is_buyer_maker_and_seller_taker: bool, is_maker: bool, currency_code: str
     ) -> str:
         """
         Returns a string describing a trader's role.
