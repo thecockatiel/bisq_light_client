@@ -202,7 +202,6 @@ class TradeStatistics2(
 
     @staticmethod
     def from_offer_payload(
-        self,
         offer_payload: OfferPayload,
         trade_price: Price,
         trade_amount: Coin,
