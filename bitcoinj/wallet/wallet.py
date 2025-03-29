@@ -48,7 +48,7 @@ from electrum_min.transaction import (
     TxOutput as ElectrumTxOutput,
     PartialTxOutput as ElectrumPartialTxOutput,
 )
-from electrum_min.network import Network
+from electrum_min.network import Network, TxBroadcastServerReturnedError
 from electrum_min.util import (
     EventListener,
     InvalidPassword,
@@ -405,15 +405,22 @@ class Wallet(EventListener):
 
     def _maybe_broadcast_possibly_not_broadcasted_txs(self):
         def on_done(f: Future, tx: "Transaction"):
+            remove = False
             try:
                 f.result()
                 logger.info(
                     f"Broadcasting completed for txid: {tx.get_tx_id()} wtxid: {tx.get_wtx_id()}"
                 )
+                remove = True
             except Exception as e:
-                logger.warning(
-                    f"Error when trying to broadcast tx at wallet start: {e}"
-                )
+                if isinstance(e, TxBroadcastServerReturnedError) or "program hash mismatch" in str(e):
+                    remove = True
+                else:
+                    logger.warning(
+                        f"Error when trying to broadcast tx at wallet start: {e}"
+                    )
+            if remove:
+                self._electrum_wallet.remove_txid_from_maybe_broadcast(tx.get_tx_id())
 
         for tx in self._get_possibly_not_broadcasted_txs():
             logger.info(f"Broadcasting possibly not broadcasted tx: {tx}")
