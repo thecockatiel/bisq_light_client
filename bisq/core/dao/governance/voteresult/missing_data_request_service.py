@@ -69,7 +69,7 @@ class MissingDataRequestService(DaoSetupService):
                 # We send all proposals including those from old cycles.
                 delay = max(0.1, min(300, random.randint(0, len(proposal_payloads))))
                 UserThread.run_after(
-                    lambda: self._republish_proposal_payload(proposal_payload),
+                    lambda p=proposal_payload: self._republish_proposal_payload(p),
                     timedelta(seconds=delay),
                 )
 
@@ -82,7 +82,7 @@ class MissingDataRequestService(DaoSetupService):
                     min(300, random.randint(0, len(blind_vote_payloads))),
                 )
                 UserThread.run_after(
-                    lambda: self._republish_blind_vote_payload(blind_vote_payload),
+                    lambda bvp=blind_vote_payload: self._republish_blind_vote_payload(bvp),
                     timedelta(seconds=delay),
                 )
 

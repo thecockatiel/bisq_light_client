@@ -614,7 +614,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 # Keep the delay long as we don't want to disconnect a peer in case we are a seed node just
                 # because he needs longer for the HS publishing
                 UserThread.run_after(
-                    lambda: self._close_anonymous_connection(connection),
+                    lambda c=connection: self._close_anonymous_connection(c),
                     timedelta(seconds=PeerManager.REMOVE_ANONYMOUS_PEER_SEC),
                 )
 

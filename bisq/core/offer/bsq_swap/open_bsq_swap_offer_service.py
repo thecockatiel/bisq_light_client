@@ -275,7 +275,7 @@ class OpenBsqSwapOfferService:
             ):
                 if self._is_proof_of_work_invalid(open_offer.get_offer()):
                     UserThread.execute(
-                        lambda: self._redo_proof_of_work_and_republish(open_offer)
+                        lambda o=open_offer: self._redo_proof_of_work_and_republish(o)
                     )
                 else:
                     open_bsq_swap_offer = OpenBsqSwapOffer(
@@ -307,8 +307,8 @@ class OpenBsqSwapOfferService:
                 and self._is_proof_of_work_invalid(open_bsq_swap_offer.open_offer.offer)
             ):
                 UserThread.execute(
-                    lambda: self._redo_proof_of_work_and_republish(
-                        open_bsq_swap_offer.open_offer
+                    lambda o=open_bsq_swap_offer: self._redo_proof_of_work_and_republish(
+                        o.open_offer
                     )
                 )
 

@@ -175,7 +175,7 @@ class AccountAgeWitnessService:
                         # stress the P2P network with publishing all at once at startup time.
                         delay_in_sec = 20 + random.randint(0, 40)
                         UserThread.run_after(
-                            lambda: self.p2p_service.add_persistable_network_payload(my_witness, True),
+                            lambda w=my_witness: self.p2p_service.add_persistable_network_payload(w, True),
                             timedelta(seconds=delay_in_sec),
                         )
 

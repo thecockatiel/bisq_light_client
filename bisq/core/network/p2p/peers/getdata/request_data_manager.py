@@ -202,7 +202,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                     # It might be that we have a prelim. request open for the same seed, if so we skip to the next.
                     if node_address not in self.handler_map:
                         UserThread.run_after(
-                            lambda: self.request_data(node_address, node_addresses),
+                            lambda node=node_address: self.request_data(node, node_addresses),
                             timedelta(milliseconds=i * 200 + 1),
                         )
                         num_requests += 1

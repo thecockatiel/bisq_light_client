@@ -130,10 +130,10 @@ class PersistenceManager(Generic[T]):
 
                     # We get our result handler called from the write thread so we map back to user thread.
                     persistence_manager.persist_now(
-                        lambda: PersistenceManager.on_write_completed(
+                        lambda pm=persistence_manager: PersistenceManager.on_write_completed(
                             complete_handler,
                             open_instances,
-                            persistence_manager,
+                            pm,
                             do_shutdown,
                         )
                     )

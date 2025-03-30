@@ -303,9 +303,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
         for envelope in envelopes_to_process:
             UserThread.execute(
-                lambda: list(
+                lambda e=envelope: (
                     map(
-                        lambda listener: listener.on_message(envelope, connection),
+                        lambda listener: listener.on_message(e, connection),
                         self.message_listeners,
                     )
                 )
@@ -655,7 +655,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.capabilities = supported_capabilities
         for listener in self.capabilities_listeners:
             if listener is not None:
-                UserThread.execute(lambda: listener.on_changed(supported_capabilities))
+                UserThread.execute(lambda l=listener: l.on_changed(supported_capabilities))
 
         return False
     
