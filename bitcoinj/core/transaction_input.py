@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.network_parameters import NetworkParameters
@@ -28,7 +28,7 @@ class TransactionInput:
 
     def __init__(
         self,
-        ec_tx_input: "ElectrumTxInput",
+        ec_tx_input: Union["ElectrumTxInput", "ElectrumPartialTxInput"],
         parent_tx: Optional["Transaction"] = None,
         outpoint: Optional["TransactionOutPoint"] = None,
     ):
@@ -87,6 +87,7 @@ class TransactionInput:
             prevout=ElectrumTxOutpoint(
                 bytes.fromhex(tx_output.parent.get_tx_id()), tx_output.index
             ),
+            script_sig=b"",
             nsequence=TransactionInput.NO_SEQUENCE,
         )
         input.utxo = tx_output.parent._electrum_transaction
