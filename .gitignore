@@ -191,3 +191,5 @@ grpc_extra_pb2.pyi
 spb_pb2_grpc.py
 spb_pb2.py
 spb_pb2.pyi
+
+/*.json
