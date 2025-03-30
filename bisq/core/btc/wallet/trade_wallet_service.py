@@ -714,7 +714,10 @@ class TradeWalletService:
         delayed_payout_tx = Transaction(self.params)
         # TODO: FIXME: hack
         delayed_payout_tx.version = 1
-        delayed_payout_tx.add_input(deposit_tx_output)
+        input = delayed_payout_tx.add_input(deposit_tx_output)
+        self._wallet._electrum_wallet.add_input_info(
+            input._ec_tx_input
+        )  # possibly update descriptor
         self._apply_lock_time(lock_time, delayed_payout_tx)
         check_argument(receivers, "receivers must not be empty")
         for receiver in receivers:
