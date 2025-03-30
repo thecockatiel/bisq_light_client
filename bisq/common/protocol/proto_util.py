@@ -1,6 +1,6 @@
 from enum import Enum
 from google.protobuf.internal.enum_type_wrapper import EnumTypeWrapper
-from typing import List, Set, Optional, Type, TypeVar, Iterable, Collection
+from typing import Optional, Type, TypeVar, Iterable, Collection
 from collections.abc import Callable
 from google.protobuf import message
 from google.protobuf.any_pb2 import Any
@@ -16,8 +16,8 @@ logger = get_logger(__name__)
 class ProtoUtil:
 
     @staticmethod
-    def byte_set_from_proto_byte_string_list(byte_string_list: List[Any]) -> Set[bytes]:
-        return {b.SerializeToString() for b in byte_string_list}
+    def byte_set_from_proto_byte_string_list(byte_string_list: list[bytes]) -> set[bytes]:
+        return {b for b in byte_string_list}
 
     @staticmethod
     def string_or_none_from_proto(proto: str) -> Optional[str]:
@@ -84,9 +84,9 @@ class ProtoUtil:
         return [extra(o.to_proto_message()) for o in collection]
 
     @staticmethod
-    def protocol_string_list_to_list(protocol_string_list: List[str]) -> List[str]:
+    def protocol_string_list_to_list(protocol_string_list: list[str]) -> list[str]:
         return [] if not protocol_string_list else list(protocol_string_list)
 
     @staticmethod
-    def protocol_string_list_to_set(protocol_string_list: List[str]) -> "OrderedSet[str]":
+    def protocol_string_list_to_set(protocol_string_list: list[str]) -> "OrderedSet[str]":
         return OrderedSet() if not protocol_string_list else OrderedSet(protocol_string_list)
