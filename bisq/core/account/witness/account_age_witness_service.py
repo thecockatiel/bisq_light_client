@@ -30,10 +30,10 @@ from utils.concurrency import ThreadSafeDict
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from utils.time import get_time_ms
 from utils.hackyway import create_fake_copy_of_instance
+from bisq.core.trade.model.bisq_v1.trade import Trade
 
 if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
-    from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.core.payment.payment_account import PaymentAccount
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
