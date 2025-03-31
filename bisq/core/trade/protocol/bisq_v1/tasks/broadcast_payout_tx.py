@@ -38,7 +38,7 @@ class BroadcastPayoutTx(TradeTask, ABC):
                 self.complete()
             else:
                 class TxCallback(TxBroadcasterCallback):
-                    def on_success(self, transaction: "Transaction") -> None:
+                    def on_success(self_, transaction: "Transaction") -> None:
                         if not self.completed:
                             logger.debug(f"BroadcastTx succeeded. Transaction: {transaction}")
                             self.set_state()
@@ -46,7 +46,7 @@ class BroadcastPayoutTx(TradeTask, ABC):
                         else:
                             logger.warning("We got the onSuccess callback called after the timeout has been triggered a complete().")
 
-                    def on_failure(self, exception: "TxBroadcastException") -> None:
+                    def on_failure(self_, exception: "TxBroadcastException") -> None:
                         if not self.completed:
                             logger.error(f"BroadcastTx failed. Error: {exception}")
                             self.failed(exc=exception)
