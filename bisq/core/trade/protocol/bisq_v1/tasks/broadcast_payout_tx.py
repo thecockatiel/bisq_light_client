@@ -4,6 +4,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
+from utils.preconditions import check_not_none
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
@@ -25,10 +26,9 @@ class BroadcastPayoutTx(TradeTask, ABC):
     def run(self) -> None:
         try:
             self.run_intercept_hook()
-            payout_tx = self.trade.get_payout_tx()
-            assert payout_tx is not None, "payoutTx must not be None"
+            payout_tx = check_not_none(self.trade.get_payout_tx(), "payoutTx must not be None")
 
-            confidence_type = payout_tx.get_confidence().confidence_type
+            confidence_type = check_not_none(payout_tx.confidence, "payout_tx.confidence must not be None").confidence_type
             logger.debug(f"payoutTx confidenceType: {confidence_type}")
             
             if (confidence_type == TransactionConfidenceType.BUILDING or 
