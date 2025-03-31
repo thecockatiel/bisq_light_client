@@ -619,6 +619,8 @@ class Trade(TradeModel, ABC):
     def get_payout_tx(self) -> Optional["Transaction"]:
         if self.payout_tx is None:
             self.payout_tx = self.btc_wallet_service.get_transaction(self.payout_tx_id) if self.payout_tx_id else None
+        else:
+            self.btc_wallet_service.wallet.add_info_from_wallet(self.payout_tx)
         return self.payout_tx
 
     @property
