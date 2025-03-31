@@ -63,7 +63,7 @@ class TransactionInput:
         from bitcoinj.core.transaction import Transaction
 
         if ec_tx_input.utxo:
-            tx = Transaction(params, ec_tx_input.utxo.serialize_as_bytes())
+            tx = Transaction(params, ec_tx_input.utxo)
             outpoint = TransactionOutPoint.from_tx(
                 tx,
                 ec_tx_input.prevout.out_idx,
