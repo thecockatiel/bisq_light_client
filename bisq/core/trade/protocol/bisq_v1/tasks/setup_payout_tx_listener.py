@@ -71,9 +71,9 @@ class SetupPayoutTxListener(TradeTask):
             self.failed(exc=e)
 
     def _apply_confidence(self, confidence: "TransactionConfidence") -> None:
-        if self.trade.get_payout_tx() is None:
+        if self.trade.payout_tx is None:
             wallet_tx = self.process_model.trade_wallet_service.get_wallet_tx(confidence.tx_id)
-            self.trade.set_payout_tx(wallet_tx)
+            self.trade.payout_tx = wallet_tx
             self.process_model.trade_manager.request_persistence()
             WalletService.print_tx("payoutTx received from network", wallet_tx)
             self.set_state()

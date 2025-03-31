@@ -141,7 +141,7 @@ class SellerProtocol(DisputeProtocol):
             .with_message(message)
             .from_peer(peer)
             .with_precondition(
-                self.trade.get_payout_tx() is None,
+                self.trade.payout_tx is None,
                 lambda: (
                     logger.warning(
                         "We received a CounterCurrencyTransferStartedMessage but we have already created the payout tx "

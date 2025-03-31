@@ -65,7 +65,7 @@ class SellerSignAndFinalizePayoutTx(TradeTask):
                 seller_multi_sig_pub_key
             )
 
-            self.trade.set_payout_tx(transaction)
+            self.trade.payout_tx = transaction
             
             self.process_model.trade_manager.request_persistence()
             

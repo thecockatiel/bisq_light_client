@@ -41,14 +41,14 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
                 self.process_model.temp_trading_peer_node_address
             )
 
-            if self.trade.get_payout_tx() is None:
+            if self.trade.payout_tx is None:
                 committed_mediated_payout_tx = (
                     WalletService.maybe_add_tx_to_wallet(
                         message.payout_tx,
                         self.process_model.btc_wallet_service.wallet,
                     )
                 )
-                self.trade.set_payout_tx(committed_mediated_payout_tx)
+                self.trade.payout_tx = committed_mediated_payout_tx
                 logger.info(
                     f"MediatedPayoutTx received from peer. Txid: {committed_mediated_payout_tx.get_tx_id()}\nhex: {committed_mediated_payout_tx.bitcoin_serialize().hex()}"
                 )
@@ -57,7 +57,7 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
                     MediationResultState.RECEIVED_PAYOUT_TX_PUBLISHED_MSG
                 )
 
-                if self.trade.get_payout_tx() is not None:
+                if self.trade.payout_tx is not None:
                     # We need to delay that call as we might get executed at startup after mailbox messages are
                     # applied where we iterate over out pending trades. The close_disputed_trade method would remove
                     # that trade from the list causing a ConcurrentModificationException.

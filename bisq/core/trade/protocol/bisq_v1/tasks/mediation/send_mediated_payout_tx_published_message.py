@@ -18,8 +18,8 @@ class SendMediatedPayoutTxPublishedMessage(SendMailboxMessageTask):
         super().__init__(task_handler, trade)
 
     def get_trade_mailbox_message(self, id: str):
-        payout_tx = self.trade.get_payout_tx()
-        assert payout_tx is not None, "trade.get_payout_tx() must not be None"
+        payout_tx = self.trade.payout_tx
+        assert payout_tx is not None, "trade.payout_tx must not be None"
         
         return MediatedPayoutTxSignatureMessage(
             trade_id=id,
@@ -48,7 +48,7 @@ class SendMediatedPayoutTxPublishedMessage(SendMailboxMessageTask):
         try:
             self.run_intercept_hook()
 
-            if self.trade.get_payout_tx() is None:
+            if self.trade.payout_tx is None:
                 msg = "PayoutTx is None"
                 logger.error(msg)
                 self.failed(msg)

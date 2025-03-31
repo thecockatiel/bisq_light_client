@@ -26,7 +26,7 @@ class BroadcastPayoutTx(TradeTask, ABC):
     def run(self) -> None:
         try:
             self.run_intercept_hook()
-            payout_tx = check_not_none(self.trade.get_payout_tx(), "payoutTx must not be None")
+            payout_tx = check_not_none(self.trade.payout_tx, "payoutTx must not be None")
 
             confidence_type = check_not_none(payout_tx.confidence, "payout_tx.confidence must not be None").confidence_type
             logger.debug(f"payoutTx confidenceType: {confidence_type}")

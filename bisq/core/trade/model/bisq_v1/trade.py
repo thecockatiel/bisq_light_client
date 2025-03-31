@@ -124,7 +124,7 @@ class Trade(TradeModel, ABC):
         # Added in v1.2.0
         self.delayed_payout_tx: Optional["Transaction"] = None # transient
         
-        self.payout_tx: Optional["Transaction"] = None # transient
+        self._payout_tx: Optional["Transaction"] = None # transient
         self.amount_property: SimpleProperty[Optional["Coin"]] = SimpleProperty(None) # transient
         self.volume_property: SimpleProperty[Optional["Volume"]] = SimpleProperty(None) # transient
 
@@ -498,10 +498,6 @@ class Trade(TradeModel, ABC):
         self.amount_property.value = amount
         self.amount_as_long = amount.value
         self.volume_property.value = self.get_volume()
-        
-    def set_payout_tx(self, payout_tx: "Transaction"):
-        self.payout_tx = payout_tx
-        self.payout_tx_id = payout_tx.get_tx_id()
 
     def set_asset_tx_proof_result(self, asset_tx_proof_result: "AssetTxProofResult"):
         self.asset_tx_proof_result_property.value = asset_tx_proof_result
@@ -615,13 +611,22 @@ class Trade(TradeModel, ABC):
     @property
     def is_withdrawn(self) -> bool:
         return self.get_trade_phase().value == TradePhase.WITHDRAWN.value
-
-    def get_payout_tx(self) -> Optional["Transaction"]:
-        if self.payout_tx is None:
-            self.payout_tx = self.btc_wallet_service.get_transaction(self.payout_tx_id) if self.payout_tx_id else None
+    
+    @property
+    def payout_tx(self) -> Optional["Transaction"]:
+        if self._payout_tx is None:
+            self._payout_tx = self.btc_wallet_service.get_transaction(self.payout_tx_id) if self.payout_tx_id else None
         else:
-            self.btc_wallet_service.wallet.add_info_from_wallet(self.payout_tx)
-        return self.payout_tx
+            self.btc_wallet_service.wallet.add_info_from_wallet(self._payout_tx)
+        return self._payout_tx
+    
+    @payout_tx.setter
+    def payout_tx(self, payout_tx: "Transaction"):
+        self._payout_tx = payout_tx
+        if payout_tx:
+            self.payout_tx_id = payout_tx.get_tx_id()
+        else:
+            self.payout_tx_id = None
 
     @property
     def has_error_message(self) -> bool:
