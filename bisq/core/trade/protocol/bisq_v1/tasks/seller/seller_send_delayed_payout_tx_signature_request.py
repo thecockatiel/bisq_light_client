@@ -23,12 +23,22 @@ class SellerSendDelayedPayoutTxSignatureRequest(TradeTask):
                 self.process_model.delayed_payout_tx_signature,
                 "process_model.delayed_payout_tx_signature must not be None",
             )
+            # set missing witness to be able to serialize the tx
+            missing_idx = []
+            for input in prepared_delayed_payout_tx.inputs:
+                if input.witness is None:
+                    input.witness = b'\x00'
+                    missing_idx.append(input.index)
             message = DelayedPayoutTxSignatureRequest(
                 trade_id=self.process_model.offer_id,
                 sender_node_address=self.process_model.my_node_address,
                 delayed_payout_tx=prepared_delayed_payout_tx.bitcoin_serialize(),
                 delayed_payout_tx_seller_signature=delayed_payout_tx_signature,
             )
+            # set the missing witness to None again
+            for input in prepared_delayed_payout_tx.inputs:
+                if input.index in missing_idx:
+                    input.witness = None
 
             peers_node_address = self.trade.trading_peer_node_address
             logger.info(
