@@ -118,11 +118,11 @@ class Trade(TradeModel, ABC):
         self._btc_wallet_service = btc_wallet_service # transient
         
         # Mutable
-        self.deposit_tx: Optional["Transaction"] = None # transient
+        self._deposit_tx: Optional["Transaction"] = None # transient
         self.is_initialized = False # transient
         
         # Added in v1.2.0
-        self.delayed_payout_tx: Optional["Transaction"] = None # transient
+        self._delayed_payout_tx: Optional["Transaction"] = None # transient
         
         self._payout_tx: Optional["Transaction"] = None # transient
         self.amount_property: SimpleProperty[Optional["Coin"]] = SimpleProperty(None) # transient
@@ -338,33 +338,36 @@ class Trade(TradeModel, ABC):
     
     # The deserialized tx has not actual confidence data, so we need to get the fresh one from the wallet.
     def update_deposit_tx_from_wallet(self):
-        if self.get_deposit_tx():
-            self.apply_deposit_tx(self.process_model.trade_wallet_service.get_wallet_tx(self.get_deposit_tx().get_tx_id()))
+        if self.deposit_tx:
+            self.apply_deposit_tx(self.process_model.trade_wallet_service.get_wallet_tx(self.deposit_tx.get_tx_id()))
             
     def apply_deposit_tx(self, tx: "Transaction"):
-        self.deposit_tx = tx
-        self.deposit_tx_id = self.deposit_tx.get_tx_id()
+        self._deposit_tx = tx
+        self.deposit_tx_id = tx.get_tx_id()
         self.setup_confidence_listener()
-        
-    def get_deposit_tx(self) -> Optional["Transaction"]:
-        if self.deposit_tx is None:
-            self.deposit_tx = self.btc_wallet_service.get_transaction(self.deposit_tx_id) if self.deposit_tx_id else None
-        return self.deposit_tx
+    
+    @property
+    def deposit_tx(self) -> Optional["Transaction"]:
+        if self._deposit_tx is None:
+            self._deposit_tx = self.btc_wallet_service.get_transaction(self.deposit_tx_id) if self.deposit_tx_id else None
+        return self._deposit_tx
     
     def apply_delayed_payout_tx(self, deplayed_payout_tx: "Transaction"):
-        self.delayed_payout_tx = deplayed_payout_tx
+        self._delayed_payout_tx = deplayed_payout_tx
         self.delayed_payout_tx_bytes = deplayed_payout_tx.bitcoin_serialize()
     
     def apply_delayed_payout_tx_bytes(self, deplayed_payout_tx_bytes: bytes):
         self.delayed_payout_tx_bytes = deplayed_payout_tx_bytes
+        self._delayed_payout_tx = None
     
     # If called from a not initialized trade (or a closed or failed trade)
     # we need to pass the btcWalletService
-    def get_delayed_payout_tx(self, btc_wallet_service: Optional["BtcWalletService"] = None) -> Optional["Transaction"]:
+    @property
+    def delayed_payout_tx(self, btc_wallet_service: Optional["BtcWalletService"] = None) -> Optional["Transaction"]:
         if btc_wallet_service is None:
             btc_wallet_service = self.process_model.btc_wallet_service
         
-        if self.delayed_payout_tx is None:
+        if self._delayed_payout_tx is None:
             if btc_wallet_service is None:
                 logger.warning("btcWalletService is null. You might call that method before the tradeManager has"
                                "initialized all trades")
@@ -374,9 +377,9 @@ class Trade(TradeModel, ABC):
                 logger.warning("delayedPayoutTxBytes are null")
                 return None
             
-            self.delayed_payout_tx = btc_wallet_service.get_tx_from_serialized_tx(self.delayed_payout_tx_bytes)
+            self._delayed_payout_tx = btc_wallet_service.get_tx_from_serialized_tx(self.delayed_payout_tx_bytes)
             
-        return self.delayed_payout_tx
+        return self._delayed_payout_tx
     
     def add_and_persist_chat_message(self, chat_message: "ChatMessage"):
         if chat_message not in self._chat_messages:
@@ -520,7 +523,7 @@ class Trade(TradeModel, ABC):
 
     def get_trade_start_time(self) -> int:
         now = get_time_ms()
-        deposit_tx = self.get_deposit_tx()
+        deposit_tx = self.deposit_tx
         start_time = 0
         
         if deposit_tx is not None:
@@ -637,7 +640,7 @@ class Trade(TradeModel, ABC):
         return (self._offer.offer_fee_payment_tx_id is None or
                 self.taker_fee_tx_id is None or
                 self.deposit_tx_id is None or
-                self.get_deposit_tx() is None or
+                self.deposit_tx is None or
                 self.delayed_payout_tx_bytes is None)
 
     def get_arbitrator_btc_pub_key(self) -> bytes:
@@ -666,7 +669,7 @@ class Trade(TradeModel, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def setup_confidence_listener(self):
-        if self.get_deposit_tx() is not None:
+        if self.deposit_tx is not None:
             class Listener(TxConfidenceListener):
                     def on_transaction_confidence_changed(self_,  confidence: "TransactionConfidence"):
                         if confidence.confidence_type == TransactionConfidenceType.BUILDING:
@@ -675,8 +678,8 @@ class Trade(TradeModel, ABC):
 
             listener = Listener(check_not_none(self.deposit_tx_id, "deposit_tx_id cannot be None at setup_confidence_listener"))
             self.process_model.btc_wallet_service.add_tx_confidence_listener(listener)
-            if self.get_deposit_tx().confidence:
-                listener.on_transaction_confidence_changed(self.get_deposit_tx().confidence)
+            if self.deposit_tx.confidence:
+                listener.on_transaction_confidence_changed(self.deposit_tx.confidence)
         else:
             logger.error("depositTx is None. That must not happen.")
 
@@ -728,7 +731,7 @@ class Trade(TradeModel, ABC):
                 f"     statePhaseProperty={self.state_phase_property},\n"
                 f"     disputeStateProperty={self.dispute_state_property},\n"
                 f"     tradePeriodStateProperty={self.trade_period_state_property},\n"
-                f"     depositTx={self.deposit_tx},\n"
+                f"     depositTx={self._deposit_tx},\n"
                 f"     delayedPayoutTx={self.delayed_payout_tx},\n"
                 f"     payoutTx={self.payout_tx},\n"
                 f"     tradeAmount={self.get_amount()},\n"

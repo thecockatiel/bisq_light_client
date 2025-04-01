@@ -21,7 +21,7 @@ class PublishedDelayedPayoutTx(TradeTask):
         try:
             self.run_intercept_hook()
 
-            delayed_payout_tx = self.trade.get_delayed_payout_tx()
+            delayed_payout_tx = self.trade.delayed_payout_tx
             btc_wallet_service = self.process_model.btc_wallet_service
 
             # We have spent the funds from the deposit tx with the delayedPayoutTx

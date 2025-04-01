@@ -17,7 +17,7 @@ class FinalizeMediatedPayoutTx(TradeTask):
         try:
             self.run_intercept_hook()
 
-            deposit_tx = self.trade.get_deposit_tx()
+            deposit_tx = self.trade.deposit_tx
             assert deposit_tx is not None, "deposit_tx must not be None"
             
             trade_id = self.trade.get_id()

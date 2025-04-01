@@ -29,7 +29,7 @@ class SignMediatedPayoutTx(TradeTask):
 
             trade_id = self.trade.get_id()
             wallet_service = self.process_model.btc_wallet_service
-            deposit_tx = self.trade.get_deposit_tx()
+            deposit_tx = self.trade.deposit_tx
             offer = self.trade.get_offer()
             trade_amount = self.trade.get_amount()
             contract = self.trade.contract

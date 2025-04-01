@@ -54,7 +54,7 @@ class SellerSignAndFinalizePayoutTx(TradeTask):
             multi_sig_key_pair = wallet_service.get_multi_sig_key_pair(id, seller_multi_sig_pub_key)
 
             transaction = self.process_model.trade_wallet_service.seller_signs_and_finalizes_payout_tx(
-                self.trade.get_deposit_tx(),
+                self.trade.deposit_tx,
                 buyer_signature,
                 buyer_payout_amount,
                 seller_payout_amount,

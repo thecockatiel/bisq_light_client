@@ -724,13 +724,13 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
 
         # Get failed trades from failed trades manager
         for trade in self.failed_trades_manager.get_trades_stream_with_funds_locked_in():
-            if trade.get_deposit_tx() is not None:
+            if trade.deposit_tx is not None:
                 logger.warning(f"We found a failed trade with locked up funds. That should never happen. trade ID={trade.get_id()}")
                 trades_id_set.add(trade.get_id())
 
         # Get failed trades from closed trades
         for trade in self.closed_tradable_manager.get_trades_stream_with_funds_locked_in():
-            deposit_tx = trade.get_deposit_tx()
+            deposit_tx = trade.deposit_tx
             if deposit_tx is not None:
                 confidence = self.btc_wallet_service.get_confidence_for_tx_id(deposit_tx.get_tx_id())
                 if confidence is not None and confidence.confidence_type != TransactionConfidenceType.BUILDING:

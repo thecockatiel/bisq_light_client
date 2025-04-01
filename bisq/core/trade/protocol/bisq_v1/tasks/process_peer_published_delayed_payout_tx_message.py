@@ -28,7 +28,7 @@ class ProcessPeerPublishedDelayedPayoutTxMessage(TradeTask):
             self.trade.trading_peer_node_address = self.process_model.temp_trading_peer_node_address
 
             # We add the tx to our wallet
-            delayed_payout_tx = self.trade.get_delayed_payout_tx()
+            delayed_payout_tx = self.trade.delayed_payout_tx
             assert delayed_payout_tx is not None
                 
             WalletService.maybe_add_tx_to_wallet(

@@ -13,7 +13,7 @@ class SellerPublishesTradeStatistics(TradeTask):
         try:
             self.run_intercept_hook()
 
-            assert self.trade.get_deposit_tx() is not None
+            assert self.trade.deposit_tx is not None
 
             capabilities = self.process_model.p2p_service.find_peers_capabilities(
                 self.trade.trading_peer_node_address

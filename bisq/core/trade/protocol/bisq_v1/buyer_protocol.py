@@ -120,7 +120,7 @@ class BuyerProtocol(DisputeProtocol, ABC):
             .with_message(message)
             .from_peer(peer)
             .with_precondition(
-                self.trade.get_deposit_tx() is None
+                self.trade.deposit_tx is None
                 or self.trade.process_model.trade_peer.payment_account_payload is None,
                 lambda: (
                     logger.warning(

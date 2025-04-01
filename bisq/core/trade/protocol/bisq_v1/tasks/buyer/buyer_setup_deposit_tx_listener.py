@@ -35,7 +35,7 @@ class BuyerSetupDepositTxListener(TradeTask):
             self.run_intercept_hook()
 
             if (
-                self.trade.get_deposit_tx() is None
+                self.trade.deposit_tx is None
                 and self.process_model.prepared_deposit_tx is not None
             ):
                 wallet_service = self.process_model.btc_wallet_service
@@ -168,7 +168,7 @@ class BuyerSetupDepositTxListener(TradeTask):
         return is_output_matching
 
     def _apply_confidence(self, confidence: "TransactionConfidence"):
-        if self.trade.get_deposit_tx() is None:
+        if self.trade.deposit_tx is None:
             wallet_tx: Optional[Transaction] = (
                 self.process_model.trade_wallet_service.get_wallet_tx(
                     confidence.tx_id

@@ -12,7 +12,7 @@ class BuyerSignPayoutTx(TradeTask):
                 self.trade.get_amount() is not None
             ), "trade.get_amount() must not be None"
             assert (
-                self.trade.get_deposit_tx() is not None
+                self.trade.deposit_tx is not None
             ), "trade.getDepget_deposit_txositTx() must not be None"
             offer = self.trade.get_offer()
             assert offer is not None, "offer must not be None"
@@ -46,7 +46,7 @@ class BuyerSignPayoutTx(TradeTask):
 
             payout_tx_signature = (
                 self.process_model.trade_wallet_service.buyer_signs_payout_tx(
-                    self.trade.get_deposit_tx(),
+                    self.trade.deposit_tx,
                     buyer_payout_amount,
                     seller_payout_amount,
                     buyer_payout_address,

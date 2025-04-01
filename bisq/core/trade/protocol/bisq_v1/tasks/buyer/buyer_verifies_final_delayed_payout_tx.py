@@ -16,7 +16,7 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
             self.run_intercept_hook()
 
             btc_wallet_service = self.process_model.btc_wallet_service
-            final_delayed_payout_tx = self.trade.get_delayed_payout_tx()
+            final_delayed_payout_tx = self.trade.delayed_payout_tx
             assert (
                 final_delayed_payout_tx is not None
             ), "trade.get_delayed_payout_tx() must not be None"
@@ -26,7 +26,7 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
                 self.trade, final_delayed_payout_tx, btc_wallet_service
             )
 
-            deposit_tx = self.trade.get_deposit_tx()
+            deposit_tx = self.trade.deposit_tx
             assert deposit_tx is not None, "trade.get_deposit_tx() must not be None"
             # Now as we know the deposit tx we can also verify the input
             TradeDataValidation.validate_payout_tx_input(

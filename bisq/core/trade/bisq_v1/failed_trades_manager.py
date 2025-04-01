@@ -145,7 +145,7 @@ class FailedTradesManager(PersistedDataHost):
         return blocking_trade_ids if blocking_trade_ids else None
 
     def has_deposit_tx(self, failed_trade: "Trade") -> bool:
-        if failed_trade.get_deposit_tx() is None:
+        if failed_trade.deposit_tx is None:
             logger.warning(f"Failed trade {failed_trade.get_id()} has no deposit tx.")
             return False
         return True

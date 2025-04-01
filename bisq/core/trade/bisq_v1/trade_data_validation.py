@@ -99,11 +99,11 @@ class TradeDataValidation:
     @staticmethod
     def validate_deposit_inputs(trade: 'Trade') -> None:
         # assumption: deposit tx always has 2 inputs, the maker and taker
-        if (trade is None or trade.get_deposit_tx() is None or
-                len(trade.get_deposit_tx().inputs) != 2):
+        if (trade is None or trade.deposit_tx is None or
+                len(trade.deposit_tx.inputs) != 2):
             raise TradeDataInvalidTxException("Deposit transaction is None or has unexpected input count")
 
-        deposit_tx = trade.get_deposit_tx()
+        deposit_tx = trade.deposit_tx
         tx_id_input0 = str(deposit_tx.inputs[0].outpoint.hash)
         tx_id_input1 = str(deposit_tx.inputs[1].outpoint.hash)
         contract_maker_tx_id = trade.contract.offer_payload.offer_fee_payment_tx_id
