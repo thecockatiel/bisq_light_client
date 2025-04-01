@@ -656,7 +656,7 @@ class Wallet(EventListener):
         """
         return [
             TransactionOutput.from_utxo(utxo, self)
-            for utxo in self._electrum_wallet.get_spendable_coins(confirmed_only=True)
+            for utxo in self._electrum_wallet.get_spendable_coins(confirmed_only=False)
         ]
 
     def sign_tx(

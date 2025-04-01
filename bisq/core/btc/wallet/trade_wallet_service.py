@@ -1352,7 +1352,6 @@ class TradeWalletService:
             send_request.fee = Coin.ZERO()
             send_request.fee_per_kb = Coin.ZERO()
             send_request.ensure_min_required_fee = False
-            # TODO: double check if following comment is True for our impl
             # We allow spending of unconfirmed tx (double spend risk is low and usability would suffer if we need to wait for 1 confirmation)
             send_request.coin_selector = BtcCoinSelector(
                 address, self._preferences.get_ignore_dust_threshold()
