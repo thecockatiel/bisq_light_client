@@ -228,7 +228,7 @@ class OfferTableBuilder(AbstractTableBuilder):
                 self.col_offer_id,
             )
 
-    def _to_blank_or_non_zero_value(s: str) -> str:
+    def _to_blank_or_non_zero_value(self, s: str) -> str:
         return "" if s.strip() == "0" else s
 
     def _first_offer_in_list(self) -> grpc_pb2.OfferInfo:

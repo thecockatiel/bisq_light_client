@@ -52,6 +52,7 @@ from bisq.core.network.p2p.decrypted_direct_message_listener import (
     DecryptedDirectMessageListener,
 )
 from bisq.core.trade.model.tradable_list import TradableList
+from bisq.core.offer.open_offer import OpenOffer
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
@@ -72,7 +73,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.p2p.peers.broadcaster import Broadcaster
     from bisq.core.offer.bisq_v1.create_offer_service import CreateOfferService
-    from bisq.core.offer.open_offer import OpenOffer
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.support.dispute.arbitration.arbitrator.arbitrator_manager import (
         ArbitratorManager,
