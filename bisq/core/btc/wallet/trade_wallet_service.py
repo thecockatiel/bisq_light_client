@@ -479,7 +479,7 @@ class TradeWalletService:
             for raw_transaction_input in taker_raw_transaction_inputs:
                 prepared_deposit_tx.add_input(
                     self._get_transaction_input(
-                        prepared_deposit_tx, None, raw_transaction_input
+                        prepared_deposit_tx, b"", raw_transaction_input
                     )
                 )
         else:
@@ -490,7 +490,7 @@ class TradeWalletService:
             for raw_transaction_input in taker_raw_transaction_inputs:
                 prepared_deposit_tx.add_input(
                     self._get_transaction_input(
-                        prepared_deposit_tx, None, raw_transaction_input
+                        prepared_deposit_tx, b"", raw_transaction_input
                     )
                 )
 
@@ -1260,7 +1260,9 @@ class TradeWalletService:
             script_sig=script_program,
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        self._wallet._electrum_wallet.add_input_info(tx_in)
+        self._wallet._electrum_wallet.add_input_info(tx_in) # possibly set descriptor and utxo
+        if not tx_in.utxo:
+            tx_in.utxo = outpoint.connected_tx._electrum_transaction
         return TransactionInput(
             tx_in,
             parent_transaction,

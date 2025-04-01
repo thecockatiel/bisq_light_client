@@ -6,6 +6,7 @@ from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.core.verification_exception import VerificationException
 from bitcoinj.script.script import Script
+import electrum_min.transaction as EcTxModule
 from electrum_min.transaction import (
     TxOutpoint as ElectrumTxOutpoint,
     PartialTxInput as ElectrumPartialTxInput,
@@ -90,7 +91,18 @@ class TransactionInput:
             script_sig=b"",
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        input.utxo = tx_output.parent._electrum_transaction
+        # FIXME:
+        # some times the tx_output is a segwit without witness (not ours)
+        # so the utxo setter does not allow setting it
+        # that's why we force it anyway
+        # this doesn't seem right, but here we go
+        # the code below is taken from Electrum TxInput utxo setter, after the is_complete check
+        input._utxo = tx_output.parent._electrum_transaction
+        # update derived fields
+        out_idx = input.prevout.out_idx
+        input._TxInput__scriptpubkey = input._utxo.outputs()[out_idx].scriptpubkey
+        input._TxInput__address = EcTxModule._NEEDS_RECALC
+        input._TxInput__value_sats = input._utxo.outputs()[out_idx].value
         return TransactionInput(
             input,
             tx_output.parent,
