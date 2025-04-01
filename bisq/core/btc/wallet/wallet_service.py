@@ -405,7 +405,7 @@ class WalletService(ABC):
 
     @property
     def last_block_seen_height(self) -> int:
-        self.wallet.last_block_seen_height
+        return self.wallet.last_block_seen_height
 
     def is_unconfirmed_transactions_limit_hit(self) -> bool:
         """Check if there are more than 20 unconfirmed transactions in the chain right now."""

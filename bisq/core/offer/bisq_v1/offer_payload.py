@@ -14,7 +14,6 @@ from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
 from utils.preconditions import check_argument
 
 
-
 # OfferPayload has about 1.4 kb. We should look into options to make it smaller but will be hard to do it in a
 # backward compatible way. Maybe a candidate when segwit activation is done as hardfork?
 @dataclass
@@ -83,6 +82,12 @@ class OfferPayload(OfferPayloadBase):
     is_private_offer: bool = field(default_factory=raise_required)
     hash_of_challenge: Optional[str] = field(default=None)
 
+    def __post_init__(self):
+        if self.block_height_at_offer_creation == 0:
+            raise ValueError(
+                "block_height_at_offer_creation must be > 0 when creating an OfferPayload"
+            )
+
     def getHash(self) -> bytes:
         if self.hash is None and self.offer_fee_payment_tx_id is not None:
             # A proto message can be created only after the offerFeePaymentTxId is
@@ -144,7 +149,9 @@ class OfferPayload(OfferPayloadBase):
         if self.hash_of_challenge:
             offer_payload.hash_of_challenge = self.hash_of_challenge
         if self.extra_data_map:
-            offer_payload.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
+            offer_payload.extra_data.extend(
+                map_to_stable_extra_data(self.extra_data_map)
+            )
 
         return protobuf.StoragePayload(offer_payload=offer_payload)
 
@@ -152,7 +159,7 @@ class OfferPayload(OfferPayloadBase):
     def from_proto(proto: protobuf.OfferPayload) -> "OfferPayload":
         check_argument(
             proto.offer_fee_payment_tx_id,
-            "OfferFeePaymentTxId must be set in PB.OfferPayload"
+            "OfferFeePaymentTxId must be set in PB.OfferPayload",
         )
 
         return OfferPayload(
