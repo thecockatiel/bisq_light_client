@@ -57,7 +57,7 @@ class TaskRunner(Generic[T]):
         self, error_message: str, exc: BaseException = None
     ) -> None:
         logger.error(
-            f"Task failed: {self.current_task.__class__.__name__} / errorMessage: {error_message}",
+            f"Task failed: {self.current_task!r} / errorMessage: {error_message}",
             exc_info=exc,
         )
         self.failed = True
