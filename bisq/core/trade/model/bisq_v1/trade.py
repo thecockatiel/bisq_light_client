@@ -89,8 +89,8 @@ class Trade(TradeModel, ABC):
         self.taker_fee_tx_id: Optional[str] = None
         self.deposit_tx_id: Optional[str] = None
         self.payout_tx_id: Optional[str] = None
-        self.amount_as_long = 0
-        self.price_as_long = 0
+        self._amount_as_long = 0
+        self._price_as_long = 0
         # no need for separate state and state_property
         self.state_property = SimpleProperty(TradeState.PREPARATION)
         self.state_phase_property = SimpleProperty(self.state_property.value.phase)
@@ -162,10 +162,27 @@ class Trade(TradeModel, ABC):
         self.state_property.add_listener(on_new_state)
         
         # Taker Trade Specific:
-        self.price_as_long = price_as_long
+        self._price_as_long = price_as_long
         self.trading_peer_node_address = trading_peer_node_address
         if amount:
             self.set_amount(amount)
+
+    @property
+    def amount_as_long(self):
+        return self._amount_as_long
+    
+    @amount_as_long.setter
+    def amount_as_long(self, value: int):
+        self.set_amount(Coin.value_of(value))
+
+    @property
+    def price_as_long(self):
+        return self._price_as_long
+    
+    @price_as_long.setter
+    def price_as_long(self, value: int):
+        self._price_as_long = value
+        self.volume_property.set(self.get_volume())
 
     @property
     def is_currency_for_taker_fee_btc(self):
@@ -231,8 +248,8 @@ class Trade(TradeModel, ABC):
             taker_fee_as_long = self.taker_fee_as_long,
             take_offer_date = self.take_offer_date,
             process_model = self.process_model.to_proto_message(),
-            trade_amount_as_long = self.amount_as_long,
-            trade_price = self.price_as_long,
+            trade_amount_as_long = self._amount_as_long,
+            trade_price = self._price_as_long,
             state = TradeState.to_proto_message(self.state_property.value),
             dispute_state = TradeDisputeState.to_proto_message(self.dispute_state_property.value),
             trade_period_state = TradePeriodState.to_proto_message(self.trade_period_state_property.value),
@@ -443,7 +460,7 @@ class Trade(TradeModel, ABC):
         return self.amount_as_long
     
     def get_amount(self):
-        return self.amount_property.value
+        return self.amount_property.get()
     
     def get_volume(self):
         try:
@@ -462,7 +479,7 @@ class Trade(TradeModel, ABC):
             return None
         
     def get_price(self) -> "Price":
-        return Price.value_of(self._offer.currency_code, self.price_as_long)
+        return Price.value_of(self._offer.currency_code, self._price_as_long)
     
     # getTxFee() is implemented in concrete classes
     # Maker use fee from offer, taker use self.tx_fee
@@ -496,10 +513,10 @@ class Trade(TradeModel, ABC):
        else:
            logger.warning("State change is not getting applied because it would cause an invalid transition. "
                          f"Trade state={self.state_property.value}, intended state={new_state.name}")
-           
+    
     def set_amount(self, amount: "Coin"):
+        self._amount_as_long = amount.value
         self.amount_property.value = amount
-        self.amount_as_long = amount.value
         self.volume_property.value = self.get_volume()
 
     def set_asset_tx_proof_result(self, asset_tx_proof_result: "AssetTxProofResult"):
@@ -702,8 +719,8 @@ class Trade(TradeModel, ABC):
                 f"     takerFeeTxId='{self.taker_fee_tx_id}',\n"
                 f"     depositTxId='{self.deposit_tx_id}',\n"
                 f"     payoutTxId='{self.payout_tx_id}',\n"
-                f"     tradeAmountAsLong={self.amount_as_long},\n"
-                f"     tradePrice={self.price_as_long},\n"
+                f"     tradeAmountAsLong={self._amount_as_long},\n"
+                f"     tradePrice={self._price_as_long},\n"
                 f"     tradingPeerNodeAddress={self.trading_peer_node_address},\n"
                 f"     state={self.state_property.value},\n"
                 f"     disputeState={self.dispute_state_property.value},\n"
