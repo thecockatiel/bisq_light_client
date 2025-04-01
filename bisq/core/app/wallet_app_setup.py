@@ -211,7 +211,7 @@ class WalletAppSetup:
                                     open_offer, on_success, logger.warning
                                 )
 
-                            UserThread.run_after(handle_offer, 1)
+                            UserThread.run_after(handle_offer, timedelta(seconds=1))
 
                     # Handle trades
                     for trade in trade_manager.get_observable_list():
