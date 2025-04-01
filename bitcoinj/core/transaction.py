@@ -98,7 +98,7 @@ class Transaction:
         it should be retrieved from the wallet
         it's called "label" in electrum
         """
-        self.confidence: Optional["TransactionConfidence"] = None
+        self.confidence: Optional["TransactionConfidence"] = TransactionConfidence(self.get_tx_id())
 
     @property
     def update_time(self):

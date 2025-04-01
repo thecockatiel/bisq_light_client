@@ -14,6 +14,7 @@ class TransactionConfidence:
         depth=0,
         appeared_at_chain_height=-1,
         confidence_type: "TransactionConfidenceType" = None,
+        source: "TransactionConfidenceSource" = None,
     ) -> None:
         self.depth = depth
         """
@@ -38,7 +39,10 @@ class TransactionConfidence:
             confidence_type = TransactionConfidenceType.UNKNOWN
         self.confidence_type = confidence_type
         """a general statement of the level of confidence you can have in this transaction."""
-        self.confidence_source = TransactionConfidenceSource.NETWORK
+
+        if source is None:
+            source = TransactionConfidenceSource.UNKNOWN
+        self.source = source
         """always Network since we use electrum"""
 
         self.confirmations = confirmations

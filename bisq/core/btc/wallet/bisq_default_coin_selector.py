@@ -5,12 +5,15 @@ from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.network_parameters import NetworkParameters
+from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
+from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.wallet.coin_selector import CoinSelector
 from bitcoinj.wallet.coin_selection import CoinSelection
 from bitcoinj.base.coin import Coin
 
 
 if TYPE_CHECKING:
+    from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
 
 
@@ -47,8 +50,7 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
                         break
 
                 if (output.parent is not None and
-                    # no need because we only pass spendable outputs to coin selector
-                    # self.is_tx_spendable(output.parent) and 
+                    self.is_tx_spendable(output.parent) and 
                     self.is_tx_output_spendable(output)):
                     selected.append(output)
                     total += output.value
@@ -68,6 +70,14 @@ class BisqDefaultCoinSelector(CoinSelector, ABC):
         if change < 0:
             raise InsufficientMoneyException(Coin.value_of(change * -1))
         return Coin.value_of(change)
+    
+    def is_tx_spendable(self, tx: "Transaction") -> bool:
+        confidence = tx.confidence
+        confidence_type = confidence.confidence_type
+        is_confirmed = confidence_type == TransactionConfidenceType.BUILDING
+        is_pending = confidence_type == TransactionConfidenceType.PENDING
+        is_own_tx = confidence.source == TransactionConfidenceSource.SELF
+        return is_confirmed or (is_pending and (self.permit_foreign_pending_tx or is_own_tx))
     
     @abstractmethod
     def is_tx_output_spendable(self, output: "TransactionOutput") -> bool:

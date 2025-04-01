@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import random
 from threading import Lock
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
+from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_input import TransactionInput
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script import Script
@@ -493,6 +494,7 @@ class Wallet(EventListener):
                 depth=self.last_block_seen_height - info.height,
                 appeared_at_chain_height=info.height,
                 confidence_type=TransactionConfidenceType.BUILDING,
+                source=TransactionConfidenceSource.NETWORK,
                 confirmations=info.conf,
             )
         else:
@@ -506,6 +508,9 @@ class Wallet(EventListener):
                     if is_pending
                     else TransactionConfidenceType.UNKNOWN
                 ),
+                source=TransactionConfidenceSource.NETWORK # TODO: need to add a way to keep track of ours vs others txs for validation
+                    if is_pending
+                    else TransactionConfidenceSource.UNKNOWN
             )
 
     async def broadcast_tx(self, tx: "Transaction", timeout: float = None):
