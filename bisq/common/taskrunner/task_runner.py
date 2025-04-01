@@ -10,12 +10,16 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-T = TypeVar('T', bound=TaskModel)
+T = TypeVar("T", bound=TaskModel)
+
 
 class TaskRunner(Generic[T]):
-    def __init__(self, shared_model: T, 
-                 result_handler: "ResultHandler",
-                 error_message_handler: "ErrorMessageHandler"):
+    def __init__(
+        self,
+        shared_model: T,
+        result_handler: "ResultHandler",
+        error_message_handler: "ErrorMessageHandler",
+    ):
         self.tasks: Queue[Type[Task[T]]] = Queue()
         self.shared_model = shared_model
         self.result_handler = result_handler
@@ -36,11 +40,10 @@ class TaskRunner(Generic[T]):
             if not self.tasks.empty():
                 try:
                     self.current_task = self.tasks.get()
-                    logger.info(f"Run task: {self.current_task.__name__}")
+                    logger.info(f"Run task: {self.current_task.__class__.__name__}")
                     self.current_task(self, self.shared_model).run()
                 except Exception as e:
-                    logger.exception("Error at taskRunner")
-                    self.handle_error_message(f"Error at taskRunner: {str(e)}")
+                    self.handle_error_message(f"Error at taskRunner: {str(e)}", e)
             else:
                 self.result_handler()
 
@@ -50,9 +53,12 @@ class TaskRunner(Generic[T]):
     def handle_complete(self) -> None:
         self._next()
 
-    def handle_error_message(self, error_message: str) -> None:
-        logger.error(f"Task failed: {self.current_task.__name__} / errorMessage: {error_message}")
+    def handle_error_message(
+        self, error_message: str, exc: BaseException = None
+    ) -> None:
+        logger.error(
+            f"Task failed: {self.current_task.__class__.__name__} / errorMessage: {error_message}",
+            exc_info=exc,
+        )
         self.failed = True
         self.error_message_handler(error_message)
-
-
