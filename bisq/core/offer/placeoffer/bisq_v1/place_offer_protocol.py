@@ -15,7 +15,9 @@ from bisq.core.offer.placeoffer.bisq_v1.tasks.validate_offer import ValidateOffe
 
 if TYPE_CHECKING:
     from bisq.common.handlers.error_message_handler import ErrorMessageHandler
-    from bisq.core.trade.bisq_v1.transaction_result_handler import TransactionResultHandler
+    from bisq.core.trade.bisq_v1.transaction_result_handler import (
+        TransactionResultHandler,
+    )
     from bisq.core.offer.placeoffer.bisq_v1.place_offer_model import PlaceOfferModel
 
 logger = get_logger(__name__)
@@ -67,15 +69,13 @@ class PlaceOfferProtocol:
         )
 
         if self.model.is_shared_maker_fee:
-            task_runner.add_tasks([ValidateOffer, CloneAddressEntryForSharedMakerFee])
+            task_runner.add_tasks(ValidateOffer, CloneAddressEntryForSharedMakerFee)
         else:
             task_runner.add_tasks(
-                [
-                    ValidateOffer,
-                    CheckNumberOfUnconfirmedTransactions,
-                    CreateMakerFeeTx,
-                    AddToOfferBook,
-                ]
+                ValidateOffer,
+                CheckNumberOfUnconfirmedTransactions,
+                CreateMakerFeeTx,
+                AddToOfferBook,
             )
 
         task_runner.run()

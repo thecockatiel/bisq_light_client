@@ -19,7 +19,7 @@ class ValidateOffer(Task['PlaceOfferModel']):
         try:
             self.run_intercept_hook()
 
-            check_argument(not offer.is_bsq_swap_offer(), "BSQ swap offers not supported")
+            check_argument(not offer.is_bsq_swap_offer, "BSQ swap offers not supported")
 
             # Validate coins
             self.check_coin_not_null_or_zero(offer.amount, "Amount")
