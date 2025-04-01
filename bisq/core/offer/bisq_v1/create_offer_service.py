@@ -79,7 +79,7 @@ class CreateOfferService:
                                       not payment_account.has_payment_method_with_id(PaymentMethod.HAL_CASH_ID))
 
         price_as_long = price.value if price and not use_market_based_price_value else 0
-        market_price_margin_param = market_price_margin if use_market_based_price_value else 0
+        market_price_margin_param = market_price_margin if use_market_based_price_value else 0.0
         amount_as_long = amount.value if amount else 0
         min_amount_as_long = min_amount.value if min_amount else 0
         it_is_crypto_currency = is_crypto_currency(currency_code)
