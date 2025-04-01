@@ -199,7 +199,7 @@ class TransactionOutput:
                 or ScriptPattern.is_p2sh(script)
             ):
                 buf.append(" to ")
-                buf.append(script.get_to_address(self.parent.params))
+                buf.append(str(script.get_to_address(self.parent.params)))
             elif ScriptPattern.is_p2pk(script):
                 buf.append(" to pubkey ")
                 buf.append(ScriptPattern.extract_key_from_p2pk(script).hex())
