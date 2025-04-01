@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
@@ -165,7 +166,7 @@ class OpenOffer(Tradable):
     def start_timeout(self):
         self.stop_timeout()
 
-        UserThread.run_after(self._on_timed_out, OpenOffer.TIMEOUT_SEC)
+        UserThread.run_after(self._on_timed_out, timedelta(seconds=OpenOffer.TIMEOUT_SEC))
 
     def stop_timeout(self):
         if self._timeout_timer:
