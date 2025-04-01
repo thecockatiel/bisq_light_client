@@ -40,7 +40,7 @@ class TaskRunner(Generic[T]):
             if not self.tasks.empty():
                 try:
                     self.current_task = self.tasks.get()
-                    logger.info(f"Run task: {self.current_task.__class__.__name__}")
+                    logger.info(f"Run task: {self.current_task!r}")
                     self.current_task(self, self.shared_model).run()
                 except Exception as e:
                     self.handle_error_message(f"Error at taskRunner: {str(e)}", e)
