@@ -21,25 +21,24 @@ class BuyerSendsDelayedPayoutTxSignatureResponse(TradeTask):
                 self.process_model.delayed_payout_tx_signature
             )
 
-            # set missing witness to be able to serialize the tx
-            missing_idx = []
-            for input in self.process_model.deposit_tx.inputs:
-                if input.witness is None:
-                    input.witness = b'\x00'
-                    missing_idx.append(input.index)
-            
             if self.process_model.deposit_tx is not None:
+                # set missing witness to be able to serialize the tx
+                missing_idx = []
+                for input in self.process_model.deposit_tx.inputs:
+                    if input.witness is None:
+                        input.witness = b"\x00"
+                        missing_idx.append(input.index)
+
                 # set in BuyerAsTakerSignsDepositTx task
                 deposit_tx_bytes = self.process_model.deposit_tx.bitcoin_serialize()
+
+                # set the missing witness to None again
+                for input in self.process_model.deposit_tx.inputs:
+                    if input.index in missing_idx:
+                        input.witness = None
             else:
                 # set in BuyerAsMakerCreatesAndSignsDepositTx task
                 deposit_tx_bytes = self.process_model.prepared_deposit_tx
-            
-            # set the missing witness to None again
-            for input in self.process_model.deposit_tx.inputs:
-                if input.index in missing_idx:
-                    input.witness = None
-
 
             message = DelayedPayoutTxSignatureResponse(
                 trade_id=self.process_model.offer_id,
