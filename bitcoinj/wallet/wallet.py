@@ -4,6 +4,7 @@ from threading import Lock
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.transaction_confidence_source import TransactionConfidenceSource
 from bitcoinj.core.transaction_input import TransactionInput
+from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_output import TransactionOutput
 from bitcoinj.script.script import Script
 from bitcoinj.script.script_exception import ScriptException
@@ -414,7 +415,9 @@ class Wallet(EventListener):
                 )
                 remove = True
             except Exception as e:
-                if isinstance(e, TxBroadcastServerReturnedError) or "program hash mismatch" in str(e):
+                if isinstance(
+                    e, TxBroadcastServerReturnedError
+                ) or "program hash mismatch" in str(e):
                     remove = True
                 else:
                     logger.warning(
@@ -508,14 +511,14 @@ class Wallet(EventListener):
                     if is_pending
                     else TransactionConfidenceType.UNKNOWN
                 ),
-                source=TransactionConfidenceSource.NETWORK # TODO: need to add a way to keep track of ours vs others txs for validation
+                source=(
+                    TransactionConfidenceSource.NETWORK  # TODO: need to add a way to keep track of ours vs others txs for validation
                     if is_pending
                     else TransactionConfidenceSource.UNKNOWN
+                ),
             )
 
     async def broadcast_tx(self, tx: "Transaction", timeout: float = None):
-        tx.maybe_finalize(self)
-        self.maybe_add_transaction(tx)
         await self._electrum_network.broadcast_transaction(
             tx._electrum_transaction, timeout=timeout
         )
@@ -638,6 +641,8 @@ class Wallet(EventListener):
             size = len(req.tx.bitcoin_serialize())
             if size > 100000:  # MAX_STANDARD_TX_SIZE = 100000
                 raise ExceededMaxTransactionSize()
+            
+            req.tx.finalize()
 
             calculated_fee = req.tx.get_fee()
             if calculated_fee:
@@ -863,8 +868,31 @@ class Wallet(EventListener):
 
     def send_coins(self, send_request: "SendRequest"):
         self.complete_tx(send_request)
+        self.maybe_add_transaction(send_request.tx)
         return as_future(self.broadcast_tx(send_request.tx))
 
     def add_electrum_info(self, tx: "Transaction"):
         tx._electrum_transaction.add_info_from_wallet(self._electrum_wallet)
         return tx
+
+    def get_key_for_outpoint(
+        self, outpoint: "TransactionOutPoint"
+    ) -> Optional["DeterministicKey"]:
+        connected_output = check_not_none(
+            outpoint.connected_output, "Input is not connected so cannot retrieve key"
+        )
+        connected_script = connected_output.get_script_pub_key()
+        if ScriptPattern.is_p2pkh(connected_script):
+            address_bytes = ScriptPattern.extract_hash_from_p2pkh(connected_script)
+            return self.find_key_from_pub_key_hash(address_bytes, ScriptType.P2PKH)
+        elif ScriptPattern.is_p2wpkh(connected_script):
+            address_bytes = ScriptPattern.extract_hash_from_p2wpkh(connected_script)
+            return self.find_key_from_pub_key_hash(address_bytes, ScriptType.P2WPKH)
+        elif ScriptPattern.is_p2pk(connected_script):
+            pubkey_bytes = ScriptPattern.extract_key_from_p2pk(connected_script)
+            return self.find_key_from_pub_key(pubkey_bytes, None)
+        else:
+            raise ScriptException(
+                "Could not understand form of connected output script: "
+                + str(connected_script)
+            )

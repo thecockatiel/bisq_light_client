@@ -145,6 +145,8 @@ class TransactionInput:
     @witness.setter
     def witness(self, value: Optional[bytes]) -> None:
         self._ec_tx_input.witness = value
+        if self.parent:
+            self.parent._electrum_transaction.invalidate_ser_cache()
 
     @property
     def witness_elements(self):
@@ -173,6 +175,8 @@ class TransactionInput:
     @script_sig.setter
     def script_sig(self, value: bytes) -> None:
         self._ec_tx_input.script_sig = value
+        if self.parent:
+            self.parent._electrum_transaction.invalidate_ser_cache()
 
     @property
     def script_pub_key(self) -> Optional[bytes]:

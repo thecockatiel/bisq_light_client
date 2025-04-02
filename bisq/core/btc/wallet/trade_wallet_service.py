@@ -543,22 +543,32 @@ class TradeWalletService:
 
         start = 0 if maker_is_buyer else len(taker_raw_transaction_inputs)
         end = len(maker_inputs) if maker_is_buyer else len(prepared_deposit_tx.inputs)
-        # TODO: check sign
-        prepared_deposit_tx = check_not_none(
-            self._wallet.sign_tx(self._password, prepared_deposit_tx),
-            "Failed to sign prepared_deposit_tx",
-        )
         for i in range(start, end):
             tx_input = prepared_deposit_tx.inputs[i]
+            self.sign_input(prepared_deposit_tx, tx_input, i)
             WalletService.check_script_sig(prepared_deposit_tx, tx_input, i)
 
         WalletService.print_tx("maker_creates_deposit_tx", prepared_deposit_tx)
         WalletService.verify_transaction(prepared_deposit_tx)
 
-        return PreparedDepositTxAndMakerInputs(
+        # set missing witness to be able to serialize the tx
+        missing_idx = []
+        for input in prepared_deposit_tx.inputs:
+            if input.witness is None:
+                input.witness = b'\x00'
+                missing_idx.append(input.index)
+
+        prepared_msg = PreparedDepositTxAndMakerInputs(
             raw_maker_inputs=maker_raw_transaction_inputs,
             deposit_transaction=prepared_deposit_tx.bitcoin_serialize(),
         )
+
+        # set the missing witness to None again
+        for input in prepared_deposit_tx.inputs:
+            if input.index in missing_idx:
+                input.witness = None
+
+        return prepared_msg
 
     def taker_signs_deposit_tx(
         self,
@@ -697,7 +707,7 @@ class TradeWalletService:
             tx_input = my_deposit_tx.inputs[i]
             witness_from_buyer = buyers_deposit_tx_with_witness.inputs[i].witness
 
-            if not tx_input.witness and witness_from_buyer:
+            if not tx_input.has_witness and witness_from_buyer:
                 tx_input.witness = witness_from_buyer
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -778,13 +788,12 @@ class TradeWalletService:
         seller_tx_signature = TransactionSignature.decode_from_der(
             seller_signature, TransactionSigHash.ALL, False
         )
+        input = delayed_payout_tx.inputs[0]
+        input.script_sig = b""
         witness = TransactionWitness.redeem_p2wsh(
             redeem_script, seller_tx_signature, buyer_tx_signature
         ).construct_witness()
-        input = delayed_payout_tx.inputs[0]
-        input.script_sig = b""
         input.witness = witness
-
         WalletService.print_tx("finalizeDelayedPayoutTx", delayed_payout_tx)
         WalletService.verify_transaction(delayed_payout_tx)
 
@@ -1260,7 +1269,9 @@ class TradeWalletService:
             script_sig=script_program,
             nsequence=TransactionInput.NO_SEQUENCE,
         )
-        self._wallet._electrum_wallet.add_input_info(tx_in) # possibly set descriptor and utxo
+        self._wallet._electrum_wallet.add_input_info(
+            tx_in
+        )  # possibly set descriptor and utxo
         if not tx_in.utxo:
             tx_in.utxo = outpoint.connected_tx._electrum_transaction
         return TransactionInput(
@@ -1338,6 +1349,53 @@ class TradeWalletService:
 
         check_argument(len(transaction.outputs) >= 1, "We need at least one output.")
         return transaction
+
+    def sign_input(
+        self,
+        transaction: "Transaction",
+        input: "TransactionInput",
+        input_index: int,
+    ) -> None:
+        check_not_none(
+            input.connected_output, "input.connected_output must not be None"
+        )
+        script_pub_key = input.connected_output.get_script_pub_key()
+        sig_key = self._wallet.get_key_for_outpoint(input.outpoint)
+        check_not_none(
+            sig_key,
+            f"sign_input: sig_key must not be None. input.outpoint={input.outpoint}",
+        )
+
+        if ScriptPattern.is_p2pk(script_pub_key) or ScriptPattern.is_p2pkh(
+            script_pub_key
+        ):
+            sig_hash = transaction.hash_for_signature(
+                input_index, script_pub_key, TransactionSigHash.ALL, False
+            )
+            signature = sig_key.ecdsa_sign(sig_hash, self._password)
+            tx_sig = TransactionSignature(signature, TransactionSigHash.ALL, False)
+            if ScriptPattern.is_p2pk(script_pub_key):
+                input.script_sig = ScriptBuilder.create_p2pk_input_script(tx_sig).program
+            elif ScriptPattern.is_p2pkh(script_pub_key):
+                input.script_sig = ScriptBuilder.create_p2pkh_input_script(tx_sig, sig_key.get_pub_key()).program
+        elif ScriptPattern.is_p2wpkh(script_pub_key):
+            script_code = ScriptBuilder.create_p2pkh_output_script(sig_key.get_pub_key_hash())
+            value = input.get_value()
+            tx_sig = transaction.calculate_witness_signature(
+                input_index,
+                sig_key,
+                script_code,
+                value,
+                TransactionSigHash.ALL,
+                False,
+                self._password
+            )
+            input.script_sig = b""
+            input.witness = TransactionWitness.redeem_p2wpkh(tx_sig, sig_key.get_pub_key()).construct_witness()
+        else:
+            raise WalletException(
+                f"Don't know how to sign for this kind of script_pub_key: {script_pub_key}"
+            )
 
     def _add_available_inputs_and_change_outputs(
         self, transaction: "Transaction", address: "Address", change_address: "Address"

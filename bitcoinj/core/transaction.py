@@ -12,6 +12,7 @@ from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.core.transaction_sig_hash import TransactionSigHash
 from bitcoinj.core.varint import get_var_int_bytes
 from bitcoinj.core.verification_exception import VerificationException
+from bitcoinj.crypto.deterministic_key import DeterministicKey
 from bitcoinj.crypto.transaction_signature import TransactionSignature
 from bitcoinj.script.script_builder import ScriptBuilder
 from electrum_min.bitcoin import opcodes
@@ -98,7 +99,9 @@ class Transaction:
         it should be retrieved from the wallet
         it's called "label" in electrum
         """
-        self.confidence: Optional["TransactionConfidence"] = TransactionConfidence(self.get_tx_id())
+        self.confidence: Optional["TransactionConfidence"] = TransactionConfidence(
+            self.get_tx_id()
+        )
 
     @property
     def update_time(self):
@@ -313,14 +316,26 @@ class Transaction:
             for tx_in in tx.inputs:
                 if tx_in.is_coin_base:
                     raise VerificationException.UnexpectedCoinbaseInput()
+                
+    def finalize(self):
+        self._electrum_transaction.finalize_psbt()
 
-    def maybe_finalize(self, wallet: "Wallet"):
-        if (
-            isinstance(self._electrum_transaction, PartialElectrumTransaction)
-            and not self._electrum_transaction.is_complete()
-        ):
-            wallet.add_info_from_wallet(self._electrum_transaction)
-            self._electrum_transaction.finalize_psbt()
+    def calculate_witness_signature(
+        self,
+        input_index: int,
+        key: "DeterministicKey",
+        script_code: Union[bytes, "Script"],
+        value: "Coin",
+        hash_type: "TransactionSigHash",
+        anyone_can_pay: bool,
+        password: str = None,
+    ) -> "TransactionSignature":
+        hash = self.hash_for_witness_signature(
+            input_index, script_code, value, hash_type, anyone_can_pay
+        )
+        return TransactionSignature.decode_from_der(
+            key.ecdsa_sign(hash, password), hash_type, anyone_can_pay,
+        )
 
     def hash_for_witness_signature(
         self,
@@ -502,11 +517,7 @@ class Transaction:
                 s.append(f"block {self.lock_time}")
                 # Chain estimation not implemented
             else:
-                s.append(
-                    date_time_format(
-                        datetime.fromtimestamp(self.lock_time)
-                    )
-                )
+                s.append(date_time_format(datetime.fromtimestamp(self.lock_time)))
             s.append("\n")
 
         if self.has_relative_lock_time:

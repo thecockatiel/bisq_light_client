@@ -34,8 +34,7 @@ class MemPoolSpaceTxBroadcaster:
         cls.config = config
 
     @classmethod
-    async def broadcast_tx(cls, tx: "Transaction", wallet: "Wallet") -> None:
-        tx.maybe_finalize(wallet)
+    async def broadcast_tx(cls, tx: "Transaction") -> None:
 
         if not cls.config.base_currency_network.is_mainnet():
             logger.info("MemPoolSpaceTxBroadcaster only supports mainnet")
