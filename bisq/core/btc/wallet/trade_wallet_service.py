@@ -263,6 +263,7 @@ class TradeWalletService:
             self._remove_dust(result_tx)
 
             # Sign all BTC inputs # TODO check if works as expected
+            # TODO: FIXME: only sign the current input 
             result_tx = check_not_none(
                 self._wallet.sign_tx(self._password, result_tx),
                 "Failed to sign tx at complete_bsq_trading_fee_tx",
@@ -665,11 +666,9 @@ class TradeWalletService:
         # Sign inputs
         start = len(buyer_inputs) if taker_is_seller else 0
         end = len(deposit_tx.inputs) if taker_is_seller else len(buyer_inputs)
-        deposit_tx = check_not_none(
-            self._wallet.sign_tx(self._password, deposit_tx),
-            "Failed to sign deposit_tx",
-        )
         for i in range(start, end):
+            input = deposit_tx.inputs[i]
+            self.sign_input(deposit_tx, input, i)
             WalletService.check_script_sig(deposit_tx, deposit_tx.inputs[i], i)
 
         WalletService.print_tx("takerSignsDepositTx", deposit_tx)
