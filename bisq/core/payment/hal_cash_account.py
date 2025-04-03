@@ -26,15 +26,15 @@ class HalCashAccount(PaymentAccount):
 
     @property
     def mobile_nr(self):
-        return self._swish_account_payload.mobile_nr
+        return self._hal_cash_account_payload.mobile_nr
 
     @mobile_nr.setter
     def mobile_nr(self, value: str):
         if value is None:
             value = ""
-        self._swish_account_payload.mobile_nr = value
+        self._hal_cash_account_payload.mobile_nr = value
 
     @property
-    def _swish_account_payload(self):
+    def _hal_cash_account_payload(self):
         assert isinstance(self.payment_account_payload, HalCashAccountPayload)
         return self.payment_account_payload
