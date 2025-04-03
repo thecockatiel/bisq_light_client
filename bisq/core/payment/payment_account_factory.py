@@ -19,6 +19,7 @@ from bisq.core.payment.national_bank_account import NationalBankAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.perfect_money_account import PerfectMoneyAccount
 from bisq.core.payment.popmoney_account import PopmoneyAccount
+from bisq.core.payment.prompt_pay_account import PromptPayAccount
 from bisq.core.payment.revolute_account import RevolutAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.sepa_account import SepaAccount
@@ -64,7 +65,7 @@ _account_map = {
     PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
     PaymentMethod.F2F_ID: lambda: F2FAccount(),
     PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
-    # PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
+    PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
     # PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
     # PaymentMethod.TRANSFERWISE_ID: lambda: TransferwiseAccount(),
     # PaymentMethod.TRANSFERWISE_USD_ID: lambda: TransferwiseUsdAccount(),
