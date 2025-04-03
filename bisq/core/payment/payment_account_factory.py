@@ -26,6 +26,7 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.paysera_account import PayseraAccount
 from bisq.core.payment.paytm_account import PaytmAccount
 from bisq.core.payment.perfect_money_account import PerfectMoneyAccount
+from bisq.core.payment.pix_account import PixAccount
 from bisq.core.payment.popmoney_account import PopmoneyAccount
 from bisq.core.payment.prompt_pay_account import PromptPayAccount
 from bisq.core.payment.revolute_account import RevolutAccount
@@ -90,7 +91,7 @@ _account_map = {
     PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
     PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
     PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
-    # PaymentMethod.PIX_ID: lambda: PixAccount(),
+    PaymentMethod.PIX_ID: lambda: PixAccount(),
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
     # PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
     # PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
