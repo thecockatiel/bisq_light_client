@@ -24,6 +24,7 @@ from bisq.core.payment.instant_crypto_currency_account import (
 )
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
+from bisq.core.payment.mercado_pago_account import MercadoPagoAccount
 from bisq.core.payment.monese_account import MoneseAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
@@ -121,7 +122,7 @@ _account_map = {
     PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
     PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
-    # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
+    PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
     PaymentMethod.SBP_ID: lambda: SbpAccount(),
     # Cannot be deleted as it would break old trade history entries
     PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),
