@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from bisq.core.payment.ach_transfer_account import AchTransferAccount
 from bisq.core.payment.advanced_cash_account import AdvancedCashAccount
 from bisq.core.payment.ali_pay_account import AliPayAccount
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
@@ -112,7 +113,7 @@ _account_map = {
     PaymentMethod.VERSE_ID: lambda: VerseAccount(),
     PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
     PaymentMethod.SWIFT_ID: lambda: SwiftAccount(),
-    # PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
+    PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
     # PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
