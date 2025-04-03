@@ -6,6 +6,7 @@ from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
+from bisq.core.payment.popmoney_account import PopmoneyAccount
 from bisq.core.payment.revolute_account import RevolutAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.sepa_account import SepaAccount
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 _account_map = {
     PaymentMethod.UPHOLD_ID: lambda: UpholdAccount(),
     PaymentMethod.MONEY_BEAM_ID: lambda: MoneyBeamAccount(),
-    # PaymentMethod.POPMONEY_ID: lambda: PopmoneyAccount(),
+    PaymentMethod.POPMONEY_ID: lambda: PopmoneyAccount(),
     PaymentMethod.REVOLUT_ID: lambda: RevolutAccount(),
     # PaymentMethod.PERFECT_MONEY_ID: lambda: PerfectMoneyAccount(),
     PaymentMethod.SEPA_ID: lambda: SepaAccount(),
