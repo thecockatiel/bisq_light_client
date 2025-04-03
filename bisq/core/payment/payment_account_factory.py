@@ -5,6 +5,7 @@ from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
 from bisq.core.payment.bizum_account import BizumAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
+from bisq.core.payment.capitual_account import CapitualAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.cash_deposit_account import CashDepositAccount
 from bisq.core.payment.chase_quick_pay_account import ChaseQuickPayAccount
@@ -95,7 +96,7 @@ _account_map = {
     PaymentMethod.PIX_ID: lambda: PixAccount(),
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
     PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
-    # PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
+    PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
     # PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
     # PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
     # PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
