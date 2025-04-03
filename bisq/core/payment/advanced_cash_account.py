@@ -21,7 +21,7 @@ class AdvancedCashAccount(PaymentAccount):
     ]
 
     def __init__(self):
-        super().__init__(PaymentMethod.PROMPT_PAY)
+        super().__init__(PaymentMethod.ADVANCED_CASH)
         self.trade_currencies.extend(AdvancedCashAccount.SUPPORTED_CURRENCIES)
 
     def create_payload(self) -> PaymentAccountPayload:
