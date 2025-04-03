@@ -8,6 +8,7 @@ from bisq.core.payment.chase_quick_pay_account import ChaseQuickPayAccount
 from bisq.core.payment.clear_xchange_account import ClearXchangeAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
+from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
@@ -49,7 +50,7 @@ _account_map = {
     PaymentMethod.SWISH_ID: lambda: SwishAccount(),
     PaymentMethod.CLEAR_X_CHANGE_ID: lambda: ClearXchangeAccount(),
     PaymentMethod.CHASE_QUICK_PAY_ID: lambda: ChaseQuickPayAccount(),
-    # PaymentMethod.INTERAC_E_TRANSFER_ID: lambda: InteracETransferAccount(),
+    PaymentMethod.INTERAC_E_TRANSFER_ID: lambda: InteracETransferAccount(),
     # PaymentMethod.US_POSTAL_MONEY_ORDER_ID: lambda: USPostalMoneyOrderAccount(),
     # PaymentMethod.CASH_DEPOSIT_ID: lambda: CashDepositAccount(),
     # PaymentMethod.BLOCK_CHAINS_ID: lambda: CryptoCurrencyAccount(),
