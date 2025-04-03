@@ -18,6 +18,7 @@ from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.national_bank_account import NationalBankAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
+from bisq.core.payment.paysera_account import PayseraAccount
 from bisq.core.payment.perfect_money_account import PerfectMoneyAccount
 from bisq.core.payment.popmoney_account import PopmoneyAccount
 from bisq.core.payment.prompt_pay_account import PromptPayAccount
@@ -72,7 +73,7 @@ _account_map = {
     PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
     PaymentMethod.TRANSFERWISE_ID: lambda: TransferwiseAccount(),
     PaymentMethod.TRANSFERWISE_USD_ID: lambda: TransferwiseUsdAccount(),
-    # PaymentMethod.PAYSERA_ID: lambda: PayseraAccount(),
+    PaymentMethod.PAYSERA_ID: lambda: PayseraAccount(),
     # PaymentMethod.PAXUM_ID: lambda: PaxumAccount(),
     # PaymentMethod.NEFT_ID: lambda: NeftAccount(),
     # PaymentMethod.RTGS_ID: lambda: RtgsAccount(),
