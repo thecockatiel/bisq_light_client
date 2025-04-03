@@ -3,6 +3,7 @@ from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.f2f_account import F2FAccount
+from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -29,7 +30,7 @@ _account_map = {
     PaymentMethod.PERFECT_MONEY_ID: lambda: PerfectMoneyAccount(),
     PaymentMethod.SEPA_ID: lambda: SepaAccount(),
     PaymentMethod.SEPA_INSTANT_ID: lambda: SepaInstantAccount(),
-    # PaymentMethod.FASTER_PAYMENTS_ID: lambda: FasterPaymentsAccount(),
+    PaymentMethod.FASTER_PAYMENTS_ID: lambda: FasterPaymentsAccount(),
     # PaymentMethod.NATIONAL_BANK_ID: lambda: NationalBankAccount(),
     PaymentMethod.SAME_BANK_ID: lambda: SameBankAccount(),
     PaymentMethod.SPECIFIC_BANKS_ID: lambda: SpecificBanksAccount(),
