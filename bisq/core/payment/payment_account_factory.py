@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from bisq.core.payment.advanced_cash_account import AdvancedCashAccount
 from bisq.core.payment.ali_pay_account import AliPayAccount
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
@@ -66,7 +67,7 @@ _account_map = {
     PaymentMethod.F2F_ID: lambda: F2FAccount(),
     PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
     PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
-    # PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
+    PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
     # PaymentMethod.TRANSFERWISE_ID: lambda: TransferwiseAccount(),
     # PaymentMethod.TRANSFERWISE_USD_ID: lambda: TransferwiseUsdAccount(),
     # PaymentMethod.PAYSERA_ID: lambda: PayseraAccount(),
@@ -94,14 +95,15 @@ _account_map = {
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
     # PaymentMethod.SBP_ID: lambda: SbpAccount(),
-    
     # Cannot be deleted as it would break old trade history entries
     # PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),
     # PaymentMethod.CASH_APP_ID: lambda: CashAppAccount(),
     # PaymentMethod.VENMO_ID: lambda: VenmoAccount(),
 }
-class PaymentAccountFactory():
-    
+
+
+class PaymentAccountFactory:
+
     @staticmethod
     def get_payment_account(payment_method: "PaymentMethod") -> "PaymentAccount":
         try:
