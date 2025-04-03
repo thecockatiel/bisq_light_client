@@ -25,6 +25,7 @@ from bisq.core.payment.perfect_money_account import PerfectMoneyAccount
 from bisq.core.payment.popmoney_account import PopmoneyAccount
 from bisq.core.payment.prompt_pay_account import PromptPayAccount
 from bisq.core.payment.revolute_account import RevolutAccount
+from bisq.core.payment.rtgs_account import RtgsAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
@@ -78,7 +79,7 @@ _account_map = {
     PaymentMethod.PAYSERA_ID: lambda: PayseraAccount(),
     PaymentMethod.PAXUM_ID: lambda: PaxumAccount(),
     PaymentMethod.NEFT_ID: lambda: NeftAccount(),
-    # PaymentMethod.RTGS_ID: lambda: RtgsAccount(),
+    PaymentMethod.RTGS_ID: lambda: RtgsAccount(),
     # PaymentMethod.IMPS_ID: lambda: ImpsAccount(),
     # PaymentMethod.UPI_ID: lambda: UpiAccount(),
     # PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
