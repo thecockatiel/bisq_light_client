@@ -20,6 +20,7 @@ from bisq.core.payment.sepa_instant_account import SepaInstantAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.swift_account import SwiftAccount
 from bisq.core.payment.uphold_account import UpholdAccount
+from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -41,7 +42,7 @@ _account_map = {
     PaymentMethod.JAPAN_BANK_ID: lambda: JapanBankAccount(),
     PaymentMethod.AUSTRALIA_PAYID_ID: lambda: AustraliaPayidAccount(),
     PaymentMethod.ALI_PAY_ID: lambda: AliPayAccount(),
-    # PaymentMethod.WECHAT_PAY_ID: lambda: WeChatPayAccount(),
+    PaymentMethod.WECHAT_PAY_ID: lambda: WeChatPayAccount(),
     # PaymentMethod.SWISH_ID: lambda: SwishAccount(),
     # PaymentMethod.CLEAR_X_CHANGE_ID: lambda: ClearXchangeAccount(),
     # PaymentMethod.CHASE_QUICK_PAY_ID: lambda: ChaseQuickPayAccount(),
