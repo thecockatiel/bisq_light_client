@@ -3,6 +3,7 @@ from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.f2f_account import F2FAccount
+from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.revolute_account import RevolutAccount
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 _account_map = {
     PaymentMethod.UPHOLD_ID: lambda: UpholdAccount(),
-    # PaymentMethod.MONEY_BEAM_ID: lambda: MoneyBeamAccount(),
+    PaymentMethod.MONEY_BEAM_ID: lambda: MoneyBeamAccount(),
     # PaymentMethod.POPMONEY_ID: lambda: PopmoneyAccount(),
     PaymentMethod.REVOLUT_ID: lambda: RevolutAccount(),
     # PaymentMethod.PERFECT_MONEY_ID: lambda: PerfectMoneyAccount(),
