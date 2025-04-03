@@ -3,6 +3,7 @@ from bisq.core.payment.advanced_cash_account import AdvancedCashAccount
 from bisq.core.payment.ali_pay_account import AliPayAccount
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
+from bisq.core.payment.bizum_account import BizumAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.cash_deposit_account import CashDepositAccount
@@ -88,7 +89,7 @@ _account_map = {
     PaymentMethod.UPI_ID: lambda: UpiAccount(),
     PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
     PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
-    # PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
+    PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
     # PaymentMethod.PIX_ID: lambda: PixAccount(),
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
     # PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
