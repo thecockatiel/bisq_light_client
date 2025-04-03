@@ -36,6 +36,7 @@ from bisq.core.payment.swish_account import SwishAccount
 from bisq.core.payment.transferwise_account import TransferwiseAccount
 from bisq.core.payment.transferwise_usd_account import TransferwiseUsdAccount
 from bisq.core.payment.uphold_account import UpholdAccount
+from bisq.core.payment.upi_account import UpiAccount
 from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
 from bisq.core.payment.western_union_account import WesternUnionAccount
@@ -82,7 +83,7 @@ _account_map = {
     PaymentMethod.NEFT_ID: lambda: NeftAccount(),
     PaymentMethod.RTGS_ID: lambda: RtgsAccount(),
     PaymentMethod.IMPS_ID: lambda: ImpsAccount(),
-    # PaymentMethod.UPI_ID: lambda: UpiAccount(),
+    PaymentMethod.UPI_ID: lambda: UpiAccount(),
     # PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
     # PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
     # PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
