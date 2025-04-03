@@ -10,6 +10,7 @@ from bisq.core.payment.clear_xchange_account import ClearXchangeAccount
 from bisq.core.payment.crypto_currency_account import CryptoCurrencyAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
+from bisq.core.payment.hal_cash_account import HalCashAccount
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
@@ -60,7 +61,7 @@ _account_map = {
     PaymentMethod.BLOCK_CHAINS_ID: lambda: CryptoCurrencyAccount(),
     PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
     PaymentMethod.WESTERN_UNION_ID: lambda: WesternUnionAccount(),
-    # PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
+    PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
     PaymentMethod.F2F_ID: lambda: F2FAccount(),
     PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
     # PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
