@@ -28,6 +28,7 @@ from bisq.core.payment.swish_account import SwishAccount
 from bisq.core.payment.uphold_account import UpholdAccount
 from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
+from bisq.core.payment.western_union_account import WesternUnionAccount
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -58,7 +59,7 @@ _account_map = {
     PaymentMethod.CASH_DEPOSIT_ID: lambda: CashDepositAccount(),
     PaymentMethod.BLOCK_CHAINS_ID: lambda: CryptoCurrencyAccount(),
     PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
-    # PaymentMethod.WESTERN_UNION_ID: lambda: WesternUnionAccount(),
+    PaymentMethod.WESTERN_UNION_ID: lambda: WesternUnionAccount(),
     # PaymentMethod.HAL_CASH_ID: lambda: HalCashAccount(),
     PaymentMethod.F2F_ID: lambda: F2FAccount(),
     PaymentMethod.CASH_BY_MAIL_ID: lambda: CashByMailAccount(),
