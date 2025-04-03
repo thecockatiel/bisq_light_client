@@ -41,6 +41,7 @@ from bisq.core.payment.revolute_account import RevolutAccount
 from bisq.core.payment.rtgs_account import RtgsAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.satispay_account import SatispayAccount
+from bisq.core.payment.sbp_account import SbpAccount
 from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
@@ -118,7 +119,7 @@ _account_map = {
     PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
-    # PaymentMethod.SBP_ID: lambda: SbpAccount(),
+    PaymentMethod.SBP_ID: lambda: SbpAccount(),
     # Cannot be deleted as it would break old trade history entries
     # PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),
     # PaymentMethod.CASH_APP_ID: lambda: CashAppAccount(),
