@@ -11,6 +11,7 @@ from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.swift_account import SwiftAccount
+from bisq.core.payment.uphold_account import UpholdAccount
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 # TODO: not complete
 
 _account_map = {
-    # PaymentMethod.UPHOLD_ID: lambda: UpholdAccount(),
+    PaymentMethod.UPHOLD_ID: lambda: UpholdAccount(),
     # PaymentMethod.MONEY_BEAM_ID: lambda: MoneyBeamAccount(),
     # PaymentMethod.POPMONEY_ID: lambda: PopmoneyAccount(),
     PaymentMethod.REVOLUT_ID: lambda: RevolutAccount(),
