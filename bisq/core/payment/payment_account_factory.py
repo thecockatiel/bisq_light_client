@@ -12,6 +12,7 @@ from bisq.core.payment.crypto_currency_account import CryptoCurrencyAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.hal_cash_account import HalCashAccount
+from bisq.core.payment.imps_account import ImpsAccount
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
@@ -80,7 +81,7 @@ _account_map = {
     PaymentMethod.PAXUM_ID: lambda: PaxumAccount(),
     PaymentMethod.NEFT_ID: lambda: NeftAccount(),
     PaymentMethod.RTGS_ID: lambda: RtgsAccount(),
-    # PaymentMethod.IMPS_ID: lambda: ImpsAccount(),
+    PaymentMethod.IMPS_ID: lambda: ImpsAccount(),
     # PaymentMethod.UPI_ID: lambda: UpiAccount(),
     # PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
     # PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
