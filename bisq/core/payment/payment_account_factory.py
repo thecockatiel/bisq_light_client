@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
+from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.f2f_account import F2FAccount
@@ -37,7 +38,7 @@ _account_map = {
     PaymentMethod.SAME_BANK_ID: lambda: SameBankAccount(),
     PaymentMethod.SPECIFIC_BANKS_ID: lambda: SpecificBanksAccount(),
     PaymentMethod.JAPAN_BANK_ID: lambda: JapanBankAccount(),
-    # PaymentMethod.AUSTRALIA_PAYID_ID: lambda: AustraliaPayidAccount(),
+    PaymentMethod.AUSTRALIA_PAYID_ID: lambda: AustraliaPayidAccount(),
     # PaymentMethod.ALI_PAY_ID: lambda: AliPayAccount(),
     # PaymentMethod.WECHAT_PAY_ID: lambda: WeChatPayAccount(),
     # PaymentMethod.SWISH_ID: lambda: SwishAccount(),
