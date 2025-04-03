@@ -29,6 +29,7 @@ from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.swift_account import SwiftAccount
 from bisq.core.payment.swish_account import SwishAccount
 from bisq.core.payment.transferwise_account import TransferwiseAccount
+from bisq.core.payment.transferwise_usd_account import TransferwiseUsdAccount
 from bisq.core.payment.uphold_account import UpholdAccount
 from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
@@ -70,7 +71,7 @@ _account_map = {
     PaymentMethod.PROMPT_PAY_ID: lambda: PromptPayAccount(),
     PaymentMethod.ADVANCED_CASH_ID: lambda: AdvancedCashAccount(),
     PaymentMethod.TRANSFERWISE_ID: lambda: TransferwiseAccount(),
-    # PaymentMethod.TRANSFERWISE_USD_ID: lambda: TransferwiseUsdAccount(),
+    PaymentMethod.TRANSFERWISE_USD_ID: lambda: TransferwiseUsdAccount(),
     # PaymentMethod.PAYSERA_ID: lambda: PayseraAccount(),
     # PaymentMethod.PAXUM_ID: lambda: PaxumAccount(),
     # PaymentMethod.NEFT_ID: lambda: NeftAccount(),
