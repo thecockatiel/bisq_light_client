@@ -21,6 +21,7 @@ from bisq.core.payment.instant_crypto_currency_account import (
 )
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
+from bisq.core.payment.monese_account import MoneseAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.national_bank_account import NationalBankAccount
@@ -101,7 +102,7 @@ _account_map = {
     PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
     PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
     PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
-    # PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
+    PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
     # PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
     # PaymentMethod.TIKKIE_ID: lambda: TikkieAccount(),
     # PaymentMethod.VERSE_ID: lambda: VerseAccount(),
