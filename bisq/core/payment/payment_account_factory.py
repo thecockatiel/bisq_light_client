@@ -13,6 +13,7 @@ from bisq.core.payment.cel_pay_account import CelPayAccount
 from bisq.core.payment.chase_quick_pay_account import ChaseQuickPayAccount
 from bisq.core.payment.clear_xchange_account import ClearXchangeAccount
 from bisq.core.payment.crypto_currency_account import CryptoCurrencyAccount
+from bisq.core.payment.domestic_wire_transfer_account import DomesticWireTransferAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.hal_cash_account import HalCashAccount
@@ -114,7 +115,7 @@ _account_map = {
     PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
     PaymentMethod.SWIFT_ID: lambda: SwiftAccount(),
     PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
-    # PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
+    PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
     PaymentMethod.BSQ_SWAP_ID: lambda: BsqSwapAccount(),
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
     # PaymentMethod.SBP_ID: lambda: SbpAccount(),
