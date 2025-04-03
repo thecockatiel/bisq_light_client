@@ -38,6 +38,7 @@ from bisq.core.payment.prompt_pay_account import PromptPayAccount
 from bisq.core.payment.revolute_account import RevolutAccount
 from bisq.core.payment.rtgs_account import RtgsAccount
 from bisq.core.payment.same_bank_account import SameBankAccount
+from bisq.core.payment.satispay_account import SatispayAccount
 from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
@@ -103,7 +104,7 @@ _account_map = {
     PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
     PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
     PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
-    # PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
+    PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
     # PaymentMethod.TIKKIE_ID: lambda: TikkieAccount(),
     # PaymentMethod.VERSE_ID: lambda: VerseAccount(),
     # PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
