@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, cast
+from typing import TYPE_CHECKING
 from bisq.core.locale.currency_util import get_all_fiat_currencies
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class F2FAccount(CountryBasedPaymentAccount):
-    SUPPORTED_CURRENCIES = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
 
     def __init__(self):
         super().__init__(PaymentMethod.F2F)
@@ -18,30 +18,34 @@ class F2FAccount(CountryBasedPaymentAccount):
     def create_payload(self) -> "PaymentAccountPayload":
         return F2FAccountPayload(self.payment_method.id, self.id)
 
-    def get_supported_currencies(self) -> List['TradeCurrency']:
+    def get_supported_currencies(self) -> list["TradeCurrency"]:
         return F2FAccount.SUPPORTED_CURRENCIES
 
     @property
     def contact(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).contact
-    
+        return self._f2f_account_payload.contact
+
     @contact.setter
     def contact(self, contact: str) -> None:
-        cast(F2FAccountPayload, self.payment_account_payload).contact = contact
+        self._f2f_account_payload.contact = contact
 
     @property
     def city(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).city
-    
+        return self._f2f_account_payload.city
+
     @city.setter
     def city(self, city: str) -> None:
-        cast(F2FAccountPayload, self.payment_account_payload).city = city
+        self._f2f_account_payload.city = city
 
     @property
     def extra_info(self) -> str:
-        return cast(F2FAccountPayload, self.payment_account_payload).extra_info
-    
+        return self._f2f_account_payload.extra_info
+
     @extra_info.setter
     def extra_info(self, extra_info: str) -> None:
-        cast(F2FAccountPayload, self.payment_account_payload).extra_info = extra_info
+        self._f2f_account_payload.extra_info = extra_info
 
+    @property
+    def _f2f_account_payload(self):
+        assert isinstance(self.payment_account_payload, F2FAccountPayload)
+        return self.payment_account_payload
