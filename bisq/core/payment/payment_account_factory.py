@@ -42,6 +42,7 @@ from bisq.core.payment.satispay_account import SatispayAccount
 from bisq.core.payment.sepa_account import SepaAccount
 from bisq.core.payment.sepa_instant_account import SepaInstantAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
+from bisq.core.payment.strike_account import StrikeAccount
 from bisq.core.payment.swift_account import SwiftAccount
 from bisq.core.payment.swish_account import SwishAccount
 from bisq.core.payment.tikkie_account import TikkieAccount
@@ -109,7 +110,7 @@ _account_map = {
     PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
     PaymentMethod.TIKKIE_ID: lambda: TikkieAccount(),
     PaymentMethod.VERSE_ID: lambda: VerseAccount(),
-    # PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
+    PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
     PaymentMethod.SWIFT_ID: lambda: SwiftAccount(),
     # PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
     # PaymentMethod.DOMESTIC_WIRE_TRANSFER_ID: lambda: DomesticWireTransferAccount(),
