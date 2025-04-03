@@ -6,6 +6,7 @@ from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
+from bisq.core.payment.national_bank_account import NationalBankAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.perfect_money_account import PerfectMoneyAccount
 from bisq.core.payment.popmoney_account import PopmoneyAccount
@@ -31,7 +32,7 @@ _account_map = {
     PaymentMethod.SEPA_ID: lambda: SepaAccount(),
     PaymentMethod.SEPA_INSTANT_ID: lambda: SepaInstantAccount(),
     PaymentMethod.FASTER_PAYMENTS_ID: lambda: FasterPaymentsAccount(),
-    # PaymentMethod.NATIONAL_BANK_ID: lambda: NationalBankAccount(),
+    PaymentMethod.NATIONAL_BANK_ID: lambda: NationalBankAccount(),
     PaymentMethod.SAME_BANK_ID: lambda: SameBankAccount(),
     PaymentMethod.SPECIFIC_BANKS_ID: lambda: SpecificBanksAccount(),
     # PaymentMethod.JAPAN_BANK_ID: lambda: JapanBankAccount(),
