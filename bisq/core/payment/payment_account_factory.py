@@ -14,6 +14,7 @@ from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.hal_cash_account import HalCashAccount
 from bisq.core.payment.imps_account import ImpsAccount
+from bisq.core.payment.instant_crypto_currency_account import InstantCryptoCurrencyAccount
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
@@ -93,7 +94,7 @@ _account_map = {
     PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
     PaymentMethod.PIX_ID: lambda: PixAccount(),
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
-    # PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
+    PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
     # PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
     # PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
     # PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
