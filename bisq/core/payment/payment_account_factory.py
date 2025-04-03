@@ -4,6 +4,7 @@ from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
+from bisq.core.payment.chase_quick_pay_account import ChaseQuickPayAccount
 from bisq.core.payment.clear_xchange_account import ClearXchangeAccount
 from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
@@ -47,7 +48,7 @@ _account_map = {
     PaymentMethod.WECHAT_PAY_ID: lambda: WeChatPayAccount(),
     PaymentMethod.SWISH_ID: lambda: SwishAccount(),
     PaymentMethod.CLEAR_X_CHANGE_ID: lambda: ClearXchangeAccount(),
-    # PaymentMethod.CHASE_QUICK_PAY_ID: lambda: ChaseQuickPayAccount(),
+    PaymentMethod.CHASE_QUICK_PAY_ID: lambda: ChaseQuickPayAccount(),
     # PaymentMethod.INTERAC_E_TRANSFER_ID: lambda: InteracETransferAccount(),
     # PaymentMethod.US_POSTAL_MONEY_ORDER_ID: lambda: USPostalMoneyOrderAccount(),
     # PaymentMethod.CASH_DEPOSIT_ID: lambda: CashDepositAccount(),
