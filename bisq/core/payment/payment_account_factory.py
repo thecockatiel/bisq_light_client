@@ -65,7 +65,6 @@ from bisq.core.payment.western_union_account import WesternUnionAccount
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
 
-# TODO: not complete
 
 _account_map = {
     PaymentMethod.UPHOLD_ID: lambda: UpholdAccount(),
