@@ -8,6 +8,7 @@ from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.capitual_account import CapitualAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.cash_deposit_account import CashDepositAccount
+from bisq.core.payment.cel_pay_account import CelPayAccount
 from bisq.core.payment.chase_quick_pay_account import ChaseQuickPayAccount
 from bisq.core.payment.clear_xchange_account import ClearXchangeAccount
 from bisq.core.payment.crypto_currency_account import CryptoCurrencyAccount
@@ -15,7 +16,9 @@ from bisq.core.payment.f2f_account import F2FAccount
 from bisq.core.payment.faster_payments_account import FasterPaymentsAccount
 from bisq.core.payment.hal_cash_account import HalCashAccount
 from bisq.core.payment.imps_account import ImpsAccount
-from bisq.core.payment.instant_crypto_currency_account import InstantCryptoCurrencyAccount
+from bisq.core.payment.instant_crypto_currency_account import (
+    InstantCryptoCurrencyAccount,
+)
 from bisq.core.payment.interac_e_transfer_account import InteracETransferAccount
 from bisq.core.payment.japan_bank_account import JapanBankAccount
 from bisq.core.payment.money_beam_account import MoneyBeamAccount
@@ -97,7 +100,7 @@ _account_map = {
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
     PaymentMethod.BLOCK_CHAINS_INSTANT_ID: lambda: InstantCryptoCurrencyAccount(),
     PaymentMethod.CAPITUAL_ID: lambda: CapitualAccount(),
-    # PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
+    PaymentMethod.CELPAY_ID: lambda: CelPayAccount(),
     # PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
     # PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
     # PaymentMethod.TIKKIE_ID: lambda: TikkieAccount(),
