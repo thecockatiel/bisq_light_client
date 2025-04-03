@@ -50,6 +50,7 @@ from bisq.core.payment.transferwise_usd_account import TransferwiseUsdAccount
 from bisq.core.payment.uphold_account import UpholdAccount
 from bisq.core.payment.upi_account import UpiAccount
 from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
+from bisq.core.payment.verse_account import VerseAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
 from bisq.core.payment.western_union_account import WesternUnionAccount
 
@@ -107,7 +108,7 @@ _account_map = {
     PaymentMethod.MONESE_ID: lambda: MoneseAccount(),
     PaymentMethod.SATISPAY_ID: lambda: SatispayAccount(),
     PaymentMethod.TIKKIE_ID: lambda: TikkieAccount(),
-    # PaymentMethod.VERSE_ID: lambda: VerseAccount(),
+    PaymentMethod.VERSE_ID: lambda: VerseAccount(),
     # PaymentMethod.STRIKE_ID: lambda: StrikeAccount(),
     PaymentMethod.SWIFT_ID: lambda: SwiftAccount(),
     # PaymentMethod.ACH_TRANSFER_ID: lambda: AchTransferAccount(),
