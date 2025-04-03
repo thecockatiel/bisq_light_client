@@ -19,6 +19,7 @@ from bisq.core.payment.money_beam_account import MoneyBeamAccount
 from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.national_bank_account import NationalBankAccount
 from bisq.core.payment.neft_account import NeftAccount
+from bisq.core.payment.nequi_account import NequiAccount
 from bisq.core.payment.paxum_account import PaxumAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.paysera_account import PayseraAccount
@@ -86,7 +87,7 @@ _account_map = {
     PaymentMethod.IMPS_ID: lambda: ImpsAccount(),
     PaymentMethod.UPI_ID: lambda: UpiAccount(),
     PaymentMethod.PAYTM_ID: lambda: PaytmAccount(),
-    # PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
+    PaymentMethod.NEQUI_ID: lambda: NequiAccount(),
     # PaymentMethod.BIZUM_ID: lambda: BizumAccount(),
     # PaymentMethod.PIX_ID: lambda: PixAccount(),
     PaymentMethod.AMAZON_GIFT_CARD_ID: lambda: AmazonGiftCardAccount(),
