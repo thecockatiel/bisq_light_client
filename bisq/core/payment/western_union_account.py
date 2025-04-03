@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class WesternUnionAccount(CountryBasedPaymentAccount):
-    SUPPORTED_CURRENCIES = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
 
     def __init__(self):
         super().__init__(PaymentMethod.WESTERN_UNION)

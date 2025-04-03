@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class CashDepositAccount(CountryBasedPaymentAccount, SameCountryRestrictedBankAccount):
-    SUPPORTED_CURRENCIES = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
 
     def __init__(self):
         super().__init__(PaymentMethod.CASH_DEPOSIT)
@@ -36,7 +36,7 @@ class CashDepositAccount(CountryBasedPaymentAccount, SameCountryRestrictedBankAc
         return country.code if country else ""
 
     @property
-    def requirements(self): 
+    def requirements(self):
         return self._cash_deposit_account_payload.requirements
 
     @property

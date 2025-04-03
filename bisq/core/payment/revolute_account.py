@@ -1,5 +1,6 @@
 from typing import cast
 from bisq.core.locale.fiat_currency import FiatCurrency
+from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.revolute_account_payload import RevolutAccountPayload
 from bisq.core.payment.payment_account import PaymentAccount
@@ -8,7 +9,7 @@ from bisq.core.payment.payment_account import PaymentAccount
 class RevolutAccount(PaymentAccount):
 
     # https://www.revolut.com/help/getting-started/exchanging-currencies/what-fiat-currencies-are-supported-for-holding-and-exchange
-    SUPPORTED_CURRENCIES = [
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = [
         FiatCurrency("AED"),
         FiatCurrency("AUD"),
         FiatCurrency("BGN"),
@@ -51,7 +52,8 @@ class RevolutAccount(PaymentAccount):
 
     @property
     def _revolute_account_payload(self):
-        return cast(RevolutAccountPayload, self.payment_account_payload)
+        assert isinstance(self.payment_account_payload, RevolutAccountPayload)
+        return self.payment_account_payload
 
     @property
     def account_id(self):

@@ -1,4 +1,4 @@
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from bisq.core.locale.currency_util import get_all_fiat_currencies
 from bisq.core.payment.bank_name_restricted_bank_account import BankNameRestrictedBankAccount
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
@@ -6,9 +6,11 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.specfic_banks_account_payload import SpecificBanksAccountPayload
 from bisq.core.payment.same_country_restricted_bank_account import SameCountryRestrictedBankAccount
 
+if TYPE_CHECKING:
+    from bisq.core.locale.trade_currency import TradeCurrency
 
 class SpecificBanksAccount(CountryBasedPaymentAccount, BankNameRestrictedBankAccount, SameCountryRestrictedBankAccount):
-    SUPPORTED_CURRENCIES = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
     
     def __init__(self):
         super().__init__(PaymentMethod.SPECIFIC_BANKS)
@@ -21,12 +23,17 @@ class SpecificBanksAccount(CountryBasedPaymentAccount, BankNameRestrictedBankAcc
     
     @property
     def accepted_banks(self):
-        return cast(SpecificBanksAccountPayload, self.payment_account_payload).accepted_banks
+        return self._specific_banks_account_payload.accepted_banks
     
     @property
     def bank_id(self):
-        return cast(SpecificBanksAccountPayload, self.payment_account_payload).bank_id
+        return self._specific_banks_account_payload.bank_id
     
     @property
     def country_code(self):
         return self.country.code if self.country else ""
+    
+    @property
+    def _specific_banks_account_payload(self):
+        assert isinstance(self.payment_account_payload, SpecificBanksAccountPayload)
+        return self.payment_account_payload
