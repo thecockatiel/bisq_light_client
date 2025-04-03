@@ -24,6 +24,7 @@ from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from bisq.core.payment.swift_account import SwiftAccount
 from bisq.core.payment.swish_account import SwishAccount
 from bisq.core.payment.uphold_account import UpholdAccount
+from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
 
 if TYPE_CHECKING:
@@ -51,7 +52,7 @@ _account_map = {
     PaymentMethod.CLEAR_X_CHANGE_ID: lambda: ClearXchangeAccount(),
     PaymentMethod.CHASE_QUICK_PAY_ID: lambda: ChaseQuickPayAccount(),
     PaymentMethod.INTERAC_E_TRANSFER_ID: lambda: InteracETransferAccount(),
-    # PaymentMethod.US_POSTAL_MONEY_ORDER_ID: lambda: USPostalMoneyOrderAccount(),
+    PaymentMethod.US_POSTAL_MONEY_ORDER_ID: lambda: USPostalMoneyOrderAccount(),
     # PaymentMethod.CASH_DEPOSIT_ID: lambda: CashDepositAccount(),
     # PaymentMethod.BLOCK_CHAINS_ID: lambda: CryptoCurrencyAccount(),
     PaymentMethod.MONEY_GRAM_ID: lambda: MoneyGramAccount(),
