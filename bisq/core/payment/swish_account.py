@@ -38,7 +38,7 @@ class SwishAccount(PaymentAccount):
     def holder_name(self):
         return self._swish_account_payload.holder_name
 
-    @mobile_nr.setter
+    @holder_name.setter
     def holder_name(self, value: str):
         if value is None:
             value = ""
