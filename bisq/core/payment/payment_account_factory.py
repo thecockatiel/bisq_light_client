@@ -7,6 +7,7 @@ from bisq.core.payment.australia_payid_account import AustraliaPayidAccount
 from bisq.core.payment.bizum_account import BizumAccount
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 from bisq.core.payment.capitual_account import CapitualAccount
+from bisq.core.payment.cash_app_account import CashAppAccount
 from bisq.core.payment.cash_by_mail_account import CashByMailAccount
 from bisq.core.payment.cash_deposit_account import CashDepositAccount
 from bisq.core.payment.cel_pay_account import CelPayAccount
@@ -29,6 +30,7 @@ from bisq.core.payment.money_gram_account import MoneyGramAccount
 from bisq.core.payment.national_bank_account import NationalBankAccount
 from bisq.core.payment.neft_account import NeftAccount
 from bisq.core.payment.nequi_account import NequiAccount
+from bisq.core.payment.ok_pay_account import OKPayAccount
 from bisq.core.payment.paxum_account import PaxumAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.paysera_account import PayseraAccount
@@ -54,6 +56,7 @@ from bisq.core.payment.transferwise_usd_account import TransferwiseUsdAccount
 from bisq.core.payment.uphold_account import UpholdAccount
 from bisq.core.payment.upi_account import UpiAccount
 from bisq.core.payment.us_postal_money_order_account import USPostalMoneyOrderAccount
+from bisq.core.payment.venmo_account import VenmoAccount
 from bisq.core.payment.verse_account import VerseAccount
 from bisq.core.payment.we_chat_pay_account import WeChatPayAccount
 from bisq.core.payment.western_union_account import WesternUnionAccount
@@ -121,9 +124,9 @@ _account_map = {
     # PaymentMethod.MERCADO_PAGO_ID: lambda: MercadoPagoAccount(),
     PaymentMethod.SBP_ID: lambda: SbpAccount(),
     # Cannot be deleted as it would break old trade history entries
-    # PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),
-    # PaymentMethod.CASH_APP_ID: lambda: CashAppAccount(),
-    # PaymentMethod.VENMO_ID: lambda: VenmoAccount(),
+    PaymentMethod.OK_PAY_ID: lambda: OKPayAccount(),
+    PaymentMethod.CASH_APP_ID: lambda: CashAppAccount(),
+    PaymentMethod.VENMO_ID: lambda: VenmoAccount(),
 }
 
 
