@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.asset.asset import Asset
 from bisq.asset.coin import Coin
 from bisq.asset.coins.asset_registry import AssetRegistry
@@ -14,10 +14,11 @@ from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.locale.res import Res
 from bisq.core.locale.trade_currency import TradeCurrency
 from utils.data import SimpleProperty
+from utils.java_compat import java_cmp_str
+from bisq.common.config.config import Config
 
 if TYPE_CHECKING:
     from bisq.common.config.base_currency_network import BaseCurrencyNetwork
-    from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -25,15 +26,85 @@ logger = get_logger(__name__)
 
 # TODO: not complete
 
+BASE_CURRENCY_CODE = SimpleProperty("BTC")
+
 
 def _asset_to_crypto_currency(asset: Asset):
     return CryptoCurrency(
         asset.get_ticker_symbol(), asset.get_name(), isinstance(asset, Asset)
     )
 
+
+# java TODO We handle assets of other types (Token, ERC20) as matching the network which is not correct.
+# We should add support for network property in those tokens as well.
+def asset_matches_network(
+    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    # coin here is from bisq coin, not bitcoinj.
+    return (
+        not isinstance(asset, Coin)
+        or asset.network.name == base_currency_network.network
+    )
+
+
+# We want all coins available also in testnet or regtest for testing purpose
+def coin_matches_network_if_mainnet(
+    coin: Coin, base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    matches_network = asset_matches_network(coin, base_currency_network)
+    return not base_currency_network.is_mainnet() or matches_network
+
+
+# We only check for coins not other types of assets (java TODO network check should be supported for all assets)
+def asset_matches_network_if_mainnet(
+    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
+) -> bool:
+    return not isinstance(asset, Coin) or coin_matches_network_if_mainnet(
+        asset, base_currency_network
+    )
+
+
+def _is_not_bsq_or_bsq_trading_activated(
+    asset: Asset,
+    base_currency_network: "BaseCurrencyNetwork",
+    dao_trading_activated: bool,
+) -> bool:
+    return not isinstance(asset, CryptoCurrency) or (
+        dao_trading_activated and asset_matches_network(asset, base_currency_network)
+    )
+
+
+def asset_is_not_base_currency(asset: Asset) -> bool:
+    return not asset_matches_currency_code(asset, BASE_CURRENCY_CODE.get())
+
+
+def asset_matches_currency_code(asset: Asset, currency_code: str) -> bool:
+    return currency_code == asset.get_ticker_symbol()
+
+
+def get_sorted_asset_stream():
+    return sorted(
+        filter(
+            lambda asset: (
+                asset_is_not_base_currency(asset)
+                and _is_not_bsq_or_bsq_trading_activated(
+                    asset,
+                    Config.BASE_CURRENCY_NETWORK_VALUE,
+                    DevEnv.is_dao_trading_activated(),
+                )
+                and asset_matches_network_if_mainnet(
+                    asset, Config.BASE_CURRENCY_NETWORK_VALUE
+                )
+            ),
+            AssetRegistry.registered_assets,
+        ),
+        key=lambda asset: asset.get_name(),
+    )
+
+
 crypto_currency_map = {
     asset.get_ticker_symbol(): _asset_to_crypto_currency(asset)
-    for asset in AssetRegistry.registered_assets
+    for asset in get_sorted_asset_stream()
 }
 
 CURRENCY_CODE_TO_FIAT_CURRENCY_MAP = {
@@ -47,52 +118,6 @@ def get_currency_by_country_code(country_code: str):
         COUNTRY_TO_CURRENCY_CODE_MAP[country_code]
     ]
     return currency_data
-
-
-# along with the comments.
-def is_crypto_currency(currency_code: str):
-    """
-    We return true if it is BTC or any of our currencies available in the assetRegistry.
-    For removed assets it would fail as they are not found but we don't want to conclude that they are fiat then.
-    As the caller might not deal with the case that a currency can be neither a cryptoCurrency nor Fiat if not found
-    we return true as well in case we have no fiat currency for the code.
-
-    As we use a boolean result for isCryptoCurrency and isFiatCurrency we do not treat missing currencies correctly.
-    To throw an exception might be an option but that will require quite a lot of code change, so we don't do that
-    for the moment, but could be considered for the future. Another maybe better option is to introduce an enum which
-    contains 3 entries (CryptoCurrency, Fiat, Undefined).
-    """
-    if currency_code is None:
-        # Some tests call that method with null values. Should be fixed in the tests but to not break them return false.
-        return False
-    elif currency_code == "BTC":
-        # BTC is not part of our assetRegistry so treat it extra here. Other old base currencies (LTC, DOGE, DASH)
-        # are not supported anymore so we can ignore that case.
-        return True
-    elif crypto_currency_map.get(currency_code):
-        # If we find the code in our assetRegistry we return true.
-        # It might be that an asset was removed from the assetsRegistry, we deal with such cases below by checking if
-        # it is a fiat currency
-        return True
-    elif not CURRENCY_CODE_TO_DATA_MAP.get(currency_code, None):
-        # In case the code is from a removed asset we cross check if there exist a fiat currency with that code,
-        # if we don't find a fiat currency we treat it as a crypto currency.
-        return True
-    else:
-        return False
-
-
-def is_fiat_currency(currency_code: str):
-    if (
-        currency_code
-        and not is_crypto_currency(currency_code)
-        and currency_code in CURRENCY_CODE_TO_DATA_MAP
-    ):
-        return True
-    return False
-
-
-BASE_CURRENCY_CODE = SimpleProperty("BTC")
 
 
 def set_base_currency_code(currency_code: str):
@@ -114,7 +139,7 @@ MATURE_MARKET_CURRENCIES = tuple(
             FiatCurrency("AUD"),
             FiatCurrency("BRL"),
         ],
-        key=lambda x: x.code,
+        key=lambda x: java_cmp_str(x.code),
     )
 )
 
@@ -158,26 +183,6 @@ def get_main_fiat_currencies() -> list["TradeCurrency"]:
         currencies.insert(0, default_fiat_currency)
 
     return currencies
-
-
-def get_sorted_asset_stream():
-    return sorted(
-        filter(
-            lambda asset: (
-                asset_is_not_base_currency(asset)
-                and _is_not_bsq_or_bsq_trading_activated(
-                    asset,
-                    Config.BASE_CURRENCY_NETWORK_VALUE,
-                    DevEnv.is_dao_trading_activated(),
-                )
-                and asset_matches_network_if_mainnet(
-                    asset, Config.BASE_CURRENCY_NETWORK_VALUE
-                )
-            ),
-            AssetRegistry.registered_assets,
-        ),
-        key=lambda asset: asset.get_name(),
-    )
 
 
 def get_main_crypto_currencies() -> list["CryptoCurrency"]:
@@ -229,6 +234,10 @@ def get_all_fiat_currencies() -> list["FiatCurrency"]:
     return SORTED_BY_NAME_FIAT_CURRENCIES
 
 
+def get_all_sorted_crypto_currencies() -> Iterable["CryptoCurrency"]:
+    return crypto_currency_map.values()
+
+
 def get_crypto_currency(currency_code: str) -> Optional["CryptoCurrency"]:
     return crypto_currency_map.get(currency_code, None)
 
@@ -247,6 +256,48 @@ def get_trade_currency(currency_code: str) -> Optional["TradeCurrency"]:
         return crypto_currency
 
     return None
+
+
+def is_crypto_currency(currency_code: str):
+    """
+    We return true if it is BTC or any of our currencies available in the assetRegistry.
+    For removed assets it would fail as they are not found but we don't want to conclude that they are fiat then.
+    As the caller might not deal with the case that a currency can be neither a cryptoCurrency nor Fiat if not found
+    we return true as well in case we have no fiat currency for the code.
+
+    As we use a boolean result for isCryptoCurrency and isFiatCurrency we do not treat missing currencies correctly.
+    To throw an exception might be an option but that will require quite a lot of code change, so we don't do that
+    for the moment, but could be considered for the future. Another maybe better option is to introduce an enum which
+    contains 3 entries (CryptoCurrency, Fiat, Undefined).
+    """
+    if currency_code is None:
+        # Some tests call that method with null values. Should be fixed in the tests but to not break them return false.
+        return False
+    elif currency_code == "BTC":
+        # BTC is not part of our assetRegistry so treat it extra here. Other old base currencies (LTC, DOGE, DASH)
+        # are not supported anymore so we can ignore that case.
+        return True
+    elif crypto_currency_map.get(currency_code):
+        # If we find the code in our assetRegistry we return true.
+        # It might be that an asset was removed from the assetsRegistry, we deal with such cases below by checking if
+        # it is a fiat currency
+        return True
+    elif not CURRENCY_CODE_TO_DATA_MAP.get(currency_code, None):
+        # In case the code is from a removed asset we cross check if there exist a fiat currency with that code,
+        # if we don't find a fiat currency we treat it as a crypto currency.
+        return True
+    else:
+        return False
+
+
+def is_fiat_currency(currency_code: str):
+    if (
+        currency_code
+        and not is_crypto_currency(currency_code)
+        and currency_code in CURRENCY_CODE_TO_DATA_MAP
+    ):
+        return True
+    return False
 
 
 def get_trade_currencies(currency_codes: list[str]) -> Optional[list["TradeCurrency"]]:
@@ -294,53 +345,6 @@ def get_currency_name_by_code(currency_code: str) -> str:
 
 def get_currency_name_and_code(currency_code: str):
     return get_currency_name_by_code(currency_code) + " (" + currency_code + ")"
-
-
-def asset_is_not_base_currency(asset: Asset) -> bool:
-    return not asset_matches_currency_code(asset, BASE_CURRENCY_CODE.get())
-
-
-# java TODO We handle assets of other types (Token, ERC20) as matching the network which is not correct.
-# We should add support for network property in those tokens as well.
-def asset_matches_network(
-    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
-) -> bool:
-    # coin here is from bisq coin, not bitcoinj.
-    return (
-        not isinstance(asset, Coin)
-        or asset.network.name == base_currency_network.network
-    )
-
-
-# We only check for coins not other types of assets (java TODO network check should be supported for all assets)
-def asset_matches_network_if_mainnet(
-    asset: "Asset", base_currency_network: "BaseCurrencyNetwork"
-) -> bool:
-    return not isinstance(asset, Coin) or coin_matches_network_if_mainnet(
-        asset, base_currency_network
-    )
-
-
-# We want all coins available also in testnet or regtest for testing purpose
-def coin_matches_network_if_mainnet(
-    coin: Coin, base_currency_network: "BaseCurrencyNetwork"
-) -> bool:
-    matches_network = asset_matches_network(coin, base_currency_network)
-    return not base_currency_network.is_mainnet() or matches_network
-
-
-def _is_not_bsq_or_bsq_trading_activated(
-    asset: Asset,
-    base_currency_network: "BaseCurrencyNetwork",
-    dao_trading_activated: bool,
-) -> bool:
-    return not isinstance(asset, CryptoCurrency) or (
-        dao_trading_activated and asset_matches_network(asset, base_currency_network)
-    )
-
-
-def asset_matches_currency_code(asset: Asset, currency_code: str) -> bool:
-    return currency_code == asset.get_ticker_symbol()
 
 
 def find_asset(
