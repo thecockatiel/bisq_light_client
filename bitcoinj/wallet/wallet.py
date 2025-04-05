@@ -388,7 +388,9 @@ class Wallet(EventListener):
 
     def get_transactions(self):
         """return an Generator that returns all transactions in the wallet, newest first"""
-        for tx in reversed(self._electrum_wallet.db.transactions.values()):
+        with self._electrum_wallet.db.lock:
+            reversed_it = reversed(self._electrum_wallet.db.transactions.copy().values())
+        for tx in reversed_it:
             tx = Transaction(self.network_params, tx)
             self.add_info_from_wallet(tx)
             yield tx
@@ -477,10 +479,11 @@ class Wallet(EventListener):
         return Transaction(self.network_params, existing_tx)
 
     def is_transaction_pending(self, tx_id: str):
-        return (
-            tx_id in self._electrum_wallet.adb.unconfirmed_tx
-            or tx_id in self._electrum_wallet.adb.unverified_tx
-        )
+        with self._electrum_wallet.adb.lock:
+            return (
+                tx_id in self._electrum_wallet.adb.unconfirmed_tx
+                or tx_id in self._electrum_wallet.adb.unverified_tx
+            )
 
     def get_confidence_for_tx_id(
         self, tx_id: Optional[str]
