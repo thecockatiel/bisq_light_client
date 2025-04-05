@@ -109,6 +109,7 @@ class GetDataRequestHandler:
     def on_future_complete(
         self, future: "Future[Connection]", data_response: "GetDataResponse"
     ):
+        connection = None
         try:
             connection = future.result()
             if not connection:
