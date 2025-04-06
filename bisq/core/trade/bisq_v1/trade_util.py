@@ -68,7 +68,6 @@ class TradeUtil:
             return None
 
         multi_sig_pub_key_string = bytes_as_hex_string(multi_sig_pub_key)
-         # TODO: Check later
         multi_sig_address = next(
             (
                 e
