@@ -241,10 +241,9 @@ class Wallet(EventListener):
             get_sha256_ripemd160_hash(pub_key), script_type
         )
 
-    def get_receiving_address(self) -> "Address":
-        return Address.from_string(
-            self._electrum_wallet.get_receiving_address(), self._network_params
-        )
+    def fresh_receive_address(self) -> "Address":
+        addr_str = self._electrum_wallet.create_new_address(for_change=False)
+        return Address.from_string(addr_str, self._network_params)
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):
         self._change_listeners.add(listener)
@@ -389,7 +388,9 @@ class Wallet(EventListener):
     def get_transactions(self):
         """return an Generator that returns all transactions in the wallet, newest first"""
         with self._electrum_wallet.db.lock:
-            reversed_it = reversed(self._electrum_wallet.db.transactions.copy().values())
+            reversed_it = reversed(
+                self._electrum_wallet.db.transactions.copy().values()
+            )
         for tx in reversed_it:
             tx = Transaction(self.network_params, tx)
             self.add_info_from_wallet(tx)
@@ -644,7 +645,7 @@ class Wallet(EventListener):
             size = len(req.tx.bitcoin_serialize())
             if size > 100000:  # MAX_STANDARD_TX_SIZE = 100000
                 raise ExceededMaxTransactionSize()
-            
+
             req.tx.finalize()
 
             calculated_fee = req.tx.get_fee()

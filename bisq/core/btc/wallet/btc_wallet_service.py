@@ -664,7 +664,7 @@ class BtcWalletService(WalletService, DaoStateListener):
                 )
             else:
                 key = self.wallet.find_key_from_address(
-                    self.wallet.get_receiving_address()
+                    self.wallet.fresh_receive_address()
                 )
                 entry = AddressEntry(key, context, offer_id, segwit=True)
                 logger.info(f"get_or_create_address_entry: new AddressEntry={entry}")
@@ -723,7 +723,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             return address_entry
         else:
             # NOTE: we only use segwit
-            key = self.wallet.find_key_from_address(self.wallet.get_receiving_address())
+            key = self.wallet.find_key_from_address(self.wallet.fresh_receive_address())
             entry = AddressEntry(key, context, segwit=True)
             logger.info(
                 f"get_or_create_address_entry_with_context: add new AddressEntry {entry}"

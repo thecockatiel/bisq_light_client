@@ -52,7 +52,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         return AddressEntryList(entry_set=ThreadSafeSet(AddressEntry.from_proto(entry) for entry in proto.address_entry))
     
     def to_proto_message(self):
-        entries = {entry.to_proto_message() for entry in self.entry_set}
+        entries = [entry.to_proto_message() for entry in self.entry_set]
         return protobuf.PersistableEnvelope(
             address_entry_list=protobuf.AddressEntryList(address_entry=entries)
         )
@@ -95,7 +95,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
             # TODO: double check later if its okay to generate a segwit address here.
             # to generate a legacy address means we have to create and handle an extra wallet instance,
             # so we use segwit for now to not do that
-            key = wallet.find_key_from_address(wallet.get_receiving_address())
+            key = wallet.find_key_from_address(wallet.fresh_receive_address())
             self.entry_set.add(
                 AddressEntry(key_pair=key, context=AddressEntryContext.ARBITRATOR, segwit=True)
             )

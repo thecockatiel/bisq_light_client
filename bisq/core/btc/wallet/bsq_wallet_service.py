@@ -421,8 +421,10 @@ class BsqWalletService(WalletService, DaoStateListener):
                 if ScriptType.P2WPKH == address.output_script_type
                 and self.is_address_unused(address)
             ),
-            self.wallet.get_receiving_address(),
+            None,
         )
+        if unused_address is None:
+            unused_address = self.wallet.fresh_receive_address()
         return unused_address
 
     def get_unused_bsq_address_as_string(self) -> str:
