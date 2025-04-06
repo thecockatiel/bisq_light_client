@@ -52,7 +52,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         return AddressEntryList(entry_set=ThreadSafeSet(AddressEntry.from_proto(entry) for entry in proto.address_entry))
     
     def to_proto_message(self):
-        entries = [entry.to_proto_message() for entry in self.entry_set]
+        entries = {entry.to_proto_message() for entry in self.entry_set}
         return protobuf.PersistableEnvelope(
             address_entry_list=protobuf.AddressEntryList(address_entry=entries)
         )
