@@ -766,7 +766,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         ]
 
     def get_address_entry_list_as_immutable_list(self) -> list["AddressEntry"]:
-        return self.address_entry_list.entry_set
+        return self.address_entry_list.entry_set.copy()
 
     def swap_trade_entry_to_available_entry(
         self, offer_id: str, context: AddressEntryContext
