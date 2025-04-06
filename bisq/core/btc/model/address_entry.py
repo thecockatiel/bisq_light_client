@@ -78,9 +78,8 @@ class AddressEntry(PersistablePayload):
             context=AddressEntryContext.to_proto_message(self.context),
             coin_locked_in_multi_sig=self.coin_locked_in_multi_sig,
             segwit=self.segwit,
+            offer_id=self.offer_id,
         )
-        if self.offer_id:
-            builder.offer_id = self.offer_id
         return builder
     
     # ///////////////////////////////////////////////////////////////////////////////////////////
