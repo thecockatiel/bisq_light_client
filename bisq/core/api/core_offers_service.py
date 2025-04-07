@@ -19,6 +19,7 @@ from bisq.core.offer.bisq_v1.mutable_offer_payload_fields import (
     MutableOfferPayloadFields,
 )
 from bisq.core.offer.offer_direction import OfferDirection
+from bisq.core.offer.offer_filter_service_result import OfferFilterServiceResult
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
 from bisq.core.util.price_util import PriceUtil
@@ -101,20 +102,22 @@ class CoreOffersService:
         return offer
 
     def find_available_offer(self, id: str) -> Optional["Offer"]:
-        # NOTE: room for improvement: make get_offers return iterator
-        offers = self.offer_book_service.get_offers()
-        return next(
-            (
-                o
-                for o in offers
-                if o.id == id
-                and not o.is_my_offer(self.key_ring)
-                and self.offer_filter_service.can_take_offer(
+        for o in self.offer_book_service.get_offers():
+            if o.id == id:
+                if o.is_my_offer(self.key_ring):
+                    raise IllegalStateException(
+                        f"Offer id '{id}' is not available to take: ITS_MY_OWN_OFFER"
+                    )
+                inquiry_result = self.offer_filter_service.can_take_offer(
                     o, self.core_context.is_api_user
-                ).is_valid
-            ),
-            None,
-        )
+                )
+                if inquiry_result.is_valid:
+                    return o
+                else:
+                    raise IllegalStateException(
+                        f"Offer id '{id}' is not available to take: {inquiry_result.name}"
+                    )
+        return None
 
     def get_my_offer(self, id: str) -> "OpenOffer":
         open_offer = self.find_my_open_offer(id)
@@ -140,7 +143,6 @@ class CoreOffersService:
         return offer
 
     def find_available_bsq_swap_offer(self, id: str) -> Optional["Offer"]:
-        # NOTE: room for improvement: make get_offers return iterator
         offers = self.offer_book_service.get_offers()
         return next(
             (
@@ -163,7 +165,6 @@ class CoreOffersService:
         return offer
 
     def find_my_bsq_swap_offer(self, id: str) -> Optional["Offer"]:
-        # NOTE: room for improvement: make get_offers return iterator
         offers = self.offer_book_service.get_offers()
         return next(
             (
@@ -175,7 +176,6 @@ class CoreOffersService:
         )
 
     def get_bsq_swap_offers(self, direction: str) -> list["Offer"]:
-        # NOTE: room for improvement: make get_offers return iterator
         offers = self.offer_book_service.get_offers()
         cleaned_direction = direction.strip().casefold()
         filtered = [

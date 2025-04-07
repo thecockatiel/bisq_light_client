@@ -1,6 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Set, Collection, List, Optional
+from typing import TYPE_CHECKING, Collection, Optional
 
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
@@ -150,14 +150,12 @@ class OfferBookService:
             if error_message_handler:
                 error_message_handler("Remove offer failed")
 
-    def get_offers(self) -> List[Offer]:
-        offers = []
+    def get_offers(self):
         for data in self.p2p_service.data_map.values():
             if isinstance(data.protected_storage_payload, OfferPayloadBase):
                 offer = Offer(data.protected_storage_payload)
                 offer.price_feed_service = self.price_feed_service
-                offers.append(offer)
-        return offers
+                yield offer
 
     def remove_offer_at_shut_down(self, offer_payload_base: "OfferPayloadBase") -> None:
         self.remove_offer(offer_payload_base, None, None)
