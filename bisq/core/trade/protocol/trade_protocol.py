@@ -6,6 +6,7 @@ from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task import Task
 from bisq.common.user_thread import UserThread
 from bisq.common.timer import Timer
+from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.decrypted_direct_message_listener import (
     DecryptedDirectMessageListener,
@@ -345,7 +346,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
             source = message.__class__.__name__
 
         if message is None and source is None:
-            raise ValueError("Either message or source must be set.")
+            raise IllegalArgumentException("Either message or source must be set.")
         
         logger.error(
             f"Task runner failed with error {error_message}. Triggered from {source}"

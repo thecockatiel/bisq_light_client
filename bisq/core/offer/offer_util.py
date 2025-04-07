@@ -3,6 +3,7 @@ import uuid
 from bisq.common.capabilities import Capabilities
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.payment.same_bank_account import SameBankAccount
 from bisq.core.payment.specific_banks_account import SpecificBanksAccount
 from utils.preconditions import check_argument
@@ -101,7 +102,7 @@ class OfferUtil:
     def maybe_set_fee_payment_currency_preference(self, fee_currency_code: str) -> None:
         if fee_currency_code:
             if not self.is_valid_fee_payment_currency_code(fee_currency_code):
-                raise ValueError(f"{fee_currency_code.upper()} cannot be used to pay trade fees")
+                raise IllegalStateException(f"{fee_currency_code.upper()} cannot be used to pay trade fees")
 
             if fee_currency_code.upper() == "BSQ" and self.preferences.is_pay_fee_in_btc():
                 self.preferences.set_pay_fee_in_btc(False)

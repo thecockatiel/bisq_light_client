@@ -481,6 +481,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 
                 self.init_trade_and_protocol(trade, trade_protocol)
 
+                check_argument(isinstance(trade_protocol, TakerProtocol), "created TradeProtocol is not a TakerProtocol.")
                 cast(TakerProtocol, trade_protocol).on_take_offer()
                 trade_result_handler(trade)
                 self.request_persistence()
