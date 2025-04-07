@@ -223,7 +223,9 @@ class TradeWalletService:
 
             # The reserved amount we need for the trade we send to our trade reserved_for_trade_address
             prepared_bsq_tx.add_output(
-                reserved_funds_for_offer, reserved_for_trade_address
+                TransactionOutput.from_coin_and_address(
+                    reserved_funds_for_offer, reserved_for_trade_address, prepared_bsq_tx
+                )
             )
 
             # We allow spending of unconfirmed tx (double spend risk is low and usability would suffer if we need to
@@ -263,7 +265,7 @@ class TradeWalletService:
             self._remove_dust(result_tx)
 
             # Sign all BTC inputs # TODO check if works as expected
-            # TODO: FIXME: only sign the current input 
+            # TODO: FIXME: only sign the current input
             result_tx = check_not_none(
                 self._wallet.sign_tx(self._password, result_tx),
                 "Failed to sign tx at complete_bsq_trading_fee_tx",
@@ -556,7 +558,7 @@ class TradeWalletService:
         missing_idx = []
         for input in prepared_deposit_tx.inputs:
             if input.witness is None:
-                input.witness = b'\x00'
+                input.witness = b"\x00"
                 missing_idx.append(input.index)
 
         prepared_msg = PreparedDepositTxAndMakerInputs(
@@ -1374,11 +1376,17 @@ class TradeWalletService:
             signature = sig_key.ecdsa_sign(sig_hash, self._password)
             tx_sig = TransactionSignature(signature, TransactionSigHash.ALL, False)
             if ScriptPattern.is_p2pk(script_pub_key):
-                input.script_sig = ScriptBuilder.create_p2pk_input_script(tx_sig).program
+                input.script_sig = ScriptBuilder.create_p2pk_input_script(
+                    tx_sig
+                ).program
             elif ScriptPattern.is_p2pkh(script_pub_key):
-                input.script_sig = ScriptBuilder.create_p2pkh_input_script(tx_sig, sig_key.get_pub_key()).program
+                input.script_sig = ScriptBuilder.create_p2pkh_input_script(
+                    tx_sig, sig_key.get_pub_key()
+                ).program
         elif ScriptPattern.is_p2wpkh(script_pub_key):
-            script_code = ScriptBuilder.create_p2pkh_output_script(sig_key.get_pub_key_hash())
+            script_code = ScriptBuilder.create_p2pkh_output_script(
+                sig_key.get_pub_key_hash()
+            )
             value = input.get_value()
             tx_sig = transaction.calculate_witness_signature(
                 input_index,
@@ -1387,10 +1395,12 @@ class TradeWalletService:
                 value,
                 TransactionSigHash.ALL,
                 False,
-                self._password
+                self._password,
             )
             input.script_sig = b""
-            input.witness = TransactionWitness.redeem_p2wpkh(tx_sig, sig_key.get_pub_key()).construct_witness()
+            input.witness = TransactionWitness.redeem_p2wpkh(
+                tx_sig, sig_key.get_pub_key()
+            ).construct_witness()
         else:
             raise WalletException(
                 f"Don't know how to sign for this kind of script_pub_key: {script_pub_key}"
