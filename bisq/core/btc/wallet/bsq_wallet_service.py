@@ -28,6 +28,9 @@ from electrum_min.elogging import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument, check_not_none
 from utils.time import get_time_ms
+from bitcoinj.core.transaction_output import TransactionOutput
+from bitcoinj.core.address import Address
+from bitcoinj.core.transaction import Transaction
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
@@ -41,12 +44,9 @@ if TYPE_CHECKING:
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
     from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
-    from bitcoinj.core.address import Address
-    from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
-    from bitcoinj.core.transaction import Transaction
     from bisq.core.btc.listeners.bsq_balance_listener import BsqBalanceListener
 
 
@@ -377,7 +377,7 @@ class BsqWalletService(WalletService, DaoStateListener):
         )
         tx.add_output(
             TransactionOutput.from_coin_and_address(
-                receiver_amount, Address.from_string(self.params, receiver_address), tx
+                receiver_amount, Address.from_string(receiver_address, self.params), tx
             )
         )
         try:
