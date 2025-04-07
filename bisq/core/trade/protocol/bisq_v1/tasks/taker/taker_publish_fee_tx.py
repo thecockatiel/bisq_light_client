@@ -48,7 +48,6 @@ class TakerPublishFeeTx(TradeTask):
                     trade_wallet_service.get_cloned_transaction(take_offer_fee_tx)
                 )
 
-                # We use a short timeout as there are issues with BSQ txs. See comment in TxBroadcaster
                 class Listener(TxBroadcasterCallback):
                     def on_success(self_, transaction: "Transaction"):
                         self._on_success(transaction)
@@ -59,7 +58,6 @@ class TakerPublishFeeTx(TradeTask):
                 bsq_wallet_service.broadcast_tx(
                     take_offer_fee_tx,
                     Listener(),
-                    timeout_sec=1,
                 )
 
         except Exception as e:

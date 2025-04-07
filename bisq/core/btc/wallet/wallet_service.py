@@ -380,6 +380,9 @@ class WalletService(ABC):
     @property
     def is_chain_height_synced_within_tolerance(self) -> bool:
         return self._wallets_setup.is_chain_height_synced_within_tolerance
+    
+    def get_cloned_transaction(self, tx: "Transaction") -> "Transaction":
+        return Transaction(self.params, tx.bitcoin_serialize())
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Wallet delegates to avoid direct access to wallet outside the service class

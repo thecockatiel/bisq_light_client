@@ -53,6 +53,9 @@ class WalletsManager:
     def publish_and_commit_bsq_tx(
         self, tx: "Transaction", tx_type: "TxType", callback: "TxBroadcasterCallback"
     ):
-        raise NotImplementedError(
-            "WalletsManager.publish_and_commit_bsq_tx is not implemented yet"
-        )
+        # We clone before commit to avoid unwanted side effects
+        cloned_tx = self.btc_wallet_service.get_cloned_transaction(tx)
+        self.btc_wallet_service.commit_tx(cloned_tx)
+        self.bsq_wallet_service.commit_tx(tx, tx_type)
+
+        self.bsq_wallet_service.broadcast_tx(tx, callback)

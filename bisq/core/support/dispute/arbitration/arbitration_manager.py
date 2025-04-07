@@ -290,7 +290,6 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                         self.trade_wallet_service.broadcast_tx(
                             signed_disputed_payout_tx,
                             TxCallback(),
-                            15
                         )
 
                         success = True

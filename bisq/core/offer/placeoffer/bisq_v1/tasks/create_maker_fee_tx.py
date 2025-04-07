@@ -104,9 +104,8 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
                                                f"{exception}")
                         self.failed(exc=exception)
 
-                # We use a short timeout as there are issues with BSQ txs. See comment in TxBroadcaster
                 bsq_wallet_service.broadcast_tx(
-                    signed_tx, CreateBsqTxCallback(), timeout_sec=1
+                    signed_tx, CreateBsqTxCallback()
                 )
 
         except Exception as e:
