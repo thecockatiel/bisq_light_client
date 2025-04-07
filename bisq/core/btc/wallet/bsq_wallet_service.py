@@ -2,6 +2,12 @@ from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.user_thread import UserThread
+from bisq.core.btc.exceptions.bsq_change_below_dust_exception import (
+    BsqChangeBelowDustException,
+)
+from bisq.core.btc.exceptions.insufficient_bsq_exception import InsufficientBsqException
+from bisq.core.btc.wallet.bisq_default_coin_selector import BisqDefaultCoinSelector
+from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.btc.wallet.wallet_transactions_change_listener import (
     WalletTransactionsChangeListener,
@@ -9,12 +15,18 @@ from bisq.core.btc.wallet.wallet_transactions_change_listener import (
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
+from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
+from bitcoinj.core.transaction_input import TransactionInput
+from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.script.script_type import ScriptType
+from bitcoinj.wallet.send_request import SendRequest
 from electrum_min.elogging import get_logger
 from utils.concurrency import ThreadSafeSet
+from utils.preconditions import check_argument, check_not_none
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
@@ -234,7 +246,7 @@ class BsqWalletService(WalletService, DaoStateListener):
                 self.unlocking_bonds_balance,
             )
 
-        logger.info("updateBsqBalance took {} ms", get_time_ms() - ts)
+        logger.info(f"updateBsqBalance took {get_time_ms() - ts} ms")
 
     def add_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self._bsq_balance_listeners.add(listener)
@@ -300,9 +312,11 @@ class BsqWalletService(WalletService, DaoStateListener):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def sign_tx_and_verify_no_dust_outputs(self, tx: "Transaction") -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.sign_tx_and_verify_no_dust_outputs Not implemented yet"
-        )
+        # TODO: check if this works correctly
+        if self.wallet.sign_tx(self.password, tx) is None:
+            raise IllegalStateException("Failed to sign tx")
+        WalletService.verify_non_dust_txo(tx)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Commit tx
@@ -325,42 +339,225 @@ class BsqWalletService(WalletService, DaoStateListener):
         receiver_amount: Coin,
         utxo_candidates: Optional[set["TransactionOutput"]] = None,
     ) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_send_bsq_tx Not implemented yet"
+        if utxo_candidates is not None:
+            self._bsq_coin_selector.utxo_candidates = utxo_candidates
+
+        return self._get_prepared_send_tx(
+            receiver_address, receiver_amount, self._bsq_coin_selector
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Send BTC (non-BSQ) with BTC fee (e.g. the issuance output from a  lost comp. request)
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def get_prepared_send_btc_tx(
+        self,
+        receiver_address: str,
+        receiver_amount: Coin,
+        utxo_candidates: Optional[set["TransactionOutput"]] = None,
+    ) -> "Transaction":
+        if utxo_candidates is not None:
+            self._non_bsq_coin_selector.utxo_candidates = utxo_candidates
+
+        return self._get_prepared_send_tx(
+            receiver_address, receiver_amount, self._non_bsq_coin_selector
+        )
+
+    def _get_prepared_send_tx(
+        self,
+        receiver_address: str,
+        receiver_amount: Coin,
+        coin_selector: "BisqDefaultCoinSelector",
+    ) -> "Transaction":
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+        tx = Transaction(self.params)
+        check_argument(
+            Restrictions.is_above_dust(receiver_amount),
+            "The amount is too low (dust limit).",
+        )
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                receiver_amount, Address.from_string(self.params, receiver_address), tx
+            )
+        )
+        try:
+            selection = coin_selector.select(
+                receiver_amount, self.wallet.calculate_all_spend_candidates()
+            )
+            change = coin_selector.get_change(receiver_amount, selection)
+            if Restrictions.is_above_dust(change):
+                tx.add_output(
+                    TransactionOutput.from_coin_and_address(
+                        change, self._get_change_address(), tx
+                    )
+                )
+            elif not change.is_zero():
+                msg = f"BSQ change output is below dust limit. outputValue={change.value / 100} BSQ"
+                logger.warning(msg)
+                raise BsqChangeBelowDustException(msg, change)
+
+            send_request = SendRequest.for_tx(tx)
+            send_request.fee = Coin.ZERO()
+            send_request.fee_per_kb = Coin.ZERO()
+            send_request.ensure_min_required_fee = False
+            send_request.password = self.password
+            send_request.shuffle_outputs = False
+            send_request.sign_inputs = False
+            send_request.change_address = self._get_change_address()
+            send_request.coin_selector = coin_selector
+            self.wallet.complete_tx(send_request)
+            WalletService.check_wallet_consistency(self.wallet)
+            WalletService.verify_non_dust_txo(tx)
+            coin_selector.utxo_candidates = None  # We reuse the selectors. Reset the transactionOutputCandidates field
+            return tx
+        except InsufficientMoneyException as e:
+            logger.error(f"_get_prepared_send_tx: tx={tx}")
+            logger.error(str(e))
+            raise InsufficientBsqException(e.missing)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Burn fee txs
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_prepared_trade_fee_tx(self, fee: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_trade_fee_tx Not implemented yet"
-        )
+        self._dao_kill_switch.assert_dao_is_not_disabled()
 
+        tx = Transaction(self.params)
+        self._add_inputs_and_change_output_for_tx(tx, fee, self._bsq_coin_selector)
+        return tx
+
+    # We create a tx with Bsq inputs for the fee and optional BSQ change output.
+    # As the fee amount will be missing in the output those BSQ fees are burned.
     def get_prepared_proposal_tx(self, fee: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_proposal_tx Not implemented yet"
-        )
+        return self._get_prepared_tx_with_mandatory_bsq_change_output(fee)
 
     def get_prepared_issuance_tx(self, fee: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_issuance_tx Not implemented yet"
-        )
+        return self._get_prepared_tx_with_mandatory_bsq_change_output(fee)
 
     def get_prepared_proof_of_burn_tx(self, fee: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_proof_of_burn_tx Not implemented yet"
-        )
+        return self._get_prepared_tx_with_mandatory_bsq_change_output(fee)
 
     def get_prepared_burn_fee_tx_for_asset_listing(self, fee: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_burn_fee_tx_for_asset_listing Not implemented yet"
+        return self._get_prepared_tx_with_mandatory_bsq_change_output(fee)
+
+    # We need to require one BSQ change output as we could otherwise not be able to distinguish between 2
+    # structurally same transactions where only the BSQ fee is different. In case of asset listing fee and proof of
+    # burn it is a user input, so it is not known to the parser, instead we derive the burned fee from the parser.
+
+    # In case of proposal fee we could derive it from the params.
+
+    # For issuance txs we also require a BSQ change output before the issuance output gets added. There was a
+    # minor bug with the old version that multiple inputs would have caused an exception in case there was no
+    # change output (e.g. inputs of 21 and 6 BSQ for BSQ fee of 21 BSQ would have caused that only 1 input was used
+    # and then caused an error as we enforced a change output. This new version handles such cases correctly.
+
+    # Examples for the structurally indistinguishable transactions:
+    # Case 1: 10 BSQ fee to burn
+    # In: 17 BSQ
+    # Out: BSQ change 7 BSQ -> valid BSQ
+    # Out: OpReturn
+    # Miner fee: 1000 sat  (10 BSQ burned)
+
+    # Case 2: 17 BSQ fee to burn
+    # In: 17 BSQ
+    # Out: burned BSQ change 7 BSQ -> BTC (7 BSQ burned)
+    # Out: OpReturn
+    # Miner fee: 1000 sat  (10 BSQ burned)
+
+    def _get_prepared_tx_with_mandatory_bsq_change_output(
+        self, fee: Coin
+    ) -> "Transaction":
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+
+        tx = Transaction(self.params)
+        # We look for inputs covering our BSQ fee we want to pay.
+        coin_selection = self._bsq_coin_selector.select(
+            fee, self.wallet.calculate_all_spend_candidates()
         )
+        try:
+            change = self._bsq_coin_selector.get_change(fee, coin_selection)
+            if change.is_zero() or Restrictions.is_dust(change):
+                # If change is zero or below dust, we increase required input amount to enforce a BSQ change output.
+                # All outputs after that are considered BTC and therefore would be burned BSQ if BSQ is left from what
+                # we use for miner fee.
+
+                min_dust_threshold = Coin.value_of(
+                    self._preferences.get_ignore_dust_threshold()
+                )
+                increased_required_input = fee.add(min_dust_threshold)
+                coin_selection = self._bsq_coin_selector.select(
+                    increased_required_input,
+                    self.wallet.calculate_all_spend_candidates(),
+                )
+                change = self._bsq_coin_selector.get_change(fee, coin_selection)
+
+                logger.warning(
+                    f"We increased required input as change output was zero or dust: New change value={change}",
+                )
+                info = (
+                    f"Available BSQ balance={coin_selection.value_gathered.value / 100} BSQ. "
+                    f"Intended fee to burn={fee.value / 100} BSQ. "
+                    f"Please increase your balance to at least "
+                    f"{(fee.value + min_dust_threshold.value) / 100} BSQ."
+                )
+                check_argument(
+                    coin_selection.value_gathered > fee,
+                    f"This transaction requires a change output of at least {min_dust_threshold.value / 100} BSQ (dust limit). {info}",
+                )
+
+                check_argument(
+                    not Restrictions.is_dust(change),
+                    f"This transaction would create a dust output of {change.value / 100} BSQ. "
+                    f"It requires a change output of at least {min_dust_threshold.value / 100} BSQ (dust limit). {info}",
+                )
+
+            for gathered_input in coin_selection.gathered:
+                tx.add_input(gathered_input)
+            tx.add_output(
+                TransactionOutput.from_coin_and_address(
+                    change, self._get_change_address(), tx
+                )
+            )
+
+            return tx
+
+        except InsufficientMoneyException as e:
+            logger.error(f"coinSelection.gathered={coin_selection.gathered}")
+            raise InsufficientBsqException(e.missing)
+
+    def _add_inputs_and_change_output_for_tx(
+        self, tx: "Transaction", fee: Coin, bsq_coin_selector: "BsqCoinSelector"
+    ) -> None:
+        # If our fee is less then dust limit we increase it so we are sure to not get any dust output.
+        if Restrictions.is_dust(fee):
+            required_input = fee.add(Restrictions.get_min_non_dust_output())
+        else:
+            required_input = fee
+
+        coin_selection = bsq_coin_selector.select(
+            required_input, self.wallet.calculate_all_spend_candidates()
+        )
+        for gathered_input in coin_selection.gathered:
+            tx.add_input(gathered_input)
+
+        try:
+            change = bsq_coin_selector.get_change(fee, coin_selection)
+            # Change can be ZERO, then no change output is created so don't rely on a BSQ change output
+            if change.is_positive():
+                check_argument(
+                    Restrictions.is_above_dust(change),
+                    f"The change output of {change.value / 100:.2f} BSQ is below the min. dust value of "
+                    f"{Restrictions.get_min_non_dust_output().value / 100:.2f} BSQ. At least "
+                    f"{Restrictions.get_min_non_dust_output().add(fee).value / 100:.2f} BSQ is needed for this transaction",
+                )
+                tx.add_output(
+                    TransactionOutput.from_coin_and_address(
+                        change, self._get_change_address(), tx
+                    )
+                )
+        except InsufficientMoneyException as e:
+            logger.error(str(tx))
+            raise InsufficientBsqException(e.missing)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // BsqSwap tx
@@ -377,43 +574,97 @@ class BsqWalletService(WalletService, DaoStateListener):
     # // Blind vote tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    # We create a tx with Bsq inputs for the fee, one output for the stake and optional one BSQ change output.
+    # As the fee amount will be missing in the output those BSQ fees are burned.
     def get_prepared_blind_vote_tx(self, fee: Coin, stake: Coin) -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_blind_vote_tx Not implemented yet"
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+        tx = Transaction(self.params)
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                stake, self.get_unused_address(), tx
+            )
         )
+        self._add_inputs_and_change_output_for_tx(
+            tx, fee.add(stake), self._bsq_coin_selector
+        )
+        # WalletService.print_tx("getPreparedBlindVoteTx", tx)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // MyVote reveal tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_prepared_vote_reveal_tx(self, stake_tx_output: "TxOutput") -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_vote_reveal_tx Not implemented yet"
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+        tx = Transaction(self.params)
+        stake = Coin.value_of(stake_tx_output.value)
+        blind_vote_tx = self.wallet.get_transaction(stake_tx_output.tx_id)
+        check_not_none(blind_vote_tx, "blind_vote_tx must not be null")
+        # TODO: double check later
+        tx.add_input(TransactionInput.from_output(stake_tx_output))
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                stake, self.get_unused_address(), tx
+            )
         )
+        # WalletService.print_tx("getPreparedVoteRevealTx", tx)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Lockup bond tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_prepared_lockup_tx(self, lockup_amount: "Coin") -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_lockup_tx Not implemented yet"
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+        tx = Transaction(self.params)
+        check_argument(
+            Restrictions.is_above_dust(lockup_amount),
+            "The amount is too low (dust limit).",
         )
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                lockup_amount, self.get_unused_address(), tx
+            )
+        )
+        self._add_inputs_and_change_output_for_tx(
+            tx, lockup_amount, self._bsq_coin_selector
+        )
+        WalletService.print_tx("prepareLockupTx", tx)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Unlock bond tx
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def get_prepared_unlock_tx(self, lockup_tx_output: "TxOutput") -> "Transaction":
-        raise RuntimeError(
-            "BsqWalletService.get_prepared_unlock_tx Not implemented yet"
+        self._dao_kill_switch.assert_dao_is_not_disabled()
+        tx = Transaction(self.params)
+        # Unlocking means spending the full value of the locked txOutput to another txOutput with the same value
+        amount_to_unlock = Coin.value_of(lockup_tx_output.value)
+        check_argument(
+            Restrictions.is_above_dust(amount_to_unlock),
+            "The amount is too low (dust limit).",
         )
+        lockup_tx = self.wallet.get_transaction(lockup_tx_output.tx_id)
+        check_not_none(lockup_tx, "lockup_tx must not be null")
+        # TODO: double check later
+        tx.add_input(TransactionInput.from_output(lockup_tx_output))
+        tx.add_output(
+            TransactionOutput.from_coin_and_address(
+                amount_to_unlock, self.get_unused_address(), tx
+            )
+        )
+        WalletService.print_tx("prepareUnlockTx", tx)
+        return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Addresses
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_unused_address(self) -> "Address":
+    def _get_change_address(self) -> "Address":
+        return self.get_unused_address(True)
+
+    def get_unused_address(self, for_change=False) -> "Address":
         unused_address = next(
             (
                 address
@@ -424,7 +675,7 @@ class BsqWalletService(WalletService, DaoStateListener):
             None,
         )
         if unused_address is None:
-            unused_address = self.wallet.fresh_receive_address()
+            unused_address = self.wallet.fresh_receive_address(for_change)
         return unused_address
 
     def get_unused_bsq_address_as_string(self) -> str:

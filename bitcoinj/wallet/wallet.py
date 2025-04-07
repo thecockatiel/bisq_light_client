@@ -241,8 +241,8 @@ class Wallet(EventListener):
             get_sha256_ripemd160_hash(pub_key), script_type
         )
 
-    def fresh_receive_address(self) -> "Address":
-        addr_str = self._electrum_wallet.create_new_address(for_change=False)
+    def fresh_receive_address(self, for_change=False) -> "Address":
+        addr_str = self._electrum_wallet.create_new_address(for_change)
         return Address.from_string(addr_str, self._network_params)
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):

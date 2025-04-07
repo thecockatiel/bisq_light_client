@@ -19,7 +19,7 @@ from bitcoinj.script.script_pattern import ScriptPattern
 from utils.concurrency import AtomicReference, ThreadSafeSet
 from utils.data import SimplePropertyChangeEvent
 from bitcoinj.core.transaction import Transaction
-from utils.preconditions import check_not_none
+from utils.preconditions import check_argument, check_not_none
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
@@ -176,6 +176,16 @@ class WalletService(ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Dust
     # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def verify_non_dust_txo(tx: "Transaction") -> None:
+        for txo in tx.outputs:
+            value = txo.get_value()
+            # OpReturn outputs have value 0
+            if value.is_positive():
+                check_argument(
+                    Restrictions.is_above_dust(value),
+                    f"An output value is below dust limit. Transaction={tx}",
+                )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Broadcast tx
