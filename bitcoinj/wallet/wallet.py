@@ -642,7 +642,7 @@ class Wallet(EventListener):
                 req.tx = self.sign_tx(req.password, req.tx)
 
             # Check size.
-            size = len(req.tx.bitcoin_serialize())
+            size = req.tx.get_message_size()
             if size > 100000:  # MAX_STANDARD_TX_SIZE = 100000
                 raise ExceededMaxTransactionSize()
 

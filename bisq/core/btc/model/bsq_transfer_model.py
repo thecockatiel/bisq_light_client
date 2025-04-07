@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
+from bisq.core.dao.state.model.blockchain.tx_type import TxType
 
 
 if TYPE_CHECKING:
-    from bisq.core.dao.state.model.blockchain.tx_type import TxType
     from bitcoinj.base.coin import Coin
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction import Transaction
