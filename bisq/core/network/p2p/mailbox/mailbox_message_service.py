@@ -110,7 +110,7 @@ class MailboxMessageService:
                 reverse=True
             )
             
-            sorted_items = [mailbox_item for mailbox_item in sorted_items if (not mailbox_item.is_expired(self.clock) and mailbox_item.get_uid() not in self.mailbox_items_by_uid)]
+            sorted_items = [mailbox_item for mailbox_item in sorted_items if (not mailbox_item.is_expired(self.clock) and mailbox_item.uid not in self.mailbox_items_by_uid)]
             # get first 3000 items
             sorted_items = sorted_items[:3000]
             
@@ -135,7 +135,7 @@ class MailboxMessageService:
                 # Those outdated messages would then stay in the network until TTL triggers removal.
                 # By not applying large messages we reduce the impact of such cases at costs of extra loading costs if the message is still alive.
                 if serialized_size < 20_000:
-                    self.mailbox_items_by_uid[mailbox_item.get_uid()] = mailbox_item
+                    self.mailbox_items_by_uid[mailbox_item.uid] = mailbox_item
                     self.mailbox_message_list.append(mailbox_item)
                     total_size.get_and_add(serialized_size)
 
@@ -435,7 +435,7 @@ class MailboxMessageService:
         return MailboxItem(protected_mailbox_storage_entry, None)
 
     def handle_mailbox_item(self, mailbox_item: "MailboxItem"):
-        uid = mailbox_item.get_uid()
+        uid = mailbox_item.uid
         if uid not in self.mailbox_items_by_uid:
             self.mailbox_items_by_uid[uid] = mailbox_item
             self.mailbox_message_list.append(mailbox_item)

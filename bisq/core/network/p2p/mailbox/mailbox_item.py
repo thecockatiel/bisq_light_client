@@ -62,7 +62,8 @@ class MailboxItem(PersistablePayload):
     def is_mine(self) -> bool:
         return self.decrypted_message_with_pub_key is not None
 
-    def get_uid(self) -> str:
+    @property
+    def uid(self) -> str:
         if self.decrypted_message_with_pub_key:
             # We use uid from mailboxMessage in case its ours as we have the at removeMailboxMsg only the
             # decryptedMessageWithPubKey available which contains the mailboxMessage.
