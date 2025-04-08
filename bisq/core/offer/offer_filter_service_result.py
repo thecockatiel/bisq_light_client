@@ -15,6 +15,8 @@ class OfferFilterServiceResult(Enum):
     IS_INSUFFICIENT_COUNTERPARTY_TRADE_LIMIT = False
     IS_MY_INSUFFICIENT_TRADE_LIMIT = False
     HIDE_BSQ_SWAPS_DUE_DAO_DEACTIVATED = False
+    IS_MY_OFFER = False
+    IS_NOT_BSQ_SWAP_OFFER = False
 
     def __init__(self, is_valid: bool = False):
         self.is_valid = is_valid
