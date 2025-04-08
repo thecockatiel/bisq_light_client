@@ -143,20 +143,26 @@ class CoreOffersService:
         return offer
 
     def find_available_bsq_swap_offer(self, id: str) -> Optional["Offer"]:
-        offers = self.offer_book_service.get_offers()
-        return next(
-            (
-                o
-                for o in offers
-                if o.id == id
-                and not o.is_my_offer(self.key_ring)
-                and self.offer_filter_service.can_take_offer(
+        for o in self.offer_book_service.get_offers():
+            if o.id == id:
+                if o.is_my_offer(self.key_ring):
+                    raise IllegalStateException(
+                        f"Offer id '{id}' is not available to take: ITS_MY_OWN_OFFER"
+                    )
+                if not o.is_bsq_swap_offer:
+                    raise IllegalStateException(
+                        f"Offer id '{id}' is not available to take: IS_NOT_BSQ_SWAP_OFFER"
+                    )
+                inquiry_result = self.offer_filter_service.can_take_offer(
                     o, self.core_context.is_api_user
-                ).is_valid
-                and o.is_bsq_swap_offer
-            ),
-            None,
-        )
+                )
+                if inquiry_result.is_valid:
+                    return o
+                else:
+                    raise IllegalStateException(
+                        f"Offer id '{id}' is not available to take: {inquiry_result.name}"
+                    )
+        return None
 
     def get_my_bsq_swap_offer(self, id: str) -> "Offer":
         offer = self.find_my_bsq_swap_offer(id)
