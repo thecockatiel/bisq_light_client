@@ -25,9 +25,9 @@ class BondConsensus:
         # PushData of <= 4 bytes is converted to int when returned from bitcoind and not handled the way we
         # require by btcd-cli4j, avoid opReturns with 4 bytes or less
         with BytesIO() as output_stream:
-            output_stream.write(bytes([OpReturnType.LOCKUP.type]))
+            output_stream.write(OpReturnType.LOCKUP.type)
             output_stream.write(Version.LOCKUP)
-            output_stream.write(bytes([lockup_reason.id]))
+            output_stream.write(lockup_reason.id)
             bytes_ = integer_to_byte_array(lock_time, 2)
             output_stream.write(bytes_)
             output_stream.write(hash_value)
@@ -51,7 +51,7 @@ class BondConsensus:
 
     @staticmethod
     def get_lockup_reason(op_return_data: bytes) -> "Optional[LockupReason]":
-        return LockupReason.get_lockup_reason(op_return_data[2])
+        return LockupReason.get_lockup_reason(op_return_data[2:3])
 
     @staticmethod
     def is_lock_time_over(unlock_block_height: int, current_block_height: int) -> bool:

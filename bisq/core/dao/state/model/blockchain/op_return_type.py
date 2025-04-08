@@ -5,17 +5,17 @@ from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStat
 class OpReturnType(ImmutableDaoStateModel, Enum):
     """Provides byte constants for distinguishing the type of a DAO transaction used in the OP_RETURN data."""
 
-    UNDEFINED = 0x00
-    PROPOSAL = 0x10
-    COMPENSATION_REQUEST = 0x11
-    REIMBURSEMENT_REQUEST = 0x12
-    BLIND_VOTE = 0x13
-    VOTE_REVEAL = 0x14
-    LOCKUP = 0x15
-    ASSET_LISTING_FEE = 0x16
-    PROOF_OF_BURN = 0x17
+    UNDEFINED = b"\x00"
+    PROPOSAL = b"\x10"
+    COMPENSATION_REQUEST = b"\x11"
+    REIMBURSEMENT_REQUEST = b"\x12"
+    BLIND_VOTE = b"\x13"
+    VOTE_REVEAL = b"\x14"
+    LOCKUP = b"\x15"
+    ASSET_LISTING_FEE = b"\x16"
+    PROOF_OF_BURN = b"\x17"
 
-    def __init__(self, type: int):
+    def __init__(self, type: bytes):
         self.type = type
 
     def __new__(cls, *args, **kwds):
@@ -25,7 +25,7 @@ class OpReturnType(ImmutableDaoStateModel, Enum):
         return obj
 
     @staticmethod
-    def get_op_return_type(type: int):
+    def get_op_return_type(type: bytes):
         return next(
             (
                 op_return_type

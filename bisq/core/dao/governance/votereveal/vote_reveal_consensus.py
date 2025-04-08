@@ -19,7 +19,7 @@ class VoteRevealConsensus:
     @staticmethod
     def get_op_return_data(hash_of_blind_vote_list: bytes, secret_key: bytes) -> bytes:
         with BytesIO() as output_stream:
-            output_stream.write(bytes([OpReturnType.VOTE_REVEAL.type]))
+            output_stream.write(OpReturnType.VOTE_REVEAL.type)
             output_stream.write(Version.VOTE_REVEAL)
             output_stream.write(hash_of_blind_vote_list)  # hash is 20 bytes
             output_stream.write(secret_key)  # secret_key has 16 bytes

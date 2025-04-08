@@ -20,7 +20,7 @@ class ProofOfBurnConsensus:
     @staticmethod
     def get_op_return_data(hash: bytes) -> bytes:
         with BytesIO() as output_stream:
-            output_stream.write(bytes([OpReturnType.PROOF_OF_BURN.type]))
+            output_stream.write(OpReturnType.PROOF_OF_BURN.type)
             output_stream.write(Version.PROOF_OF_BURN)
             output_stream.write(hash)
             return output_stream.getvalue()

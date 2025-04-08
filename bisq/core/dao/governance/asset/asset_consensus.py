@@ -32,7 +32,7 @@ class AssetConsensus:
     @staticmethod
     def get_op_return_data(hash: bytes) -> bytes:
         with BytesIO() as output_stream:
-            output_stream.write(bytes([OpReturnType.ASSET_LISTING_FEE.type]))
+            output_stream.write(OpReturnType.ASSET_LISTING_FEE.type)
             output_stream.write(Version.ASSET_LISTING_FEE)
             output_stream.write(hash)
             return output_stream.getvalue()

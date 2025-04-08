@@ -24,11 +24,11 @@ class ProposalConsensus:
 
     @staticmethod
     def get_op_return_data(
-        hash_of_payload: bytes, op_return_type: int, version: Union[int, bytes]
+        hash_of_payload: bytes, op_return_type: bytes, version: bytes
     ) -> bytes:
         with BytesIO() as output_stream:
-            output_stream.write(bytes([op_return_type]))
-            output_stream.write(bytes([version]) if isinstance(version, int) else version)
+            output_stream.write(op_return_type)
+            output_stream.write(version)
             output_stream.write(hash_of_payload)
             return output_stream.getvalue()
 

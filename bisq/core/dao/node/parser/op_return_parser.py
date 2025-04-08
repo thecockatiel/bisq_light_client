@@ -34,7 +34,7 @@ class OpReturnParser:
             )
             return TxOutputType.INVALID_OUTPUT
 
-        op_return_type = OpReturnType.get_op_return_type(op_return_data[0])
+        op_return_type = OpReturnType.get_op_return_type(op_return_data[0:1])
         if not op_return_type:
             logger.warning(
                 f"OP_RETURN data does not match our defined types. op_return_data={bytes_as_hex_string(op_return_data)}"

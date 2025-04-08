@@ -86,7 +86,7 @@ class BlindVoteConsensus:
     @staticmethod
     def get_op_return_data(hash: bytes) -> bytes:
         with BytesIO() as output_stream:
-            output_stream.write(bytes([OpReturnType.BLIND_VOTE.type]))
+            output_stream.write(OpReturnType.BLIND_VOTE.type)
             output_stream.write(Version.BLIND_VOTE)
             output_stream.write(hash)
             bytes_data = output_stream.getvalue()
