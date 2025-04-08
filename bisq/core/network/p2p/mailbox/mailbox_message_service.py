@@ -149,7 +149,7 @@ class MailboxMessageService:
                     logger.info(
                         f"Ignoring large persisted mailboxItem. If still valid will reload from seed nodes. "
                         f"Size={readable_file_size(serialized_size)}; date={date}; "
-                        f"sender={protected_entry.get_mailbox_storage_payload().prefixed_sealed_and_signed_message.sender_node_address}"
+                        f"sender={protected_entry.mailbox_storage_payload.prefixed_sealed_and_signed_message.sender_node_address}"
                     )
 
             per_day = []
@@ -345,7 +345,7 @@ class MailboxMessageService:
         # at the remove_mailbox_msg method.
         for entry in protected_storage_entries:
             if isinstance(entry, ProtectedMailboxStorageEntry):
-                uid = entry.get_mailbox_storage_payload().prefixed_sealed_and_signed_message.uid
+                uid = entry.mailbox_storage_payload.prefixed_sealed_and_signed_message.uid
                 if uid in self.mailbox_items_by_uid:
                     self.remove_mailbox_item_from_local_store(uid)
 
@@ -407,7 +407,7 @@ class MailboxMessageService:
 
     def try_decrypt_protected_mailbox_storage_entry(self, protected_mailbox_storage_entry: "ProtectedMailboxStorageEntry"):
         prefixed_sealed_message = (
-            protected_mailbox_storage_entry.get_mailbox_storage_payload().prefixed_sealed_and_signed_message
+            protected_mailbox_storage_entry.mailbox_storage_payload.prefixed_sealed_and_signed_message
         )
         sealed_and_signed = prefixed_sealed_message.sealed_and_signed
         uid = prefixed_sealed_message.uid
@@ -538,7 +538,7 @@ class MailboxMessageService:
             logger.error("Signing at get_mailbox_data_with_signed_seq_nr failed.")
 
     def remove_mailbox_entry_from_network(self, protected_mailbox_storage_entry: "ProtectedMailboxStorageEntry") -> None:
-        mailbox_storage_payload = protected_mailbox_storage_entry.get_mailbox_storage_payload()
+        mailbox_storage_payload = protected_mailbox_storage_entry.mailbox_storage_payload
         receivers_pub_key = protected_mailbox_storage_entry.receivers_pub_key
         try:
             updated_entry = self.p2p_data_storage.get_mailbox_data_with_signed_seq_nr(

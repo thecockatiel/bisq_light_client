@@ -74,7 +74,7 @@ class MailboxItem(PersistablePayload):
             # If its not our mailbox msg we take the uid from the prefixedSealedAndSignedMessage instead.
             # Those will never be removed via removeMailboxMsg but we clean up expired entries at startup.
             return (
-                self.protected_mailbox_storage_entry.get_mailbox_storage_payload().prefixed_sealed_and_signed_message.uid
+                self.protected_mailbox_storage_entry.mailbox_storage_payload.prefixed_sealed_and_signed_message.uid
             )
 
     def is_expired(self, clock: "Clock") -> bool:

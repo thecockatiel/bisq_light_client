@@ -10,6 +10,7 @@ from bisq.core.network.p2p.storage.payload.protected_storage_entry import (
 from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import pb_pb2 as protobuf
+from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
@@ -66,8 +67,10 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
     # API
     # /////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_mailbox_storage_payload(self) -> MailboxStoragePayload:
-        return cast(MailboxStoragePayload, self.protected_storage_payload)
+    @property
+    def mailbox_storage_payload(self) -> MailboxStoragePayload:
+        check_argument(isinstance(self.protected_storage_payload, MailboxStoragePayload))
+        return self.protected_storage_payload
 
     def is_valid_for_add_operation(self) -> bool:
         """
@@ -77,7 +80,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         if not self.is_signature_valid():
             return False
 
-        mailbox_storage_payload = self.get_mailbox_storage_payload()
+        mailbox_storage_payload = self.mailbox_storage_payload
 
         # Verify the Entry.receiversPubKey matches the Payload.ownerPubKey. This is a requirement for removal
         if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
@@ -115,7 +118,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         if not self.is_signature_valid():
             return False
 
-        mailbox_storage_payload = self.get_mailbox_storage_payload()
+        mailbox_storage_payload = self.mailbox_storage_payload
 
         # Verify the Entry has the correct receiversPubKey for removal
         if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
