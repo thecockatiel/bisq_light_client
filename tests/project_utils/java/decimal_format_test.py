@@ -1,5 +1,5 @@
 import unittest
-from bisq.core.util.decimal_format import DecimalFormat
+from utils.java.decimal_format import DecimalFormat
 from bisq.core.util.volume_util import VolumeUtil
 
 class TestDecimalFormat(unittest.TestCase):

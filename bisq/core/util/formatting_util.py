@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Union
 from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.res import Res
-from bisq.core.util.decimal_format import DecimalFormat
+from utils.java.decimal_format import DecimalFormat
 from bisq.core.locale.currency_util import is_fiat_currency
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
 from bitcoinj.base.coin import Coin

@@ -2,7 +2,7 @@ import math
 from typing import TYPE_CHECKING
 from bisq.core.locale.res import Res
 from bisq.core.monetary.volume import Volume
-from bisq.core.util.decimal_format import DecimalFormat
+from utils.java.decimal_format import DecimalFormat
 from bisq.core.util.formatting_util import FormattingUtils
 from bitcoinj.base.utils.fiat import Fiat
 from bitcoinj.base.utils.monetary_format import MonetaryFormat

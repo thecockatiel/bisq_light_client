@@ -7,7 +7,7 @@ from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.util.coin.coin_formatter import CoinFormatter
 from bisq.core.util.coin.immutable_coin_formatter import ImmutableCoinFormatter
-from bisq.core.util.decimal_format import DecimalFormat
+from utils.java.decimal_format import DecimalFormat
 from bisq.core.util.formatting_util import FormattingUtils
 from bisq.core.util.parsing_utils import ParsingUtils
 from bisq.core.util.validation.btc_address_validator import BtcAddressValidator

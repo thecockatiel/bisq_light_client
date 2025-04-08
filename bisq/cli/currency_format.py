@@ -1,7 +1,7 @@
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Union
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
-from bisq.core.util.decimal_format import DecimalFormat
+from utils.java.decimal_format import DecimalFormat
 import grpc_pb2
 
 
