@@ -1,5 +1,5 @@
+from collections import defaultdict
 from typing import TYPE_CHECKING
-from bisq.common.crypto.key_ring import KeyRing
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.witness.account_age_witness_service import (
     AccountAgeWitnessService,
@@ -45,16 +45,8 @@ class OfferFilterService:
             user.payment_accounts_observable.add_listener(on_accounts_changed)
 
     def can_take_offer(
-        self,
-        offer: "Offer",
-        my_key_ring: "KeyRing",
-        wants_bsq_swap_offer: bool,
-        is_taker_api_user: bool,
+        self, offer: "Offer", is_taker_api_user: bool
     ) -> "OfferFilterServiceResult":
-        if offer.is_my_offer(my_key_ring):
-            return OfferFilterServiceResult.IS_MY_OFFER
-        if wants_bsq_swap_offer and not offer.is_bsq_swap_offer:
-            return OfferFilterServiceResult.IS_NOT_BSQ_SWAP_OFFER
         if (
             is_taker_api_user
             and self.filter_manager.get_filter() is not None
