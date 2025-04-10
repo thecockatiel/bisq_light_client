@@ -1,7 +1,12 @@
-
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
 from bisq.common.setup.log_setup import get_logger
+from bisq.core.locale.currency_tuple import CurrencyTuple
+from bisq.core.locale.currency_util import (
+    get_all_sorted_crypto_currencies,
+    get_all_sorted_fiat_currencies,
+)
+from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.network.p2p.persistence.append_only_data_store_listener import (
     AppendOnlyDataStoreListener,
@@ -10,6 +15,8 @@ from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.trade.model.bisq_v1.buyer_trade import BuyerTrade
 from bisq.core.trade.model.bisq_v1.trade import Trade
 from bisq.core.trade.statistics.trade_statistics_2 import TradeStatistics2
+from bisq.core.trade.statistics.trade_statistics_for_json import TradeStatisticsForJson
+from bisq.core.util.json_util import JsonUtil
 from utils.data import ObservableSet
 from bisq.common.file.json_file_manager import JsonFileManager
 from utils.time import get_time_ms
@@ -32,7 +39,6 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-# TODO: complete impl when necessary
 class TradeStatisticsManager:
 
     def __init__(
@@ -99,7 +105,74 @@ class TradeStatisticsManager:
     def maybe_dump_statistics(self):
         if not self._dump_statistics:
             return
-        # TODO implement later
+
+        if self._json_file_manager is None:
+            self._json_file_manager = JsonFileManager(self._storage_dir)
+
+            # We only dump once the currencies as they do not change during runtime
+            # Dump fiat currencies
+            fiat_currency_list = [
+                CurrencyTuple(e.code, e.name, 8)
+                for e in get_all_sorted_fiat_currencies()
+            ]
+            self._json_file_manager.write_to_disc_threaded(
+                JsonUtil.object_to_json(fiat_currency_list), "fiat_currency_list"
+            )
+
+            # Dump crypto currencies
+            crypto_currency_list = [
+                CurrencyTuple(e.code, e.name, 8)
+                for e in get_all_sorted_crypto_currencies()
+            ]
+            crypto_currency_list.insert(
+                0,
+                CurrencyTuple(
+                    Res.base_currency_code,
+                    Res.base_currency_name,
+                    8,
+                ),
+            )
+            self._json_file_manager.write_to_disc_threaded(
+                JsonUtil.object_to_json(crypto_currency_list), "crypto_currency_list"
+            )
+
+            # Filter active currencies
+            year_ago = get_time_ms() - 365 * 24 * 60 * 60 * 1000
+            active_currencies = {
+                e.currency
+                for e in self.observable_trade_statistics_set
+                if e.date > year_ago
+            }
+
+            active_fiat_currency_list = [
+                CurrencyTuple(e.code, e.name, 8)
+                for e in fiat_currency_list
+                if e.code in active_currencies
+            ]
+            self._json_file_manager.write_to_disc_threaded(
+                JsonUtil.object_to_json(active_fiat_currency_list),
+                "active_fiat_currency_list",
+            )
+
+            active_crypto_currency_list = [
+                CurrencyTuple(e.code, e.name, 8)
+                for e in crypto_currency_list
+                if e.code in active_currencies
+            ]
+            self._json_file_manager.write_to_disc_threaded(
+                JsonUtil.object_to_json(active_crypto_currency_list),
+                "active_crypto_currency_list",
+            )
+
+        # Dump trade statistics
+        trade_statistics_list = sorted(
+            (TradeStatisticsForJson(e) for e in self.observable_trade_statistics_set),
+            key=lambda x: x.trade_date,
+            reverse=True,
+        )
+        self._json_file_manager.write_to_disc_threaded(
+            JsonUtil.object_to_json(trade_statistics_list), "trade_statistics"
+        )
 
     def maybe_republish_trade_statistics(
         self,
