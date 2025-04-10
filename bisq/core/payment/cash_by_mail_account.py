@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, List, cast
-from bisq.core.locale.currency_util import get_all_fiat_currencies
+from bisq.core.locale.currency_util import get_all_sorted_fiat_currencies
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.cash_by_mail_account_payload import (
     CashByMailAccountPayload,
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class CashByMailAccount(PaymentAccount):
-    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_sorted_fiat_currencies()
 
     def __init__(self):
         super().__init__(PaymentMethod.CASH_BY_MAIL)

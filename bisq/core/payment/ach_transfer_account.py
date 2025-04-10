@@ -1,5 +1,4 @@
-from typing import TYPE_CHECKING, List, cast
-from bisq.core.locale.currency_util import get_all_fiat_currencies
+from typing import TYPE_CHECKING
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -24,7 +23,7 @@ class AchTransferAccount(CountryBasedPaymentAccount, SameCountryRestrictedBankAc
     def create_payload(self) -> "PaymentAccountPayload":
         return AchTransferAccountPayload(self.payment_method.id, self.id)
 
-    def get_supported_currencies(self) -> List["TradeCurrency"]:
+    def get_supported_currencies(self) -> list["TradeCurrency"]:
         return AchTransferAccount.SUPPORTED_CURRENCIES
 
     @property

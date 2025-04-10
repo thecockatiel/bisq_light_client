@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from bisq.core.locale.currency_util import get_all_fiat_currencies
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from bisq.core.locale.currency_util import get_all_fiat_currencies
+from bisq.core.locale.currency_util import get_all_sorted_fiat_currencies
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.f2f_account_payload import F2FAccountPayload
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class F2FAccount(CountryBasedPaymentAccount):
-    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_fiat_currencies()
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = get_all_sorted_fiat_currencies()
 
     def __init__(self):
         super().__init__(PaymentMethod.F2F)

@@ -1,4 +1,4 @@
-from bisq.core.locale.currency_util import SORTED_BY_CODE_FIAT_CURRENCIES
+from bisq.core.locale.currency_util import get_all_sorted_by_code_fiat_currencies
 from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -7,7 +7,9 @@ from bisq.core.payment.payment_account import PaymentAccount
 
 
 class SwiftAccount(PaymentAccount):
-    SUPPORTED_CURRENCIES: list["TradeCurrency"] = SORTED_BY_CODE_FIAT_CURRENCIES
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = (
+        get_all_sorted_by_code_fiat_currencies()
+    )
 
     def __init__(self):
         super().__init__(PaymentMethod.SWIFT)

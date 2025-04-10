@@ -98,7 +98,7 @@ def get_sorted_asset_stream():
             ),
             AssetRegistry.registered_assets,
         ),
-        key=lambda asset: asset.get_name(),
+        key=lambda asset: java_cmp_str(asset.get_name()),
     )
 
 
@@ -149,10 +149,10 @@ def get_mature_market_currencies():
 
 
 SORTED_BY_NAME_FIAT_CURRENCIES = sorted(
-    list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: x.name
+    list(CURRENCY_CODE_TO_FIAT_CURRENCY_MAP.values()), key=lambda x: java_cmp_str(x.name)
 )
 SORTED_BY_CODE_FIAT_CURRENCIES = sorted(
-    SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: x.code
+    SORTED_BY_NAME_FIAT_CURRENCIES, key=lambda x: java_cmp_str(x.code)
 )
 
 
@@ -230,8 +230,11 @@ def get_removed_crypto_currencies() -> list["CryptoCurrency"]:
     return list(REMOVED_CRYPTO_CURRENCIES.values())
 
 
-def get_all_fiat_currencies() -> list["FiatCurrency"]:
+def get_all_sorted_fiat_currencies() -> list["FiatCurrency"]:
     return SORTED_BY_NAME_FIAT_CURRENCIES
+
+def get_all_sorted_by_code_fiat_currencies() -> list["FiatCurrency"]:
+    return SORTED_BY_CODE_FIAT_CURRENCIES
 
 
 def get_all_sorted_crypto_currencies() -> Iterable["CryptoCurrency"]:
