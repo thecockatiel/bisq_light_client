@@ -209,8 +209,8 @@ class OfferBookService:
         offers = [
             offer
             for offer in self.get_offers()
-            if not offer.is_use_market_based_price()
-            or self.price_feed_service.get_market_price(offer.get_currency_code())
+            if not offer.is_use_market_based_price
+            or self.price_feed_service.get_market_price(offer.currency_code)
             is not None
         ]
 
