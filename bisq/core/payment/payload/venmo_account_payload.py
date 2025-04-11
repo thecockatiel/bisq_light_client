@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import pb_pb2 as protobuf
@@ -50,7 +51,7 @@ class VenmoAccountPayload(PaymentAccountPayload):
             venmo_user_name=venmo_payload.venmo_user_name,
             holder_name=venmo_payload.holder_name,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

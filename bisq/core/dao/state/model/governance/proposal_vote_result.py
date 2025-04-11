@@ -53,8 +53,8 @@ class ProposalVoteResult(PersistablePayload, ImmutableDaoStateModel):
     def to_proto_message(self):
         return protobuf.ProposalVoteResult(
             proposal=self._proposal.to_proto_message(),
-            stake_of_Accepted_votes=self._stake_of_accepted_votes,  # weird protobuf names
-            stake_of_Rejected_votes=self._stake_of_rejected_votes,  # weird protobuf names
+            stake_of_accepted_votes=self._stake_of_accepted_votes,
+            stake_of_rejected_votes=self._stake_of_rejected_votes,
             num_accepted_votes=self._num_accepted_votes,
             num_rejected_votes=self._num_rejected_votes,
             num_ignored_votes=self._num_ignored_votes,
@@ -64,8 +64,8 @@ class ProposalVoteResult(PersistablePayload, ImmutableDaoStateModel):
     def from_proto(proto: protobuf.ProposalVoteResult):
         return ProposalVoteResult(
             proposal=Proposal.from_proto(proto.proposal),
-            stake_of_accepted_votes=proto.stake_of_Accepted_votes,  # weird protobuf names
-            stake_of_rejected_votes=proto.stake_of_Rejected_votes,  # weird protobuf names
+            stake_of_accepted_votes=proto.stake_of_accepted_votes,
+            stake_of_rejected_votes=proto.stake_of_rejected_votes,
             num_accepted_votes=proto.num_accepted_votes,
             num_rejected_votes=proto.num_rejected_votes,
             num_ignored_votes=proto.num_ignored_votes,

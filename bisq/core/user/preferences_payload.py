@@ -12,7 +12,7 @@ from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.locale.trade_currency import TradeCurrency
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 
 class PreferencesPayload(PersistableEnvelope):
     
@@ -193,17 +193,17 @@ class PreferencesPayload(PersistableEnvelope):
             use_custom_withdrawal_tx_fee=self.use_custom_withdrawal_tx_fee,
             max_price_distance_in_percent=self.max_price_distance_in_percent,
             trade_statistics_tick_unit_index=self.trade_statistics_tick_unit_index,
-            resync_Spv_requested=self.resync_spv_requested, # weird protobuf names
+            resync_spv_requested=self.resync_spv_requested,
             sort_market_currencies_numerically=self.sort_market_currencies_numerically,
             use_percentage_based_price=self.use_percentage_based_price,
-            peer_tag_map=map_to_stable_extra_data(self.peer_tag_map),
+            peer_tag_map=ProtoUtil.to_string_map_entry_list(self.peer_tag_map),
             bitcoin_nodes=self.bitcoin_nodes,
             ignore_traders_list=self.ignore_traders_list,
             directory_chooser_path=self.directory_chooser_path,
             buyer_security_deposit_as_long=self.buyer_security_deposit_as_long,
             use_animations=self.use_animations,
             css_theme=self.css_theme,
-            pay_fee_in_Btc=self.pay_fee_in_btc, # weird protobuf names
+            pay_fee_in_btc=self.pay_fee_in_btc,
             bridge_option_ordinal=self.bridge_option_ordinal,
             tor_transport_ordinal=self.tor_transport_ordinal,
             bitcoin_nodes_option_ordinal=self.bitcoin_nodes_option_ordinal,
@@ -251,8 +251,7 @@ class PreferencesPayload(PersistableEnvelope):
         if self.sell_screen_crypto_currency_code:
             builder.sell_screen_crypto_currency_code = self.sell_screen_crypto_currency_code
         if self.selected_payment_account_for_create_offer:
-            # weird protobuf names
-            builder.selectedPayment_account_for_createOffer.CopyFrom(self.selected_payment_account_for_create_offer.to_proto_message())
+            builder.selected_payment_account_for_create_offer.CopyFrom(self.selected_payment_account_for_create_offer.to_proto_message())
         if self.bridge_addresses:
             builder.bridge_addresses.extend(self.bridge_addresses)
         if self.custom_bridges:
@@ -275,10 +274,9 @@ class PreferencesPayload(PersistableEnvelope):
     @staticmethod
     def from_proto(proto: protobuf.PreferencesPayload, core_proto_resolver: "CoreProtoResolver"):
         payment_account = None
-        # weird protobuf names
-        if (proto.HasField('selectedPayment_account_for_createOffer') and 
-            proto.selectedPayment_account_for_createOffer.HasField('payment_method')):  
-            payment_account = PaymentAccount.from_proto(proto.selectedPayment_account_for_createOffer, core_proto_resolver)
+        if (proto.HasField('selected_payment_account_for_create_offer') and
+            proto.selected_payment_account_for_create_offer.HasField('payment_method')):  
+            payment_account = PaymentAccount.from_proto(proto.selected_payment_account_for_create_offer, core_proto_resolver)
         
         return PreferencesPayload(
             user_language=proto.user_language,
@@ -305,10 +303,10 @@ class PreferencesPayload(PersistableEnvelope):
             buy_screen_crypto_currency_code=ProtoUtil.string_or_none_from_proto(proto.buy_screen_crypto_currency_code),
             sell_screen_crypto_currency_code=ProtoUtil.string_or_none_from_proto(proto.sell_screen_crypto_currency_code),
             trade_statistics_tick_unit_index=proto.trade_statistics_tick_unit_index,
-            resync_spv_requested=proto.resync_Spv_requested, # weird protobuf names
+            resync_spv_requested=proto.resync_spv_requested,
             sort_market_currencies_numerically=proto.sort_market_currencies_numerically,
             use_percentage_based_price=proto.use_percentage_based_price,
-            peer_tag_map=stable_extra_data_to_map(proto.peer_tag_map),
+            peer_tag_map=ProtoUtil.to_string_map(proto.peer_tag_map),
             bitcoin_nodes=proto.bitcoin_nodes,
             ignore_traders_list=list(proto.ignore_traders_list),
             directory_chooser_path=proto.directory_chooser_path,
@@ -316,7 +314,7 @@ class PreferencesPayload(PersistableEnvelope):
             use_animations=proto.use_animations,
             css_theme=proto.css_theme,
             selected_payment_account_for_create_offer=payment_account,
-            pay_fee_in_btc=proto.pay_fee_in_Btc, # weird protobuf names
+            pay_fee_in_btc=proto.pay_fee_in_btc,
             bridge_addresses=list(proto.bridge_addresses) if proto.bridge_addresses else None,
             bridge_option_ordinal=proto.bridge_option_ordinal,
             tor_transport_ordinal=proto.tor_transport_ordinal,

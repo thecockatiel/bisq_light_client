@@ -8,7 +8,7 @@ import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 from utils.time import get_time_ms
 from datetime import datetime
 
@@ -58,7 +58,7 @@ class PaymentAccount(PersistablePayload, ABC):
             builder.selected_trade_currency.CopyFrom(self.selected_trade_currency.to_proto_message())
         
         if self.extra_data:
-            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data))
+            builder.extra_data.extend(ProtoUtil.to_string_map_entry_list(self.extra_data))
             
         return builder
 
@@ -92,7 +92,7 @@ class PaymentAccount(PersistablePayload, ABC):
             if proto.HasField('selected_trade_currency'):
                 account.selected_trade_currency = TradeCurrency.from_proto(proto.selected_trade_currency)
 
-            account.extra_data = stable_extra_data_to_map(proto.extra_data)
+            account.extra_data = ProtoUtil.to_string_map(proto.extra_data)
             
             return account
             

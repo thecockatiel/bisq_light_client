@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import secrets
 from typing import Optional
 import binascii
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 import pb_pb2 as protobuf
@@ -78,7 +79,7 @@ class PaymentAccountPayload(NetworkPayload, UsedForTradeContractJson, ABC):
             payment_method_id=self.payment_method_id,
             max_trade_period=self.max_trade_period,
             id=self.id,
-            exclude_from_json_data=self.exclude_from_json_data_map,
+            exclude_from_json_data=ProtoUtil.to_string_map_entry_list(self.exclude_from_json_data_map),
         )
         return builder
 

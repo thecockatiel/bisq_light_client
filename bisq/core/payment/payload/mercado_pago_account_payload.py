@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
     CountryBasedPaymentAccountPayload,
@@ -51,11 +52,11 @@ class MercadoPagoAccountPayload(CountryBasedPaymentAccountPayload):
         return MercadoPagoAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based_payload.countryCode,
+            country_code=country_based_payload.country_code,
             account_holder_name=mercado_payload.holder_name,
             account_holder_id=mercado_payload.holder_id,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

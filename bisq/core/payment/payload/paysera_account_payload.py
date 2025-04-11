@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import pb_pb2 as protobuf
@@ -24,18 +25,18 @@ class PayseraAccountPayload(PaymentAccountPayload):
             email=self.email,
         )
         builder = self.get_payment_account_payload_builder()
-        builder.Paysera_account_payload.CopyFrom(payload)  # weird protobuf names
+        builder.paysera_account_payload.CopyFrom(payload)
         return builder
 
     @staticmethod
     def from_proto(proto: protobuf.PaymentAccountPayload):
-        payload = proto.Paysera_account_payload  # weird protobuf names
+        payload = proto.paysera_account_payload
         return PayseraAccountPayload(
             payment_method_id=proto.payment_method_id,
             id=proto.id,
             email=payload.email,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     def get_payment_details(self) -> str:

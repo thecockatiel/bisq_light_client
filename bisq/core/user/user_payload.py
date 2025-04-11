@@ -119,7 +119,7 @@ class UserPayload(PersistableEnvelope):
                                            lambda msg: cast(protobuf.StoragePayload, msg).refund_agent))
             
         if self.cookie:
-            payload.cookie.update(self.cookie.to_proto_message())
+            payload.cookie.extend(ProtoUtil.to_string_map_entry_list(self.cookie.to_proto_message()))
 
         # Convert subAccountsById map to list of SubAccountMapEntry
         for key, value in self.sub_accounts_by_id.items():
@@ -179,7 +179,7 @@ class UserPayload(PersistableEnvelope):
                 RefundAgent.from_proto(agent)
                 for agent in proto.accepted_refund_agents
             ] if proto.accepted_refund_agents else [],
-            cookie=Cookie.from_proto(proto.cookie),
+            cookie=Cookie.from_proto(ProtoUtil.to_string_map(proto.cookie)),
             sub_accounts_by_id=sub_accounts
         )
 

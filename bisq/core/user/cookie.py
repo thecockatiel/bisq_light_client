@@ -1,4 +1,4 @@
-from typing import Optional, Dict 
+from typing import Optional
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.user.cookie_key import CookieKey
 
@@ -23,11 +23,11 @@ class Cookie(dict[CookieKey, str]):
     def get_as_optional_boolean(self, key: CookieKey) -> Optional[bool]:
         return self.get(key) == "1" if key in self else None
         
-    def to_proto_message(self) -> Dict[str, str]:
+    def to_proto_message(self) -> dict[str, str]:
         return {key.name: value for key, value in self.items() if key is not None}
     
     @staticmethod
-    def from_proto(proto_map: Optional[Dict[str, str]] = None) -> 'Cookie':
+    def from_proto(proto_map: Optional[dict[str, str]] = None) -> 'Cookie':
         cookie = Cookie()
         if proto_map is not None:
             for key, value in proto_map.items():

@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.bank_util import BankUtil
 from bisq.core.locale.country_util import get_name_by_code
 from bisq.core.locale.res import Res
@@ -70,13 +71,13 @@ class WesternUnionAccountPayload(
         return WesternUnionAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based_payload.countryCode,
-            holder_name=proto.holder_name,
+            country_code=country_based_payload.country_code,
+            holder_name=wu_payload.holder_name,
             city=wu_payload.city,
             state=wu_payload.state,
             email=wu_payload.email,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

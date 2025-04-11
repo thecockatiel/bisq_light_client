@@ -101,6 +101,20 @@ class DaoState(PersistablePayload):
                 self._add_to_tx_outputs_by_tx_output_type_map(tx)
                 self.tx_cache[tx.id] = tx
 
+    def get_json_dict(self):
+        return {
+            "chainHeight": self.chain_height,
+            "blocks": self.blocks,
+            "cycles": self.cycles,
+            "unspentTxOutputMap": self.unspent_tx_output_map,
+            "spentInfoMap": self.spent_info_map,
+            "confiscatedLockupTxList": self.confiscated_lockup_tx_list,
+            "issuanceMap": self.issuance_map,
+            "paramChangeList": self.param_change_list,
+            "evaluatedProposalList": self.evaluated_proposal_list,
+            "decryptedBallotsWithMeritsList": self.decrypted_ballots_with_merits_list,
+        }
+
     @property
     def blocks(self):
         """do not modify the list directly, use add_block() instead"""
@@ -121,8 +135,8 @@ class DaoState(PersistablePayload):
         builder = protobuf.DaoState(
             chain_height=self.chain_height,
             cycles=[cycle.to_proto_message() for cycle in self.cycles],
-            unspent_tx_output_map=[
-                protobuf.StableUnspentTxOutputMap(
+            unspent_tx_output_map_entries=[
+                protobuf.BaseTxOutputMapEntry(
                     key=str(key), value=value.to_proto_message()
                 )
                 # HashMap is used in original java, so we have to do this here as well
@@ -131,8 +145,8 @@ class DaoState(PersistablePayload):
                     for txkey, value in self.unspent_tx_output_map.items()
                 )
             ],
-            spent_info_map=[
-                protobuf.StableSpentInfoMap(
+            spent_info_map_entries=[
+                protobuf.SpentInfoMapEntry(
                     key=str(key), value=value.to_proto_message()
                 )
                 for key, value in HashMap(
@@ -140,8 +154,8 @@ class DaoState(PersistablePayload):
                 )
             ],
             confiscated_lockup_tx_list=self.confiscated_lockup_tx_list,
-            issuance_map=[
-                protobuf.StableIssuanceMap(key=key, value=value.to_proto_message())
+            issuance_map_entries=[
+                protobuf.IssuanceMapEntry(key=key, value=value.to_proto_message())
                 for key, value in HashMap(
                     (str(txkey), value) for txkey, value in self.issuance_map.items()
                 )
@@ -175,19 +189,19 @@ class DaoState(PersistablePayload):
                     TxOutputKey.get_key_from_string(item.key),
                     TxOutput.from_proto(item.value),
                 )
-                for item in proto.unspent_tx_output_map
+                for item in proto.unspent_tx_output_map_entries
             ),
             spent_info_map=SortedDict(
                 (
                     TxOutputKey.get_key_from_string(item.key),
                     SpentInfo.from_proto(item.value),
                 )
-                for item in proto.spent_info_map
+                for item in proto.spent_info_map_entries
             ),
             confiscated_lockup_tx_list=list(proto.confiscated_lockup_tx_list),
             issuance_map=SortedDict(
                 (item.key, Issuance.from_proto(item.value))
-                for item in proto.issuance_map
+                for item in proto.issuance_map_entries
             ),
             param_change_list=[
                 ParamChange.from_proto(param_change_proto)

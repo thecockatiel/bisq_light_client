@@ -1,3 +1,4 @@
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.bank_account_payload import BankAccountPayload
 import pb_pb2 as protobuf
@@ -62,7 +63,7 @@ class SpecificBanksAccountPayload(BankAccountPayload):
         return SpecificBanksAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based.countryCode,  # Weird protobuf names
+            country_code=country_based.country_code,
             holder_name=bank_account.holder_name,
             bank_name=bank_account.bank_name or None,
             branch_id=bank_account.branch_id or None,
@@ -73,7 +74,7 @@ class SpecificBanksAccountPayload(BankAccountPayload):
             national_account_id=bank_account.national_account_id or None,
             accepted_banks=list(specific_banks.accepted_banks),
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     def clear_accepted_banks(self):

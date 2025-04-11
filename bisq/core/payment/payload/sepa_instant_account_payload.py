@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Union
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.country_util import get_name_by_code
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.country_based_payment_account_payload import (
@@ -85,13 +86,13 @@ class SepaInstantAccountPayload(
         return SepaInstantAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based_payload.countryCode,
+            country_code=country_based_payload.country_code,
             holder_name=sepa_instant_payload.holder_name,
             iban=sepa_instant_payload.iban,
             bic=sepa_instant_payload.bic,
             accepted_country_codes=list(sepa_instant_payload.accepted_country_codes),
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

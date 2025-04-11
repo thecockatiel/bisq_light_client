@@ -1,3 +1,4 @@
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.bank_util import BankUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.bank_account_payload import BankAccountPayload
@@ -57,14 +58,14 @@ class DomesticWireTransferAccountPayload(BankAccountPayload):
         return DomesticWireTransferAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based.countryCode,  # Weird protobuf names
+            country_code=country_based.country_code,
             holder_name=bank_account.holder_name,
             bank_name=bank_account.bank_name or None,
             branch_id=bank_account.branch_id or None,
             account_nr=bank_account.account_nr or None,
             holder_address=domestic_wire_payload.holder_address or None,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     def get_payment_details(self):

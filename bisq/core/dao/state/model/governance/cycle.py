@@ -18,7 +18,7 @@ class Cycle(PersistablePayload, ImmutableDaoStateModel):
 
     def to_proto_message(self):
         return protobuf.Cycle(
-            height_of_first_lock=self.height_of_first_block,  # weird protobuf names
+            height_of_first_block=self.height_of_first_block,
             dao_phase=[
                 dao_phase.to_proto_message() for dao_phase in self.dao_phase_list
             ],
@@ -27,7 +27,7 @@ class Cycle(PersistablePayload, ImmutableDaoStateModel):
     @staticmethod
     def from_proto(proto: protobuf.Cycle) -> "Cycle":
         dao_phase_list = tuple(DaoPhase.from_proto(phase) for phase in proto.dao_phase)
-        return Cycle(proto.height_of_first_lock, dao_phase_list)
+        return Cycle(proto.height_of_first_block, dao_phase_list)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API

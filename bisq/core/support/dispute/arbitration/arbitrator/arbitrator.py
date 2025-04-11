@@ -6,7 +6,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
 import pb_pb2 as protobuf
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 
 
 class Arbitrator(DisputeAgent):
@@ -57,7 +57,7 @@ class Arbitrator(DisputeAgent):
         if self.info:
             arbitrator.info = self.info
         if self.extra_data_map:
-            arbitrator.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
+            arbitrator.extra_data.extend(ProtoUtil.to_string_map_entry_list(self.extra_data_map))
 
         return protobuf.StoragePayload(
             arbitrator=arbitrator,
@@ -76,7 +76,7 @@ class Arbitrator(DisputeAgent):
             registration_signature=proto.registration_signature,
             email_address=ProtoUtil.string_or_none_from_proto(proto.email_address),
             info=ProtoUtil.string_or_none_from_proto(proto.info),
-            extra_data_map=stable_extra_data_to_map(proto.extra_data),
+            extra_data_map=ProtoUtil.to_string_map(proto.extra_data),
         )
 
     def __str__(self) -> str:

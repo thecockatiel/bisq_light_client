@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import pb_pb2 as protobuf
@@ -44,7 +45,7 @@ class AmazonGiftCardAccountPayload(PaymentAccountPayload):
             email_or_mobile_nr=amazon_payload.email_or_mobile_nr,
             country_code=amazon_payload.country_code,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),            
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),            
         )
 
     def get_payment_details(self) -> str:

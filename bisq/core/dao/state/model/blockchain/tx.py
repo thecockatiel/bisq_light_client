@@ -63,9 +63,9 @@ class Tx(BaseTx, PersistablePayload, ImmutableDaoStateModel):
         builder.tx.CopyFrom(
             protobuf.Tx(
                 tx_outputs=[output.to_proto_message() for output in self.tx_outputs],
-                txType=(
+                tx_type=(
                     self.tx_type.to_proto_message() if self.tx_type else None
-                ),  # weird protobuf names
+                ),
                 burnt_bsq=self.burnt_bsq,
             )
         )
@@ -86,7 +86,7 @@ class Tx(BaseTx, PersistablePayload, ImmutableDaoStateModel):
             proto.time,
             tx_inputs,
             tx_outputs,
-            TxType.from_proto(proto_tx.txType),
+            TxType.from_proto(proto_tx.tx_type),
             proto_tx.burnt_bsq,
         )
 

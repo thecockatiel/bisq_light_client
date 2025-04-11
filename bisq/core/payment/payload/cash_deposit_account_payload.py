@@ -1,3 +1,4 @@
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.bank_util import BankUtil
 from bisq.core.locale.country_util import get_name_by_code
 from bisq.core.locale.res import Res
@@ -81,7 +82,7 @@ class CashDepositAccountPayload(BankAccountPayload):
         return CashDepositAccountPayload(
             payment_method_name=proto.payment_method_id,
             id=proto.id,
-            country_code=country_based.countryCode,  # Weird protobuf names
+            country_code=country_based.country_code,
             holder_name=deposit_payload.holder_name,
             holder_email=deposit_payload.holder_email or None,
             bank_name=deposit_payload.bank_name or None,
@@ -93,7 +94,7 @@ class CashDepositAccountPayload(BankAccountPayload):
             bank_id=deposit_payload.bank_id or None,
             national_account_id=deposit_payload.national_account_id or None,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     def get_payment_details(self) -> str:

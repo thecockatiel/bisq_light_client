@@ -16,7 +16,7 @@ from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
 from utils.data import ObservableList, SimpleProperty, raise_required
 from utils.formatting import get_short_id
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 
 logger = get_logger(__name__)
 
@@ -191,7 +191,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             mediators_dispute_result=self.mediators_dispute_result,
             delayed_payout_tx_id=self.delayed_payout_tx_id,
             donation_address_of_delayed_payout_tx=self.donation_address_of_delayed_payout_tx,
-            extra_data=map_to_stable_extra_data(self.extra_data_map),
+            extra_data=ProtoUtil.to_string_map_entry_list(self.extra_data_map),
         )
         return message
     
@@ -223,7 +223,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         )
         
         if proto.extra_data:
-            dispute.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(stable_extra_data_to_map(proto.extra_data))
+            dispute.extra_data_map = ExtraDataMapValidator.get_validated_extra_data_map(ProtoUtil.to_string_map(proto.extra_data))
         
         if proto.chat_message:
             for chat_message in proto.chat_message:

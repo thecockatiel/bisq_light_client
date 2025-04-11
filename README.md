@@ -35,9 +35,9 @@ It is a priority to make the project runnable without installing deps through pi
 
 ```bash
 # generate the python files
-python3 -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. --proto_path=proto spb.proto pb.proto grpc.proto grpc_extra.proto
+python3 -m grpc_tools.protoc -I. --python_out=. --pyi_out=. --grpc_python_out=. --proto_path=proto pb.proto grpc.proto grpc_extra.proto
 # Or this if you are using debian packages and command above does not work:
-python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto spb.proto pb.proto grpc.proto grpc_extra.proto
+python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --proto_path=proto pb.proto grpc.proto grpc_extra.proto
 ```
 
 Note: files are expected to be generated at the root of project, beside `run_client.py`

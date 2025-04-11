@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Dict, Any
+from typing import TYPE_CHECKING, Optional, Any
 from datetime import timedelta
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
@@ -11,7 +10,7 @@ from bisq.common.protocol.network.get_data_response_priority import (
 )
 from bisq.common.version import Version
 import pb_pb2 as protobuf
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 
 if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
@@ -28,7 +27,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
     owner_pub_key_bytes: Optional[bytes]
     signature_as_base64: Optional[str]
     owner_pub_key: Optional[Any] = None  # PublicKey equivalent
-    extra_data_map: Optional[Dict[str, str]] = None
+    extra_data_map: Optional[dict[str, str]] = None
 
     def __init__(
         self,
@@ -38,7 +37,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         version: str,
         owner_pub_key_bytes: bytes = None,
         signature_as_base64: str = None,
-        extra_data_map: Optional[Dict[str, str]] = None,
+        extra_data_map: Optional[dict[str, str]] = None,
     ) -> None:
         super().__init__()
         self.message = message
@@ -74,7 +73,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
         )
 
         if self.extra_data_map:
-            alert.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
+            alert.extra_data.extend(ProtoUtil.to_string_map_entry_list(self.extra_data_map))
 
         return protobuf.StoragePayload(alert=alert)
 
@@ -92,7 +91,7 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
             version=proto.version,
             owner_pub_key_bytes=proto.owner_pub_key_bytes,
             signature_as_base64=proto.signature_as_base64,
-            extra_data_map=stable_extra_data_to_map(proto.extra_data),
+            extra_data_map=ProtoUtil.to_string_map(proto.extra_data),
         )
 
     def get_data_response_priority(self) -> GetDataResponsePriority:

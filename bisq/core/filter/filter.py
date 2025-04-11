@@ -13,7 +13,7 @@ from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePay
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
 import pb_pb2 as protobuf
 from utils.ordered_containers import OrderedSet
-from utils.pb_helper import map_to_stable_extra_data, stable_extra_data_to_map
+from bisq.common.protocol.proto_util import ProtoUtil
 from utils.time import get_time_ms
 
 class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto):
@@ -195,8 +195,8 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
         filter = self.get_filter_builder()
         if serialize_for_hash:
             # excludeForHash
-            filter.ClearField("addedBtcNodes") # Weird protobuf names
-            filter.ClearField("addedSeedNodes") # Weird protobuf names
+            filter.ClearField("added_btc_nodes")
+            filter.ClearField("added_seed_nodes")
             
         return filter
     
@@ -224,13 +224,13 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             disable_dao_below_version=self.disable_dao_below_version,
             disable_trade_below_version=self.disable_trade_below_version,
             mediators=self.mediators,
-            refundAgents=self.refund_agents, # weird protobuf names
-            bannedSignerPubKeys=self.banned_account_witness_signer_pub_keys, # weird protobuf names
+            refund_agents=self.refund_agents,
+            banned_signer_pub_keys=self.banned_account_witness_signer_pub_keys,
             btc_fee_receiver_addresses=self.btc_fee_receiver_addresses,
             owner_pub_key_bytes=self.owner_pub_key_bytes,
             signer_pub_key_as_hex=self.signer_pub_key_as_hex,
             creation_date=self.creation_date,
-            bannedPrivilegedDevPubKeys=self.banned_privileged_dev_pub_keys, # weird protobuf names
+            banned_privileged_dev_pub_keys=self.banned_privileged_dev_pub_keys,
             disable_auto_conf=self.disable_auto_conf,
             banned_auto_conf_explorers=self.banned_auto_conf_explorers,
             node_addresses_banned_from_network=list(self.node_addresses_banned_from_network),
@@ -243,16 +243,16 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             taker_fee_btc=self.taker_fee_btc,
             maker_fee_bsq=self.maker_fee_bsq,
             taker_fee_bsq=self.taker_fee_bsq,
-            delayedPayoutPaymentAccounts=delayed_payout_payment_accounts, # weird protobuf names
-            addedBtcNodes=self.added_btc_nodes, # weird protobuf names
-            addedSeedNodes=self.added_seed_nodes, # weird protobuf names
+            delayed_payout_payment_accounts=delayed_payout_payment_accounts,
+            added_btc_nodes=self.added_btc_nodes,
+            added_seed_nodes=self.added_seed_nodes,
             uid=self.uid
         )
 
         if self.signature_as_base64:
             builder.signature_as_base64 = self.signature_as_base64
         if self.extra_data_map:
-            builder.extra_data.extend(map_to_stable_extra_data(self.extra_data_map))
+            builder.extra_data.extend(ProtoUtil.to_string_map_entry_list(self.extra_data_map))
 
         return builder
 
@@ -265,7 +265,7 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
 
         delayed_payout_payment_accounts = [
             PaymentAccountFilter.from_proto(account) 
-            for account in proto.delayedPayoutPaymentAccounts
+            for account in proto.delayed_payout_payment_accounts
         ]
         
         return Filter(
@@ -284,15 +284,15 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             disable_dao_below_version=proto.disable_dao_below_version,
             disable_trade_below_version=proto.disable_trade_below_version,
             mediators=ProtoUtil.protocol_string_list_to_list(proto.mediators),
-            refund_agents=ProtoUtil.protocol_string_list_to_list(proto.refundAgents),  
-            banned_account_witness_signer_pub_keys=ProtoUtil.protocol_string_list_to_list(proto.bannedSignerPubKeys),
+            refund_agents=ProtoUtil.protocol_string_list_to_list(proto.refund_agents),  
+            banned_account_witness_signer_pub_keys=ProtoUtil.protocol_string_list_to_list(proto.banned_signer_pub_keys),
             btc_fee_receiver_addresses=ProtoUtil.protocol_string_list_to_list(proto.btc_fee_receiver_addresses),
             owner_pub_key_bytes=proto.owner_pub_key_bytes,
             creation_date=proto.creation_date,
-            extra_data_map=stable_extra_data_to_map(proto.extra_data),
+            extra_data_map=ProtoUtil.to_string_map(proto.extra_data),
             signature_as_base64=proto.signature_as_base64,
             signer_pub_key_as_hex=proto.signer_pub_key_as_hex,
-            banned_privileged_dev_pub_keys=ProtoUtil.protocol_string_list_to_list(proto.bannedPrivilegedDevPubKeys),
+            banned_privileged_dev_pub_keys=ProtoUtil.protocol_string_list_to_list(proto.banned_privileged_dev_pub_keys),
             disable_auto_conf=proto.disable_auto_conf,
             node_addresses_banned_from_network=ProtoUtil.protocol_string_list_to_set(proto.node_addresses_banned_from_network),
             disable_mempool_validation=proto.disable_mempool_validation,
@@ -305,8 +305,8 @@ class Filter(ProtectedStoragePayload, ExpirablePayload, ExcludeForHashAwareProto
             maker_fee_bsq=proto.maker_fee_bsq,
             taker_fee_bsq=proto.taker_fee_bsq,
             delayed_payout_payment_accounts=delayed_payout_payment_accounts,
-            added_btc_nodes=ProtoUtil.protocol_string_list_to_list(proto.addedBtcNodes),
-            added_seed_nodes=ProtoUtil.protocol_string_list_to_list(proto.addedSeedNodes),
+            added_btc_nodes=ProtoUtil.protocol_string_list_to_list(proto.added_btc_nodes),
+            added_seed_nodes=ProtoUtil.protocol_string_list_to_list(proto.added_seed_nodes),
             uid=proto.uid
         )
 

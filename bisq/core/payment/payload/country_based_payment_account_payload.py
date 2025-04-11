@@ -28,7 +28,7 @@ class CountryBasedPaymentAccountPayload(PaymentAccountPayload, ABC):
 
     def get_payment_account_payload_builder(self):
         country_payload = protobuf.CountryBasedPaymentAccountPayload(
-            countryCode=self.country_code
+            country_code=self.country_code
         )
         builder = super().get_payment_account_payload_builder()
         builder.country_based_payment_account_payload.CopyFrom(country_payload)

@@ -7,6 +7,7 @@ from google.protobuf.any_pb2 import Any
 
 from bisq.common.proto import Proto
 from bisq.common.setup.log_setup import get_logger
+from pb_pb2 import StringMapEntry
 from utils.ordered_containers import OrderedSet
 
 T = TypeVar('T', bound=message.Message)
@@ -90,3 +91,15 @@ class ProtoUtil:
     @staticmethod
     def protocol_string_list_to_set(protocol_string_list: list[str]) -> "OrderedSet[str]":
         return OrderedSet() if not protocol_string_list else OrderedSet(protocol_string_list)
+
+    @staticmethod
+    def to_string_map_entry_list(map: dict[str, str]):
+        if not map:
+            return None
+        return [StringMapEntry(key=k, value=v) for k, v in map.items()]
+
+    @staticmethod
+    def to_string_map(entries: Iterable[StringMapEntry]):
+        if not entries:
+            return None
+        return {v.key: v.value for v in entries}

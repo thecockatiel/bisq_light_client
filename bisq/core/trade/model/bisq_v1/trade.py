@@ -256,7 +256,7 @@ class Trade(TradeModel, ABC):
             chat_message = [msg.to_proto_network_envelope().chat_message for msg in self.chat_messages],
             lock_time = self.lock_time,
             uid = self.uid,
-            sellerConfirmedPaymentReceiptDate = self.seller_confirmed_payment_receipt_date, # weird protobuf names
+            seller_confirmed_payment_receipt_date = self.seller_confirmed_payment_receipt_date,
         )
         
 
@@ -325,7 +325,7 @@ class Trade(TradeModel, ABC):
 
         trade._chat_messages.extend(ChatMessage.from_payload_proto(msg) for msg in proto.chat_message)
         
-        trade.seller_confirmed_payment_receipt_date = proto.sellerConfirmedPaymentReceiptDate # weird protobuf names
+        trade.seller_confirmed_payment_receipt_date = proto.seller_confirmed_payment_receipt_date
 
         return trade
 

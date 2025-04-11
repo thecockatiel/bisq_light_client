@@ -268,8 +268,7 @@ class Contract(NetworkPayload):
             self.taker_payment_account_payload = None
             changed = True
         return changed
-    
-    # TODO: check and compare real json data
+
     def get_json_dict(self):
         return {
             "offerPayload": self.offer_payload,

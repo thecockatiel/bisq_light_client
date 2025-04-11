@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payload_with_holder_name import PayloadWithHolderName
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
@@ -54,7 +55,7 @@ class SwishAccountPayload(PaymentAccountPayload, PayloadWithHolderName):
             mobile_nr=payload.mobile_nr,
             holder_name=payload.holder_name,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

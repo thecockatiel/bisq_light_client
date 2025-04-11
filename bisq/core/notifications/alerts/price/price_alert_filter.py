@@ -9,7 +9,7 @@ class PriceAlertFilter(PersistablePayload):
 
     def to_proto_message(self) -> protobuf.PriceAlertFilter:
         return protobuf.PriceAlertFilter(
-            currencyCode=self.currency_code, # weird protobuf names
+            currency_code=self.currency_code,
             high=self.high,
             low=self.low
         )
@@ -17,7 +17,7 @@ class PriceAlertFilter(PersistablePayload):
     @staticmethod
     def from_proto(proto: protobuf.PriceAlertFilter) -> 'PriceAlertFilter':
         return PriceAlertFilter(
-            currency_code=proto.currencyCode, # weird protobuf names
+            currency_code=proto.currency_code,
             high=proto.high,
             low=proto.low
         )

@@ -1,4 +1,5 @@
 from typing import Optional
+from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.locale.res import Res
 from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 import pb_pb2 as protobuf
@@ -40,7 +41,7 @@ class AustraliaPayidAccountPayload(PaymentAccountPayload):
             payid=payload.payid,
             bank_account_name=payload.bank_account_name,
             max_trade_period=proto.max_trade_period,
-            exclude_from_json_data_map=dict(proto.exclude_from_json_data),
+            exclude_from_json_data_map=ProtoUtil.to_string_map(proto.exclude_from_json_data),
         )
 
     def get_payment_details(self) -> str:
