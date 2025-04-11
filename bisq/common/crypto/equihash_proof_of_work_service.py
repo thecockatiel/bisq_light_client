@@ -1,5 +1,3 @@
-from concurrent.futures import Future
-from multiprocessing import freeze_support 
 from typing import Optional
 from bisq.common.crypto.equihash import (
     Equihash,
@@ -13,7 +11,7 @@ from bisq.common.crypto.proof_of_work import ProofOfWork
 from bisq.common.setup.log_setup import get_logger
 
 from utils.time import get_time_ms
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, Future
 
 logger = get_logger(__name__)
 
@@ -94,7 +92,7 @@ class EquihashProofOfWorkService(ProofOfWorkService):
             EquihashProofOfWorkService.DIFFICULTY_SCALE_FACTOR * difficulty
         )
         
-    def shutdown(self):
+    def shut_down(self):
         if self._process_pool_executor is not None:
             self._process_pool_executor.shutdown(wait=False, cancel_futures=True)
             self._process_pool_executor = None

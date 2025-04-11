@@ -17,3 +17,7 @@ POW_INSTANCE_HOLDER: list["ProofOfWorkService"] = [
 
 def pow_service_for_version(version: int) -> Optional["ProofOfWorkService"]:
     return POW_INSTANCE_HOLDER[version] if 0 <= version < len(POW_INSTANCE_HOLDER) else None
+
+def shut_down():
+    for instance in POW_INSTANCE_HOLDER:
+        instance.shut_down()

@@ -32,6 +32,10 @@ class ProofOfWorkService(ABC):
     def get_challenge(self, item_id: str, owner_id: str) -> bytes:
         pass
 
+    @abstractmethod
+    def shut_down(self):
+        pass
+
     def mint_with_ids(self, item_id: str, owner_id: str, difficulty: float) -> Future["ProofOfWork"]:
         return self.mint(
             self.get_payload(item_id),
