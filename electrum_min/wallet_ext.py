@@ -16,10 +16,12 @@ _logger = get_logger(__name__)
 class NoSyncDeterministicWallet(Standard_Wallet):
 
     def __init__(self, db: "WalletDB", *, config: "SimpleConfig"):
-        self._ephemeral_addr_to_addr_index: dict[str, Sequence[int]] = {}
-        Abstract_Wallet.__init__(self, db, config=config)
-        self.gap_limit = db.get('gap_limit', 20)
-        # We deliberately don't call syncronize to not generate new addresses
+        Standard_Wallet.__init__(self, db, config=config)
+
+    def synchronize(self):
+        # We deliberately make synchronize a noop to not generate new addresses
+        # because bisq is supposed to manage the addresses
+        pass
 
 def create_new_bisq_wallet(*, path, config: SimpleConfig, derivation_path: str, passphrase=None,
                 password=None, seed: str=None,encrypt_file=True, seed_type=None, gap_limit=None) -> dict:
