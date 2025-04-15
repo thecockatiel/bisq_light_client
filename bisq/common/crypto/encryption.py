@@ -283,7 +283,9 @@ class Encryption:
     ##########################################################################################
             
     @staticmethod
-    def is_pubkeys_equal(key1: "PUBLIC_KEY_TYPES", key2: "PUBLIC_KEY_TYPES"):
+    def is_pubkeys_equal(key1: Union["PUBLIC_KEY_TYPES", ECPubkey, bytes], key2: Union["PUBLIC_KEY_TYPES", ECPubkey, bytes]):
         if isinstance(key1, ECPubkey) and isinstance(key2, ECPubkey):
+            return key1 == key2
+        if isinstance(key1, bytes) and isinstance(key2, bytes):
             return key1 == key2
         return Encryption.get_public_key_bytes(key1) == Encryption.get_public_key_bytes(key2)
