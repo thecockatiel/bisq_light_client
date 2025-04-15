@@ -64,7 +64,7 @@ from utils.preconditions import check_argument, check_not_none, check_state
 if TYPE_CHECKING:
     from bitcoinj.wallet.coin_selection import CoinSelection
     from bitcoinj.wallet.send_request import SendRequest
-    from electrum_min.wallet import Abstract_Wallet
+    from electrum_min.wallet import Standard_Wallet
     from bitcoinj.wallet.listeners.wallet_change_event_listener import (
         WalletChangeEventListener,
     )
@@ -77,7 +77,7 @@ class Wallet(EventListener):
 
     def __init__(
         self,
-        electrum_wallet: "Abstract_Wallet",
+        electrum_wallet: "Standard_Wallet",
         electrum_network: "Network",
         network_params: "NetworkParameters",
     ):

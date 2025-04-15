@@ -7,8 +7,8 @@ from typing import Optional
 from bitcoinj.wallet.wallet import Wallet
 from electrum_min.wallet import (
     Abstract_Wallet,
-    create_new_bisq_wallet,
 )
+from electrum_min.wallet_ext import create_new_bisq_wallet
 from collections.abc import Callable
 from bisq.common.setup.log_setup import get_logger
 from electrum_min.daemon import Daemon
@@ -150,7 +150,7 @@ class WalletConfig(EventListener):
                         # TODO: check should_replay_wallet later to see if needed
                         bool(self._restore_from_seed),
                         bsq_wallet_file,
-                        False,
+                        True,
                     ),
                     self._daemon.network,
                     self._config.network_parameters,
@@ -220,7 +220,7 @@ class WalletConfig(EventListener):
                 encrypt_file=False,
                 # here, "None" is password. gets the seed from the btc wallet we created a moment ago
                 seed=self._restore_from_seed
-                or self._btc_wallet.keystore.get_seed(None),
+                or self._btc_wallet._electrum_wallet.get_seed(None),
             )
             return result["wallet"]
         else:
