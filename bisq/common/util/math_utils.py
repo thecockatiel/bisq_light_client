@@ -1,4 +1,5 @@
 from math import isnan, pow
+from typing import Union
 from bisq.common.setup.log_setup import get_logger
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
@@ -42,12 +43,12 @@ class MathUtils:
             return 0
 
     @staticmethod
-    def scale_up_by_power_of_10(value: float, exponent: int) -> float:
+    def scale_up_by_power_of_10(value: Union[float, int], exponent: int) -> float:
         factor = pow(10, exponent)
         return value * factor
 
     @staticmethod
-    def scale_down_by_power_of_10(value: float, exponent: int) -> float:
+    def scale_down_by_power_of_10(value: Union[float, int], exponent: int) -> float:
         factor = pow(10, exponent)
         return value / factor
 
