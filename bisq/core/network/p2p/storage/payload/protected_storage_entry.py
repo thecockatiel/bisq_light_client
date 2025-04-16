@@ -146,14 +146,14 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         else:
             result = Encryption.is_pubkeys_equal(
                 self.owner_pub_key_bytes,
-                self.protected_storage_payload.get_owner_pub_key(),
+                self.protected_storage_payload.get_owner_pub_key_bytes(),
             )
             if not result:
                 res1 = str(self)
                 res2 = "null"
-                if self.protected_storage_payload.get_owner_pub_key() != None:
+                if self.protected_storage_payload.get_owner_pub_key_bytes() != None:
                     res2 = Sig.get_public_key_as_hex_string(
-                        self.protected_storage_payload.get_owner_pub_key(), True
+                        self.protected_storage_payload.get_owner_pub_key_bytes(), True
                     )
 
                 logger.warning(
@@ -173,9 +173,9 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         if not result:
             res1 = str(self)
             res2 = "null"
-            if self.protected_storage_payload.get_owner_pub_key() != None:
+            if self.protected_storage_payload.get_owner_pub_key_bytes() != None:
                 res2 = Sig.get_public_key_as_hex_string(
-                    self.protected_storage_payload.get_owner_pub_key(), True
+                    self.protected_storage_payload.get_owner_pub_key_bytes(), True
                 )
             logger.warning(
                 f"ProtectedStorageEntry::isValidForRemoveOperation() failed. Entry owner does not match Payload owner:\n"

@@ -22,7 +22,7 @@ class ProtectedStoragePayload(NetworkPayload, ABC):
     """
 
     @abstractmethod
-    def get_owner_pub_key(self) -> "PUBLIC_KEY_TYPES":
+    def get_owner_pub_key_bytes(self) -> bytes:
         """
         Used to check if the add or remove operation is permitted.
         Only the data owner can add or remove the data.

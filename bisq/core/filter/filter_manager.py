@@ -330,8 +330,8 @@ class FilterManager:
     def get_dev_filter(self) -> Optional[Filter]:
         return self._user.developers_filter
 
-    def get_owner_pub_key(self):
-        return self._key_ring.signature_key_pair.public_key
+    def get_owner_pub_key_bytes(self):
+        return self._key_ring.pub_key_ring.signature_pub_key_bytes
 
     def is_currency_banned(self, currency_code: str) -> bool:
         filter = self.get_filter()

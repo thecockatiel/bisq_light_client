@@ -128,8 +128,8 @@ class Alert(ProtectedStoragePayload, ExpirablePayload):
     def get_extra_data_map(self):
         return self.extra_data_map
     
-    def get_owner_pub_key(self):
-        return self.owner_pub_key
+    def get_owner_pub_key_bytes(self):
+        return self.owner_pub_key_bytes
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Alert):

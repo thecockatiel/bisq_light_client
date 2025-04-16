@@ -448,7 +448,7 @@ class Offer(NetworkPayload, PersistablePayload):
 
     @property
     def owner_pub_key(self):
-        return self.offer_payload_base.get_owner_pub_key()
+        return self.offer_payload_base.get_owner_pub_key_bytes()
 
     @property
     def extra_data_map(self) -> Optional[dict[str, str]]:

@@ -50,8 +50,8 @@ class OfferPayloadBase(
         return hash(self.get_hash())
         
 
-    def get_owner_pub_key(self):
-        return self.pub_key_ring.signature_pub_key
+    def get_owner_pub_key_bytes(self):
+        return self.pub_key_ring.signature_pub_key_bytes
     
     def get_extra_data_map(self):
         return self.extra_data_map
