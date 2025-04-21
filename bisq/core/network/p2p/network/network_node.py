@@ -404,6 +404,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             message_listener=self,
             connection_listener=connection_listener,
             network_proto_resolver=self.network_proto_resolver,
+            config=self._config,
             ban_filter=self.ban_filter,
         )
         self.server.start()
