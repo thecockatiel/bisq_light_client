@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Set, TypeVar, Generic
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
-from global_container import GLOBAL_CONTAINER
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.hash_map_changed_listener import HashMapChangedListener
