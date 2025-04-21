@@ -84,6 +84,8 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.dont_show_again_map_as_observable = ObservableMap[str, bool]()
         
         self.use_standby_mode_property = SimpleProperty(self.pref_payload.use_standby_mode)
+        self.persisted_times_property = SimpleProperty(0)
+        """can be used as a means to detect changes"""
         
         ###### init
         def on_use_animation_change(e: SimplePropertyChangeEvent[bool]):
@@ -386,6 +388,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
     def request_persistence(self):
         if self.initial_read_done:  
             self.persistence_manager.request_persistence()
+            self.persisted_times_property.value += 1
             
     def set_user_language(self, user_language_code: str) -> None:
         assert user_language_code
