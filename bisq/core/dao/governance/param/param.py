@@ -17,17 +17,17 @@
 #
 
 from enum import Enum
+from bisq.common.config.config import Config
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
-from global_container import GLOBAL_CONTAINER
 import pb_pb2 as protobuf
 from bisq.core.dao.governance.param.param_type import ParamType
 
 logger = get_logger(__name__)
 
 def _get_btc_recipient_network_address():
-    network = GLOBAL_CONTAINER.value.config.base_currency_network
+    network = Config.BASE_CURRENCY_NETWORK_VALUE
     
     if network.is_mainnet():
         return "1BVxNn3T12veSK6DgqwU4Hdn7QHcDDRag7"  # mainnet
@@ -138,58 +138,58 @@ class Param(Enum):
     PHASE_UNDEFINED = ("0", ParamType.BLOCK)
     PHASE_PROPOSAL = (
         # TODO: double check later for initilization timing
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "3601" or  # mainnet; 24 days
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "4" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "134" or  # dao regtest; 0.93 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "3601" or  # mainnet; 24 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "4" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "134" or  # dao regtest; 0.93 days
         "380",  # testnet or dao testnet (server side regtest); 2.6 days
         ParamType.BLOCK, 2, 2
     )
     PHASE_BREAK1 = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "149" or  # mainnet; 1 day
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "1" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "10" or  # daoBetaNet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "10" or  # dao regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "149" or  # mainnet; 1 day
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "1" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "10" or  # daoBetaNet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "10" or  # dao regtest
         "10",  # testnet or dao testnet (server side regtest)
         ParamType.BLOCK, 2, 2
     )
     PHASE_BLIND_VOTE = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "451" or  # mainnet; 3 days
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "2" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "134" or  # dao regtest; 0.93 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "451" or  # mainnet; 3 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "2" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "134" or  # dao regtest; 0.93 days
         "300",  # testnet or dao testnet (server side regtest); 2 days
         ParamType.BLOCK, 2, 2
     )
     PHASE_BREAK2 = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "9" or  # mainnet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "1" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "10" or  # daoBetaNet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "10" or  # dao regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "9" or  # mainnet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "1" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "10" or  # daoBetaNet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "10" or  # dao regtest
         "10",  # testnet or dao testnet (server side regtest)
         ParamType.BLOCK, 2, 2
     )
     PHASE_VOTE_REVEAL = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "451" or  # mainnet; 3 days
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "2" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "132" or  # dao regtest; 0.93 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "451" or  # mainnet; 3 days
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "2" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "144" or  # daoBetaNet; 1 day
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "132" or  # dao regtest; 0.93 days
         "300",  # testnet or dao testnet (server side regtest); 2 days
         ParamType.BLOCK, 2, 2
     )
     PHASE_BREAK3 = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "9" or  # mainnet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "1" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "10" or  # daoBetaNet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "10" or  # dao regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "9" or  # mainnet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "1" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "10" or  # daoBetaNet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "10" or  # dao regtest
         "10",  # testnet or dao testnet (server side regtest)
         ParamType.BLOCK, 2, 2
     )
     PHASE_RESULT = (
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() and "10" or  # mainnet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() and "2" or  # regtest
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_betanet() and "10" or  # daoBetaNet
-        GLOBAL_CONTAINER.value.config.base_currency_network.is_dao_regtest() and "2" or  # dao regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() and "10" or  # mainnet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest() and "2" or  # regtest
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_betanet() and "10" or  # daoBetaNet
+        Config.BASE_CURRENCY_NETWORK_VALUE.is_dao_regtest() and "2" or  # dao regtest
         "2",  # testnet or dao testnet (server side regtest)
         ParamType.BLOCK, 2, 2
     )

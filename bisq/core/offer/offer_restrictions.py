@@ -1,7 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from bisq.common.capabilities import Capabilities
+from bisq.common.config.config import Config
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bitcoinj.base.coin import Coin
 
@@ -21,12 +22,10 @@ class OfferRestrictions:
 
     @staticmethod
     def requires_node_address_update():
-        from global_container import GLOBAL_CONTAINER
-
         return (
             datetime.now()
             > OfferRestrictions.REQUIRE_TOR_NODE_ADDRESS_V3_DATE
-            and not GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest()
+            and not Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest()
         )
 
     TOLERATED_SMALL_TRADE_AMOUNT = (

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, TypeVar, Generic, Callable
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, TypeVar, Generic
 from bisq.common.app.dev_env import DevEnv
+from bisq.common.config.config import Config
 from bisq.common.setup.log_setup import get_logger
 from global_container import GLOBAL_CONTAINER
 
@@ -37,7 +38,7 @@ class DisputeAgentService(ABC, Generic[T]):
                          result_handler: "ResultHandler",
                          error_message_handler: "ErrorMessageHandler") -> None:
         logger.debug(f"addDisputeAgent hash(dispute_agent) {hash(dispute_agent)}")
-        if not GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet() or \
+        if not Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet() or \
                 dispute_agent.registration_pub_key.hex() != DevEnv.DEV_PRIVILEGE_PUB_KEY:
             result = self.p2p_service.add_protected_storage_entry(dispute_agent)
             if result:

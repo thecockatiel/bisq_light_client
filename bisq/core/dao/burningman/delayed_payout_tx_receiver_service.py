@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING, List
 from datetime import datetime, timezone
 
+from bisq.common.config.config import Config
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from utils.java_compat import java_cmp_str
 from utils.preconditions import check_argument
 from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
 from bisq.core.dao.burningman.burning_man_service import BurningManService
-from global_container import GLOBAL_CONTAINER
+from utils.python_helpers import classproperty
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
@@ -28,7 +29,13 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
     PROPOSAL_412_ACTIVATION_DATE = datetime(2024, 5, 1)
 
     # We don't allow to get further back than 767950 (the block height from Dec. 18th 2022).
-    MIN_SNAPSHOT_HEIGHT = 0 if GLOBAL_CONTAINER.value.config.base_currency_network.is_regtest() else 767950 # TODO: double check for initializtion timing
+    @classproperty
+    def MIN_SNAPSHOT_HEIGHT():
+        # TODO: double check for access timing
+        if Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest():
+            return 0
+        else:
+            return 767950
 
     # One part of the limit for the min. amount to be included in the DPT outputs.
     # The miner fee rate multiplied by 2 times the output size is the other factor.
