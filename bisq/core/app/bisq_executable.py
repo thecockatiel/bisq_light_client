@@ -15,7 +15,7 @@ from bisq.common.user_thread import UserThread
 from bisq.core.app.bisq_setup_listener import BisqSetupListener
 from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
 from bisq.core.setup.core_setup import CoreSetup
-from global_container import GlobalContainer, set_global_container
+from global_container import GlobalContainer
 from utils.concurrency import AtomicBoolean, AtomicInt
 from utils.dir import user_data_dir
 from threading import Timer, Thread
@@ -125,9 +125,7 @@ class BisqExecutable(
     
     def setup_injector(self):
         self.init_core_module()
-        self._injector = GlobalContainer()
-        self._injector._config = self._config
-        set_global_container(self._injector)
+        self._injector = GlobalContainer(self._config)
         self.apply_injector()
 
     def apply_injector(self):
