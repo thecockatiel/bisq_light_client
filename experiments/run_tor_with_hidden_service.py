@@ -10,7 +10,6 @@ from bisq.core.network.p2p.network.hidden_service_socket import HiddenServiceSoc
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.utils.utils import Utils
 from twisted.internet import reactor
-from global_container import GlobalContainer
 from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
