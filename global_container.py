@@ -1,13 +1,26 @@
 # tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.19/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from utils.di import DependencyProvider
 
-from bisq.common.config.config import Config
+if TYPE_CHECKING:
+    from bisq.common.config.config import Config
+    from bisq.core.user.user import User
+    from bisq.core.user.preferences import Preferences
+
 
 class GlobalContainer:
-    def __init__(self, config: Optional["Config"] = None):
+    def __init__(
+        self,
+        config: Optional["Config"] = None,
+        user: Optional["User"] = None,
+        preferences: Optional["Preferences"] = None,
+    ):
         self._config = config
+        self._user = user
+        if user is not None:
+            self._key_ring = user.key_ring
+        self._preferences = preferences
 
     def __getattr__(self, name):
         return None
@@ -431,9 +444,7 @@ class GlobalContainer:
                 CorruptedStorageFileHandler,
             )
 
-            self._corrupted_storage_file_handler = (
-                CorruptedStorageFileHandler()
-            )
+            self._corrupted_storage_file_handler = CorruptedStorageFileHandler()
         return self._corrupted_storage_file_handler
 
     @property
@@ -683,13 +694,11 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._arbitration_dispute_list_service = (
-                ArbitrationDisputeListService(
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    )
+            self._arbitration_dispute_list_service = ArbitrationDisputeListService(
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
                 )
             )
         return self._arbitration_dispute_list_service
@@ -702,13 +711,11 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._mediation_dispute_list_service = (
-                MediationDisputeListService(
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    )
+            self._mediation_dispute_list_service = MediationDisputeListService(
+                PersistenceManager(
+                    self.config.storage_dir,
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
                 )
             )
         return self._mediation_dispute_list_service
@@ -817,15 +824,13 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._trade_statistics_2_storage_service = (
-                TradeStatistics2StorageService(
+            self._trade_statistics_2_storage_service = TradeStatistics2StorageService(
+                self.config.storage_dir,
+                PersistenceManager(
                     self.config.storage_dir,
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    ),
-                )
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
             )
         return self._trade_statistics_2_storage_service
 
@@ -837,15 +842,13 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._trade_statistics_3_storage_service = (
-                TradeStatistics3StorageService(
+            self._trade_statistics_3_storage_service = TradeStatistics3StorageService(
+                self.config.storage_dir,
+                PersistenceManager(
                     self.config.storage_dir,
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    ),
-                )
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
             )
         return self._trade_statistics_3_storage_service
 
@@ -889,9 +892,7 @@ class GlobalContainer:
         if self._trade_util is None:
             from bisq.core.trade.bisq_v1.trade_util import TradeUtil
 
-            self._trade_util = TradeUtil(
-                self.btc_wallet_service, self.key_ring
-            )
+            self._trade_util = TradeUtil(self.btc_wallet_service, self.key_ring)
         return self._trade_util
 
     @property
@@ -972,10 +973,8 @@ class GlobalContainer:
                 CleanupMailboxMessagesService,
             )
 
-            self._cleanup_mailbox_messages_service = (
-                CleanupMailboxMessagesService(
-                    self.p2p_service, self.mailbox_message_service
-                )
+            self._cleanup_mailbox_messages_service = CleanupMailboxMessagesService(
+                self.p2p_service, self.mailbox_message_service
             )
         return self._cleanup_mailbox_messages_service
 
@@ -1017,9 +1016,7 @@ class GlobalContainer:
                 MobileNotificationValidator,
             )
 
-            self._mobile_notification_validator = (
-                MobileNotificationValidator()
-            )
+            self._mobile_notification_validator = MobileNotificationValidator()
         return self._mobile_notification_validator
 
     @property
@@ -1226,9 +1223,7 @@ class GlobalContainer:
                 CoreNetworkProtoResolver,
             )
 
-            self._network_proto_resolver = CoreNetworkProtoResolver(
-                self.clock
-            )
+            self._network_proto_resolver = CoreNetworkProtoResolver(self.clock)
 
         return self._network_proto_resolver
 
@@ -1291,9 +1286,7 @@ class GlobalContainer:
                 DefaultSeedNodeRepository,
             )
 
-            self._seed_node_repository = DefaultSeedNodeRepository(
-                self.config
-            )
+            self._seed_node_repository = DefaultSeedNodeRepository(self.config)
 
         return self._seed_node_repository
 
@@ -1315,10 +1308,8 @@ class GlobalContainer:
                 DelayedPayoutTxReceiverService,
             )
 
-            self._delayed_payout_tx_receiver_service = (
-                DelayedPayoutTxReceiverService(
-                    self.dao_state_service, self.burning_man_service
-                )
+            self._delayed_payout_tx_receiver_service = DelayedPayoutTxReceiverService(
+                self.dao_state_service, self.burning_man_service
             )
         return self._delayed_payout_tx_receiver_service
 
@@ -1353,15 +1344,13 @@ class GlobalContainer:
                 BurningManPresentationService,
             )
 
-            self._burning_man_presentation_service = (
-                BurningManPresentationService(
-                    self.dao_state_service,
-                    self.cycles_in_dao_state_service,
-                    self.my_proposal_list_service,
-                    self.bsq_wallet_service,
-                    self.burning_man_service,
-                    self.burn_target_service,
-                )
+            self._burning_man_presentation_service = BurningManPresentationService(
+                self.dao_state_service,
+                self.cycles_in_dao_state_service,
+                self.my_proposal_list_service,
+                self.bsq_wallet_service,
+                self.burning_man_service,
+                self.burn_target_service,
             )
         return self._burning_man_presentation_service
 
@@ -1372,14 +1361,12 @@ class GlobalContainer:
                 BurningManAccountingService,
             )
 
-            self._burning_man_accounting_service = (
-                BurningManAccountingService(
-                    self.dao_state_service,
-                    self.burning_man_accounting_store_service,
-                    self.burning_man_presentation_service,
-                    self.trade_statistics_manager,
-                    self.preferences,
-                )
+            self._burning_man_accounting_service = BurningManAccountingService(
+                self.dao_state_service,
+                self.burning_man_accounting_store_service,
+                self.burning_man_presentation_service,
+                self.trade_statistics_manager,
+                self.preferences,
             )
         return self._burning_man_accounting_service
 
@@ -1562,15 +1549,13 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._account_age_witness_storage_service = (
-                AccountAgeWitnessStorageService(
+            self._account_age_witness_storage_service = AccountAgeWitnessStorageService(
+                self.config.storage_dir,
+                PersistenceManager(
                     self.config.storage_dir,
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    ),
-                )
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
             )
         return self._account_age_witness_storage_service
 
@@ -1600,15 +1585,13 @@ class GlobalContainer:
             )
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
-            self._signed_witness_storage_service = (
-                SignedWitnessStorageService(
+            self._signed_witness_storage_service = SignedWitnessStorageService(
+                self.config.storage_dir,
+                PersistenceManager(
                     self.config.storage_dir,
-                    PersistenceManager(
-                        self.config.storage_dir,
-                        self.persistence_proto_resolver,
-                        self.corrupted_storage_file_handler,
-                    ),
-                )
+                    self.persistence_proto_resolver,
+                    self.corrupted_storage_file_handler,
+                ),
             )
         return self._signed_witness_storage_service
 
@@ -1778,9 +1761,7 @@ class GlobalContainer:
                 AppendOnlyDataStoreService,
             )
 
-            self._append_only_data_store_service = (
-                AppendOnlyDataStoreService()
-            )
+            self._append_only_data_store_service = AppendOnlyDataStoreService()
 
         return self._append_only_data_store_service
 
@@ -1904,9 +1885,7 @@ class GlobalContainer:
                 AsyncHttpClientImpl,
             )
 
-            self._http_client = AsyncHttpClientImpl(
-                None, self.socks5_proxy_provider
-            )
+            self._http_client = AsyncHttpClientImpl(None, self.socks5_proxy_provider)
 
         return self._http_client
 
@@ -2442,15 +2421,13 @@ class GlobalContainer:
                 ProposalStateMonitoringService,
             )
 
-            self._proposal_state_monitoring_service = (
-                ProposalStateMonitoringService(
-                    self.dao_state_service,
-                    self.proposal_state_network_service,
-                    self.genesis_tx_info,
-                    self.period_service,
-                    self.proposal_service,
-                    self.seed_node_repository,
-                )
+            self._proposal_state_monitoring_service = ProposalStateMonitoringService(
+                self.dao_state_service,
+                self.proposal_state_network_service,
+                self.genesis_tx_info,
+                self.period_service,
+                self.proposal_service,
+                self.seed_node_repository,
             )
 
         return self._proposal_state_monitoring_service
@@ -2462,12 +2439,10 @@ class GlobalContainer:
                 ProposalStateNetworkService,
             )
 
-            self._proposal_state_network_service = (
-                ProposalStateNetworkService(
-                    self.network_node,
-                    self.peer_manager,
-                    self.broadcaster,
-                )
+            self._proposal_state_network_service = ProposalStateNetworkService(
+                self.network_node,
+                self.peer_manager,
+                self.broadcaster,
             )
 
         return self._proposal_state_network_service
@@ -2479,15 +2454,13 @@ class GlobalContainer:
                 BlindVoteStateMonitoringService,
             )
 
-            self._blind_vote_state_monitoring_service = (
-                BlindVoteStateMonitoringService(
-                    self.dao_state_service,
-                    self.blind_vote_state_network_service,
-                    self.genesis_tx_info,
-                    self.period_service,
-                    self.blind_vote_list_service,
-                    self.seed_node_repository,
-                )
+            self._blind_vote_state_monitoring_service = BlindVoteStateMonitoringService(
+                self.dao_state_service,
+                self.blind_vote_state_network_service,
+                self.genesis_tx_info,
+                self.period_service,
+                self.blind_vote_list_service,
+                self.seed_node_repository,
             )
 
         return self._blind_vote_state_monitoring_service
@@ -2499,12 +2472,10 @@ class GlobalContainer:
                 BlindVoteStateNetworkService,
             )
 
-            self._blind_vote_state_network_service = (
-                BlindVoteStateNetworkService(
-                    self.network_node,
-                    self.peer_manager,
-                    self.broadcaster,
-                )
+            self._blind_vote_state_network_service = BlindVoteStateNetworkService(
+                self.network_node,
+                self.peer_manager,
+                self.broadcaster,
             )
 
         return self._blind_vote_state_network_service
@@ -2724,13 +2695,11 @@ class GlobalContainer:
                 CompensationProposalFactory,
             )
 
-            self._compensation_proposal_factory = (
-                CompensationProposalFactory(
-                    self.bsq_wallet_service,
-                    self.btc_wallet_service,
-                    self.dao_state_service,
-                    self.compensation_validator,
-                )
+            self._compensation_proposal_factory = CompensationProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.compensation_validator,
             )
 
         return self._compensation_proposal_factory
@@ -2755,13 +2724,11 @@ class GlobalContainer:
                 ReimbursementProposalFactory,
             )
 
-            self._reimbursement_proposal_factory = (
-                ReimbursementProposalFactory(
-                    self.bsq_wallet_service,
-                    self.btc_wallet_service,
-                    self.dao_state_service,
-                    self.reimbursement_validator,
-                )
+            self._reimbursement_proposal_factory = ReimbursementProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.reimbursement_validator,
             )
 
         return self._reimbursement_proposal_factory
@@ -2844,13 +2811,11 @@ class GlobalContainer:
                 ConfiscateBondProposalFactory,
             )
 
-            self._confiscate_bond_proposal_factory = (
-                ConfiscateBondProposalFactory(
-                    self.bsq_wallet_service,
-                    self.btc_wallet_service,
-                    self.dao_state_service,
-                    self.confiscate_bond_validator,
-                )
+            self._confiscate_bond_proposal_factory = ConfiscateBondProposalFactory(
+                self.bsq_wallet_service,
+                self.btc_wallet_service,
+                self.dao_state_service,
+                self.confiscate_bond_validator,
             )
 
         return self._confiscate_bond_proposal_factory
@@ -3122,12 +3087,10 @@ class GlobalContainer:
                 RepublishGovernanceDataHandler,
             )
 
-            self._republish_governance_data_handler = (
-                RepublishGovernanceDataHandler(
-                    self.network_node,
-                    self.peer_manager,
-                    self.seed_node_repository,
-                )
+            self._republish_governance_data_handler = RepublishGovernanceDataHandler(
+                self.network_node,
+                self.peer_manager,
+                self.seed_node_repository,
             )
 
         return self._republish_governance_data_handler
@@ -3217,12 +3180,10 @@ class GlobalContainer:
                 MyBondedReputationRepository,
             )
 
-            self._my_bonded_reputation_repository = (
-                MyBondedReputationRepository(
-                    self.dao_state_service,
-                    self.bsq_wallet_service,
-                    self.my_reputation_list_service,
-                )
+            self._my_bonded_reputation_repository = MyBondedReputationRepository(
+                self.dao_state_service,
+                self.bsq_wallet_service,
+                self.my_reputation_list_service,
             )
 
         return self._my_bonded_reputation_repository
