@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     )
     from bisq.core.network.p2p.network.ban_filter import BanFilter
     from bisq.core.network.p2p.network.connection import Connection
+    from bisq.common.config.config import Config
 
 logger = get_logger(__name__)
 
@@ -27,8 +28,10 @@ class Server(Callable[[], None]):
         message_listener: "MessageListener",
         connection_listener: "ConnectionListener",
         network_proto_resolver: "NetworkProtoResolver",
+        config: "Config",
         ban_filter: "BanFilter" = None,
     ):
+        self._config = config
         self.server_socket = server_socket
         self.message_listener = message_listener
         self.connection_listener = connection_listener
@@ -59,6 +62,7 @@ class Server(Callable[[], None]):
                         message_listener=self.message_listener,
                         connection_listener=self.connection_listener,
                         network_proto_resolver=self.network_proto_resolver,
+                        config=self._config,
                         ban_filter=self.ban_filter,
                     )
 

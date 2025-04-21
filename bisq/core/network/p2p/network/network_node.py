@@ -29,6 +29,7 @@ from utils.time import get_time_ms
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
 
 if TYPE_CHECKING:
+    from bisq.common.config.config import Config
     from bisq.core.network.p2p.network.setup_listener import SetupListener
     from bisq.core.network.p2p.network.inbound_connection import InboundConnection
     from bisq.common.capabilities import Capabilities
@@ -45,19 +46,20 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         service_port: int,
         network_proto_resolver: NetworkProtoResolver,
         ban_filter: Optional[BanFilter],
-        max_connections: int,
+        config: "Config",
     ):
         self.service_port = service_port
         self.network_proto_resolver = network_proto_resolver
         self.ban_filter = ban_filter
+        self._config = config
 
         self.inbound_connections: ThreadSafeSet["InboundConnection"] = ThreadSafeSet()
         self.message_listeners: ThreadSafeSet["MessageListener"] = ThreadSafeSet()
         self.connection_listeners: ThreadSafeSet["ConnectionListener"] = ThreadSafeSet()
         self.setup_listeners: ThreadSafeSet["SetupListener"] = ThreadSafeSet()
 
-        self.connection_executor = ThreadPoolExecutor(max_workers=max_connections * 2, thread_name_prefix="NetworkNode.connection_executor")
-        self.send_message_executor = ThreadPoolExecutor(max_workers=max_connections * 3, thread_name_prefix="NetworkNode.send_message_executor")
+        self.connection_executor = ThreadPoolExecutor(max_workers=self._config.max_connections * 2, thread_name_prefix="NetworkNode.connection_executor")
+        self.send_message_executor = ThreadPoolExecutor(max_workers=self._config.max_connections * 3, thread_name_prefix="NetworkNode.send_message_executor")
 
         self.__shut_down_in_progress = AtomicBoolean(False)
         self.outbound_connections: ThreadSafeSet[OutboundConnection] = ThreadSafeSet()
@@ -134,6 +136,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 connection_listener=NetworkNodeOutboundConnectionListener(self),
                 peers_node_address=peers_node_address,
                 network_proto_resolver=self.network_proto_resolver,
+                config=self._config,
                 ban_filter=self.ban_filter,
             )
             if logger.isEnabledFor(logging.DEBUG):

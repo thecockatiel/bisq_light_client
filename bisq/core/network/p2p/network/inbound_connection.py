@@ -2,6 +2,7 @@ from typing import Optional, TYPE_CHECKING
 from bisq.core.network.p2p.network.connection import Connection
 
 if TYPE_CHECKING:
+    from bisq.common.config.config import Config
     from socket import socket as Socket
     from bisq.common.protocol.network.network_proto_resolver import (
         NetworkProtoResolver,
@@ -18,6 +19,7 @@ class InboundConnection(Connection):
         message_listener: "MessageListener",
         connection_listener: "ConnectionListener",
         network_proto_resolver: "NetworkProtoResolver",
+        config: "Config",
         ban_filter: Optional["BanFilter"] = None,
     ):
         super().__init__(
@@ -26,5 +28,6 @@ class InboundConnection(Connection):
             connection_listener=connection_listener,
             peers_node_address=None,
             network_proto_resolver=network_proto_resolver,
+            config=config,
             ban_filter=ban_filter,
         )

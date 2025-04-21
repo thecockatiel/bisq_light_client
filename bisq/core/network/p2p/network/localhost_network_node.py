@@ -12,6 +12,7 @@ import socket
 from utils.concurrency import ThreadSafeSet
 
 if TYPE_CHECKING:
+    from bisq.common.config.config import Config
     from bisq.core.network.p2p.network.ban_filter import BanFilter
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.network.p2p.network.setup_listener import SetupListener
@@ -30,8 +31,8 @@ class LocalhostNetworkNode(NetworkNode):
     def set_simulate_tor_delay_hidden_service(delay: int) -> None:
         LocalhostNetworkNode.simulate_tor_delay_hidden_service = delay
     
-    def __init__(self, service_port: int, network_proto_resolver: "NetworkProtoResolver", ban_filter: Optional["BanFilter"], max_connections: int):
-        super().__init__(service_port, network_proto_resolver, ban_filter, max_connections)
+    def __init__(self, service_port: int, network_proto_resolver: "NetworkProtoResolver", ban_filter: Optional["BanFilter"], config: "Config"):
+        super().__init__(service_port, network_proto_resolver, ban_filter, config)
         self.__create_socket_futures = ThreadSafeSet[Future]()
         
     async def start(self, setup_listener: Optional["SetupListener"] = None):

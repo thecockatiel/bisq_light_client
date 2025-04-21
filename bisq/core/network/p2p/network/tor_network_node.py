@@ -21,6 +21,7 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from python_socks.async_.asyncio import Proxy
 
 if TYPE_CHECKING:
+    from bisq.common.config.config import Config
     from txtorcon import Tor
     from bisq.core.network.p2p.network.tor_mode import TorMode
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
@@ -41,10 +42,10 @@ class TorNetworkNode(NetworkNode):
         network_proto_resolver: "NetworkProtoResolver",
         tor_mode: "TorMode",
         ban_filter: Optional["BanFilter"],
-        max_connections: int,
+        config: "Config",
     ):
         super().__init__(
-            service_port, network_proto_resolver, ban_filter, max_connections
+            service_port, network_proto_resolver, ban_filter, config
         )
         
         if isinstance(tor_mode, LimitedRunningTor):

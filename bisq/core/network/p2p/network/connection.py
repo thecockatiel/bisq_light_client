@@ -68,18 +68,11 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     # JAVA TODO decrease limits again after testing
     SOCKET_TIMEOUT_SEC = 240
     SHUTDOWN_TIMEOUT_SEC = 0.1
-    _config: Config = None
-    
-    @property
-    def config(self):
-        if Connection._config is None:
-            from global_container import GLOBAL_CONTAINER
-            Connection._config = GLOBAL_CONTAINER.value.config
-        return Connection._config
 
     def __init__(self, socket: Socket.socket, message_listener: MessageListener,
                 connection_listener: 'ConnectionListener',
                 network_proto_resolver: 'NetworkProtoResolver',
+                config: "Config",
                 peers_node_address: Optional['NodeAddress'] = None,
                 ban_filter: Optional[BanFilter] = None):
         self.last_send_timestamp = 0
@@ -87,6 +80,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
         self.stopped = AtomicBoolean(False)
         self.thread_name_set = False
+        self.config = config
         # We use a weak reference here to ensure that no connection causes a memory leak in case it get closed without
         # the shutDown being called.
         self.capabilities_listeners: ThreadSafeWeakSet[SupportedCapabilitiesListener] = ThreadSafeWeakSet()

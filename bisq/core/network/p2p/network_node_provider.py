@@ -31,7 +31,7 @@ class NetworkNodeProvider:
                 config.node_port,
                 network_proto_resolver,
                 ban_filter,
-                config.max_connections,
+                config,
             )
         else:
             tor_mode = self._get_tor_mode(
@@ -43,7 +43,7 @@ class NetworkNodeProvider:
                 network_proto_resolver,
                 tor_mode,
                 ban_filter,
-                config.max_connections,
+                config,
             )
 
     def _get_tor_mode(
