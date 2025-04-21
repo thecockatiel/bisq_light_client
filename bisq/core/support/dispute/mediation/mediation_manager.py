@@ -298,6 +298,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             self.p2p_service.network_node,
             dispute.contract.mediator_node_address,
             callback,
+            self.config,
         )
 
     def process_file_part_received(self, ftp: "FileTransferPart") -> None:
@@ -318,7 +319,10 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         
         try:
             session = dispute.create_or_get_file_transfer_receiver(
-                self.p2p_service.network_node, ftp.sender_node_address, self
+                self.p2p_service.network_node, 
+                ftp.sender_node_address, 
+                self, 
+                self.config,
             )
             session.process_file_part_received(ftp)
         except IOError as e:

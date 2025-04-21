@@ -4,6 +4,7 @@ from bisq.core.util.validation.input_validation_result import InputValidationRes
 from bisq.core.util.validation.input_validator import InputValidator
 from bitcoinj.core.address import Address
 from bitcoinj.core.address_format_exception import AddressFormatException
+from bisq.common.config.config import Config
 
 class BtcAddressValidator(InputValidator):
     
@@ -17,9 +18,8 @@ class BtcAddressValidator(InputValidator):
     def validate_btc_address(self, input_str: str):
         if self.allow_empty and (input_str is None or input_str.strip() == ""):
             return InputValidationResult(True)
-        from global_container import GLOBAL_CONTAINER
         try:
-            Address.from_string(input_str, GLOBAL_CONTAINER.value.config.base_currency_network_parameters).output_script_type
+            Address.from_string(input_str, Config.BASE_CURRENCY_NETWORK_VALUE.parameters).output_script_type
             return InputValidationResult(True)
         except (AddressFormatException, IllegalStateException):
             return InputValidationResult(False, Res.get("validation.btc.invalidFormat"))

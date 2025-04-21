@@ -21,8 +21,8 @@ from bisq.core.support.dispute.agent.dispute_agent_lookup_map import (
 )
 from bisq.core.locale.res import Res
 from bisq.common.version import Version
-from global_container import GLOBAL_CONTAINER
 from utils.preconditions import check_argument
+from bisq.common.config.config import Config
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
@@ -34,7 +34,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.burningman.delayed_payout_tx_receiver_service import (
         DelayedPayoutTxReceiverService,
     )
-    from bisq.common.config.config import Config
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
@@ -254,7 +253,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
     ) -> Future[List["Transaction"]]:
         # in regtest mode, simulate a delay & failure obtaining the blockchain transactions
         # since we cannot request them in regtest anyway.  this is useful for checking failure scenarios
-        if not GLOBAL_CONTAINER.value.config.base_currency_network.is_mainnet():
+        if not Config.BASE_CURRENCY_NETWORK_VALUE.is_mainnet():
             future = Future()
             UserThread.run_after(lambda: future.set_result([]), timedelta(seconds=5))
             return future

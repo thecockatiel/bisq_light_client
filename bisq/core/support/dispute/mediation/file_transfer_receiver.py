@@ -1,6 +1,6 @@
 from datetime import timedelta
-from pathlib import Path
 from typing import Optional
+from bisq.common.config.config import Config
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
@@ -10,7 +10,6 @@ from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.common.setup.log_setup import get_logger
 
-from global_container import GLOBAL_CONTAINER
 from utils.formatting import get_short_id
 
 logger = get_logger(__name__)
@@ -24,11 +23,13 @@ class FileTransferReceiver(FileTransferSession):
         trade_id: str,
         trader_id: int,
         trader_role: str,
+        config: Config,
         callback: Optional[FileTransferSession.FtpCallback] = None,
     ):
         super().__init__(
             network_node, peer_node_address, trade_id, trader_id, trader_role, callback
         )
+        self._config = config
         self.zip_file_path = self.ensure_receiving_directory_exists().joinpath(self.zip_id + ".zip")
     
     def process_file_part_received(self, ftp: FileTransferPart):
@@ -92,7 +93,7 @@ class FileTransferReceiver(FileTransferSession):
         self.send_message(ack_message, network_node, peer_node_address)
         
     def ensure_receiving_directory_exists(self):
-        receiving_directory = GLOBAL_CONTAINER.value.config.app_data_dir.joinpath("clientLogs")
+        receiving_directory = self._config.app_data_dir.joinpath("clientLogs")
         if not receiving_directory.exists():
             try:
                 receiving_directory.mkdir(parents=True, exist_ok=True)

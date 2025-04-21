@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.network.network_payload import NetworkPayload
@@ -21,6 +21,7 @@ from bisq.common.protocol.proto_util import ProtoUtil
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
+    from bisq.common.config.config import Config
     from bisq.core.support.messages.chat_messsage import ChatMessage
     from bisq.core.support.dispute.dispute_result import DisputeResult
     from bisq.core.support.dispute.mediation.file_transfer_session import (
@@ -102,7 +103,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     # Should be only used in emergency case if we need to add data but do not want to break backward compatibility
     # at the P2P network storage checks. The hash of the object will be used to verify if the data is valid. Any new
     # field in a class would break that hash and therefore break the storage mechanism.
-    extra_data_map: Optional[Dict[str, str]] = field(default=None)
+    extra_data_map: Optional[dict[str, str]] = field(default=None)
 
     # We do not persist uid, it is only used by dispute agents to guarantee an uid.
     uid: str = field(default_factory=lambda: str(uuid4()), init=False)  # transient
@@ -127,6 +128,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         network_node: "NetworkNode",
         peer_node_address: "NodeAddress",
         callback: "FileTransferSession.FtpCallback",
+        config: "Config",
     ) -> "FileTransferReceiver":
         # the receiver stores its state temporarily here in the dispute
         # this method gets called to retrieve the session each time a part of the log files is received
@@ -137,6 +139,7 @@ class Dispute(NetworkPayload, PersistablePayload):
                 trade_id=self.trade_id,
                 trader_id=self.trader_id,
                 trader_role=self.get_role_string_for_log_file(),
+                config=config,
                 callback=callback,
             )
         return self.file_transfer_session
@@ -146,6 +149,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         network_node: "NetworkNode",
         peer_node_address: "NodeAddress",
         callback: "FileTransferSession.FtpCallback",
+        config: "Config",
     ) -> "FileTransferSender":
         return FileTransferSender(
             network_node=network_node,
@@ -153,6 +157,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             trade_id=self.trade_id,
             trader_id=self.trader_id,
             trader_role=self.get_role_string_for_log_file(),
+            config=config,
             callback=callback,
             is_test=False,
         )
