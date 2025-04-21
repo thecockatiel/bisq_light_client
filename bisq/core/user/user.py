@@ -10,13 +10,20 @@ from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.core.payment.bsq_swap_account import BsqSwapAccount
 
 from bisq.core.user.user_payload import UserPayload
-from utils.data import ObservableChangeEvent, ObservableSet, SimpleProperty, SimplePropertyChangeEvent
+from utils.data import (
+    ObservableChangeEvent,
+    ObservableSet,
+    SimpleProperty,
+    SimplePropertyChangeEvent,
+)
 
 if TYPE_CHECKING:
     from bisq.core.user.cookie import Cookie
     from bisq.core.payment.payment_account import PaymentAccount
     from bisq.core.network.p2p.node_address import NodeAddress
-    from bisq.core.notifications.alerts.market.market_alert_filter import MarketAlertFilter
+    from bisq.core.notifications.alerts.market.market_alert_filter import (
+        MarketAlertFilter,
+    )
     from bisq.core.notifications.alerts.price.price_alert_filter import PriceAlertFilter
     from bisq.core.support.dispute.arbitration.arbitrator.arbitrator import Arbitrator
     from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
@@ -31,15 +38,19 @@ class User(PersistedDataHost):
     The User is persisted locally.
     It must never be transmitted over the wire (messageKeyPair contains private key!).
     """
-    
-    def __init__(self, persistence_manager: "PersistenceManager[UserPayload]", key_ring: "KeyRing"):
+
+    def __init__(
+        self,
+        persistence_manager: "PersistenceManager[UserPayload]",
+        key_ring: "KeyRing",
+    ):
         super().__init__()
         self.persistence_manager = persistence_manager
         self.key_ring = key_ring
-        
+
         self.payment_accounts_observable = ObservableSet["PaymentAccount"]()
         self.current_payment_account_property = SimpleProperty["PaymentAccount"]()
-        
+
         self.user_payload = UserPayload()
         self.is_payment_account_import: bool = False
 
@@ -47,33 +58,45 @@ class User(PersistedDataHost):
         assert self.persistence_manager is not None
         self.persistence_manager.read_persisted(
             lambda persisted: (
-                setattr(self, 'user_payload', persisted),
+                setattr(self, "user_payload", persisted),
                 self._init(),
-                complete_handler()
+                complete_handler(),
             ),
-            lambda: (
-                self._init(),
-                complete_handler()
-            ),
-            file_name="UserPayload"
+            lambda: (self._init(), complete_handler()),
+            file_name="UserPayload",
         )
 
     def _init(self):
         assert self.persistence_manager is not None
-        self.persistence_manager.initialize(self.user_payload, PersistenceManagerSource.PRIVATE)
+        self.persistence_manager.initialize(
+            self.user_payload, PersistenceManagerSource.PRIVATE
+        )
 
-        assert self.user_payload.payment_accounts is not None, "userPayload.payment_accounts must not be null"
-        assert self.user_payload.accepted_language_locale_codes is not None, "userPayload.accepted_language_locale_codes must not be null"
-        
-        self.payment_accounts_observable = ObservableSet["PaymentAccount"](self.user_payload.payment_accounts)
-        self.current_payment_account_property.set(self.user_payload.current_payment_account)
-        
+        assert (
+            self.user_payload.payment_accounts is not None
+        ), "userPayload.payment_accounts must not be null"
+        assert (
+            self.user_payload.accepted_language_locale_codes is not None
+        ), "userPayload.accepted_language_locale_codes must not be null"
+
+        self.payment_accounts_observable = ObservableSet["PaymentAccount"](
+            self.user_payload.payment_accounts
+        )
+        self.current_payment_account_property.set(
+            self.user_payload.current_payment_account
+        )
+
         assert self.key_ring is not None
         self.user_payload.account_id = str(abs(hash(self.key_ring.pub_key_ring)))
 
         # Language setup
-        if LanguageUtil.get_default_language_locale_as_code() not in self.user_payload.accepted_language_locale_codes:
-            self.user_payload.accepted_language_locale_codes.append(LanguageUtil.get_default_language_locale_as_code())
+        if (
+            LanguageUtil.get_default_language_locale_as_code()
+            not in self.user_payload.accepted_language_locale_codes
+        ):
+            self.user_payload.accepted_language_locale_codes.append(
+                LanguageUtil.get_default_language_locale_as_code()
+            )
         english = LanguageUtil.get_english_language_locale_code()
         if english not in self.user_payload.accepted_language_locale_codes:
             self.user_payload.accepted_language_locale_codes.append(english)
@@ -81,12 +104,18 @@ class User(PersistedDataHost):
         def on_payment_accounts_change(e: ObservableChangeEvent["PaymentAccount"]):
             self.user_payload.payment_accounts = set(self.payment_accounts_observable)
             self.request_persistence()
+
         self.payment_accounts_observable.add_listener(on_payment_accounts_change)
 
-        def on_current_payment_account_change(value: "SimplePropertyChangeEvent[PaymentAccount]"):
+        def on_current_payment_account_change(
+            value: "SimplePropertyChangeEvent[PaymentAccount]",
+        ):
             self.user_payload.current_payment_account = value.new_value
             self.request_persistence()
-        self.current_payment_account_property.add_listener(on_current_payment_account_change)
+
+        self.current_payment_account_property.add_listener(
+            on_current_payment_account_change
+        )
 
         # We create a default placeholder account for BSQ swaps. The account has not content, it is just used
         # so that the BsqSwap use case fits into the current domain
@@ -95,12 +124,17 @@ class User(PersistedDataHost):
         self.request_persistence()
 
     def add_bsq_swap_account(self):
-        assert self.user_payload.payment_accounts is not None, "userPayload.payment_accounts must not be null"
-        
+        assert (
+            self.user_payload.payment_accounts is not None
+        ), "userPayload.payment_accounts must not be null"
+
         # Check if BsqSwapAccount already exists
-        if any(isinstance(account, BsqSwapAccount) for account in self.user_payload.payment_accounts):
+        if any(
+            isinstance(account, BsqSwapAccount)
+            for account in self.user_payload.payment_accounts
+        ):
             return
-        
+
         account = BsqSwapAccount()
         account.init()
         account.account_name = Res.get("BSQ_SWAP")
@@ -115,29 +149,54 @@ class User(PersistedDataHost):
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-
-    def get_accepted_arbitrator_by_address(self, node_address: "NodeAddress") -> Optional["Arbitrator"]:
+    def get_accepted_arbitrator_by_address(
+        self, node_address: "NodeAddress"
+    ) -> Optional["Arbitrator"]:
         accepted_arbitrators = self.user_payload.accepted_arbitrators
         if accepted_arbitrators is not None:
-            return next((arbitrator for arbitrator in accepted_arbitrators 
-                        if arbitrator.node_address == node_address), None)
+            return next(
+                (
+                    arbitrator
+                    for arbitrator in accepted_arbitrators
+                    if arbitrator.node_address == node_address
+                ),
+                None,
+            )
         return None
 
-    def get_accepted_mediator_by_address(self, node_address: "NodeAddress") -> Optional["Mediator"]:
+    def get_accepted_mediator_by_address(
+        self, node_address: "NodeAddress"
+    ) -> Optional["Mediator"]:
         accepted_mediators = self.user_payload.accepted_mediators
         if accepted_mediators is not None:
-            return next((mediator for mediator in accepted_mediators 
-                        if mediator.node_address == node_address), None)
+            return next(
+                (
+                    mediator
+                    for mediator in accepted_mediators
+                    if mediator.node_address == node_address
+                ),
+                None,
+            )
         return None
 
-    def get_accepted_refund_agent_by_address(self, node_address: "NodeAddress") -> Optional["RefundAgent"]:
+    def get_accepted_refund_agent_by_address(
+        self, node_address: "NodeAddress"
+    ) -> Optional["RefundAgent"]:
         accepted_refund_agents = self.user_payload.accepted_refund_agents
         if accepted_refund_agents is not None:
-            return next((agent for agent in accepted_refund_agents 
-                        if agent.node_address == node_address), None)
+            return next(
+                (
+                    agent
+                    for agent in accepted_refund_agents
+                    if agent.node_address == node_address
+                ),
+                None,
+            )
         return None
 
-    def find_first_payment_account_with_currency(self, trade_currency: "TradeCurrency") -> Optional["PaymentAccount"]:
+    def find_first_payment_account_with_currency(
+        self, trade_currency: "TradeCurrency"
+    ) -> Optional["PaymentAccount"]:
         if self.user_payload.payment_accounts is not None:
             for payment_account in self.user_payload.payment_accounts:
                 for currency in payment_account.trade_currencies:
@@ -160,7 +219,7 @@ class User(PersistedDataHost):
 
     def add_payment_account(self, payment_account: "PaymentAccount"):
         payment_account.on_add_to_user()
-        
+
         changed = self.payment_accounts_observable.add(payment_account)
         self.set_current_payment_account(payment_account)
         if changed:
@@ -170,10 +229,10 @@ class User(PersistedDataHost):
         self.is_payment_account_import = True
 
         changed = self.payment_accounts_observable.update(payment_accounts)
-        
+
         if payment_accounts:  # if list is not empty
             self.current_payment_account_property.set(payment_accounts[0])
-            
+
         if changed:
             self.request_persistence()
 
@@ -186,9 +245,11 @@ class User(PersistedDataHost):
 
     def add_accepted_arbitrator(self, arbitrator: "Arbitrator") -> bool:
         arbitrators = self.user_payload.accepted_arbitrators
-        if (arbitrators is not None and 
-            arbitrator not in arbitrators and 
-            not self.is_my_own_registered_arbitrator(arbitrator)):
+        if (
+            arbitrators is not None
+            and arbitrator not in arbitrators
+            and not self.is_my_own_registered_arbitrator(arbitrator)
+        ):
             arbitrators.append(arbitrator)
             self.request_persistence()
             return True
@@ -209,9 +270,11 @@ class User(PersistedDataHost):
 
     def add_accepted_mediator(self, mediator: "Mediator") -> bool:
         mediators = self.user_payload.accepted_mediators
-        if (mediators is not None and 
-            mediator not in mediators and 
-            not self.is_my_own_registered_mediator(mediator)):
+        if (
+            mediators is not None
+            and mediator not in mediators
+            and not self.is_my_own_registered_mediator(mediator)
+        ):
             mediators.append(mediator)
             self.request_persistence()
             return True
@@ -232,9 +295,11 @@ class User(PersistedDataHost):
 
     def add_accepted_refund_agent(self, refund_agent: "RefundAgent") -> bool:
         refund_agents = self.user_payload.accepted_refund_agents
-        if (refund_agents is not None and 
-            refund_agent not in refund_agents and 
-            not self.is_my_own_registered_refund_agent(refund_agent)):
+        if (
+            refund_agents is not None
+            and refund_agent not in refund_agents
+            and not self.is_my_own_registered_refund_agent(refund_agent)
+        ):
             refund_agents.append(refund_agent)
             self.request_persistence()
             return True
@@ -308,10 +373,18 @@ class User(PersistedDataHost):
     # // Getters
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def get_payment_account(self, payment_account_id: str) -> Optional["PaymentAccount"]:
+    def get_payment_account(
+        self, payment_account_id: str
+    ) -> Optional["PaymentAccount"]:
         if self.user_payload.payment_accounts is not None:
-            return next((account for account in self.user_payload.payment_accounts 
-                        if account.id == payment_account_id), None)
+            return next(
+                (
+                    account
+                    for account in self.user_payload.payment_accounts
+                    if account.id == payment_account_id
+                ),
+                None,
+            )
         return None
 
     @property
@@ -355,24 +428,34 @@ class User(PersistedDataHost):
     @property
     def accepted_arbitrator_addresses(self) -> Optional[list["NodeAddress"]]:
         if self.user_payload.accepted_arbitrators is not None:
-            return [arbitrator.node_address for arbitrator in self.user_payload.accepted_arbitrators]
+            return [
+                arbitrator.node_address
+                for arbitrator in self.user_payload.accepted_arbitrators
+            ]
         return None
 
     @property
     def accepted_mediator_addresses(self) -> Optional[list["NodeAddress"]]:
         if self.user_payload.accepted_mediators is not None:
-            return [mediator.node_address for mediator in self.user_payload.accepted_mediators]
+            return [
+                mediator.node_address
+                for mediator in self.user_payload.accepted_mediators
+            ]
         return None
 
     @property
     def accepted_refund_agent_addresses(self) -> Optional[list["NodeAddress"]]:
         if self.user_payload.accepted_refund_agents is not None:
-            return [agent.node_address for agent in self.user_payload.accepted_refund_agents]
+            return [
+                agent.node_address for agent in self.user_payload.accepted_refund_agents
+            ]
         return None
 
     @property
     def has_accepted_arbitrators(self) -> bool:
-        return self.accepted_arbitrators is not None and len(self.accepted_arbitrators) > 0
+        return (
+            self.accepted_arbitrators is not None and len(self.accepted_arbitrators) > 0
+        )
 
     @property
     def has_accepted_mediators(self) -> bool:
@@ -380,7 +463,10 @@ class User(PersistedDataHost):
 
     @property
     def has_accepted_refund_agents(self) -> bool:
-        return self.accepted_refund_agents is not None and len(self.accepted_refund_agents) > 0
+        return (
+            self.accepted_refund_agents is not None
+            and len(self.accepted_refund_agents) > 0
+        )
 
     @property
     def developers_filter(self) -> Optional["Filter"]:
@@ -411,10 +497,9 @@ class User(PersistedDataHost):
     def price_alert_filter(self) -> Optional["PriceAlertFilter"]:
         return self.user_payload.price_alert_filter
 
-
     def payment_account_exists(self, payment_account: "PaymentAccount") -> bool:
         return payment_account in self.payment_accounts_observable
-    
+
     @property
     def cookie(self) -> "Cookie":
         return self.user_payload.cookie
@@ -422,6 +507,3 @@ class User(PersistedDataHost):
     @property
     def sub_accounts_by_id(self) -> dict[str, set["PaymentAccount"]]:
         return self.user_payload.sub_accounts_by_id
-
-
-
