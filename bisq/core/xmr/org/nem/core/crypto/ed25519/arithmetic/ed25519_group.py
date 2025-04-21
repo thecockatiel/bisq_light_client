@@ -25,7 +25,7 @@ class Ed25519Group:
     GROUP_ORDER = (1 << 252) + 27742317777372353535851937790883648493
     """2^252 - 27742317777372353535851937790883648493"""
 
-    BASE_POINT = get_base_point()
+    BASE_POINT: "Ed25519GroupElement" = None
     """(x, 4/5); x > 0"""
 
     # Different representations of zero
@@ -38,3 +38,6 @@ class Ed25519Group:
     ZERO_PRECOMPUTED = Ed25519GroupElement.precomputed(
         Ed25519Field.ONE, Ed25519Field.ONE, Ed25519Field.ZERO
     )
+
+
+Ed25519Group.BASE_POINT = Ed25519Group.get_base_point()

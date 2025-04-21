@@ -11,6 +11,7 @@ class Ed25519Field:
     Represents the underlying finite field for Ed25519.
     The field has p = 2^255 - 19 elements.
     """
+
     P = int.from_bytes(
         bytes.fromhex(
             "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed"
@@ -33,9 +34,9 @@ class Ed25519Field:
         d = (-121665 * pow(121666, -1, Ed25519Field.P)) % Ed25519Field.P
         return Ed25519EncodedFieldElement(d.to_bytes(32, byteorder="little")).decode()
 
-    ZERO = _get_field_element(0)
-    ONE = _get_field_element(1)
-    TWO = _get_field_element(2)
+    ZERO: "Ed25519FieldElement" = None
+    ONE: "Ed25519FieldElement" = None
+    TWO: "Ed25519FieldElement" = None
     D: "Ed25519FieldElement" = None
     D_TIMES_TWO: "Ed25519FieldElement" = None
     ZERO_SHORT = bytes(32)
@@ -48,5 +49,9 @@ class Ed25519Field:
     ).decode()
     """I ^ 2 = -1"""
 
+
+Ed25519Field.ZERO = Ed25519Field._get_field_element(0)
+Ed25519Field.ONE = Ed25519Field._get_field_element(1)
+Ed25519Field.TWO = Ed25519Field._get_field_element(2)
 Ed25519Field.D = Ed25519Field._get_d()
 Ed25519Field.D_TIMES_TWO = Ed25519Field.D.multiply(Ed25519Field.TWO)
