@@ -4,20 +4,15 @@ from pathlib import Path
 from bisq.common.config.config import Config
 from utils.aio import as_future
 from twisted.internet import reactor
-from global_container import GlobalContainer, set_global_container
 from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import configure_logging
 from utils.dir import user_data_dir
 
-global_container = None
+config = Config("bisq_light_client", user_data_dir())
 if __name__ == '__main__':
-    global_container = GlobalContainer()
-    config = Config("bisq_light_client", user_data_dir())
-    global_container._config = config
-    set_global_container(global_container)
-    configure_logging(log_file=None, log_level=global_container.config.log_level)
+    configure_logging(log_file=None, log_level=config.log_level)
 
 async def main():
     base_dir = Path(__file__).parent.joinpath(".testdata")
@@ -27,7 +22,7 @@ async def main():
     tor = await NewTor(
         base_dir,
         tor_dir,
-        global_container.config.torrc_file,
+        config.torrc_file,
         "SocksPort=9050,ControlPort=9052",
         None,
         True,
