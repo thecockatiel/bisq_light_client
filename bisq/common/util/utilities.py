@@ -98,3 +98,11 @@ class WaitableResultHandler(Generic[_T], Callable[[_T], None]):
     def wait(self) -> _T:
         self._completion_event.wait()
         return self._result_container["value"]
+
+import secrets
+import string
+
+def get_random_id(length=8):
+    chars = string.ascii_letters + string.digits
+    # using secrets for better randomness
+    return ''.join(secrets.choice(chars) for _ in range(length))
