@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.key_ring import KeyRing
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
@@ -41,10 +42,12 @@ class User(PersistedDataHost):
 
     def __init__(
         self,
+        data_dir: Path,
         persistence_manager: "PersistenceManager[UserPayload]",
         key_ring: "KeyRing",
     ):
         super().__init__()
+        self.data_dir = data_dir
         self.persistence_manager = persistence_manager
         self.key_ring = key_ring
 

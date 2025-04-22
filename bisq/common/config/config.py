@@ -297,12 +297,6 @@ class Config:
         )
         btc_network_dir.mkdir(parents=True, exist_ok=True)
 
-        self.key_storage_dir = btc_network_dir.joinpath("keys")
-        self.key_storage_dir.mkdir(parents=True, exist_ok=True)
-
-        self.storage_dir = btc_network_dir.joinpath("db")
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
-
         self.tor_dir = btc_network_dir.joinpath("tor")
         self.tor_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
 

@@ -5,27 +5,36 @@ from utils.di import DependencyProvider
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
-    from bisq.core.user.user import User
-    from bisq.core.user.preferences import Preferences
 
 
 class GlobalContainer:
     def __init__(
         self,
-        config: Optional["Config"] = None,
-        user: Optional["User"] = None,
-        preferences: Optional["Preferences"] = None,
+        config: Optional["Config"],
     ):
         self._config = config
-        self._user = user
-        if user is not None:
-            self._key_ring = user.key_ring
-        self._preferences = preferences
+        # init user by accessing it early
+        self.user
 
     def __getattr__(self, name):
         return None
 
     ###############################################################################
+    @property
+    def storage_dir(self):
+        # reason for this is to rely on user data directory for multi-user feature
+        if self._storage_dir is None:
+            self._storage_dir = self.user.data_dir.joinpath("db")
+            self._storage_dir.mkdir(parents=True, exist_ok=True)
+        return self._storage_dir
+
+    @property
+    def wallet_dir(self):
+        if self._wallet_dir is None:
+            self._wallet_dir = self.user.data_dir.joinpath("electrum_wallet")
+            self._wallet_dir.mkdir(parents=True, exist_ok=True)
+        return self._wallet_dir
+
     @property
     def core_context(self):
         if self._core_context is None:
@@ -477,7 +486,7 @@ class GlobalContainer:
 
             self._removed_payloads_service = RemovedPayloadsService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 )
@@ -696,7 +705,7 @@ class GlobalContainer:
 
             self._arbitration_dispute_list_service = ArbitrationDisputeListService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 )
@@ -713,7 +722,7 @@ class GlobalContainer:
 
             self._mediation_dispute_list_service = MediationDisputeListService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 )
@@ -730,7 +739,7 @@ class GlobalContainer:
 
             self._refund_dispute_list_service = RefundDisputeListService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 )
@@ -769,7 +778,7 @@ class GlobalContainer:
                 self.encryption_service,
                 self.ignored_mailbox_service,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -789,7 +798,7 @@ class GlobalContainer:
 
             self._ignored_mailbox_service = IgnoredMailboxService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -809,7 +818,7 @@ class GlobalContainer:
                 self.price_feed_service,
                 self.bsq_wallet_service,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -825,9 +834,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._trade_statistics_2_storage_service = TradeStatistics2StorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -843,9 +852,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._trade_statistics_3_storage_service = TradeStatistics3StorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -865,7 +874,7 @@ class GlobalContainer:
                 self.trade_statistics_2_storage_service,
                 self.trade_statistics_3_storage_service,
                 self.append_only_data_store_service,
-                self.config.storage_dir,
+                self.storage_dir,
             )
         return self._trade_statistics_converter
 
@@ -882,7 +891,7 @@ class GlobalContainer:
                 self.trade_statistics_3_storage_service,
                 self.append_only_data_store_service,
                 self.trade_statistics_converter,
-                self.config.storage_dir,
+                self.storage_dir,
                 self.config.dump_statistics,
             )
         return self._trade_statistics_manager
@@ -928,7 +937,7 @@ class GlobalContainer:
             )
 
             self._dump_delayed_payout_tx = DumpDelayedPayoutTx(
-                self.config.storage_dir,
+                self.storage_dir,
                 self.config.dump_delayed_payout_txs,
             )
         return self._dump_delayed_payout_tx
@@ -1177,7 +1186,9 @@ class GlobalContainer:
         if self._key_storage is None:
             from bisq.common.crypto.key_storage import KeyStorage
 
-            self._key_storage = KeyStorage(self.config.storage_dir)
+            key_storage_dir = self.user.data_dir.joinpath("keys")
+            key_storage_dir.mkdir(parents=True, exist_ok=True)
+            self._key_storage = KeyStorage(key_storage_dir)
 
         return self._key_storage
 
@@ -1195,14 +1206,26 @@ class GlobalContainer:
         if self._user is None:
             from bisq.core.user.user import User
             from bisq.common.persistence.persistence_manager import PersistenceManager
+            from bisq.common.crypto.key_ring import KeyRing
+            from bisq.common.crypto.key_storage import KeyStorage
 
+            base_network_dir = self.config.app_data_dir.joinpath(
+                self.config.base_currency_network.name.lower()
+            )
+            db_dir = base_network_dir.joinpath("db")
+            db_dir.mkdir(parents=True, exist_ok=True)
+            key_storage_dir = base_network_dir.joinpath("keys")
+            key_storage_dir.mkdir(parents=True, exist_ok=True)
+            self._key_storage = KeyStorage(key_storage_dir)
+            self._key_ring = KeyRing(self._key_storage)
             self._user = User(
+                base_network_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    db_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
-                self.key_ring,
+                self._key_ring,
             )
 
         return self._user
@@ -1254,7 +1277,7 @@ class GlobalContainer:
 
             self._preferences = Preferences(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1381,9 +1404,9 @@ class GlobalContainer:
             self._burning_man_accounting_store_service = (
                 BurningManAccountingStoreService(
                     self.resource_data_store_service,
-                    self.config.storage_dir,
+                    self.storage_dir,
                     PersistenceManager(
-                        self.config.storage_dir,
+                        self.storage_dir,
                         self.persistence_proto_resolver,
                         self.corrupted_storage_file_handler,
                     ),
@@ -1416,7 +1439,7 @@ class GlobalContainer:
                 self.provider,
                 self.clock_watcher,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1441,7 +1464,7 @@ class GlobalContainer:
                 self.preferences,
                 self.trade_statistics_manager,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1479,7 +1502,7 @@ class GlobalContainer:
                 self.btc_wallet_service,
                 self.preferences,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1550,9 +1573,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._account_age_witness_storage_service = AccountAgeWitnessStorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1586,9 +1609,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._signed_witness_storage_service = SignedWitnessStorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1644,7 +1667,7 @@ class GlobalContainer:
                 self.delayed_payout_tx_receiver_service,
                 self.broadcaster,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1661,7 +1684,7 @@ class GlobalContainer:
                 self.p2p_service,
                 self.price_feed_service,
                 self.filter_manager,
-                self.config.storage_dir,
+                self.storage_dir,
                 self.config.dump_statistics,
             )
         return self._offer_book_service
@@ -1721,7 +1744,7 @@ class GlobalContainer:
                 self.seed_node_repository,
                 self.clock_watcher,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1743,7 +1766,7 @@ class GlobalContainer:
                 self.protected_data_store_service,
                 self.resource_data_store_service,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1898,7 +1921,7 @@ class GlobalContainer:
 
             self._address_entry_list = AddressEntryList(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -1916,6 +1939,7 @@ class GlobalContainer:
                 self.preferences,
                 self.socks5_proxy_provider,
                 self.config,
+                self.wallet_dir,
             )
 
         return self._wallets_setup
@@ -2369,9 +2393,9 @@ class GlobalContainer:
             self._dao_state_storage_service = DaoStateStorageService(
                 self.resource_data_store_service,
                 self.bsq_blocks_storage_service,
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2393,7 +2417,7 @@ class GlobalContainer:
                 self.genesis_tx_info,
                 self.seed_node_repository,
                 self.preferences,
-                self.config.storage_dir,
+                self.storage_dir,
                 self.config.ignore_dev_msg,
             )
 
@@ -2491,7 +2515,7 @@ class GlobalContainer:
             self._unconfirmed_bsq_change_output_list_service = (
                 UnconfirmedBsqChangeOutputListService(
                     PersistenceManager(
-                        self.config.storage_dir,
+                        self.storage_dir,
                         self.persistence_proto_resolver,
                         self.corrupted_storage_file_handler,
                     )
@@ -2509,7 +2533,7 @@ class GlobalContainer:
 
             self._export_json_files_service = ExportJsonFilesService(
                 self.dao_state_service,
-                self.config.storage_dir,
+                self.storage_dir,
                 self.config.dump_blockchain_data,
             )
         return self._export_json_files_service
@@ -2560,7 +2584,7 @@ class GlobalContainer:
                 self.period_service,
                 self.wallets_manager,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2627,9 +2651,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._proposal_storage_service = ProposalStorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2646,9 +2670,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._temp_proposal_storage_service = TempProposalStorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2907,7 +2931,7 @@ class GlobalContainer:
                 self.period_service,
                 self.proposal_validator_provider,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2926,7 +2950,7 @@ class GlobalContainer:
             self._my_vote_list_service = MyVoteListService(
                 self.dao_state_service,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2961,9 +2985,9 @@ class GlobalContainer:
             from bisq.common.persistence.persistence_manager import PersistenceManager
 
             self._blind_vote_storage_service = BlindVoteStorageService(
-                self.config.storage_dir,
+                self.storage_dir,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -2999,7 +3023,7 @@ class GlobalContainer:
                 self.period_service,
                 self.wallets_manager,
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -3165,7 +3189,7 @@ class GlobalContainer:
 
             self._my_reputation_list_service = MyReputationListService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -3231,7 +3255,7 @@ class GlobalContainer:
 
             self._my_proof_of_burn_list_service = MyProofOfBurnListService(
                 PersistenceManager(
-                    self.config.storage_dir,
+                    self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
                 ),
@@ -3249,7 +3273,7 @@ class GlobalContainer:
             self._bsq_blocks_storage_service = BsqBlocksStorageService(
                 self.genesis_tx_info,
                 self.persistence_proto_resolver,
-                self.config.storage_dir,
+                self.storage_dir,
             )
 
         return self._bsq_blocks_storage_service

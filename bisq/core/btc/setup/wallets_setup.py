@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import timedelta
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from bisq.common.file.file_util import (
     delete_directory,
@@ -34,11 +35,13 @@ class WalletsSetup:
         preferences: "Preferences",
         socks5_proxy_provider: "Socks5ProxyProvider",
         config: "Config",
+        wallet_dir: Path,
     ):
         self._address_entry_list = address_entry_list
         self._preferences = preferences
         self._socks5_proxy_provider = socks5_proxy_provider
         self._config = config
+        self._wallet_dir = wallet_dir
 
         self._chain_height_property = SimpleProperty(0)
         self._num_peers_property = SimpleProperty(0)
@@ -70,7 +73,7 @@ class WalletsSetup:
         )
         self.backup_wallets()
 
-        self.wallet_config = WalletConfig(self._config, seed)
+        self.wallet_config = WalletConfig(self._config, self._wallet_dir, seed)
         self.wallet_config.current_height_property.add_listener(self._new_chain_height)
         self.wallet_config.num_peers_property.add_listener(self._new_peer_count)
 
@@ -102,7 +105,7 @@ class WalletsSetup:
         self.wallet_config.start_up(on_complete, on_exception)
 
     def resync_spv_chain(self):
-        self._config.wallet_dir.joinpath(WalletsSetup.SPV_CHAIN_FILE_NAME).unlink(
+        self._wallet_dir.joinpath(WalletsSetup.SPV_CHAIN_FILE_NAME).unlink(
             missing_ok=True
         )
 
@@ -128,12 +131,12 @@ class WalletsSetup:
 
     def backup_wallets(self):
         rolling_backup(
-            self._config.wallet_dir,
+            self._wallet_dir,
             WalletConfig.BTC_WALLET_FILE_NAME,
             20,
         )
         rolling_backup(
-            self._config.wallet_dir,
+            self._wallet_dir,
             WalletConfig.BSQ_WALLET_FILE_NAME,
             20,
         )
@@ -141,7 +144,7 @@ class WalletsSetup:
     def clear_backups(self):
         # we dont touch pre segwit stuff in python client
         try:
-            delete_directory(self._config.wallet_dir.joinpath("backup"))
+            delete_directory(self._wallet_dir.joinpath("backup"))
         except Exception as e:
             logger.error(f"Could not delete directory: {e}", exc_info=e)
 

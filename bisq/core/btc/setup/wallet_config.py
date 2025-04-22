@@ -1,4 +1,4 @@
-from utils.aio import as_future # importing it sets up stuff
+from utils.aio import as_future  # importing it sets up stuff
 from threading import Lock
 from electrum_min.util import EventListener, event_listener
 import asyncio
@@ -34,8 +34,9 @@ class WalletConfig(EventListener):
     BSQ_WALLET_FILE_NAME = "bisq_BSQ.wallet"
     BTC_WALLET_FILE_NAME = "bisq_BTC.wallet"
 
-    def __init__(self, config: "Config", seed: Optional[str] = None):
+    def __init__(self, config: "Config", wallet_dir: Path, seed: Optional[str] = None):
         self._config = config
+        self._wallet_dir = wallet_dir
 
         self._daemon: Optional["Daemon"] = None
         self._btc_wallet: Optional["Wallet"] = None
@@ -76,7 +77,9 @@ class WalletConfig(EventListener):
     @event_listener
     def on_event_wallet_updated(self, *args):
         if self._btc_wallet.is_up_to_date:
-            self._current_height_property.value = self._btc_wallet.last_block_seen_height
+            self._current_height_property.value = (
+                self._btc_wallet.last_block_seen_height
+            )
 
     @event_listener
     def on_event_network_updated(self):
@@ -104,7 +107,7 @@ class WalletConfig(EventListener):
                     options["regtest"] = True
                 self._electrum_config = SimpleConfig(
                     options=options,
-                    read_user_dir_function=lambda: str(self._config.wallet_dir),
+                    read_user_dir_function=lambda: str(self._wallet_dir),
                 )
                 if self._config.tor_control_host:
                     self._electrum_config.NETWORK_PROXY = (
@@ -127,11 +130,11 @@ class WalletConfig(EventListener):
                     start_network=False,
                 )
 
-                btc_wallet_file = self._config.wallet_dir.joinpath(
+                btc_wallet_file = self._wallet_dir.joinpath(
                     WalletConfig.BTC_WALLET_FILE_NAME
                 )
 
-                bsq_wallet_file = self._config.wallet_dir.joinpath(
+                bsq_wallet_file = self._wallet_dir.joinpath(
                     WalletConfig.BSQ_WALLET_FILE_NAME
                 )
                 # TODO: define and use password
