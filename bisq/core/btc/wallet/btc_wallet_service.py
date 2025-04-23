@@ -912,6 +912,52 @@ class BtcWalletService(WalletService, DaoStateListener):
     # // Withdrawal Fee calculation
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
+    def get_fee_estimation_transaction(
+        self,
+        from_address: str,
+        to_address: str,
+        amount: Coin,
+        context: AddressEntryContext,
+    ) -> "Transaction":
+        address_entry = self._find_address_entry(from_address, context)
+        if not address_entry:
+            raise AddressEntryException(
+                "WithdrawFromAddress is not found in our wallet."
+            )
+
+        check_not_none(
+            address_entry.get_address(), "address_entry.get_address() must not be None"
+        )
+
+        try:
+            fee = Coin.ZERO()
+            counter = 0
+            tx_vsize = 0
+            tx = None
+            tx_fee_for_withdrawal_per_vbyte = self.get_tx_fee_for_withdrawal_per_vbyte()
+            while True:
+                counter += 1
+                fee = tx_fee_for_withdrawal_per_vbyte.multiply(tx_vsize)
+                send_request = self._get_send_request(
+                    from_address, to_address, amount, fee, self.password, context
+                )
+                self.wallet.complete_tx(send_request)
+                tx = send_request.tx
+                tx_vsize = tx.get_vsize()
+                self.print_tx("FeeEstimationTransaction", tx)
+                if not self._tx_fee_estimation_not_satisfied(counter, tx):
+                    break
+                if counter == 10:
+                    logger.error(f"Could not calculate the fee. Tx={tx}")
+                    break
+            return tx
+        except InsufficientMoneyException as e:
+            raise InsufficientFundsException(
+                "The fees for that transaction exceed the available funds "
+                "or the resulting output value is below the min. dust value:\n"
+                f"Missing: {e.missing.to_friendly_string() if e.missing else 'None'}"
+            )
+
     def get_fee_estimation_transaction_for_multiple_addresses(
         self,
         from_addresses: set[str],
