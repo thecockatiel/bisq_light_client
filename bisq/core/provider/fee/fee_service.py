@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.param.param import Param
 from bitcoinj.base.coin import Coin
 from utils.data import SimpleProperty
@@ -9,8 +9,7 @@ from utils.time import get_time_ms
 if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.dao.state.dao_state_service import DaoStateService
-    
-logger = get_logger(__name__)
+
 
 class FeeService:
     # Miner fees are between 1-600 sat/vbyte. We try to stay on the safe side. BTC_DEFAULT_TX_FEE is only used if our
@@ -20,6 +19,7 @@ class FeeService:
     dao_state_service: "DaoStateService" = None
 
     def __init__(self, dao_state_service: "DaoStateService"):
+        self.logger = get_ctx_logger(__name__)
         FeeService.dao_state_service = dao_state_service
         self.fee_update_counter_property = SimpleProperty(0)
         self.tx_fee_per_vbyte = FeeService.BTC_DEFAULT_TX_FEE
@@ -93,5 +93,5 @@ class FeeService:
         self.min_fee_per_vbyte = min_fee_per_vbyte
         self.fee_update_counter_property.set(self.fee_update_counter_property.get() + 1)
         self.last_request = get_time_ms()
-        logger.info(f"BTC tx fee: txFeePerVbyte={tx_fee_per_vbyte} minFeePerVbyte={min_fee_per_vbyte}")
+        self.logger.info(f"BTC tx fee: txFeePerVbyte={tx_fee_per_vbyte} minFeePerVbyte={min_fee_per_vbyte}")
 

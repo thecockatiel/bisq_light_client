@@ -1,4 +1,3 @@
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task import Task
 from bisq.common.taskrunner.task_runner import TaskRunner
 from utils.preconditions import check_argument
@@ -8,7 +7,6 @@ from bisq.core.offer.availability.messages.offer_availability_response import Of
 from bisq.core.offer.availability.offer_availability_model import OfferAvailabilityModel
 from bisq.core.offer.offer_state import OfferState
 
-logger = get_logger(__name__)
 
 class ProcessOfferAvailabilityResponse(Task[OfferAvailabilityModel]):
     

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
+from utils.aio import FutureCallback
 from utils.concurrency import ThreadSafeSet
 from bisq.core.dao.monitoring.network.request_state_hashes_handler import (
     RequestStateHashesHandler,
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
 
 
-logger = get_logger(__name__)
 
 _Msg = TypeVar("Msg", bound="NewStateHashMessage")
 _Req = TypeVar("Req", bound="GetStateHashesRequest")
@@ -44,29 +43,29 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
 
         @abstractmethod
         def on_new_state_hash_message(
-            self, new_state_hash_message: _Msg, connection: "Connection"
+            self_, new_state_hash_message: _Msg, connection: "Connection"
         ) -> None:
             pass
 
         @abstractmethod
         def on_get_state_hash_request(
-            self, connection: "Connection", get_state_hash_request: _Req
+            self_, connection: "Connection", get_state_hash_request: _Req
         ) -> None:
             pass
 
         @abstractmethod
         def on_peers_state_hashes(
-            self, state_hashes: list[_StH], peers_node_address: Optional["NodeAddress"]
+            self_, state_hashes: list[_StH], peers_node_address: Optional["NodeAddress"]
         ) -> None:
             pass
 
     class ResponseListener(ABC):
         @abstractmethod
-        def on_success(self, serialized_size: int) -> None:
+        def on_success(self_, serialized_size: int) -> None:
             pass
 
         @abstractmethod
-        def on_fault(self) -> None:
+        def on_fault(self_) -> None:
             pass
 
     def __init__(
@@ -75,6 +74,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
         peer_manager: "PeerManager",
         broadcaster: "Broadcaster",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._broadcaster = broadcaster
@@ -144,7 +144,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
             new_state_hash_message = self.cast_to_new_state_hash_message(
                 network_envelope
             )
-            logger.debug(
+            self.logger.debug(
                 f"We received a {new_state_hash_message.__class__.__name__} from peer {connection.peers_node_address} with stateHash={new_state_hash_message.state_hash}"
             )
             for listener in self._listeners:
@@ -153,7 +153,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
             get_state_hash_request = self.cast_to_get_state_hash_request(
                 network_envelope
             )
-            logger.debug(
+            self.logger.debug(
                 f"We received a {get_state_hash_request.__class__.__name__} from peer {connection.peers_node_address} for height={get_state_hash_request.height}"
             )
             for listener in self._listeners:
@@ -174,34 +174,31 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
         get_state_hashes_response = self.get_get_state_hashes_response(
             nonce, state_hashes
         )
-        logger.info(
+        self.logger.info(
             f"Send {get_state_hashes_response.__class__.__name__} with {len(state_hashes)} stateHashes to peer {connection.peers_node_address}"
         )
         future = self._network_node.send_message(connection, get_state_hashes_response)
-        future.add_done_callback(
-            lambda f: self._handle_send_get_state_hashes_response(
-                f, get_state_hashes_response
-            )
-        )
 
-    def _handle_send_get_state_hashes_response(
-        self, future: "Future[Connection]", get_state_hashes_response: _Res
-    ) -> None:
-        try:
-            future.result()
-
-            def on_success():
+        def on_success(r):
+            def main_t():
                 for listener in self._response_listeners:
                     listener.on_success(get_state_hashes_response.get_serialized_size())
 
-            UserThread.execute(on_success)
-        except Exception as e:
-
-            def on_failure():
+            UserThread.execute(main_t)
+            
+        def on_failure(e):
+            def main_t():
                 for listener in self._response_listeners:
                     listener.on_fault()
 
-            UserThread.execute(on_failure)
+            UserThread.execute(main_t)
+
+        
+        future.add_done_callback(
+            FutureCallback(
+                on_success, on_failure
+            )
+        )
 
     def request_hashes_from_all_connected_seed_nodes(self, from_height: int) -> None:
         for connection in self._network_node.get_confirmed_connections():
@@ -259,7 +256,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
             def on_fault(
                 self_, error_message: str, connection: "Optional[Connection]"
             ) -> None:
-                logger.warning(
+                self.logger.warning(
                     f"requestDaoStateHashesHandler with outbound connection failed.\n\tnodeAddress={node_address}\n\tErrorMessage={error_message}"
                 )
                 self._request_state_hash_handler_map.pop(node_address, None)

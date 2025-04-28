@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
@@ -10,12 +10,11 @@ if TYPE_CHECKING:
     from bisq.common.taskrunner.task_runner import TaskRunner
 
 
-logger = get_logger(__name__)
-
 class PublishedDelayedPayoutTx(TradeTask):
     
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -35,11 +34,11 @@ class PublishedDelayedPayoutTx(TradeTask):
 
             class BroadcastCallback(TxBroadcasterCallback):
                 def on_success(self_, transaction: "Transaction"):
-                    logger.info(f"publishDelayedPayoutTx onSuccess {transaction}")
+                    self.logger.info(f"publishDelayedPayoutTx onSuccess {transaction}")
                     self.complete()
 
                 def on_failure(self_, exception: Exception):
-                    logger.error("publishDelayedPayoutTx onFailure", exc_info=exception)
+                    self.logger.error("publishDelayedPayoutTx onFailure", exc_info=exception)
                     self.failed(exc=exception)
 
             self.process_model.trade_wallet_service.broadcast_tx(

@@ -1,5 +1,7 @@
+from typing import TYPE_CHECKING
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sig import Sig
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.btc_wallet_service import WalletService
@@ -13,8 +15,15 @@ from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.validator import Validator
 from utils.preconditions import check_argument
 
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 class BuyerProcessDepositTxAndDelayedPayoutTxMessage(TradeTask):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:

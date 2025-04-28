@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future, run_in_thread
 import os
 from pathlib import Path
@@ -5,7 +6,6 @@ import platform
 import re
 import tarfile
 from typing import TYPE_CHECKING, Optional, Union
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
 from utils.network import download_file
 from utils.time import get_time_ms
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
         BridgeAddressProvider,
     )
 
-logger = get_logger(__name__)
 
 CURRENT_TOR_VERSION = "14.0.4"
 
@@ -41,6 +40,7 @@ class NewTor(TorMode):
         use_bridges_file=True,
     ):
         super().__init__(tor_dir)
+        self.logger = get_ctx_logger(__name__)
         self.torrc_file = torrc_file
         self.torrc_options = torrc_options
         self.bridge_address_provider = bridge_address_provider
@@ -56,7 +56,7 @@ class NewTor(TorMode):
             tor_bin_path = await self._download_and_extract_tor()
             if tor_bin_path is None:
                 msg = "Failed to download and extract tor binary"
-                logger.error(msg)
+                self.logger.error(msg)
                 raise RuntimeError(msg)
         # we just want to make sure the tor we configure supports different transports
         # thats why we download it anyway
@@ -81,14 +81,14 @@ class NewTor(TorMode):
             else None
         )
         if bridge_entries:
-            logger.info(f"Using bridges: {','.join(bridge_entries)}")
+            self.logger.info(f"Using bridges: {','.join(bridge_entries)}")
             config_data["UseBridges"] = 1
             for bridge in bridge_entries:
                 self._add_line_to_config_data(f"Bridge {bridge}", config_data)
         elif self.use_bridges_file:
             lines = await run_in_thread(self._read_bridges_file)
             if lines:
-                logger.info(f"Using bridges file: {','.join(lines)}")
+                self.logger.info(f"Using bridges file: {','.join(lines)}")
                 config_data["UseBridges"] = 1
                 for line in lines:
                     self._add_line_to_config_data(f"Bridge {line}", config_data)
@@ -98,7 +98,7 @@ class NewTor(TorMode):
             for line in self.torrc_options.split(","):
                 added = self._add_line_to_config_data(line, config_data)
                 if not added:
-                    logger.error(
+                    self.logger.error(
                         f"custom torrc override parse error ('{line}'). skipping..."
                     )
 
@@ -145,19 +145,19 @@ class NewTor(TorMode):
         # write torrc for debugging purposes
         await run_in_thread(self._write_torrc_for_debugging, config)
 
-        logger.info("Starting tor")
+        self.logger.info("Starting tor")
         result = await as_future(
             launch(reactor,
                    tor_binary=str(tor_bin_path),
                    data_directory=str(self.tor_dir),
-                   progress_updates=lambda percent, tag, summary: logger.trace(f"Tor: {percent}%: {tag} - {summary}"),
+                   progress_updates=lambda percent, tag, summary: self.logger.trace(f"Tor: {percent}%: {tag} - {summary}"),
                    kill_on_stderr=True,
                    _tor_config=config,
                    socks_port=socks_port,
                    control_port=control_port,
                 )
         )
-        logger.info(
+        self.logger.info(
             "\n##################################################################################\n"
             f"Tor started after {get_time_ms() - ts1} ms. Listening on {config.SOCKSPort[0]}. Can start publishing hidden service.\n"
             "##################################################################################"
@@ -180,7 +180,7 @@ class NewTor(TorMode):
                     for line in lines:
                         self._add_line_to_config_data(line, config_data)
             except:
-                logger.error(
+                self.logger.error(
                     f"custom torrc file not found ('{self.torrc_file}'). Proceeding with defaults."
                 )
         return config_data
@@ -220,7 +220,7 @@ class NewTor(TorMode):
                     if line and not line.startswith("#"):
                         lines.append(line)
         except:
-            logger.warning(
+            self.logger.warning(
                 f"bridges file not found ('{bridges_path}'). this is normal, continuing operation..."
             )
         return lines
@@ -266,13 +266,13 @@ class NewTor(TorMode):
         try:
             downloaded_file = await download_file(self.app_data_dir, tor_bin_url)
         except Exception as e:
-            logger.error(f"Failed to download tor binary: {e}")
+            self.logger.error(f"Failed to download tor binary: {e}")
             return None
         try: 
             with tarfile.open(str(downloaded_file)) as archive:
                 archive.extractall(str(tor_bin_dir))
         except:
-            logger.error("Failed to extract tor binary. archive corrupted? removing the archive to download again")
+            self.logger.error("Failed to extract tor binary. archive corrupted? removing the archive to download again")
             try:
                 downloaded_file.unlink(True)
             except Exception as e:

@@ -31,11 +31,11 @@ import hashlib
 import hmac
 from typing import Union, Mapping, Optional
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 import electrum_ecc as ecc
 from .util import assert_bytes, InvalidPassword, to_bytes, to_string, WalletFileException, versiontuple
 
-_logger = get_logger(__name__)
+_logger = get_base_logger(__name__)
 
 
 HAS_PYAES = False

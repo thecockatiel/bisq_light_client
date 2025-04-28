@@ -13,25 +13,23 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred
 
 from bisq.core.network.p2p.network.new_tor import NewTor
-from bisq.common.setup.log_setup import configure_logging, get_logger
+from bisq.common.setup.log_setup import setup_log_for_test
 from utils.dir import user_data_dir
 
 config = Config("bisq_light_client", user_data_dir())
-if __name__ == '__main__':
-    configure_logging(log_file=None, log_level=config.log_level)
 
-logger = get_logger(__name__)
+data_dir = Path(__file__).parent.joinpath(".testdata")
+data_dir.mkdir(exist_ok=True, parents=True)
+logger = setup_log_for_test("run_tor", data_dir)
 
 class MainApp(GracefulShutDownHandler):
     async def main(self):
         CommonSetup.setup_sig_int_handlers(self)
-        base_dir = Path(__file__).parent.joinpath(".testdata")
-        base_dir.mkdir(exist_ok=True, parents=True)
-        tor_dir = base_dir.joinpath("tor")
+        tor_dir = data_dir.joinpath("tor")
         tor_dir.mkdir(mode=0o700, exist_ok=True, parents=True)
         try:
             self.tor = await NewTor(
-                base_dir,
+                data_dir,
                 tor_dir,
                 config.torrc_file,
                 "SocksPort=9050,ControlPort=9052",

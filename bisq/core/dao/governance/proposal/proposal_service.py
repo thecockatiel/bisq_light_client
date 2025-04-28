@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Collection, Iterable
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.proposal.storage.temp.temp_proposal_payload import (
     TempProposalPayload,
 )
@@ -50,8 +50,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.period.period_service import PeriodService
 
 
-logger = get_logger(__name__)
-
 
 class ProposalService(
     HashMapChangedListener,
@@ -75,6 +73,7 @@ class ProposalService(
         dao_state_service: "DaoStateService",
         validator_provider: "ProposalValidatorProvider",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.period_service = period_service
         self.proposal_storage_service = proposal_storage_service
@@ -204,7 +203,7 @@ class ProposalService(
                     proposal_payload, False
                 )
                 if success:
-                    logger.info(
+                    self.logger.info(
                         f"We published a ProposalPayload to the P2P network as append-only data. proposalTxId={proposal_payload.proposal.tx_id}"
                     )
                 # If we had data already we did not broadcast and success is false
@@ -239,12 +238,12 @@ class ProposalService(
                         ).are_data_fields_valid(proposal)
                     ):
                         if from_broadcast_message:
-                            logger.info(
+                            self.logger.info(
                                 f"We received a TempProposalPayload and store it to our protectedStoreList. proposalTxId={proposal.tx_id}"
                             )
                         self.temp_proposals.append(proposal)
                     else:
-                        logger.debug(
+                        self.logger.debug(
                             f"We received an invalid proposal from the P2P network. Proposal={proposal}, blockHeight={self.dao_state_service.chain_height}"
                         )
 
@@ -274,7 +273,7 @@ class ProposalService(
                 if in_phase or tx_in_past_cycle or unconfirmed_or_non_bsq_tx:
                     try:
                         temp_proposals_with_updates.remove(proposal)
-                        logger.debug(
+                        self.logger.debug(
                             f"We received a remove request for a TempProposalPayload and have removed the proposal "
                             f"from our list. proposal creation date={proposal.get_creation_date_as_date()}, proposalTxId={proposal.tx_id}, inPhase={in_phase}, "
                             f"txInPastCycle={tx_in_past_cycle}, unconfirmedOrNonBsqTx={unconfirmed_or_non_bsq_tx}"
@@ -282,7 +281,7 @@ class ProposalService(
                     except:
                         pass
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"We received a remove request outside the PROPOSAL phase. "
                         f"Proposal creation date={proposal.get_creation_date_as_date()}, proposal.txId={proposal.tx_id}, current blockHeight={self.dao_state_service.chain_height}"
                     )
@@ -312,11 +311,11 @@ class ProposalService(
                     ).are_data_fields_valid(proposal)
                 ):
                     if from_broadcast_message:
-                        logger.info(
+                        self.logger.info(
                             f"We received a ProposalPayload and store it to our appendOnlyStoreList. proposalTxId={proposal.tx_id}"
                         )
                     self.proposal_payloads.append(proposal_payload)
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"We received an invalid append-only proposal from the P2P network. Proposal={proposal}, blockHeight={self.dao_state_service.chain_height}"
                     )

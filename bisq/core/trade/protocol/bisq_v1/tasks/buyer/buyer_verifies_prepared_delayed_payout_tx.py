@@ -1,4 +1,5 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.trade.bisq_v1.trade_data_validation import TradeDataValidation
 from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
@@ -7,10 +8,16 @@ from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from utils.preconditions import check_not_none
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.common.taskrunner.task_runner import TaskRunner
+    from bisq.core.trade.model.bisq_v1.trade import Trade
 
 
 class BuyerVerifiesPreparedDelayedPayoutTx(TradeTask):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -46,7 +53,7 @@ class BuyerVerifiesPreparedDelayedPayoutTx(TradeTask):
                 != sellers_prepared_delayed_payout_tx.get_tx_id()
             ):
                 error_msg = "TxIds of buyers_prepared_delayed_payout_tx and sellers_prepared_delayed_payout_tx must be the same."
-                logger.error(
+                self.logger.error(
                     f"{error_msg} \n"
                     f"buyers_prepared_delayed_payout_tx={buyers_prepared_delayed_payout_tx}, \n"
                     f"sellers_prepared_delayed_payout_tx={sellers_prepared_delayed_payout_tx}, \n"
@@ -63,7 +70,7 @@ class BuyerVerifiesPreparedDelayedPayoutTx(TradeTask):
                     prepared_deposit_tx, sellers_prepared_delayed_payout_tx
                 )
             else:
-                logger.info(
+                self.logger.info(
                     "Deposit tx is malleable, so we skip sellers_prepared_delayed_payout_tx input validation."
                 )
 

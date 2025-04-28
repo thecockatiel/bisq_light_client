@@ -1,13 +1,12 @@
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 from bisq.common.crypto.sig import Sig, DSA
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import (
     MailboxStoragePayload,
 )
 from bisq.core.network.p2p.storage.payload.protected_storage_entry import (
     ProtectedStorageEntry,
 )
-from bisq.common.setup.log_setup import get_logger
 from utils.clock import Clock
 import pb_pb2 as protobuf
 from utils.preconditions import check_argument
@@ -15,10 +14,8 @@ from utils.preconditions import check_argument
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
-logger = get_logger(__name__)
 
 
-@dataclass
 class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
 
     def __init__(
@@ -44,6 +41,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
             owner_pub_key=owner_pub_key,
             owner_pub_key_bytes=owner_pub_key_bytes,
         )
+        self.logger = get_ctx_logger(__name__)
         self._receivers_pub_key = receivers_pub_key
         self._receivers_pub_key_bytes = receivers_pub_key_bytes
 
@@ -84,7 +82,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
 
         # Verify the Entry.receiversPubKey matches the Payload.ownerPubKey. This is a requirement for removal
         if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
-            logger.debug(
+            self.logger.debug(
                 "Entry receiversPubKey does not match payload owner which is a requirement for adding MailboxStoragePayloads"
             )
             return False
@@ -103,7 +101,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                         mailbox_storage_payload.sender_pub_key_for_add_operation, True
                     )
 
-            logger.warning(
+            self.logger.warning(
                 "ProtectedMailboxStorageEntry::isValidForAddOperation() failed. "
                 + f"Entry owner does not match sender key in payload:\nProtectedStorageEntry={res1}\n"
                 + f"SenderPubKeyForAddOperation={res2}"
@@ -122,7 +120,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
 
         # Verify the Entry has the correct receiversPubKey for removal
         if mailbox_storage_payload.owner_pub_key_bytes != self.receivers_pub_key_bytes:
-            logger.debug(
+            self.logger.debug(
                 "Entry receiversPubKey does not match payload owner which is a requirement for removing MailboxStoragePayloads"
             )
             return False
@@ -140,7 +138,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
                     mailbox_storage_payload.owner_pub_key, True
                 )
 
-            logger.warning(
+            self.logger.warning(
                 "ProtectedMailboxStorageEntry::isValidForRemoveOperation() failed. "
                 + f"Entry owner does not match Payload owner:\nProtectedStorageEntry={res1}\n"
                 + f"PayloadOwner={res2}"
@@ -155,7 +153,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
         matches. For ProtectedMailboxStorageEntry, the receiversPubKey must stay the same.
         """
         if not isinstance(protected_storage_entry, ProtectedMailboxStorageEntry):
-            logger.error(
+            self.logger.error(
                 "ProtectedMailboxStorageEntry::isMetadataEquals() failed due to object type mismatch. "
                 + "ProtectedMailboxStorageEntry required, but got\n"
                 + str(protected_storage_entry)
@@ -171,7 +169,7 @@ class ProtectedMailboxStorageEntry(ProtectedStorageEntry):
             == self.receivers_pub_key_bytes
         )
         if not result:
-            logger.warning(
+            self.logger.warning(
                 "ProtectedMailboxStorageEntry::isMetadataEquals() failed due to metadata mismatch. "
                 + f"new.receiversPubKey={Sig.get_public_key_as_hex_string(protected_mailbox_storage_entry.receivers_pub_key_bytes, True)}\n"
                 f"stored.receiversPubKey={Sig.get_public_key_as_hex_string(self.receivers_pub_key_bytes, True)}"

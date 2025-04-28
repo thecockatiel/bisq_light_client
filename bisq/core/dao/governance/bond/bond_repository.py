@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Generic, Iterator, Optional, TypeVar
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.wallet_transactions_change_listener import (
     WalletTransactionsChangeListener,
 )
@@ -26,8 +26,6 @@ _B = TypeVar("B", bound="Bond")
 _T = TypeVar("T", bound="BondedAsset")
 
 
-logger = get_logger(__name__)
-
 
 class BondRepository(
     Generic[_B, _T], DaoSetupService, WalletTransactionsChangeListener, ABC
@@ -43,6 +41,7 @@ class BondRepository(
         dao_state_service: "DaoStateService",
         bsq_wallet_service: "BsqWalletService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._bsq_wallet_service = bsq_wallet_service
 
@@ -112,7 +111,7 @@ class BondRepository(
 
     def update(self):
         ts = get_time_ms()
-        logger.debug("update")
+        self.logger.debug("update")
         self._bonded_asset_by_hash_map = None
         for bonded_asset in self.get_bonded_asset_stream():
             uid = bonded_asset.uid
@@ -127,7 +126,7 @@ class BondRepository(
         self._update_bond_state_from_unconfirmed_unlock_txs()
 
         self.bonds.set_all(self._bond_by_uid_map.values())
-        logger.debug(f"update took {get_time_ms() - ts} ms")
+        self.logger.debug(f"update took {get_time_ms() - ts} ms")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

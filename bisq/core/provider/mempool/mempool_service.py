@@ -2,14 +2,15 @@ from asyncio import Future
 import asyncio
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Union
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.provider.mempool.fee_validation_status import FeeValidationStatus
 from bisq.core.provider.mempool.mempool_request import MempoolRequest
 from bisq.core.provider.mempool.tx_validator import TxValidator
 from bitcoinj.base.coin import Coin
+from utils.aio import FutureCallback
 
 if TYPE_CHECKING:
     from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
@@ -22,8 +23,6 @@ if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
     from bisq.core.user.preferences import Preferences
-
-logger = get_logger(__name__)
 
 
 # TODO
@@ -38,6 +37,7 @@ class MempoolService:
         dao_state_service: "DaoStateService",
         burning_man_presentation_service: "BurningManPresentationService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.socks5_proxy_provider = socks5_proxy_provider
         self.config = config
         self.preferences = preferences
@@ -59,7 +59,7 @@ class MempoolService:
         def on_done(_):
             self.outstanding_requests -= 1
 
-        request.add_done_callback(on_done)
+        request.add_done_callback(FutureCallback(on_done, on_done))
         return request
 
     def can_request_be_made(self, offer_payload: "OfferPayload" = None) -> bool:
@@ -149,16 +149,15 @@ class MempoolService:
                     tx_validator.end_result(FeeValidationStatus.NACK_BTC_TX_NOT_FOUND)
                 )
 
-        def on_done(f: Future[str]):
+        def on_done(r_or_e):
             self.outstanding_requests -= 1
-            try:
-                json_txt = f.result()
-                UserThread.execute(lambda: on_success(json_txt))
-            except Exception as e:
-                logger.warning(f"onFailure - {str(e)}")
+            if isinstance(r_or_e, BaseException):
+                self.logger.warning(f"onFailure - {str(r_or_e)}")
                 UserThread.execute(on_failure)
+            else:
+                UserThread.execute(lambda: on_success(r_or_e))
 
-        return on_done
+        return FutureCallback(on_done, on_done)
 
     def _get_all_btc_fee_receivers(self):
         btc_fee_receivers = list[str]()
@@ -199,19 +198,19 @@ class MempoolService:
             self.filter_manager.get_filter() is not None
             and self.filter_manager.get_filter().disable_mempool_validation
         ):
-            logger.info(
+            self.logger.info(
                 "MempoolService bypassed by filter setting disableMempoolValidation=true"
             )
             return False
         if self.config.bypass_mempool_validation:
-            logger.info(
+            self.logger.info(
                 "MempoolService bypassed by config setting bypassMempoolValidation=true"
             )
             return False
         if not self.config.base_currency_network.is_mainnet():
-            logger.info("MempoolService only supports mainnet")
+            self.logger.info("MempoolService only supports mainnet")
             return False
         if not self.can_request_be_made():
-            logger.info("Tx Validation bypassed as service is not ready")
+            self.logger.info("Tx Validation bypassed as service is not ready")
             return False
         return True

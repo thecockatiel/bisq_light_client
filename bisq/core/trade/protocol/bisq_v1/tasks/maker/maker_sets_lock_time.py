@@ -1,14 +1,19 @@
+from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
-from bisq.core.util.coin.coin_util import CoinUtil
-from utils.preconditions import check_argument
-from bisq.common.setup.log_setup import get_logger
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.common.taskrunner.task_runner import TaskRunner
+    from bisq.core.trade.model.bisq_v1.trade import Trade
 
 
 class MakerSetsLockTime(TradeTask):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -27,7 +32,7 @@ class MakerSetsLockTime(TradeTask):
             lock_time = (
                 self.process_model.btc_wallet_service.get_best_chain_height() + delay
             )
-            logger.info(f"lockTime={lock_time}, delay={delay}")
+            self.logger.info(f"lockTime={lock_time}, delay={delay}")
             self.trade.lock_time = lock_time
 
             self.process_model.trade_manager.request_persistence()

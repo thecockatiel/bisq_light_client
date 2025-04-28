@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
 from datetime import timedelta
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from typing import TYPE_CHECKING, Optional
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
 from bisq.core.network.p2p.peers.keepalive.messages.pong import Pong
+from utils.aio import FutureCallback
 from utils.random import next_random_int
 from utils.time import get_time_ms
 
@@ -17,22 +17,22 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
-logger = get_logger(__name__)
 
 class KeepAliveHandler(MessageListener):
     MAX_DELAY_MS = 10_000
     
     class Listener(ABC):
         @abstractmethod
-        def on_complete(self):
+        def on_complete(self_):
             pass
         
         @abstractmethod
-        def on_fault(self, error_message: str):
+        def on_fault(self_, error_message: str):
             pass
     
     def __init__(self, network_node: "NetworkNode", peer_manager: "PeerManager", listener: "Listener") -> None:
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.network_node: "NetworkNode" = network_node
         self.peer_manager: "PeerManager" = peer_manager
         self.listener: "KeepAliveHandler.Listener" = listener
@@ -58,32 +58,31 @@ class KeepAliveHandler(MessageListener):
             ping = Ping(nonce=self.nonce, last_round_trip_time=connection.statistic.round_trip_time_property.value)
             self.send_ts = get_time_ms()
             
-                    
-            def on_done_callback(future: Future["Connection"]):
-                try:
-                    conn = future.result()
-                    if conn is None:
-                        raise Exception("Future returned None, connection was expected")
-                    if not self.stopped:
-                        self.connection = conn
-                        conn.add_message_listener(self)
-                    else:
-                        logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onSuccess call.")
-                except Exception as e:
-                    if not self.stopped:
-                        error_message = (f"Sending ping to {connection} failed. That is expected if the peer is offline.\n"
-                                    f"\tping={ping}.\n\tException={str(e)}")
-                        self.cleanup()
-                        logger.info(error_message)
-                        self.peer_manager.handle_connection_fault(connection=connection)
-                        self.listener.on_fault(error_message)
-                    else:
-                        logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
+            future = self.network_node.send_message(connection, ping)                    
 
-            future = self.network_node.send_message(connection, ping)
-            future.add_done_callback(on_done_callback)
+            def on_success(conn: "Connection"):
+                if conn is None:
+                    raise Exception("Future returned None, connection was expected")
+                if not self.stopped:
+                    self.connection = conn
+                    conn.add_message_listener(self)
+                else:
+                    self.logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onSuccess call.")
+
+            def on_failure(e):
+                if not self.stopped:
+                    error_message = (f"Sending ping to {connection} failed. That is expected if the peer is offline.\n"
+                                f"\tping={ping}.\n\tException={str(e)}")
+                    self.cleanup()
+                    self.logger.info(error_message)
+                    self.peer_manager.handle_connection_fault(connection=connection)
+                    self.listener.on_fault(error_message)
+                else:
+                    self.logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
+
+            future.add_done_callback(FutureCallback(on_success, on_failure))
         else:
-            logger.trace("We have stopped already. We ignore that sendPing call.")
+            self.logger.trace("We have stopped already. We ignore that sendPing call.")
             
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // MessageListener implementation
@@ -99,10 +98,10 @@ class KeepAliveHandler(MessageListener):
                     self.cleanup()
                     self.listener.on_complete()
                 else:
-                    logger.warning("Nonce not matching. That should never happen.\n\t"
+                    self.logger.warning("Nonce not matching. That should never happen.\n\t"
                               f"We drop that message. nonce={self.nonce} / requestNonce={pong.request_nonce}")
             else:
-                logger.trace("We have stopped already. We ignore that onMessage call.")
+                self.logger.trace("We have stopped already. We ignore that onMessage call.")
 
     def cleanup(self) -> None:
         self.stopped = True

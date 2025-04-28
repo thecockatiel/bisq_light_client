@@ -1,4 +1,3 @@
-from bisq.common.config.config import Config
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sig import Sig
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
@@ -8,9 +7,6 @@ from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.json_util import JsonUtil
 from utils.preconditions import check_argument, check_not_none
-from bisq.common.setup.log_setup import get_logger
-
-logger = get_logger(__name__)
 
 
 class MakerCreateAndSignContract(TradeTask):

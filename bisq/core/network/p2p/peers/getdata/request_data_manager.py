@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
     from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
 
-logger = get_logger(__name__)
-
 
 class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listener):
     RETRY_DELAY_SEC = 10
@@ -47,30 +45,30 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
 
     class Listener(ABC):
         @abstractmethod
-        def on_preliminary_data_received(self):
+        def on_preliminary_data_received(self_):
             pass
 
         @abstractmethod
-        def on_updated_data_received(self):
+        def on_updated_data_received(self_):
             pass
 
         @abstractmethod
-        def on_data_received(self):
+        def on_data_received(self_):
             pass
 
-        def on_no_peers_available(self):
+        def on_no_peers_available(self_):
             pass
 
-        def on_no_seed_node_available(self):
+        def on_no_seed_node_available(self_):
             pass
 
     class ResponseListener:
         @abstractmethod
-        def on_success(self, serialized_size: int):
+        def on_success(self_, serialized_size: int):
             pass
 
         @abstractmethod
-        def on_fault(self):
+        def on_fault(self_):
             pass
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -84,6 +82,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         data_storage: "P2PDataStorage",
         peer_manager: "PeerManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.network_node = network_node
         self.data_storage = data_storage
         self.peer_manager = peer_manager
@@ -277,27 +276,22 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 uid = connection.uid
                 if uid not in self.get_data_request_handlers:
                     class Listener(GetDataRequestHandler.Listener):
-                        
-                        def __init__(self, request_data_manager: "RequestDataManager") -> None:
-                            super().__init__()
-                            self.request_data_manager = request_data_manager
-                        
-                        def on_complete(self, serialized_size: int):
-                            self.request_data_manager._on_get_data_request_complete(
+                        def on_complete(self_, serialized_size: int):
+                            self._on_get_data_request_complete(
                                 uid, serialized_size, connection
                             )
 
-                        def on_fault(self, error_message: str, conn: "Connection"):
-                            self.request_data_manager._on_get_data_request_fault(uid, error_message, conn)
+                        def on_fault(self_, error_message: str, conn: "Connection"):
+                            self._on_get_data_request_fault(uid, error_message, conn)
                             
-                    listener = Listener(self)
+                    listener = Listener()
                     get_data_request_handler = GetDataRequestHandler(
                         self.network_node, self.data_storage, listener
                     )
                     self.get_data_request_handlers[uid] = get_data_request_handler
                     get_data_request_handler.handle(get_data_request, connection)
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "We have already a GetDataRequestHandler for that connection started. "
                         "We start a cleanup timer if the handler has not closed by itself in between 2 minutes."
                     )
@@ -306,27 +300,27 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                         timedelta(seconds=self.CLEANUP_TIMER),
                     )
             else:
-                logger.warning(
+                self.logger.warning(
                     "We have stopped already. We ignore that on_message call."
                 )
 
     def _on_get_data_request_complete(self, uid: str, serialized_size: int, connection: "Connection"):
         self.get_data_request_handlers.pop(uid, None)
-        logger.trace(f"requestDataHandshake completed.\n\tConnection={connection}")
+        self.logger.trace(f"requestDataHandshake completed.\n\tConnection={connection}")
         for listener in self.response_listeners:
             listener.on_success(serialized_size)
 
     def _on_get_data_request_fault(self, uid: str, error_message: str, connection: "Connection"):
         self.get_data_request_handlers.pop(uid, None)
         if not self.stopped:
-            logger.trace(
+            self.logger.trace(
                 f"GetDataRequestHandler failed.\n\tConnection={connection}\n\tErrorMessage={error_message}"
             )
             self.peer_manager.handle_connection_fault(connection=connection)
             for listener in self.response_listeners:
                 listener.on_fault()
         else:
-            logger.warning(
+            self.logger.warning(
                 "We have stopped already. We ignore that getDataRequestHandler.handle.onFault call."
             )
 
@@ -366,7 +360,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                     node_address, self.is_preliminary_data_request
                 )
             else:
-                logger.warning(
+                self.logger.warning(
                     f"We have started already a requestDataHandshake to peer. nodeAddress={node_address}\n"
                     f"We start a cleanup timer if the handler has not closed by itself in between 2 minutes."
                 )
@@ -375,7 +369,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                     timedelta(seconds=self.CLEANUP_TIMER),
                 )
         else:
-            logger.warning("We have stopped already. We ignore that request_data call.")
+            self.logger.warning("We have stopped already. We ignore that request_data call.")
 
     def _on_request_data_complete(
         self,
@@ -383,7 +377,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         was_truncated: bool,
         remaining_node_addresses: list["NodeAddress"],
     ):
-        logger.trace(
+        self.logger.trace(
             f"RequestDataHandshake of outbound connection complete. nodeAddress={node_address}"
         )
         self.stop_retry_timer()
@@ -412,7 +406,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 # If we had allDataReceived already set to true but get a response with truncated flag,
                 # we still repeat the request to that node for higher redundancy. Otherwise, one seed node
                 # providing incomplete data would stop others to fill the gaps.
-                logger.info(
+                self.logger.info(
                     "DataResponse did not contain all data, so we repeat request until we got all data"
                 )
                 UserThread.run_after(
@@ -420,7 +414,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 )
             elif not self.all_data_received:
                 self.all_data_received = True
-                logger.warning(
+                self.logger.warning(
                     "\n#################################################################\n"
                     f"Loading initial data from {node_address} did not complete after 20 repeated requests.\n"
                     "#################################################################\n"
@@ -429,7 +423,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 self.listener.on_data_received()
         elif not self.all_data_received:
             self.all_data_received = True
-            logger.info(
+            self.logger.info(
                 "\n\n#################################################################\n"
                 f"Loading initial data from {node_address} completed\n"
                 "#################################################################\n"
@@ -444,7 +438,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         connection: Optional["Connection"],
         remaining_node_addresses: list["NodeAddress"],
     ):
-        logger.trace(
+        self.logger.trace(
             f"requestDataHandshake with outbound connection failed.\n\tnodeAddress={node_address}\n\t"
             f"ErrorMessage={error_message}"
         )
@@ -452,7 +446,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         self.handler_map.pop(node_address, None)
 
         if remaining_node_addresses:
-            logger.debug(
+            self.logger.debug(
                 "There are remaining nodes available for requesting data. "
                 "We will try requestDataFromPeers again."
             )
@@ -461,7 +455,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         elif not self.handler_map:
             # If not other connection attempts are in the handlerMap we assume that no seed
             # nodes are available.
-            logger.debug(
+            self.logger.debug(
                 "There is no remaining node available for requesting data. "
                 "That is expected if no other node is online.\n\t"
                 "We will try to use reported peers (if no available we use persisted peers) "
@@ -478,7 +472,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                     self.listener.on_no_peers_available()
             self.request_from_non_seed_node_peers()
         else:
-            logger.info(
+            self.logger.info(
                 f"We could not connect to seed node {node_address.get_full_address()} but "
                  "we have other connection attempts open."
             )
@@ -577,7 +571,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
                 self.handler_map[node_address].cancel()
                 del self.handler_map[node_address]
         else:
-            logger.trace(
+            self.logger.trace(
                 f"closeRequestDataHandler: node_address not set in connection {connection}"
             )
 

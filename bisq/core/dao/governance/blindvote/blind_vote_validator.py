@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.dao.governance.proposal.proposal_validation_exception import (
@@ -15,14 +15,13 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
 
-logger = get_logger(__name__)
-
 
 class BlindVoteValidator:
 
     def __init__(
         self, dao_state_service: "DaoStateService", period_service: "PeriodService"
     ):
+        self.logger = get_ctx_logger(__name__)
         self.dao_state_service = dao_state_service
         self.period_service = period_service
 
@@ -69,18 +68,18 @@ class BlindVoteValidator:
 
             ExtraDataMapValidator.validate(blind_vote.extra_data_map)
         except Exception as e:
-            logger.warning(str(e))
+            self.logger.warning(str(e))
             raise ProposalValidationException(e)
 
     def are_data_fields_valid_and_tx_confirmed(self, blind_vote: "BlindVote") -> bool:
         if not self.are_data_fields_valid(blind_vote):
-            logger.warning(f"blindVote is invalid. blindVote={blind_vote}")
+            self.logger.warning(f"blindVote is invalid. blindVote={blind_vote}")
             return False
 
         # Check if tx is already confirmed and in DaoState
         is_confirmed = self.dao_state_service.get_tx(blind_vote.tx_id) is not None
         if self.dao_state_service.parse_block_chain_complete and not is_confirmed:
-            logger.warning(
+            self.logger.warning(
                 f"blindVoteTx is not confirmed. blindVoteTxId={blind_vote.tx_id}"
             )
 
@@ -90,18 +89,18 @@ class BlindVoteValidator:
         tx_id = blind_vote.tx_id
         optional_tx = self.dao_state_service.get_tx(tx_id)
         if not optional_tx:
-            logger.debug(f"Tx is not in daoStateService. blindVoteTxId={tx_id}")
+            self.logger.debug(f"Tx is not in daoStateService. blindVoteTxId={tx_id}")
             return False
 
         tx_height = optional_tx.block_height
         if not self.period_service.is_tx_in_correct_cycle(
             tx_height, self.dao_state_service.chain_height
         ):
-            logger.debug(f"Tx is not in current cycle. blindVote={blind_vote}")
+            self.logger.debug(f"Tx is not in current cycle. blindVote={blind_vote}")
             return False
 
         if not self.period_service.is_tx_in_phase(tx_id, DaoPhase.Phase.BLIND_VOTE):
-            logger.debug(f"Tx is not in BLIND_VOTE phase. blindVote={blind_vote}")
+            self.logger.debug(f"Tx is not in BLIND_VOTE phase. blindVote={blind_vote}")
             return False
 
         return True

@@ -1,7 +1,7 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
 from bisq.core.dao.governance.bond.lockup.lockup_reason import LockupReason
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.wallets_manager import WalletsManager
 
-logger = get_logger(__name__)
-
 
 class LockupTxService:
     """Service for publishing the lockup transaction."""
@@ -28,6 +26,7 @@ class LockupTxService:
         bsq_wallet_service: "BsqWalletService",
         btc_wallet_service: "BtcWalletService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._wallets_manager = wallets_manager
         self._bsq_wallet_service = bsq_wallet_service
         self._btc_wallet_service = btc_wallet_service
@@ -51,10 +50,10 @@ class LockupTxService:
             )
 
             class Listener(TxBroadcasterCallback):
-                def on_success(self, tx: "Transaction"):
+                def on_success(self_, tx: "Transaction"):
                     result_handler(tx.get_tx_id())
 
-                def on_failure(self, exception):
+                def on_failure(self_, exception):
                     exception_handler(exception)
 
             self._wallets_manager.publish_and_commit_bsq_tx(
@@ -94,5 +93,5 @@ class LockupTxService:
         transaction = self._bsq_wallet_service.sign_tx_and_verify_no_dust_outputs(
             tx_with_btc_fee
         )
-        logger.info(f"Lockup tx: {transaction}")
+        self.logger.info(f"Lockup tx: {transaction}")
         return transaction

@@ -1,12 +1,11 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 import random
 from typing import TYPE_CHECKING, Optional
 from bisq.common.config.config import Config
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.file.file_util import remove_and_backup_file
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.monitoring.model.dao_state_block import DaoStateBlock
@@ -43,8 +42,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
-
 
 class DaoStateMonitoringService(
     DaoSetupService,
@@ -55,13 +52,13 @@ class DaoStateMonitoringService(
 ):
 
     class Listener:
-        def on_dao_state_hashes_changed(self):
+        def on_dao_state_hashes_changed(self_):
             pass
 
-        def on_checkpoint_failed(self):
+        def on_checkpoint_failed(self_):
             pass
 
-        def on_dao_state_block_created(self):
+        def on_dao_state_block_created(self_):
             pass
 
     def __init__(
@@ -75,6 +72,7 @@ class DaoStateMonitoringService(
         storage_dir: Path,
         ignore_dev_msg: bool,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.dao_state_service = dao_state_service
         self._dao_state_storage_service = dao_state_storage_service
         self._dao_state_network_service = dao_state_network_service
@@ -148,7 +146,7 @@ class DaoStateMonitoringService(
         if not self.ignore_dev_msg:
             self._verify_checkpoints()
 
-        logger.info(
+        self.logger.info(
             f"ParseBlockChainComplete: Accumulated updateHashChain() calls for {self._num_calls} blocks took {self._accumulated_duration} ms "
             f"({int(self._accumulated_duration / self._num_calls) if self._num_calls else 0} ms in average / block)"
         )
@@ -227,7 +225,7 @@ class DaoStateMonitoringService(
         self._dao_state_network_service.reset()
 
         if persisted_dao_state_hash_chain:
-            logger.info(
+            self.logger.info(
                 f"Apply snapshot with {len(persisted_dao_state_hash_chain)} daoStateHashes. "
                 f"Last daoStateHash={persisted_dao_state_hash_chain[-1]}"
             )
@@ -267,7 +265,7 @@ class DaoStateMonitoringService(
             if height == self.genesis_tx_info.genesis_block_height:
                 prev_hash = bytes()
             else:
-                logger.warning(
+                self.logger.warning(
                     "DaoStateBlockchain is empty but we received the block which was not the genesis block. "
                     "We stop execution here."
                 )
@@ -281,7 +279,7 @@ class DaoStateMonitoringService(
             if height == height_of_last_block + 1:
                 prev_hash = last.hash
             else:
-                logger.warning(
+                self.logger.warning(
                     f"New block must be 1 block above previous block. height={height}, "
                     f"daoStateBlockChain.getLast().getHeight()={height_of_last_block}"
                 )
@@ -317,12 +315,12 @@ class DaoStateMonitoringService(
             )
 
         duration = get_time_ms() - ts
-        logger.trace(f"updateHashChain for block {block.height} took {duration} ms")
+        self.logger.trace(f"updateHashChain for block {block.height} took {duration} ms")
         self._accumulated_duration += duration
         self._num_calls += 1
 
         if self._num_calls % 10 == 0:
-            logger.info(
+            self.logger.info(
                 "Accumulated updateHashChain() calls for {} blocks took {} ms ({} ms in average / block)".format(
                     self._num_calls,
                     self._accumulated_duration,
@@ -405,10 +403,10 @@ class DaoStateMonitoringService(
 
         if self._is_seed_node(peers_node_address):
             self.is_in_conflict_with_seed_node = True
-            logger.warning(f"Conflict with seed nodes: {conflict_msg}")
+            self.logger.warning(f"Conflict with seed nodes: {conflict_msg}")
         else:
             self.is_in_conflict_with_non_seed_node = True
-            logger.debug(f"Conflict with non-seed nodes: {conflict_msg}")
+            self.logger.debug(f"Conflict with non-seed nodes: {conflict_msg}")
 
     def _check_utxos(self, block: "Block"):
         genesis_total_supply = self.dao_state_service.genesis_total_supply.value
@@ -434,7 +432,7 @@ class DaoStateMonitoringService(
         )
 
         if sum_bsq != sum_utxo:
-            logger.error(
+            self.logger.error(
                 f"BSQ Utxos are not matching. sumBsq={sum_bsq}; sumUtxo={sum_utxo}"
             )
             self.utxo_mismatches.append(UtxoMismatch(block.height, sum_utxo, sum_bsq))
@@ -444,12 +442,12 @@ class DaoStateMonitoringService(
             for dao_state_hash in self.dao_state_hash_chain:
                 if dao_state_hash.height == checkpoint.height:
                     if dao_state_hash.hash == checkpoint.hash:
-                        logger.info(f"Passed checkpoint {checkpoint}")
+                        self.logger.info(f"Passed checkpoint {checkpoint}")
                     else:
                         if self._checkpoint_failed:
                             return
                         self._checkpoint_failed = True
-                        logger.warning(
+                        self.logger.warning(
                             f"verifyCheckpoints failed. We resync from resources "
                             f"daoStateHash.getHash()={dao_state_hash.hash.hex()}, "
                             f"checkpoint.getHash()={checkpoint.hash.hex()}, checkpoint {checkpoint}"
@@ -457,7 +455,7 @@ class DaoStateMonitoringService(
                         try:
                             self._dao_state_storage_service.remove_and_backup_all_dao_data()
                         except Exception as e:
-                            logger.error("removeAndBackupAllDaoData failed", exc_info=e)
+                            self.logger.error("removeAndBackupAllDaoData failed", exc_info=e)
                         for listener in self._listeners:
                             listener.on_checkpoint_failed()
 

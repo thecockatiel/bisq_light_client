@@ -1,4 +1,5 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, List, Callable, Optional
 from utils.preconditions import check_argument
 from bisq.common.version import Version
@@ -6,7 +7,6 @@ from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.exceptions.trade_price_out_of_tolerance_exception import (
@@ -89,9 +89,7 @@ if TYPE_CHECKING:
     )
     from bisq.core.user.preferences import Preferences
     from bisq.core.user.user import User
-
-logger = get_logger(__name__)
-
+ 
 
 class OpenOfferManager(
     PeerManager.Listener,
@@ -130,7 +128,7 @@ class OpenOfferManager(
         persistence_manager: "PersistenceManager[TradableList[OpenOffer]]",
         dao_state_service: "DaoStateService",
     ):
-
+        self.logger = get_ctx_logger(__name__)
         self.core_context = core_context
         self.create_offer_service = create_offer_service
         self.key_ring = key_ring
@@ -233,7 +231,7 @@ class OpenOfferManager(
         # We reset all AddressEntriesForOpenOffer which do not have a corresponding openOffer
         for entry in self.btc_wallet_service.get_address_entries_for_open_offer():
             if entry.offer_id not in open_offers_id_set:
-                logger.warning(
+                self.logger.warning(
                     f"We found an outdated addressEntry for openOffer {entry.offer_id} "
                     f"(openOffers does not contain that offer), offers.size={len(self.open_offers)}"
                 )
@@ -254,7 +252,7 @@ class OpenOfferManager(
         # we remove own offers from offerbook when we go offline
         # Normally we use a delay for broadcasting to the peers, but at shut down we want to get it fast out
         size = len(self.open_offers)
-        logger.info(f"Remove open offers at shutDown. Number of open offers: {size}")
+        self.logger.info(f"Remove open offers at shutDown. Number of open offers: {size}")
         if self.offer_book_service.is_bootstrapped and size > 0:
 
             def execute():
@@ -317,11 +315,11 @@ class OpenOfferManager(
             ack_message = network_envelope
             if ack_message.source_type == AckMessageSourceType.OFFER_MESSAGE:
                 if ack_message.success:
-                    logger.info(
+                    self.logger.info(
                         f"Received AckMessage for {ack_message.source_msg_class_name} with offerId {ack_message.source_id} and uid {ack_message.source_uid}"
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"Received AckMessage with error state for {ack_message.source_msg_class_name} with offerId {ack_message.source_id} and errorMessage={ack_message.error_message}"
                     )
 
@@ -362,7 +360,7 @@ class OpenOfferManager(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_all_connections_lost(self):
-        logger.info("onAllConnectionsLost")
+        self.logger.info("onAllConnectionsLost")
         self.stopped = True
         self.stop_periodic_refresh_offers_timer()
         self.stop_periodic_republish_offers_timer()
@@ -371,12 +369,12 @@ class OpenOfferManager(
         self.restart()
 
     def on_new_connection_after_all_connections_lost(self):
-        logger.info("onNewConnectionAfterAllConnectionsLost")
+        self.logger.info("onNewConnectionAfterAllConnectionsLost")
         self.stopped = False
         self.restart()
 
     def on_awake_from_standby(self):
-        logger.info("onAwakeFromStandby")
+        self.logger.info("onAwakeFromStandby")
         self.stopped = False
         if self.p2p_service.network_node.get_all_connections():
             self.restart()
@@ -463,7 +461,7 @@ class OpenOfferManager(
                 self.start_periodic_republish_offers_timer()
                 self.start_periodic_refresh_offers_timer()
             else:
-                logger.debug(
+                self.logger.debug(
                     "We have stopped already. We ignore that place_offer_protocol.place_offer.on_result call."
                 )
             result_handler(transaction)
@@ -479,7 +477,7 @@ class OpenOfferManager(
             self.start_periodic_republish_offers_timer()
             self.start_periodic_refresh_offers_timer()
         else:
-            logger.debug(
+            self.logger.debug(
                 "We have stopped already. We ignore that place_offer_protocol.place_offer.on_result call."
             )
 
@@ -496,7 +494,7 @@ class OpenOfferManager(
                 open_offer_optional, result_handler, error_message_handler
             )
         else:
-            logger.warning(
+            self.logger.warning(
                 "Offer was not found in our list of open offers. We still try to remove it from the offerbook."
             )
             error_message_handler(
@@ -543,7 +541,7 @@ class OpenOfferManager(
             open_offer.state = OpenOfferState.AVAILABLE
             open_offer.fee_validation_status = FeeValidationStatus.NOT_CHECKED_YET
             self.request_persistence()
-            logger.debug(f"activate_open_offer, offer_id={offer.id}")
+            self.logger.debug(f"activate_open_offer, offer_id={offer.id}")
             result_handler()
 
         self.offer_book_service.activate_offer(offer, on_success, error_message_handler)
@@ -559,7 +557,7 @@ class OpenOfferManager(
         def on_success():
             open_offer.state = OpenOfferState.DEACTIVATED
             self.request_persistence()
-            logger.debug(f"deactivate_open_offer, offer_id={offer.id}")
+            self.logger.debug(f"deactivate_open_offer, offer_id={offer.id}")
             result_handler()
 
         self.offer_book_service.deactivate_offer(
@@ -597,7 +595,7 @@ class OpenOfferManager(
         error_message_handler: ErrorMessageHandler,
     ):
         if open_offer.get_id() in self.offers_to_be_edited:
-            logger.warning(
+            self.logger.warning(
                 "edit_open_offer_start called for an offer which is already in edit mode."
             )
             result_handler()
@@ -687,7 +685,7 @@ class OpenOfferManager(
                 # for the remaining offers.
                 self.btc_wallet_service.reset_address_entries_for_open_offer(offer.id)
 
-        logger.info(f"_on_removed offer_id={offer.id}")
+        self.logger.info(f"_on_removed offer_id={offer.id}")
         result_handler()
 
     # Close openOffer after deposit published
@@ -699,8 +697,8 @@ class OpenOfferManager(
                 open_offer.state = OpenOfferState.CLOSED
                 self.offer_book_service.remove_offer(
                     open_offer.get_offer().offer_payload_base,
-                    lambda: logger.trace("Successfully removed offer"),
-                    logger.error,
+                    lambda: self.logger.trace("Successfully removed offer"),
+                    self.logger.error,
                 )
         else:
             for open_offer in self.get_open_offers_by_maker_fee_tx_id(
@@ -720,8 +718,8 @@ class OpenOfferManager(
 
                 self.offer_book_service.remove_offer(
                     open_offer.get_offer().offer_payload_base,
-                    lambda: logger.trace("Successfully removed offer"),
-                    logger.error,
+                    lambda: self.logger.trace("Successfully removed offer"),
+                    self.logger.error,
                 )
 
     def reserve_open_offer(self, open_offer: "OpenOffer"):
@@ -781,7 +779,7 @@ class OpenOfferManager(
     def handle_offer_availability_request(
         self, request: "OfferAvailabilityRequest", peer_node_address: "NodeAddress"
     ):
-        logger.info(
+        self.logger.info(
             f"Received OfferAvailabilityRequest from {peer_node_address} with "
             f"offerId {request.offer_id} and uid {request.uid}"
         )
@@ -793,20 +791,20 @@ class OpenOfferManager(
             peer_node_address.host_name
         ):
             error_message = "We got a handle_offer_availability_request from a Tor node v2 address where a Tor node v3 address is required."
-            logger.info(error_message)
+            self.logger.info(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             return
 
         if not self.p2p_service.is_bootstrapped:
             error_message = "We got a handle_offer_availability_request but we have not bootstrapped yet."
-            logger.info(error_message)
+            self.logger.info(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             return
 
         # Don't allow trade start if BitcoinJ is not fully synced (bisq issue #4764)
         if not self.btc_wallet_service.is_chain_height_synced_within_tolerance:
             error_message = "We got a handle_offer_availability_request but our chain is not synced."
-            logger.info(error_message)
+            self.logger.info(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             if self.chain_not_synced_handler:
                 self.chain_not_synced_handler(Res.get("popup.warning.chainNotSynced"))
@@ -817,7 +815,7 @@ class OpenOfferManager(
             error_message = (
                 "We got a handle_offer_availability_request but our DAO is not synced."
             )
-            logger.info(error_message)
+            self.logger.info(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             if self.chain_not_synced_handler:
                 self.chain_not_synced_handler(Res.get("popup.warning.daoNeedsResync"))
@@ -825,7 +823,7 @@ class OpenOfferManager(
 
         if self.stopped:
             error_message = "We have stopped already. We ignore that handle_offer_availability_request call."
-            logger.debug(error_message)
+            self.logger.debug(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             return
 
@@ -834,7 +832,7 @@ class OpenOfferManager(
             assert request.pub_key_ring is not None, "pub_key_ring must not be None"
         except Exception as e:
             error_message = f"Message validation failed. Error={e}, Message={request}"
-            logger.warning(error_message)
+            self.logger.warning(error_message)
             self._send_ack_message(request, peer_node_address, False, error_message)
             return
 
@@ -878,19 +876,19 @@ class OpenOfferManager(
                                 )
                                 availability_result = AvailabilityResult.AVAILABLE
                             except TradePriceOutOfToleranceException as e:
-                                logger.warning(
+                                self.logger.warning(
                                     "Trade price check failed because takers price is outside out tolerance."
                                 )
                                 availability_result = (
                                     AvailabilityResult.PRICE_OUT_OF_TOLERANCE
                                 )
                             except MarketPriceNotAvailableException as e:
-                                logger.warning(e)
+                                self.logger.warning(e)
                                 availability_result = (
                                     AvailabilityResult.MARKET_PRICE_NOT_AVAILABLE
                                 )
                             except Exception as e:
-                                logger.warning(f"Trade price check failed: {e}")
+                                self.logger.warning(f"Trade price check failed: {e}")
                                 availability_result = (
                                     AvailabilityResult.PRICE_CHECK_FAILED
                                 )
@@ -901,7 +899,7 @@ class OpenOfferManager(
                 else:
                     availability_result = AvailabilityResult.MAKER_DENIED_API_USER
             else:
-                logger.warning(
+                self.logger.warning(
                     "handle_offer_availability_request: openOffer not found."
                 )
                 availability_result = AvailabilityResult.OFFER_TAKEN
@@ -911,7 +909,7 @@ class OpenOfferManager(
                 or self.bsq_wallet_service.is_unconfirmed_transactions_limit_hit()
             ):
                 error_message = Res.get("shared.unconfirmedTransactionsLimitReached")
-                logger.warning(error_message)
+                self.logger.warning(error_message)
                 availability_result = AvailabilityResult.UNCONF_TX_LIMIT_HIT
 
 
@@ -931,7 +929,7 @@ class OpenOfferManager(
                 error_message = (
                     f"Message validation failed. Error={e}, Message={request}"
                 )
-                logger.warning(error_message)
+                self.logger.warning(error_message)
                 availability_result = AvailabilityResult.INVALID_SNAPSHOT_HEIGHT
 
             response = OfferAvailabilityResponse(
@@ -942,18 +940,18 @@ class OpenOfferManager(
                 refund_agent=refund_agent_node_address,
             )
 
-            logger.info(
+            self.logger.info(
                 f"Send {response.__class__.__name__} with offerId {response.offer_id} and uid {response.uid} to peer {peer_node_address}"
             )
 
             class Listener(SendDirectMessageListener):
-                def on_arrived(self):
-                    logger.info(
+                def on_arrived(self_):
+                    self.logger.info(
                         f"{response.__class__.__name__} arrived at peer: offerId={response.offer_id}; uid={response.uid}"
                     )
 
-                def on_fault(self, error_msg: str):
-                    logger.error(
+                def on_fault(self_, error_msg: str):
+                    self.logger.error(
                         f"Sending {response.__class__.__name__} failed: uid={response.uid}; peer={peer_node_address}; error={error_msg}"
                     )
 
@@ -964,7 +962,7 @@ class OpenOfferManager(
 
         except Exception as e:
             error_message = f"Exception at handle_offer_availability_request: {e}"
-            logger.error(error_message, exc_info=e)
+            self.logger.error(error_message, exc_info=e)
         finally:
             self._send_ack_message(request, peer_node_address, result, error_message)
 
@@ -992,20 +990,20 @@ class OpenOfferManager(
 
         takers_node_address = sender
         takers_pub_key_ring = message.pub_key_ring
-        logger.info(
+        self.logger.info(
             f"Send AckMessage for OfferAvailabilityRequest to peer {takers_node_address} "
             f"with offerId {offer_id} and sourceUid {ack_message.source_uid}"
         )
 
         class Listener(SendDirectMessageListener):
-            def on_arrived(self):
-                logger.info(
+            def on_arrived(self_):
+                self.logger.info(
                     f"AckMessage for OfferAvailabilityRequest arrived at takersNodeAddress "
                     f"{takers_node_address}. offerId={offer_id}, sourceUid={ack_message.source_uid}"
                 )
 
-            def on_fault(self, error_message: str):
-                logger.error(
+            def on_fault(self_, error_message: str):
+                self.logger.error(
                     f"AckMessage for OfferAvailabilityRequest failed. AckMessage={ack_message}, "
                     f"takersNodeAddress={takers_node_address}, errorMessage={error_message}"
                 )
@@ -1064,7 +1062,7 @@ class OpenOfferManager(
                         Capabilities.app.to_string_list()
                     )
 
-                    logger.info(
+                    self.logger.info(
                         f"Converted offer to support new Capability.MEDIATION and Capability.REFUND_AGENT capability. id={original_offer.id}"
                     )
                 else:
@@ -1075,7 +1073,7 @@ class OpenOfferManager(
                 if protocol_version < Version.TRADE_PROTOCOL_VERSION:
                     # We update the trade protocol version
                     protocol_version = Version.TRADE_PROTOCOL_VERSION
-                    logger.info(
+                    self.logger.info(
                         f"Updated the protocol version of offer id={original_offer.id}"
                     )
 
@@ -1083,7 +1081,7 @@ class OpenOfferManager(
                 owner_node_address = original.owner_node_address
                 if owner_node_address != self.p2p_service.address:
                     owner_node_address = self.p2p_service.address
-                    logger.info(
+                    self.logger.info(
                         f"Updated the owner nodeaddress of offer id={original_offer.id}"
                     )
 
@@ -1148,7 +1146,7 @@ class OpenOfferManager(
                 updated_open_offer.state = original_open_offer_state
                 self.add_open_offer_to_list(updated_open_offer)
 
-                logger.info(f"Updating offer completed. id={original_offer.id}")
+                self.logger.info(f"Updating offer completed. id={original_offer.id}")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // RepublishOffers, refreshOffers
@@ -1197,7 +1195,7 @@ class OpenOfferManager(
 
         def on_error(error_message: str):
             if not self.stopped:
-                logger.error(f"Adding offer to P2P network failed. {error_message}")
+                self.logger.error(f"Adding offer to P2P network failed. {error_message}")
                 self.stop_retry_republish_offers_timer()
                 self.retry_republish_offers_timer = UserThread.run_after(
                     self.republish_offers,
@@ -1222,7 +1220,7 @@ class OpenOfferManager(
         if self.periodic_refresh_offers_timer is None:
             def refresh_action():
                 if self.stopped:
-                    logger.debug(
+                    self.logger.debug(
                         "We have stopped already. We ignore that periodic_refresh_offers_timer.run call."
                     )
                     return
@@ -1254,24 +1252,24 @@ class OpenOfferManager(
                 refresh_action, timedelta(milliseconds=OpenOfferManager.REFRESH_INTERVAL_MS)
             )
         else:
-            logger.trace("periodic_refresh_offers_timer already started")
+            self.logger.trace("periodic_refresh_offers_timer already started")
 
     def maybe_refresh_offer(self, open_offer: "OpenOffer"):
         if self._prevented_from_publishing(open_offer):
             return
 
         def on_success():
-            logger.debug("Successfully refreshed TTL for offer")
+            self.logger.debug("Successfully refreshed TTL for offer")
 
         def on_error(error_message):
-            logger.warning(error_message)
+            self.logger.warning(error_message)
 
         self.offer_book_service.refresh_ttl(
             open_offer.get_offer().offer_payload_base, on_success, on_error
         )
 
     def restart(self):
-        logger.debug("Restart after connection loss")
+        self.logger.debug("Restart after connection loss")
 
         def republish():
             self.stopped = False

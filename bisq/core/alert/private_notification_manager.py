@@ -1,9 +1,10 @@
 from collections.abc import Callable
+import contextvars
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.crypto.key_ring import KeyRing
 from bisq.common.crypto.pub_key_ring import PubKeyRing
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.core.alert.private_notification_payload import PrivateNotificationPayload
 from bisq.core.network.p2p.decrypted_message_with_pub_key import (
@@ -15,6 +16,7 @@ from bisq.core.network.p2p.send_mailbox_message_listener import (
     SendMailboxMessageListener,
 )
 from electrum_min.bitcoin import ecdsa_sign_usermessage
+from utils.aio import FutureCallback
 from utils.data import SimpleProperty
 from bisq.common.crypto.encryption import Encryption, ECPrivkey, ECPubkey
 from bisq.core.network.p2p.network.message_listener import MessageListener
@@ -30,8 +32,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
-logger = get_logger(__name__)
-
 
 class PrivateNotificationManager(MessageListener):
 
@@ -44,6 +44,7 @@ class PrivateNotificationManager(MessageListener):
         ignore_dev_msg: bool,
         use_dev_privilege_keys: bool,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.network_node = network_node
         self.mailbox_message_service = mailbox_message_service
@@ -75,7 +76,7 @@ class PrivateNotificationManager(MessageListener):
     ):
         network_envelope = decrypted_message_with_pub_key.network_envelope
         if isinstance(network_envelope, PrivateNotificationMessage):
-            logger.info(
+            self.logger.info(
                 f"Received PrivateNotificationMessage from {sender_node_address} with uid={network_envelope.uid}"
             )
             if network_envelope.sender_node_address == sender_node_address:
@@ -83,7 +84,7 @@ class PrivateNotificationManager(MessageListener):
                 if self.verify_signature(private_notification):
                     self.private_notification_message_property.set(private_notification)
             else:
-                logger.warning(
+                self.logger.warning(
                     "Peer address not matching for privateNotificationMessage"
                 )
 
@@ -109,7 +110,7 @@ class PrivateNotificationManager(MessageListener):
                 private_notification_payload=private_notification,
                 sender_node_address=self.p2p_service.network_node.node_address_property.value,
             )
-            logger.info(
+            self.logger.info(
                 f"Send {message.__class__.__name__} to peer {peers_node_address}. uid={message}"
             )
             self.mailbox_message_service.send_encrypted_mailbox_message(
@@ -167,14 +168,14 @@ class PrivateNotificationManager(MessageListener):
             )
             return True
         except:
-            logger.warning("verifySignature failed")
+            self.logger.warning("verifySignature failed")
             return False
 
     def send_ping(
         self, peers_node_address: "NodeAddress", result_handler: Callable[[str], None]
     ):
         ping = Ping()
-        logger.info(f"Send Ping to peer {peers_node_address}, nonce={ping.nonce}")
+        self.logger.info(f"Send Ping to peer {peers_node_address}, nonce={ping.nonce}")
 
         def on_send_complete(connection: "Connection"):
             connection.add_message_listener(self)
@@ -186,24 +187,22 @@ class PrivateNotificationManager(MessageListener):
                 f"That is expected if the peer is offline.\n\tping={ping}\n\t"
                 f"Exception={str(error)}"
             )
-            logger.info(error_message)
+            self.logger.info(error_message)
             result_handler(error_message)
 
         future = self.network_node.send_message(peers_node_address, ping)
 
-        def on_done(f: "Future"):
-            try:
-                connection = f.result()
-                on_send_complete(connection)
-            except Exception as e:
-                on_send_failed(e)
-
-        future.add_done_callback(on_done)
+        future.add_done_callback(
+            FutureCallback(
+                on_send_complete,
+                on_send_failed,
+            )
+        )
 
     def on_message(self, network_envelope: "NetworkEnvelope", connection: "Connection"):
         if isinstance(network_envelope, Pong):
             key = connection.peers_node_address.get_full_address()
-            logger.info(f"Received Pong! {network_envelope} from {key}")
+            self.logger.info(f"Received Pong! {network_envelope} from {key}")
             connection.remove_message_listener(self)
             if self.ping_response_handler:
                 self.ping_response_handler("SUCCESS")

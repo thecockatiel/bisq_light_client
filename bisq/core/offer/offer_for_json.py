@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.locale.res import Res
@@ -13,7 +13,6 @@ from bitcoinj.base.utils.monetary_format import MonetaryFormat
 if TYPE_CHECKING:
     from bisq.core.payment.payload.payment_method import PaymentMethod
 
-logger = get_logger(__name__)
 
 class OfferForJson:
     FIAT_FORMAT = MonetaryFormat().with_shift(0).with_min_decimals(4).repeat_optional_decimals(0, 0)
@@ -33,6 +32,7 @@ class OfferForJson:
         market_price_margin: float,
         payment_method: 'PaymentMethod'
     ):
+        self.logger = get_ctx_logger(__name__)
         self.direction = direction
         self.currency_code = currency_code
         self.min_amount = min_amount.value
@@ -101,7 +101,7 @@ class OfferForJson:
                 self.primary_market_amount = self._get_amount_as_coin().value
 
         except Exception as e:
-            logger.error(f"Error at set_display_strings: {str(e)}")
+            self.logger.error(f"Error at set_display_strings: {str(e)}")
 
     def _get_price(self) -> Price:
         return Price.value_of(self.currency_code, self.price)

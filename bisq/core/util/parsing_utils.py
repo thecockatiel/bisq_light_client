@@ -1,6 +1,6 @@
 from typing import Union
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.util.formatting_util import FormattingUtils
 from bitcoinj.base.coin import Coin
@@ -8,7 +8,6 @@ from bisq.core.util.coin.coin_formatter import CoinFormatter
 from bitcoinj.base.utils.monetary_format import MonetaryFormat
 
 
-logger = get_logger(__name__)
 
 # NOTE: I guess performance can be increased a little for clean_double_input usages
 
@@ -22,6 +21,7 @@ class ParsingUtils:
             try:
                 return formatter.parse(ParsingUtils.clean_double_input(input_str))
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at parse_to_coin: {str(e)}")
 
         return Coin.ZERO()
@@ -51,6 +51,7 @@ class ParsingUtils:
             # expected ValueError if input is not a number
             pass
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"parse_price_string_to_long: {str(e)}")
         return 0
 

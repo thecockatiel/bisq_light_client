@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.taskrunner.task_runner import TaskRunner
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.listeners.address_confidence_listener import (
@@ -20,13 +20,12 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-logger = get_logger(__name__)
-
 
 class BuyerSetupDepositTxListener(TradeTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
         self.trade_state_subscription: Optional[Callable[[], None]] = None
         self.confidence_listener: Optional[AddressConfidenceListener] = None
 
@@ -141,7 +140,7 @@ class BuyerSetupDepositTxListener(TradeTask):
         )
 
         if taker_fee_tx_id is None and num_input_matches != 1:
-            logger.warning(
+            self.logger.warning(
                 f"We got a transactionConfidenceTx which does not match our inputs. "
                 f"takerFeeTxId is null (valid if role is buyer as maker) and numInputMatches "
                 f"is not 1 as expected (for makerFeeTxId). "
@@ -149,7 +148,7 @@ class BuyerSetupDepositTxListener(TradeTask):
             )
             return False
         elif taker_fee_tx_id is not None and num_input_matches != 2:
-            logger.warning(
+            self.logger.warning(
                 f"We got a transactionConfidenceTx which does not match our inputs. "
                 f"numInputMatches is not 2 as expected (for makerFeeTxId and takerFeeTxId). "
                 f"numInputMatches={num_input_matches}, transactionConfidenceTx={wallet_tx}"
@@ -161,7 +160,7 @@ class BuyerSetupDepositTxListener(TradeTask):
             for output in wallet_tx.outputs
         )
         if not is_output_matching:
-            logger.warning(
+            self.logger.warning(
                 f"We got a transactionConfidenceTx which does not have the depositTxAddress "
                 f"as output (but as input). depositTxAddress={deposit_tx_address}, transactionConfidenceTx={wallet_tx}"
             )

@@ -7,20 +7,17 @@ from bisq.common.file.file_util import (
     delete_directory,
     rename_file,
 )
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.state.storage.bsq_block_store import BsqBlockStore
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 import pb_pb2 as protobuf
 from proto.delimited_protobuf import read_delimited, write_delimited
 from utils.time import get_time_ms
-import tempfile
 
 if TYPE_CHECKING:
     from bisq.common.protocol.persistable.persistence_proto_resolver import (
         PersistenceProtoResolver,
     )
-
-logger = get_logger(__name__)
 
 
 class BlocksPersistence:
@@ -36,6 +33,7 @@ class BlocksPersistence:
         self._file_name = file_name
         self._persistence_proto_resolver = persistence_proto_resolver
         self._used_temp_file_path: Optional[Path] = None
+        self.logger = get_ctx_logger(__name__)
 
     def write_blocks(self, protobuf_blocks: list[protobuf.BaseBlock]):
         start_time = get_time_ms()
@@ -76,7 +74,7 @@ class BlocksPersistence:
             )
             self._write_to_disk(storage_file, BsqBlockStore(temp))
 
-        logger.info(
+        self.logger.info(
             f"Write {len(protobuf_blocks)} blocks to disk took {get_time_ms() - start_time} msec"
         )
 
@@ -85,7 +83,7 @@ class BlocksPersistence:
             try:
                 delete_directory(self._storage_dir)
             except Exception as e:
-                logger.error(
+                self.logger.error(
                     f"Failed to delete directory {self._storage_dir}", exc_info=e
                 )
 
@@ -102,7 +100,7 @@ class BlocksPersistence:
             bucket_blocks = self._read_bucket(bucket_index)
             blocks.extend(bucket_blocks)
 
-        logger.info(
+        self.logger.info(
             f"Reading {len(blocks)} blocks took {get_time_ms() - start_time} msec"
         )
         return blocks
@@ -130,7 +128,7 @@ class BlocksPersistence:
                     )
                 return bsq_block_store.blocks_as_proto
         except Exception as e:
-            logger.info(f"Reading {storage_file} failed with {e}")
+            self.logger.info(f"Reading {storage_file} failed with {e}")
             return []
 
     def _write_to_disk(self, storage_file: Path, bsq_block_store: BsqBlockStore):
@@ -156,7 +154,7 @@ class BlocksPersistence:
         except Exception as e:
             # If an error occurred, don't attempt to reuse this path again, in case temp file cleanup fails.
             self._used_temp_file_path = None
-            logger.error(
+            self.logger.error(
                 f"Error at saveToFile, storageFile={self._file_name}", exc_info=e
             )
         finally:
@@ -164,4 +162,4 @@ class BlocksPersistence:
                 try:
                     temp_file.unlink(missing_ok=True)
                 except Exception as e:
-                    logger.error("Cannot delete temp file.", exc_info=e)
+                    self.logger.error("Cannot delete temp file.", exc_info=e)

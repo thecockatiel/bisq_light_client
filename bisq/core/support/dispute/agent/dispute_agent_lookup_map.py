@@ -1,8 +1,6 @@
 from bisq.core.locale.res import Res
 import re
-import logging
-
-log = logging.getLogger(__name__)
+from bisq.common.setup.log_setup import get_ctx_logger
 
 
 class DisputeAgentLookupMap:
@@ -30,7 +28,8 @@ class DisputeAgentLookupMap:
         elif full_address == "5wmuzi76l4ogbdh6ahvdafzlebk4c3sp3q5njhz5h5qa5fwbalexa7id.onion:9999":
             return "suddenwhipvapor"
         else:
-            log.warning(
+            logger = get_ctx_logger(__name__)
+            logger.warning(
             f"No user name for dispute agent with address {full_address} found."
             )
             return Res.get("shared.na")

@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterator, Optional
 from collections import Counter as Multiset
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.monetary.volume import Volume
 from bisq.core.offer.open_offer import OpenOffer
 from bisq.core.offer.open_offer_state import OpenOfferState
@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
     from bisq.core.offer.offer import Offer
 
-logger = get_logger(__name__)
 
 # TODO: check casts later
 
@@ -50,7 +49,7 @@ class ClosedTradableManager(PersistedDataHost):
                  persistence_manager: 'PersistenceManager[TradableList[Tradable]]',
                  cleanup_mailbox_messages_service: 'CleanupMailboxMessagesService',
                  dump_delayed_payout_tx: 'DumpDelayedPayoutTx'):
-        
+        self.logger = get_ctx_logger(__name__)
         self.key_ring = key_ring
         self.price_feed_service = price_feed_service
         self.bsq_swap_trade_manager = bsq_swap_trade_manager
@@ -120,12 +119,12 @@ class ClosedTradableManager(PersistedDataHost):
             if closed_trades:
                 max_trade = max(closed_trades, key=lambda t: t.get_amount_as_long())
                 if max_trade.get_amount_as_long() > self.preferences.get_user_defined_trade_limit():
-                    logger.info(f"Increasing user trade limit to size of max completed trade: {max_trade.get_amount()}")
+                    self.logger.info(f"Increasing user trade limit to size of max completed trade: {max_trade.get_amount()}")
                     self.preferences.set_user_defined_trade_limit(max_trade.get_amount_as_long())
                     self.preferences.set_user_has_raised_trade_limit(True)
 
     def maybe_clear_sensitive_data(self):
-        logger.info("checking closed trades eligibility for having sensitive data cleared")
+        self.logger.info("checking closed trades eligibility for having sensitive data cleared")
         for trade in (t for t in self.closed_tradables if isinstance(t, Trade)):
             if self.can_trade_have_sensitive_data_cleared(trade.get_id()):
                 trade.maybe_clear_sensitive_data()

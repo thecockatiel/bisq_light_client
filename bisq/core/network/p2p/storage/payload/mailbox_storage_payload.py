@@ -6,14 +6,12 @@ from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentExcep
 from bisq.core.network.p2p.storage.messages.add_once_payload import AddOncePayload
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
 from bisq.core.network.p2p.storage.payload.protected_storage_payload import ProtectedStoragePayload
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
 
 import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
-logger = get_logger(__name__)
 
 class MailboxStoragePayload(ProtectedStoragePayload, ExpirablePayload, AddOncePayload):
     """

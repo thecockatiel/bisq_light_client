@@ -4,7 +4,7 @@ from typing import Union
 
 from bisq.common.protocol.proto_resolver import ProtoResolver
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.account.sign.signed_witness import SignedWitness
 from bisq.core.account.witness.account_age_witness import AccountAgeWitness
 from bisq.core.dao.governance.blindvote.storage.blind_vote_payload import BlindVotePayload
@@ -75,7 +75,6 @@ from utils.clock import Clock
 
 import pb_pb2 as protobuf
 
-logger = get_logger(__name__)
 
 def _handle_country_based_payment_account_payload(proto: "protobuf.PaymentAccountPayload"):
     handler = country_based_payment_account_payload_cases.get(proto.country_based_payment_account_payload.WhichOneof("message"), None)
@@ -186,10 +185,13 @@ ifsc_based_account_payload_cases = {
 @dataclass
 class CoreProtoResolver(ProtoResolver):
     clock: Clock
+
+    def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
     
     def from_proto(self, proto: Union['protobuf.PaymentAccountPayload','protobuf.PersistableNetworkPayload']):
         if proto is None:
-            logger.error("CoreProtoResolver.fromProto: proto is null")
+            self.logger.error("CoreProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
         
         if isinstance(proto, protobuf.PaymentAccountPayload):

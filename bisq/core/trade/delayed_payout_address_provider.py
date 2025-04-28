@@ -1,13 +1,10 @@
-import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.param.param import Param
 
 if TYPE_CHECKING:
     from bisq.core.dao.dao_facade import DaoFacade
-
-logger = get_logger(__name__)
 
 class DelayedPayoutAddressProvider:
     INITIAL_BM_ADDRESS = (
@@ -18,12 +15,11 @@ class DelayedPayoutAddressProvider:
     # burningman3 https://github.com/bisq-network/roles/issues/80#issuecomment-723577776
     BM3_ADDRESS = "34VLFgtFKAtwTdZ5rengTT2g2zC99sWQLC"
 
-    log = logging.getLogger(__name__)
-
     @staticmethod
     def get_delayed_payout_address(dao_facade: "DaoFacade"):
         address = dao_facade.get_param_value(Param.RECIPIENT_BTC_ADDRESS)
         if DelayedPayoutAddressProvider.is_outdated_address(address):
+            logger = get_ctx_logger(__name__)
             logger.warning(
                 "Outdated delayed payout address. "
                 + "This can be the case if the DAO is deactivated or if the user has an invalid DAO state."

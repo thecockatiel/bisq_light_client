@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.protocol.bisq_v1.dispute_protocol_event import DisputeProtocolEvent
 from bisq.core.trade.protocol.bisq_v1.messages.counter_currency_transfer_started_message import (
@@ -62,12 +62,12 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-logger = get_logger(__name__)
 
 
 class DisputeProtocol(TradeProtocol):
     def __init__(self, trade: "Trade"):
         super().__init__(trade)
+        self.logger = get_ctx_logger(__name__)
         self.trade = trade
         self.process_model = trade.process_model
 
@@ -94,12 +94,12 @@ class DisputeProtocol(TradeProtocol):
             self.process_model.set_deposit_tx_sent_ack_message(ack_message)
 
         if ack_message.success:
-            logger.info(
+            self.logger.info(
                 f"Received AckMessage for {ack_message.source_msg_class_name} from {peer} "
                 f"with tradeId {self.trade_model.get_id()} and uid {ack_message.source_uid}"
             )
         else:
-            logger.warning(
+            self.logger.warning(
                 f"Received AckMessage with error state for {ack_message.source_msg_class_name} "
                 f"from {peer} with tradeId {self.trade_model.get_id()} and "
                 f"errorMessage={ack_message.error_message}"

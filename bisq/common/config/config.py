@@ -290,18 +290,9 @@ class Config:
         self.use_full_mode_dao_monitor_option_set_explicitly: bool = (
             options["useFullModeDaoMonitor"] is not None
         )
-
-        # Create all appDataDir subdirectories and assign to their respective properties
-        btc_network_dir = self.app_data_dir.joinpath(
-            self.base_currency_network.name.lower()
+        self.gui_mode: bool = (
+            options["gui"] or False
         )
-        btc_network_dir.mkdir(parents=True, exist_ok=True)
-
-        self.tor_dir = btc_network_dir.joinpath("tor")
-        self.tor_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-
-        self.wallet_dir = btc_network_dir.joinpath("electrum_wallet")
-        self.wallet_dir.mkdir(parents=True, exist_ok=True)
 
         # Assign values to special-case static fields
         Config.BASE_CURRENCY_NETWORK_VALUE = self.base_currency_network
@@ -980,6 +971,16 @@ class Config:
                 "If set to true full mode DAO monitor is activated. "
                 "By that at each block during parsing the dao state hash is created, "
                 "otherwise only after block parsing is complete and on new blocks."
+            ),
+            type=parse_bool,
+            metavar="<Boolean>",
+            nargs="?",
+            const=True,
+        )
+        parser.add_argument(
+            "--gui",
+            help=(
+                "start daemon in gui mode. waits for gui to load and instruct the daemon what to do."
             ),
             type=parse_bool,
             metavar="<Boolean>",

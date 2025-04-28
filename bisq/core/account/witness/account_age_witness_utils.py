@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.crypto.hash import get_ripemd160_hash, get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from utils.preconditions import check_argument
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from bisq.common.crypto.pub_key_ring import PubKeyRing
     from bisq.core.payment.payload.payment_account_payload import PaymentAccountPayload
 
-
-logger = get_logger(__name__)
 
 # Camel cased to match java's output on json dump
 @dataclass
@@ -46,9 +44,11 @@ class SignedWitnessDto:
     signatureBase64: str
 
 class AccountAgeWitnessUtils:
-    def __init__(self, account_age_witness_service: "AccountAgeWitnessService",
+    def __init__(self,
+                 account_age_witness_service: "AccountAgeWitnessService",
                  signed_witness_service: "SignedWitnessService",
                  key_ring: "KeyRing"):
+        self.logger = get_ctx_logger(__name__)
         self.account_age_witness_service = account_age_witness_service
         self.signed_witness_service = signed_witness_service
         self.key_ring = key_ring
@@ -56,15 +56,15 @@ class AccountAgeWitnessUtils:
     def log_signed_witnesses(self):
         """Log tree of signed witnesses"""
         orphan_signers = self.signed_witness_service.get_root_signed_witness_set(True)
-        logger.info("Orphaned signed account age witnesses:")
+        self.logger.info("Orphaned signed account age witnesses:")
         for w in orphan_signers:
-            logger.info(f"{w.verification_method.name}: Signer PKH: {get_ripemd160_hash(w.signer_pub_key).hex()[:7]} "
+            self.logger.info(f"{w.verification_method.name}: Signer PKH: {get_ripemd160_hash(w.signer_pub_key).hex()[:7]} "
                        f"Owner PKH: {get_ripemd160_hash(w.witness_owner_pub_key).hex()[:7]} "
                        f"time: {w.date}")
             self._log_child(w, "  ", [])
 
     def _log_child(self, sig_wit: "SignedWitness", init_string: str, excluded: list[StorageByteArray]):
-        logger.info(f"{init_string}AEW: {sig_wit.account_age_witness_hash.hex()[:7]} "
+        self.logger.info(f"{init_string}AEW: {sig_wit.account_age_witness_hash.hex()[:7]} "
                    f"PKH: {get_ripemd160_hash(sig_wit.witness_owner_pub_key).hex()[:7]} "
                    f"time: {sig_wit.date}")
         
@@ -78,18 +78,18 @@ class AccountAgeWitnessUtils:
 
     def log_signers(self):
         """Log signers per AEW"""
-        logger.info("Signers per AEW")
+        self.logger.info("Signers per AEW")
         signed_witness_map_values = self.signed_witness_service.get_signed_witness_map_values()
         for w in signed_witness_map_values:
-            logger.info(f"AEW {w.account_age_witness_hash.hex()}")
+            self.logger.info(f"AEW {w.account_age_witness_hash.hex()}")
             for ww in signed_witness_map_values:
                 if w.signer_pub_key == ww.witness_owner_pub_key:
-                    logger.info(f"  {ww.account_age_witness_hash.hex()} ")
+                    self.logger.info(f"  {ww.account_age_witness_hash.hex()} ")
 
     def log_unsigned_signer_pub_keys(self):
-        logger.info("Unsigned signer pubkeys")
+        self.logger.info("Unsigned signer pubkeys")
         for signed_witness in self.signed_witness_service.get_unsigned_signer_pub_keys():
-            logger.info(f"PK hash {get_ripemd160_hash(signed_witness.signer_pub_key).hex()} "
+            self.logger.info(f"PK hash {get_ripemd160_hash(signed_witness.signer_pub_key).hex()} "
                        f"date {signed_witness.date}")
             
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,7 @@ class AccountAgeWitnessUtils:
             self.account_age_witness_service.trade_amount_is_sufficient(trade.amount_property.value)
         )
         
-        logger.info(
+        self.logger.info(
             "AccountSigning debug log:\n"
             f"tradeId: {trade.get_id()}\n"
             f"is buyer: {is_buyer}\n"

@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future  # importing it sets up stuff
 from threading import Lock
 from electrum_min.util import EventListener, event_listener
@@ -10,15 +11,12 @@ from electrum_min.wallet import (
 )
 from electrum_min.wallet_ext import create_new_bisq_wallet
 from collections.abc import Callable
-from bisq.common.setup.log_setup import get_logger
 from electrum_min.daemon import Daemon
 from electrum_min.simple_config import SimpleConfig
 from bisq.common.config.config import Config
 from utils.data import SimpleProperty, SimplePropertyChangeEvent
 from utils.preconditions import check_state
 
-
-logger = get_logger(__name__)
 
 
 # TODO
@@ -37,6 +35,7 @@ class WalletConfig(EventListener):
     def __init__(self, config: "Config", wallet_dir: Path, seed: Optional[str] = None):
         self._config = config
         self._wallet_dir = wallet_dir
+        self.logger = get_ctx_logger(__name__)
 
         self._daemon: Optional["Daemon"] = None
         self._btc_wallet: Optional["Wallet"] = None
@@ -250,7 +249,7 @@ class WalletConfig(EventListener):
             if not new_name.exists():
                 break
 
-        logger.info(f"Renaming old wallet file {wallet_file} to {new_name}")
+        self.logger.info(f"Renaming old wallet file {wallet_file} to {new_name}")
         try:
             wallet_file.rename(new_name)
         except Exception as e:

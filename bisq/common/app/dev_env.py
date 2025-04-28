@@ -1,8 +1,6 @@
 
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
-
-logger = get_logger(__name__)
+from bisq.common.setup.log_setup import get_ctx_logger
 
 class DevEnv:
     
@@ -37,6 +35,7 @@ class DevEnv:
         
     @staticmethod
     def log_error_and_throw_if_dev_mode(message: str):
+        logger = get_ctx_logger(__name__)
         logger.error(message)
         if DevEnv.is_dev_mode():
             raise RuntimeError(message)

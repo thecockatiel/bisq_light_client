@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.btc.model.bsq_transfer_model import BsqTransferModel
 from bitcoinj.base.coin import Coin
@@ -10,8 +10,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.wallets_manager import WalletsManager
 
-logger = get_logger(__name__)
-
 
 class BsqTransferService:
 
@@ -21,6 +19,7 @@ class BsqTransferService:
         bsq_wallet_service: "BsqWalletService",
         btc_wallet_service: "BtcWalletService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.wallets_manager = wallets_manager
         self.bsq_wallet_service = bsq_wallet_service
         self.btc_wallet_service = btc_wallet_service
@@ -45,7 +44,7 @@ class BsqTransferService:
     def send_funds(
         self, bsq_transfer_model: "BsqTransferModel", callback: TxBroadcasterCallback
     ):
-        logger.info(f"Publishing BSQ transfer {bsq_transfer_model.to_short_string()}")
+        self.logger.info(f"Publishing BSQ transfer {bsq_transfer_model.to_short_string()}")
         self.wallets_manager.publish_and_commit_bsq_tx(
             bsq_transfer_model.tx_with_btc_fee, bsq_transfer_model.tx_type, callback
         )

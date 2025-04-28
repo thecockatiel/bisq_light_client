@@ -1,12 +1,13 @@
 from concurrent.futures import Future
 from datetime import timedelta, datetime
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.provider.price.price_request import PriceRequest
 from bisq.core.provider.price.price_request_exception import PriceRequestException
+from utils.aio import FutureCallback
 from utils.data import SimpleProperty
 from typing import TYPE_CHECKING, Dict, Optional, Callable
 from bisq.core.provider.price.price_provider import PriceProvider
@@ -29,8 +30,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.pricenode_dto import PricenodeDto
     from bisq.core.user.preferences import Preferences
 
-logger = get_logger(__name__)
-
 
 class PriceFeedService:
     PERIOD_SEC = 90
@@ -43,6 +42,7 @@ class PriceFeedService:
         price_feed_node_address_provider: "PriceFeedNodeAddressProvider",
         preferences: "Preferences",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._http_client = price_http_client
         self._p2p_service = p2p_service
         self._price_feed_node_address_provider = price_feed_node_address_provider
@@ -122,11 +122,11 @@ class PriceFeedService:
 
     def _request(self, repeat_requests: bool) -> None:
         if self._request_ts == 0:
-            logger.debug(
+            self.logger.debug(
                 f"request from provider {self._price_feed_node_address_provider.base_url}"
             )
         else:
-            logger.debug(
+            self.logger.debug(
                 f"request from provider {self._price_feed_node_address_provider.base_url} "
                 f"{(get_time_ms() - self._request_ts) / 1000:.1f} sec. after last request"
             )
@@ -142,19 +142,19 @@ class PriceFeedService:
             if success:
                 market_price = self._cache.get(self.currency_code, None)
                 if market_price:
-                    logger.debug(
+                    self.logger.debug(
                         f"Received new {market_price} from provider {self._base_url_of_responding_provider} "
                         f"after {(get_time_ms() - self._request_ts) / 1000:.1f} sec."
                     )
                 else:
-                    logger.debug(
+                    self.logger.debug(
                         f"Received new data from provider {self._base_url_of_responding_provider} "
                         f"after {(get_time_ms() - self._request_ts) / 1000:.1f} sec. "
                         f"Requested market price for currency {self.currency_code} was not provided. "
                         "That is expected if currency is not listed at provider."
                     )
             else:
-                logger.warning(
+                self.logger.warning(
                     "applyPriceToConsumer was not successful. We retry with a new provider."
                 )
                 self._retry_with_new_provider()
@@ -165,19 +165,21 @@ class PriceFeedService:
                 base_url_of_current_request = self._price_provider.base_url
 
                 if base_url_of_current_request == base_url_of_faulty_request:
-                    logger.warning(
+                    self.logger.warning(
                         f"We received an error: baseUrlOfCurrentRequest={base_url_of_current_request}, "
                         f"baseUrlOfFaultyRequest={base_url_of_faulty_request}, error={str(throwable)}"
                     )
                     self._retry_with_new_provider()
                 else:
-                    logger.debug(
+                    self.logger.debug(
                         "We received an error from an earlier request. We have started a new request already "
                         f"so we ignore that error. baseUrlOfCurrentRequest={base_url_of_current_request}, "
                         f"baseUrlOfFaultyRequest={base_url_of_faulty_request}"
                     )
             else:
-                logger.warning(f"We received an error with throwable={str(throwable)}")
+                self.logger.warning(
+                    f"We received an error with throwable={str(throwable)}"
+                )
                 self._retry_with_new_provider()
 
             if self._fault_handler:
@@ -196,7 +198,7 @@ class PriceFeedService:
                 if self._base_url_of_responding_provider is None:
                     old_base_url = self._price_provider.base_url
                     self._set_new_price_provider()
-                    logger.warning(
+                    self.logger.warning(
                         f"We did not received a response from provider {old_base_url}. "
                         f"We select the new provider {self._price_provider.base_url} and use that for a new request."
                     )
@@ -218,7 +220,7 @@ class PriceFeedService:
 
             old_base_url = self._price_provider.base_url
             self._set_new_price_provider()
-            logger.warning(
+            self.logger.warning(
                 f"We received an error at the request from provider {old_base_url}. "
                 f"We select the new provider {self._price_provider.base_url} and use that for a new request. "
                 f"retryDelay was {self._retry_delay} sec."
@@ -240,7 +242,7 @@ class PriceFeedService:
                 self._price_feed_node_address_provider.base_url,
             )
         else:
-            logger.warning(
+            self.logger.warning(
                 "We cannot create a new priceProvider because new base url is empty."
             )
 
@@ -314,12 +316,12 @@ class PriceFeedService:
                             )
                     else:
                         if self._base_url_of_responding_provider is None:
-                            logger.debug(
+                            self.logger.debug(
                                 f"Market price for currency {self.currency_code} was not delivered by provider "
                                 f"{base_url}. That is expected at startup."
                             )
                         else:
-                            logger.debug(
+                            self.logger.debug(
                                 f"Market price for currency {self.currency_code} is not provided by the provider "
                                 f"{base_url}. That is expected for currencies not listed at providers."
                             )
@@ -330,7 +332,7 @@ class PriceFeedService:
                         f"priceProvider={base_url}. Exception={str(e)}"
                     )
             else:
-                logger.debug(
+                self.logger.debug(
                     f"We don't have a price for currency {self.currency_code}. priceProvider={base_url}. "
                     "That is expected for currencies not listed at providers."
                 )
@@ -339,7 +341,7 @@ class PriceFeedService:
             error_message = "We don't have a currency yet set. That should never happen"
 
         if error_message is not None:
-            logger.warning(error_message)
+            self.logger.warning(error_message)
             if self._fault_handler is not None:
                 self._fault_handler(error_message, PriceRequestException(error_message))
 
@@ -353,7 +355,7 @@ class PriceFeedService:
         fault_handler: "FaultHandler",
     ) -> None:
         if self._http_client.has_pending_request:
-            logger.debug(
+            self.logger.debug(
                 f"We have a pending request open. This is expected when we got repeated calls. "
                 f"We ignore that request. httpClient {self._http_client}"
             )
@@ -384,15 +386,14 @@ class PriceFeedService:
                 )
             result_handler()
 
-        def on_done(future: Future["PricenodeDto"]):
-            try:
-                result = future.result()
-                UserThread.execute(lambda: on_success(result))
-            except Exception as e:
-                UserThread.execute(
-                    lambda e=e: fault_handler("Could not load marketPrices", e)
-                )
-
         future = self._price_request.request_all_prices(provider)
 
-        future.add_done_callback(on_done)
+        def on_success(result: "PricenodeDto"):
+            UserThread.execute(lambda: on_success(result))
+
+        def on_failure(e):
+            UserThread.execute(
+                lambda e=e: fault_handler("Could not load marketPrices", e)
+            )
+
+        future.add_done_callback(FutureCallback(on_success, on_failure))

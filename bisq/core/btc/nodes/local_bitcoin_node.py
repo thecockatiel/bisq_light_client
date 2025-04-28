@@ -1,13 +1,11 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import get_asyncio_loop
 import socket
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from electrum_min.util import wait_for2
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
-
-logger = get_logger(__name__)
 
 
 class LocalBitcoinNode:
@@ -20,6 +18,7 @@ class LocalBitcoinNode:
     CONNECTION_TIMEOUT_SEC = 5.0
 
     def __init__(self, config: "Config"):
+        self.logger = get_ctx_logger(__name__)
         self.config = config
         self.port = config.network_parameters.port
         self.detected: Optional[bool] = None
@@ -60,8 +59,7 @@ class LocalBitcoinNode:
             self.detected = await self._detect(self.port)
         return self.detected
 
-    @staticmethod
-    async def _detect(port: int) -> bool:
+    async def _detect(self, port: int) -> bool:
         """
         Detect whether a Bitcoin node is running on localhost by attempting to connect
         to the node's port.
@@ -69,9 +67,12 @@ class LocalBitcoinNode:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
         try:
-            await wait_for2(get_asyncio_loop().sock_connect(sock, ("127.0.0.1", port)), LocalBitcoinNode.CONNECTION_TIMEOUT_SEC)
-            logger.info(f"Local Bitcoin node detected on port {port}")
+            await wait_for2(
+                get_asyncio_loop().sock_connect(sock, ("127.0.0.1", port)),
+                LocalBitcoinNode.CONNECTION_TIMEOUT_SEC,
+            )
+            self.logger.info(f"Local Bitcoin node detected on port {port}")
             return True
         except socket.error:
-            logger.info(f"No local Bitcoin node detected on port {port}")
+            self.logger.info(f"No local Bitcoin node detected on port {port}")
             return False

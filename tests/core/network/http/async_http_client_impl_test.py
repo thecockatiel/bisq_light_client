@@ -1,10 +1,10 @@
+import logging
 from utils.aio import get_asyncio_loop
 from bisq.core.network.http.async_http_client_impl import AsyncHttpClientImpl
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
 from bisq.common.setup.log_setup import (
-    configure_logging,
-    get_logger,
-    set_custom_log_level,
+    logger_context,
+    setup_log_for_test,
 )
 from pathlib import Path
 
@@ -14,8 +14,7 @@ from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 # setup logging for this test
 testdata_dir = Path(__file__).parent.joinpath(".testdata")
 testdata_dir.mkdir(parents=True, exist_ok=True)
-configure_logging(testdata_dir.joinpath("test.log"))
-set_custom_log_level("TRACE")
+logger = setup_log_for_test("async_httpclient", testdata_dir)  
 
 from bisq.core.network.p2p.network.bridge_address_provider import BridgeAddressProvider
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
@@ -27,8 +26,6 @@ from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
 from utils.clock import Clock
-
-logger = get_logger(__name__)
 
 disabled = True
 
@@ -51,21 +48,21 @@ class TestTorNetworkNode(unittest.TestCase):
                 return [
                     #
                 ]
+        with logger_context(logging.getLogger(__name__)):
+            # Create separate TorMode instances with different hidden service directories
+            self.tor_mode1 = NewTor(
+                self.base_dir,
+                self.tor_dir_1,
+                bridge_address_provider=CustomBridgeAddressProvider(),
+            )
 
-        # Create separate TorMode instances with different hidden service directories
-        self.tor_mode1 = NewTor(
-            self.base_dir,
-            self.tor_dir_1,
-            bridge_address_provider=CustomBridgeAddressProvider(),
-        )
-
-        self.node1 = TorNetworkNode(
-            service_port=80,
-            network_proto_resolver=CoreNetworkProtoResolver(Clock()),
-            tor_mode=self.tor_mode1,
-            ban_filter=None,
-            max_connections=10,
-        )
+            self.node1 = TorNetworkNode(
+                service_port=80,
+                network_proto_resolver=CoreNetworkProtoResolver(Clock()),
+                tor_mode=self.tor_mode1,
+                ban_filter=None,
+                max_connections=10,
+            )
 
         self.node1_ready = asyncio.Event()
 

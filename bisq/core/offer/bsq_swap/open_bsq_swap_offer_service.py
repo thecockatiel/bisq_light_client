@@ -1,12 +1,12 @@
 from collections.abc import Callable
 from concurrent.futures import Future
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.crypto.proof_of_work_service_instance_holder import (
     pow_service_for_version,
 )
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.monetary.price import Price
 from bisq.core.offer.bsq_swap.bsq_swap_offer_payload import BsqSwapOfferPayload
@@ -23,6 +23,7 @@ from bisq.core.offer.placeoffer.bsq_swap.place_bsq_swap_offer_protocol import (
 )
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bitcoinj.base.coin import Coin
+from utils.aio import FutureCallback
 from utils.data import ObservableChangeEvent, SimplePropertyChangeEvent
 from bisq.core.offer.bsq_swap.open_bsq_swap_offer import OpenBsqSwapOffer
 from utils.preconditions import check_argument
@@ -46,8 +47,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
 
 
-logger = get_logger(__name__)
-
 class OpenBsqSwapOfferService:
     def __init__(
         self,
@@ -62,6 +61,7 @@ class OpenBsqSwapOfferService:
         filter_manager: "FilterManager",
         pub_key_ring: "PubKeyRing",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.open_offer_manager = open_offer_manager
         self.btc_wallet_service = btc_wallet_service
         self.bsq_wallet_service = bsq_wallet_service
@@ -152,7 +152,7 @@ class OpenBsqSwapOfferService:
         price: Price,
         result_handler: Callable[["Offer"], None],
     ):
-        logger.info(
+        self.logger.info(
             f"offer_id={offer_id},\n"
             f"direction={direction},\n"
             f"price={price.value},\n"
@@ -166,36 +166,36 @@ class OpenBsqSwapOfferService:
 
         difficulty = self._get_pow_difficulty()
 
-        def on_pow_complete(f: Future["ProofOfWork"]):
-            try:
-                proof_of_work = f.result()
+        def on_success(proof_of_work: "ProofOfWork"):
+            def execute_on_user_thread():
+                bsq_swap_offer_payload = BsqSwapOfferPayload(
+                    id=offer_id,
+                    date=get_time_ms(),
+                    owner_node_address=maker_address,
+                    pub_key_ring=self.pub_key_ring,
+                    direction=direction,
+                    price=price.value,
+                    amount=amount.value,
+                    min_amount=min_amount.value,
+                    proof_of_work=proof_of_work,
+                    extra_data_map=None,
+                    version_nr=Version.VERSION,
+                    protocol_version=Version.TRADE_PROTOCOL_VERSION,
+                )
+                result_handler(Offer(bsq_swap_offer_payload))
 
-                def execute_on_user_thread():
-                    bsq_swap_offer_payload = BsqSwapOfferPayload(
-                        id=offer_id,
-                        date=get_time_ms(),
-                        owner_node_address=maker_address,
-                        pub_key_ring=self.pub_key_ring,
-                        direction=direction,
-                        price=price.value,
-                        amount=amount.value,
-                        min_amount=min_amount.value,
-                        proof_of_work=proof_of_work,
-                        extra_data_map=None,
-                        version_nr=Version.VERSION,
-                        protocol_version=Version.TRADE_PROTOCOL_VERSION,
-                    )
-                    result_handler(Offer(bsq_swap_offer_payload))
+            UserThread.execute(execute_on_user_thread)
 
-                UserThread.execute(execute_on_user_thread)
-            except Exception as e:
-                logger.error(str(e))
+        def on_failure(e):
+            self.logger.error(str(e))
 
         self._get_pow_service().mint_with_ids(
             offer_id,
             maker_address.get_full_address(),
             difficulty,
-        ).add_done_callback(on_pow_complete)
+        ).add_done_callback(
+            FutureCallback(on_success, on_failure)
+        )
 
     def place_bsq_swap_offer(
         self,
@@ -245,19 +245,23 @@ class OpenBsqSwapOfferService:
         def on_success():
             open_offer.state = OfferState.AVAILABLE
             self.open_offer_manager.request_persistence()
-            logger.info(f"enableBsqSwapOffer {open_offer.get_short_id()}")
+            self.logger.info(f"enableBsqSwapOffer {open_offer.get_short_id()}")
 
         def on_error(error_msg):
-            logger.warning(f"Failed to enableBsqSwapOffer {open_offer.get_short_id()}")
+            self.logger.warning(
+                f"Failed to enableBsqSwapOffer {open_offer.get_short_id()}"
+            )
 
         self.offer_book_service.add_offer(open_offer.get_offer(), on_success, on_error)
 
     def disable_bsq_swap_offer(self, open_offer: "OpenOffer"):
         def on_success():
-            logger.info(f"disableBsqSwapOffer {open_offer.get_short_id()}")
+            self.logger.info(f"disableBsqSwapOffer {open_offer.get_short_id()}")
 
         def on_error(error_msg):
-            logger.warning(f"Failed to disableBsqSwapOffer {open_offer.get_short_id()}")
+            self.logger.warning(
+                f"Failed to disableBsqSwapOffer {open_offer.get_short_id()}"
+            )
 
         self.offer_book_service.remove_offer(
             open_offer.get_offer().offer_payload_base, on_success, on_error
@@ -326,42 +330,39 @@ class OpenBsqSwapOfferService:
 
         difficulty = self._get_pow_difficulty()
 
-        def on_pow_complete(f: Future["ProofOfWork"]):
-            try:
-                proof_of_work = f.result()
+        def on_success(proof_of_work: "ProofOfWork"):
+            def execute_on_user_thread():
+                # We mutate the offerId with a postfix counting the mutations to get a new unique id.
+                # This helps to avoid issues with getting added/removed at some delayed moment the offer
+                new_payload = BsqSwapOfferPayload.from_other(
+                    open_offer.get_bsq_swap_offer_payload(),
+                    new_offer_id,
+                    proof_of_work,
+                )
+                new_offer = Offer(new_payload)
+                new_offer.state = OfferState.AVAILABLE
 
-                def execute_on_user_thread():
-                    # We mutate the offerId with a postfix counting the mutations to get a new unique id.
-                    # This helps to avoid issues with getting added/removed at some delayed moment the offer
-                    new_payload = BsqSwapOfferPayload.from_other(
-                        open_offer.get_bsq_swap_offer_payload(),
-                        new_offer_id,
-                        proof_of_work,
-                    )
-                    new_offer = Offer(new_payload)
-                    new_offer.state = OfferState.AVAILABLE
+                check_argument(
+                    not open_offer.is_deactivated,
+                    "We must not get called at _redo_proof_of_work_and_republish if offer was deactivated",
+                )
 
-                    check_argument(
-                        not open_offer.is_deactivated,
-                        "We must not get called at _redo_proof_of_work_and_republish if offer was deactivated"
-                    )
+                new_open_offer = OpenOffer(new_offer)
+                if not new_open_offer.is_deactivated:
+                    self.open_offer_manager.maybe_republish_offer(new_open_offer)
 
-                    new_open_offer = OpenOffer(new_offer)
-                    if not new_open_offer.is_deactivated:
-                        self.open_offer_manager.maybe_republish_offer(new_open_offer)
+                # This triggers our _on_open_offers_added handler so we don't handle adding to our list here
+                self.open_offer_manager.add_open_bsq_swap_offer(new_open_offer)
 
-                    # This triggers our _on_open_offers_added handler so we don't handle adding to our list here
-                    self.open_offer_manager.add_open_bsq_swap_offer(new_open_offer)
-
-                UserThread.execute(execute_on_user_thread)
-            except Exception as e:
-                logger.error(str(e))
+            UserThread.execute(execute_on_user_thread)
 
         self._get_pow_service().mint_with_ids(
             new_offer_id,
             node_address.get_full_address(),
             difficulty,
-        ).add_done_callback(on_pow_complete)
+        ).add_done_callback(
+            FutureCallback(on_success, on_failure=lambda e: self.logger.error(str(e)))
+        )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Utils
@@ -390,7 +391,7 @@ class OpenBsqSwapOfferService:
         if service is None:
             # We cannot exit normally, else we get caught in an infinite loop generating invalid PoWs
             raise RuntimeError("Could not find a suitable PoW version to use")
-        logger.info(
+        self.logger.info(
             f"Selected PoW version {service.version}, service instance {service}"
         )
         return service

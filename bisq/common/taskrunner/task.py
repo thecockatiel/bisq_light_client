@@ -1,12 +1,10 @@
 from typing import TYPE_CHECKING, TypeVar, Generic, Union
 from abc import ABC, abstractmethod
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.intercept_task_exception import InterceptTaskException
 
 if TYPE_CHECKING:
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -40,5 +38,7 @@ class Task(ABC, Generic[T]):
     def failed(self, message: str = None, exc: Exception = None) -> None:
         if message:
             self.append_to_error_message(message)
+        elif exc:
+            self.append_to_error_message(str(exc))
 
         self.task_handler.handle_error_message(self.error_message, exc)

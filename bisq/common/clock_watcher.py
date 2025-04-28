@@ -2,14 +2,14 @@ from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from bisq.common.user_thread import UserThread
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.common.clock_watcher_listener import ClockWatcherListener
     from bisq.common.timer import Timer
 
-logger = get_logger(__name__)
+logger = get_base_logger(__name__)
 
 
 class ClockWatcher:
@@ -29,7 +29,9 @@ class ClockWatcher:
     def start(self) -> None:
         if self._timer is None:
             self._last_second_tick = get_time_ms()
-            self._timer = UserThread.run_periodically(self._on_timer, timedelta(seconds=1))
+            self._timer = UserThread.run_periodically(
+                self._on_timer, timedelta(seconds=1)
+            )
 
     def _on_timer(self) -> None:
         """Handle timer tick events"""

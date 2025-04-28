@@ -3,13 +3,12 @@ from typing import TYPE_CHECKING, cast
 import json
 from bisq.asset.crypto_note_utils import CryptoNoteException, get_raw_spend_key_and_view_key
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.txproof.asset_tx_proof_parser import AssetTxProofParser
 from bisq.core.trade.txproof.xmr.xmr_expected_response_dto import XmrExpectedResponseDto
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_request_detail import XmrTxProofRequestDetail
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_request_result import XmrTxProofRequestResult
 
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.core.trade.txproof.xmr.xmr_tx_proof_model import XmrTxProofModel
@@ -17,6 +16,10 @@ if TYPE_CHECKING:
 
 class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProofModel"]):
     MAX_DATE_TOLERANCE = timedelta(hours=2)
+
+    def __init__(self):
+        super().__init__()
+        self.logger = get_ctx_logger(__name__)
     
     def parse(self, json_txt: str, model: "XmrTxProofModel" = None) -> "XmrTxProofRequestResult":
         if model is None:
@@ -51,7 +54,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
             
             expected_address_hex = get_raw_spend_key_and_view_key(model.recipient_address)
             if json_address.lower() != expected_address_hex.lower():
-                logger.warning(f"Address from json result (convertToRawHex):\n{json_address}\nExpected (convertToRawHex):\n{expected_address_hex}\nRecipient address:\n{model.recipient_address}")
+                self.logger.warning(f"Address from json result (convertToRawHex):\n{json_address}\nExpected (convertToRawHex):\n{expected_address_hex}\nRecipient address:\n{model.recipient_address}")
                 return XmrTxProofRequestResult.FAILED.with_detail(XmrTxProofRequestDetail.ADDRESS_INVALID)
 
             # validate that the txHash matches
@@ -60,7 +63,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
                 return XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.API_INVALID.with_error("Missing tx_hash field"))
             
             if json_tx_hash.lower() != tx_hash.lower():
-                logger.warning(f"tx_hash mismatch: got {json_tx_hash}, expected {tx_hash}")
+                self.logger.warning(f"tx_hash mismatch: got {json_tx_hash}, expected {tx_hash}")
                 return XmrTxProofRequestResult.FAILED.with_detail(XmrTxProofRequestDetail.TX_HASH_INVALID)
 
             # validate that the txKey matches
@@ -69,7 +72,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
             if not json_tx_key:
                 return XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.API_INVALID.with_error("Missing viewkey field"))
             if json_tx_key.lower() != model.tx_key.lower():
-                logger.warning(f"tx_key mismatch: got {json_tx_key}, expected {model.tx_key}")
+                self.logger.warning(f"tx_key mismatch: got {json_tx_key}, expected {model.tx_key}")
                 return XmrTxProofRequestResult.FAILED.with_detail(XmrTxProofRequestDetail.TX_KEY_INVALID)
 
             # validate that the txDate matches within tolerance
@@ -82,7 +85,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
             difference = trade_date_seconds - json_timestamp
             # Accept up to 2 hours difference. Some tolerance is needed if users clock is out of sync
             if difference > XmrTxProofParser.MAX_DATE_TOLERANCE.total_seconds() and not DevEnv.is_dev_mode():
-                logger.warning(f"tx_timestamp mismatch: got {json_timestamp}, trade date {trade_date_seconds}, difference {difference}")
+                self.logger.warning(f"tx_timestamp mismatch: got {json_timestamp}, trade date {trade_date_seconds}, difference {difference}")
                 return XmrTxProofRequestResult.FAILED.with_detail(XmrTxProofRequestDetail.TRADE_DATE_NOT_MATCHING)
 
             # calculate how many confirms are still needed
@@ -90,7 +93,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
             if json_confirmations is None:
                 return XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.API_INVALID.with_error("Missing tx_confirmations field"))
             json_confirmations = int(json_confirmations)
-            logger.info(f"Confirmations: {json_confirmations}, xmr tx_hash: {tx_hash}")
+            self.logger.info(f"Confirmations: {json_confirmations}, xmr tx_hash: {tx_hash}")
 
 
             # iterate through the list of outputs, one of them has to match the amount we are trying to verify.
@@ -110,7 +113,7 @@ class XmrTxProofParser(AssetTxProofParser["XmrTxProofRequestResult", "XmrTxProof
                     amount_matches = amount == model.amount
                     if amount_matches:
                         break
-                    logger.warning(f"output amount mismatch: got {amount}, expected {model.amount}")
+                    self.logger.warning(f"output amount mismatch: got {amount}, expected {model.amount}")
             
             # None of the outputs had a match entry
             if not any_match_found:

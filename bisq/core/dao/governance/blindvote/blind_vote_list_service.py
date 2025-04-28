@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.dao.state.model.governance.dao_phase import DaoPhase
@@ -29,8 +29,6 @@ if TYPE_CHECKING:
         PersistableNetworkPayload,
     )
 
-logger = get_logger(__name__)
-
 
 class BlindVoteListService(
     AppendOnlyDataStoreListener, DaoStateListener, DaoSetupService
@@ -46,6 +44,7 @@ class BlindVoteListService(
         append_only_data_store_service: "AppendOnlyDataStoreService",
         blind_vote_validator: "BlindVoteValidator",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.dao_state_service = dao_state_service
         self.p2p_service = p2p_service
         self.period_service = period_service
@@ -146,7 +145,7 @@ class BlindVoteListService(
                         # even in the vote reveal phase we want to receive missed blind votes.
                         self.blind_vote_payloads.append(blind_vote_payload)
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"We received an invalid blindVotePayload. blindVoteTxId={tx_id}"
                     )
 

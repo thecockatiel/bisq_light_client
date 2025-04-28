@@ -1,9 +1,6 @@
 from typing import Optional
-
-from bisq.common.setup.log_setup import get_logger
+ 
 from utils.preconditions import check_argument
-
-logger = get_logger(__name__)
 
 class ExtraDataMapValidator:
     """

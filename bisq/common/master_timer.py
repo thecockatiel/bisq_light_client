@@ -1,11 +1,12 @@
+import contextvars
 import threading
 import time
 from collections.abc import Callable
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from utils.concurrency import ThreadSafeSet
 
-logger = get_logger(__name__)
+logger = get_base_logger(__name__)
 
 # Runs all listener objects periodically in a short interval.
 class MasterTimer:
@@ -24,8 +25,8 @@ class MasterTimer:
                     except Exception as e:
                         MasterTimer.logger.error(f"Error executing listener: {e}")
                 time.sleep(MasterTimer.FRAME_INTERVAL_MS / 1000.0)
-
-        timer_thread = threading.Thread(target=run_timer, daemon=True, name="MasterTimerThread")
+        ctx = contextvars.copy_context()
+        timer_thread = threading.Thread(target=ctx.run, args=(run_timer,), daemon=True, name="MasterTimerThread")
         timer_thread.start()
 
     @staticmethod

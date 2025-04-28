@@ -1,6 +1,6 @@
 import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.payment.bank_account import BankAccount
 from bisq.core.payment.country_based_payment_account import CountryBasedPaymentAccount
 from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -13,10 +13,12 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
     from bisq.core.payment.payment_account import PaymentAccount
 
-logger = get_logger(__name__)
 
 
 class ReceiptPredicates:
+    def __init__(self):
+        self.logger = get_ctx_logger(__name__)
+        
     def is_equal_payment_methods(
         self, offer: "Offer", account: "PaymentAccount"
     ) -> bool:
@@ -26,14 +28,14 @@ class ReceiptPredicates:
 
         are_payment_methods_equal = account_payment_method == offer_payment_method
 
-        if logger.isEnabledFor(logging.WARNING):
+        if self.logger.isEnabledFor(logging.WARNING):
             account_payment_method_id = account_payment_method.id
             offer_payment_method_id = offer_payment_method.id
             if (
                 not are_payment_methods_equal
                 and account_payment_method_id == offer_payment_method_id
             ):
-                logger.warning(
+                self.logger.warning(
                     PaymentAccountUtil.get_info_for_mismatching_payment_method_limits(
                         offer, account
                     )

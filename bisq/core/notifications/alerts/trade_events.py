@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.notifications.mobile_message import MobileMessage
 from bisq.core.notifications.mobile_message_type import MobileMessageType
@@ -14,9 +14,7 @@ if TYPE_CHECKING:
         MobileNotificationService,
     )
     from bisq.core.trade.trade_manager import TradeManager
-
-logger = get_logger(__name__)
-
+ 
 
 class TradeEvents:
     def __init__(
@@ -25,6 +23,7 @@ class TradeEvents:
         key_ring: "KeyRing",
         mobile_notification_service: "MobileNotificationService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.trade_manager = trade_manager
         self.mobile_notification_service = mobile_notification_service
         self.pub_key_ring = key_ring.pub_key_ring
@@ -40,7 +39,7 @@ class TradeEvents:
             self._set_trade_phase_listener(trade)
 
     def _set_trade_phase_listener(self, trade: "Trade"):
-        logger.info(f"We got a new trade. id={trade.get_id()}")
+        self.logger.info(f"We got a new trade. id={trade.get_id()}")
         if not trade.is_payout_published:
 
             def on_phase_changed(e: SimplePropertyChangeEvent[TradePhase]):
@@ -101,7 +100,7 @@ class TradeEvents:
                     try:
                         self.mobile_notification_service.send_message(message)
                     except Exception as e:
-                        logger.error(str(e), exc_info=e)
+                        self.logger.error(str(e), exc_info=e)
 
             trade.state_phase_property.add_listener(on_phase_changed)
 

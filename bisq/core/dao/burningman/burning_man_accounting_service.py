@@ -1,8 +1,8 @@
 from collections.abc import Callable
+import contextvars
 from datetime import datetime
 import threading
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.dao.burningman.accounting.balance.balance_entry_type import (
@@ -14,7 +14,9 @@ from bisq.core.dao.burningman.accounting.balance.received_btc_balance_entry impo
 from bisq.core.dao.burningman.accounting.blockchain.accounting_tx_type import (
     AccountingTxType,
 )
-from bisq.core.dao.burningman.burning_man_accounting_const import BurningManAccountingConst
+from bisq.core.dao.burningman.burning_man_accounting_const import (
+    BurningManAccountingConst,
+)
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 from bisq.core.monetary.price import Price
@@ -41,9 +43,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class BurningManAccountingService(DaoSetupService, DaoStateListener):
     """
     Provides APIs for the accounting related aspects of burningmen.
@@ -51,7 +50,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
     """
 
     # Constants moved to BurningManAccountingConst
-    
+
     def __init__(
         self,
         dao_state_service: "DaoStateService",
@@ -108,7 +107,12 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
                 lambda: self.balance_model_by_burning_man_name.update(map)
             )
 
-        threading.Thread(target=run_async, name="BurningManAccountingService.start.run_async").start()
+        ctx = contextvars.copy_context()
+        threading.Thread(
+            target=ctx.run,
+            args=(run_async,),
+            name="BurningManAccountingService.start.run_async",
+        ).start()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
@@ -371,7 +375,9 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         )
 
         return {
-            datetime.fromtimestamp(int(timestamp) / 1000): Price.value_of("BSQ", int(price))
+            datetime.fromtimestamp(int(timestamp) / 1000): Price.value_of(
+                "BSQ", int(price)
+            )
             for timestamp, price in (
                 entry.split("=") for entry in historical.split(", ")
             )

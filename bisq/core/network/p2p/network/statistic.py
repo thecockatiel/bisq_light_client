@@ -1,10 +1,8 @@
-import time
-from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
+from bisq.common.setup.log_setup import get_base_logger
 from bisq.common.user_thread import UserThread
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeDict
 from utils.data import SimpleProperty
 from utils.formatting import readable_file_size
@@ -13,7 +11,7 @@ from utils.time import get_time_ms
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
-logger = get_logger(__name__)
+base_logger = get_base_logger(__name__)
 
 class Statistic:
     """
@@ -105,7 +103,7 @@ def _update_statistics_periodically():
     Statistic.total_received_bytes_per_sec.value = Statistic.total_received_bytes.value / passed
 
 def _log_statistics_periodically():
-    logger.info(
+    base_logger.info(
         f"Accumulated network statistics:\n"
         f"Bytes sent: {readable_file_size(Statistic.total_sent_bytes.value)};\n"
         f"Number of sent messages/Sent messages: {Statistic.num_total_sent_messages.value} / {dict(Statistic.total_sent_messages)};\n"

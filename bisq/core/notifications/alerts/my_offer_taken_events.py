@@ -1,7 +1,7 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 import uuid
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.notifications.mobile_message import MobileMessage
 from bisq.core.notifications.mobile_message_type import MobileMessageType
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.offer.open_offer_manager import OpenOfferManager
 
-logger = get_logger(__name__)
-
 
 class MyOfferTakenEvents:
 
@@ -26,6 +24,7 @@ class MyOfferTakenEvents:
         mobile_notification_service: "MobileNotificationService",
         open_offer_manager: "OpenOfferManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.mobile_notification_service = mobile_notification_service
         self.open_offer_manager = open_offer_manager
 
@@ -42,7 +41,7 @@ class MyOfferTakenEvents:
     def _on_open_offer_removed(self, open_offer: "OpenOffer"):
         state = open_offer.state
         if state == OpenOfferState.RESERVED:
-            logger.info(
+            self.logger.info(
                 f"We got a offer removed. id={open_offer.get_id()}, state={state.name}"
             )
             short_id = open_offer.get_short_id()
@@ -55,7 +54,7 @@ class MyOfferTakenEvents:
             try:
                 self.mobile_notification_service.send_message(message)
             except Exception as e:
-                logger.error(str(e), exc_info=e)
+                self.logger.error(str(e), exc_info=e)
 
     @staticmethod
     def get_test_msg():

@@ -1,5 +1,5 @@
+from collections import defaultdict
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.core.api.exception.failed_precondition_exception import (
     FailedPreconditionException,
@@ -29,6 +29,7 @@ from bisq.core.btc.exceptions.transaction_verification_exception import (
 )
 from bisq.core.btc.exceptions.wallet_exception import WalletException
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
+from bisq.core.user.user_context import UserContext
 from bisq.core.util.parsing_utils import ParsingUtils
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
@@ -38,23 +39,12 @@ from functools import cache
 from utils.aio import FutureCallback
 
 if TYPE_CHECKING:
+    from bisq.core.user.user_manager import UserManager
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.transaction import Transaction
     from bitcoinj.core.transaction_output import TransactionOutput
     from bisq.core.api.core_context import CoreContext
-    from bisq.core.app.app_startup_state import AppStartupState
-    from bisq.core.btc.balances import Balances
-    from bisq.core.btc.wallet.bsq_transfer_service import BsqTransferService
-    from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
-    from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
-    from bisq.core.btc.wallet.wallets_manager import WalletsManager
-    from bisq.core.dao.dao_facade import DaoFacade
-    from bisq.core.provider.fee.fee_service import FeeService
-    from bisq.core.user.preferences import Preferences
-    from bisq.core.util.coin.bsq_formatter import BsqFormatter
     from bisq.core.util.coin.coin_formatter import CoinFormatter
-
-logger = get_logger(__name__)
 
 
 # TODO: implement wallet functionaility first and then visit back this file
@@ -62,44 +52,25 @@ class CoreWalletsService:
 
     def __init__(
         self,
-        app_startup_state: "AppStartupState",
         core_context: "CoreContext",
-        balances: "Balances",
-        wallets_manager: "WalletsManager",
-        bsq_wallet_service: "BsqWalletService",
-        bsq_transfer_service: "BsqTransferService",
-        bsq_formatter: "BsqFormatter",
-        btc_wallet_service: "BtcWalletService",
-        btc_formatter: "CoinFormatter",
-        fee_service: "FeeService",
-        dao_facade: "DaoFacade",
-        preferences: "Preferences",
+        user_manager: "UserManager",
     ):
-        self.app_startup_state = app_startup_state
+        self._user_manager = user_manager
         self.core_context = core_context
-        self.balances = balances
-        self.wallets_manager = wallets_manager
-        self.bsq_wallet_service = bsq_wallet_service
-        self.bsq_transfer_service = bsq_transfer_service
-        self.bsq_formatter = bsq_formatter
-        self.btc_wallet_service = btc_wallet_service
-        self.btc_formatter = btc_formatter
-        self.fee_service = fee_service
-        self.dao_facade = dao_facade
-        self.preferences = preferences
-
         self.lock_timer: Optional[Timer] = None
-        self.temp_password: Optional[str] = None
+        self.user_temp_passwords = defaultdict[str, Optional[str]](lambda: None)
 
-    def get_key(self) -> str:
-        self.verify_encrypted_wallet_is_unlocked()
-        return self.temp_password
+    def get_key(self, user_context: "UserContext") -> str:
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        return self.user_temp_passwords[user_context.user_id]
 
-    def get_network_parameters(self) -> "NetworkParameters":
-        return self.btc_wallet_service.params
+    def get_network_parameters(
+        self, user_context: "UserContext"
+    ) -> "NetworkParameters":
+        return user_context.global_container.btc_wallet_service.params
 
-    def get_network_name(self) -> str:
-        network_parameters = self.get_network_parameters()
+    def get_network_name(self, user_context: "UserContext") -> str:
+        network_parameters = self.get_network_parameters(user_context)
         payment_protocol_id = network_parameters.get_payment_protocol_id()
         if payment_protocol_id == NetworkParameters.PAYMENT_PROTOCOL_ID_TESTNET:
             return "testnet3"
@@ -108,58 +79,76 @@ class CoreWalletsService:
         else:
             return "mainnet"
 
-    @property
-    def is_dao_state_ready_and_in_sync(self) -> bool:
-        return self.dao_facade.is_dao_state_ready_and_in_sync
+    def is_dao_state_ready_and_in_sync(self, user_context: "UserContext") -> bool:
+        return user_context.global_container.dao_facade.is_dao_state_ready_and_in_sync
 
-    def get_balances(self, currency_code: str) -> BalancesInfo:
+    def get_balances(
+        self, user_context: "UserContext", currency_code: str
+    ) -> BalancesInfo:
         self._verify_wallet_currency_code_is_valid(currency_code)
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
-        if self.balances.available_balance is None:
+        if c.balances.available_balance is None:
             raise NotAvailableException("balance is not yet available")
 
         currency_code = currency_code.strip().upper()
         if currency_code == "BSQ":
-            return BalancesInfo(self._get_bsq_balances(), BtcBalanceInfo.EMPTY)
+            return BalancesInfo(
+                self._get_bsq_balances(user_context), BtcBalanceInfo.EMPTY
+            )
         elif currency_code == "BTC":
-            return BalancesInfo(BsqBalanceInfo.EMPTY, self._get_btc_balances())
+            return BalancesInfo(
+                BsqBalanceInfo.EMPTY, self._get_btc_balances(user_context)
+            )
         else:
-            return BalancesInfo(self._get_bsq_balances(), self._get_btc_balances())
+            return BalancesInfo(
+                self._get_bsq_balances(user_context),
+                self._get_btc_balances(user_context),
+            )
 
-    def get_address_balance(self, address_string: str) -> int:
-        address = self._get_address_entry(address_string).get_address()
-        return self.btc_wallet_service.get_balance_for_address(address).value
+    def get_address_balance(
+        self, user_context: "UserContext", address_string: str
+    ) -> int:
+        address = self._get_address_entry(user_context, address_string).get_address()
+        return user_context.global_container.btc_wallet_service.get_balance_for_address(
+            address
+        ).value
 
-    def get_address_balance_info(self, address_string: str) -> "AddressBalanceInfo":
-        satoshi_balance = self.get_address_balance(address_string)
+    def get_address_balance_info(
+        self, user_context: "UserContext", address_string: str
+    ) -> "AddressBalanceInfo":
+        satoshi_balance = self.get_address_balance(user_context, address_string)
         num_confirmations = self.get_num_confirmations_for_most_recent_transaction(
-            address_string
+            user_context, address_string
         )
-        address = self._get_address_entry(address_string).get_address()
+        address = self._get_address_entry(user_context, address_string).get_address()
         return AddressBalanceInfo(
             address_string,
             satoshi_balance,
             num_confirmations,
-            self.btc_wallet_service.is_address_unused(address),
+            user_context.global_container.btc_wallet_service.is_address_unused(address),
         )
 
-    def get_funding_addresses(self) -> list["AddressBalanceInfo"]:
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+    def get_funding_addresses(
+        self, user_context: "UserContext"
+    ) -> list["AddressBalanceInfo"]:
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
         # Create a new unused funding address if none exists
         unused_address_exists = any(
-            self.btc_wallet_service.is_address_unused(a.get_address())
-            for a in self.btc_wallet_service.get_available_address_entries()
+            c.btc_wallet_service.is_address_unused(a.get_address())
+            for a in c.btc_wallet_service.get_available_address_entries()
         )
         if not unused_address_exists:
-            self.btc_wallet_service.get_fresh_address_entry()
+            c.btc_wallet_service.get_fresh_address_entry()
 
         address_strings = [
             entry.get_address_string()
-            for entry in self.btc_wallet_service.get_available_address_entries()
+            for entry in c.btc_wallet_service.get_available_address_entries()
         ]
 
         # get_address_balance is memoized, because we'll map it over addresses twice.
@@ -167,57 +156,62 @@ class CoreWalletsService:
 
         # Check if any address has zero balance
         no_address_has_zero_balance = all(
-            memoized_balance(addr_str) != 0 for addr_str in address_strings
+            memoized_balance(user_context, addr_str) != 0 for addr_str in address_strings
         )
 
         if no_address_has_zero_balance:
-            new_zero_balance_address = self.btc_wallet_service.get_fresh_address_entry()
+            new_zero_balance_address = c.btc_wallet_service.get_fresh_address_entry()
             address_strings.append(new_zero_balance_address.get_address_string())
 
         return [
             AddressBalanceInfo(
                 address,
-                memoized_balance(address),
-                self.get_num_confirmations_for_most_recent_transaction(address),
-                self.btc_wallet_service.is_address_unused(
-                    self._get_address_entry(address).get_address()
+                memoized_balance(user_context, address),
+                self.get_num_confirmations_for_most_recent_transaction(
+                    user_context, address
+                ),
+                c.btc_wallet_service.is_address_unused(
+                    self._get_address_entry(user_context, address).get_address()
                 ),
             )
             for address in address_strings
         ]
 
-    def get_unused_bsq_address(self) -> str:
-        return self.bsq_wallet_service.get_unused_bsq_address_as_string()
+    def get_unused_bsq_address(self, user_context: "UserContext") -> str:
+        return (
+            user_context.global_container.bsq_wallet_service.get_unused_bsq_address_as_string()
+        )
 
     def send_bsq(
         self,
+        user_context: "UserContext",
         address_str: str,
         amount: str,
         tx_fee_rate: str,
         callback: TxBroadcasterCallback,
     ) -> None:
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
         try:
-            address = self.get_valid_bsq_address(address_str)
-            receiver_amount = self._get_valid_transfer_amount(
-                amount, self.bsq_formatter
-            )
+            address = self.get_valid_bsq_address(user_context, address_str)
+            receiver_amount = self._get_valid_transfer_amount(amount, c.bsq_formatter)
             tx_fee_per_vbyte = (
                 self._get_tx_fee_rate_from_param_or_preference_or_fee_service(
+                    user_context,
                     tx_fee_rate
                 )
             )
-            model = self.bsq_transfer_service.get_bsq_transfer_model(
+            model = c.bsq_transfer_service.get_bsq_transfer_model(
                 address, receiver_amount, tx_fee_per_vbyte
             )
-            logger.info(
+            user_context.logger.info(
                 f"Sending {amount} BSQ to {address} with tx fee rate {tx_fee_per_vbyte.value} sats/byte",
             )
-            self.bsq_transfer_service.send_funds(model, callback)
+            c.bsq_transfer_service.send_funds(model, callback)
         except InsufficientMoneyException as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise NotAvailableException(
                 "cannot send bsq due to insufficient funds",
                 ex,
@@ -228,78 +222,81 @@ class CoreWalletsService:
             TransactionVerificationException,
             WalletException,
         ) as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise IllegalStateException(ex)
 
     def send_btc(
         self,
+        user_context: "UserContext",
         address: str,
         amount: str,
         tx_fee_rate: str,
         memo: str,
         callback: FutureCallback["Transaction"],
     ) -> None:
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
         try:
             from_addresses = {
                 entry.get_address_string()
-                for entry in self.btc_wallet_service.get_address_entries_for_available_balance_stream()
+                for entry in c.btc_wallet_service.get_address_entries_for_available_balance_stream()
             }
-            receiver_amount = self._get_valid_transfer_amount(
-                amount, self.btc_formatter
-            )
+            receiver_amount = self._get_valid_transfer_amount(amount, c.btc_formatter)
             tx_fee_per_vbyte = (
                 self._get_tx_fee_rate_from_param_or_preference_or_fee_service(
-                    tx_fee_rate
+                    user_context, tx_fee_rate
                 )
             )
 
             # JAVA TODO Support feeExcluded (or included), default is fee included.
             #  See WithdrawalView # onWithdraw (and refactor).
-            fee_estimation_transaction = self.btc_wallet_service.get_fee_estimation_transaction_for_multiple_addresses(
+            fee_estimation_transaction = c.btc_wallet_service.get_fee_estimation_transaction_for_multiple_addresses(
                 from_addresses, address, receiver_amount, tx_fee_per_vbyte
             )
             if fee_estimation_transaction is None:
                 raise IllegalStateException("could not estimate the transaction fee")
 
-            dust = self.btc_wallet_service.get_dust(fee_estimation_transaction)
+            dust = c.btc_wallet_service.get_dust(fee_estimation_transaction)
             fee = fee_estimation_transaction.get_fee().add(dust)
             if dust.is_positive():
                 fee = fee_estimation_transaction.get_fee().add(dust)
-                logger.info(
+                user_context.logger.info(
                     f"Dust txo ({dust.value} sats) was detected, the dust amount has been added to the fee "
                     f"(was {fee_estimation_transaction.get_fee()}, now {fee.value})"
                 )
 
-            logger.info(
+            user_context.logger.info(
                 f"Sending {amount} BTC to {address} with tx fee of {fee.value} sats "
                 f"(fee rate {tx_fee_per_vbyte.value} sats/byte)"
             )
-            self.btc_wallet_service.send_funds_for_multiple_addresses(
+            c.btc_wallet_service.send_funds_for_multiple_addresses(
                 from_addresses,
                 address,
                 receiver_amount,
                 fee,
                 None,
-                self.temp_password,
+                self.user_temp_passwords[user_context.user_id],
                 memo if memo else None,
                 callback,
             )
         except AddressEntryException as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise IllegalStateException(
                 "cannot send btc from any addresses in wallet", ex
             )
         except (InsufficientFundsException, InsufficientMoneyException) as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise NotAvailableException("cannot send btc due to insufficient funds", ex)
 
-    def verify_bsq_sent_to_address(self, address: str, amount: str) -> bool:
-        receiver_address = self.get_valid_bsq_address(address)
-        network_parameters = self.get_network_parameters()
-        coin_value = ParsingUtils.parse_to_coin(amount, self.bsq_formatter)
+    def verify_bsq_sent_to_address(
+        self, user_context: "UserContext", address: str, amount: str
+    ) -> bool:
+        c = user_context.global_container
+        receiver_address = self.get_valid_bsq_address(user_context, address)
+        network_parameters = self.get_network_parameters(user_context)
+        coin_value = ParsingUtils.parse_to_coin(amount, c.bsq_formatter)
 
         def is_match(tx_out: "TransactionOutput"):
             return (
@@ -309,134 +306,166 @@ class CoreWalletsService:
             )
 
         spendable_bsq_tx_outputs = (
-            self.bsq_wallet_service.get_spendable_bsq_transaction_outputs()
+            c.bsq_wallet_service.get_spendable_bsq_transaction_outputs()
         )
 
-        logger.info(
+        user_context.logger.info(
             f"Searching {len(spendable_bsq_tx_outputs)} spendable tx outputs for matching address {address} and value {coin_value.to_plain_string()}"
         )
 
         num_matches = 0
         for tx_out in spendable_bsq_tx_outputs:
             if is_match(tx_out):
-                logger.info(
+                user_context.logger.info(
                     f"\t\tTx {tx_out.parent.get_tx_id()} output has matching address {address} and value {tx_out.get_value().to_plain_string()}"
                 )
                 num_matches += 1
 
         if num_matches > 1:
-            logger.warning(
+            user_context.logger.warning(
                 f"{num_matches} tx outputs matched address {address} and value {coin_value.to_plain_string()}, "
                 f"could be a false positive BSQ payment verification result."
             )
 
         return num_matches > 0
 
-    def set_tx_fee_rate_preference(self, tx_fee_rate: int) -> None:
-        min_fee_per_vbyte = self.fee_service.min_fee_per_vbyte
+    def set_tx_fee_rate_preference(
+        self, user_context: "UserContext", tx_fee_rate: int
+    ) -> None:
+        min_fee_per_vbyte = user_context.global_container.fee_service.min_fee_per_vbyte
         if tx_fee_rate < min_fee_per_vbyte:
             raise IllegalArgumentException(
                 f"tx fee rate preference must be >= {min_fee_per_vbyte} sats/byte"
             )
 
-        self.preferences.set_use_custom_withdrawal_tx_fee(True)
+        user_context.preferences.set_use_custom_withdrawal_tx_fee(True)
         sats_per_byte = Coin.value_of(tx_fee_rate)
-        self.preferences.set_withdrawal_tx_fee_in_vbytes(sats_per_byte.value)
+        user_context.preferences.set_withdrawal_tx_fee_in_vbytes(sats_per_byte.value)
 
-    def unset_tx_fee_rate_preference(self) -> None:
-        self.preferences.set_use_custom_withdrawal_tx_fee(False)
+    def unset_tx_fee_rate_preference(self, user_context: "UserContext") -> None:
+        user_context.preferences.set_use_custom_withdrawal_tx_fee(False)
 
-    def get_most_recent_tx_fee_rate_info(self) -> "TxFeeRateInfo":
+    def get_most_recent_tx_fee_rate_info(
+        self, user_context: "UserContext"
+    ) -> "TxFeeRateInfo":
+        c = user_context.global_container
         return TxFeeRateInfo(
-            self.preferences.get_use_custom_withdrawal_tx_fee(),
-            self.preferences.get_withdrawal_tx_fee_in_vbytes(),
-            self.fee_service.min_fee_per_vbyte,
-            self.fee_service.get_tx_fee_per_vbyte().value,
-            self.fee_service.last_request,
+            user_context.preferences.get_use_custom_withdrawal_tx_fee(),
+            user_context.preferences.get_withdrawal_tx_fee_in_vbytes(),
+            c.fee_service.min_fee_per_vbyte,
+            c.fee_service.get_tx_fee_per_vbyte().value,
+            c.fee_service.last_request,
         )
 
-    def get_transactions(self) -> set["Transaction"]:
-        return self.btc_wallet_service.get_transactions(False)
+    def get_transactions(
+        self,
+        user_context: "UserContext",
+    ) -> set["Transaction"]:
+        return user_context.global_container.btc_wallet_service.get_transactions(False)
 
-    def get_transaction(self, tx_id: str) -> "Transaction":
-        return self._get_transaction_with_id(tx_id)
+    def get_transaction(self, user_context: "UserContext", tx_id: str) -> "Transaction":
+        return self._get_transaction_with_id(user_context, tx_id)
 
-    def get_transaction_confirmations(self, tx_id: str) -> int:
-        return (
-            self._get_transaction_confidence(tx_id).depth
-        )
+    def get_transaction_confirmations(
+        self, user_context: "UserContext", tx_id: str
+    ) -> int:
+        return self._get_transaction_confidence(user_context, tx_id).depth
 
     def get_num_confirmations_for_most_recent_transaction(
-        self, address_string: str
+        self, user_context: "UserContext", address_string: str
     ) -> int:
-        address = self._get_address_entry(address_string).get_address()
-        confidence = self.btc_wallet_service.get_confidence_for_address(address)
+        address = self._get_address_entry(user_context, address_string).get_address()
+        confidence = (
+            user_context.global_container.btc_wallet_service.get_confidence_for_address(
+                address
+            )
+        )
         return 0 if confidence is None else confidence.confirmations
 
-    def set_wallet_password(self, password: str, new_password: str = None) -> None:
-        self.verify_wallets_are_available()
+    def set_wallet_password(
+        self, user_context: "UserContext", password: str, new_password: str = None
+    ) -> None:
+        self.verify_wallets_are_available(user_context)
 
         raise IllegalStateException(
             "core_wallets_service.set_wallet_password is not implemented yet"
         )
 
-    def lock_wallet(self) -> None:
+    def lock_wallet(self, user_context: "UserContext") -> None:
         raise IllegalStateException(
             "core_wallets_service.lock_wallet is not implemented yet"
         )
 
-    def unlock_wallet(self, password: str, timeout: int) -> None:
+    def unlock_wallet(
+        self, user_context: "UserContext", password: str, timeout: int
+    ) -> None:
         raise IllegalStateException(
             "core_wallets_service.unlock_wallet is not implemented yet"
         )
 
-    def remove_wallet_password(self, password: str) -> None:
+    def remove_wallet_password(
+        self, user_context: "UserContext", password: str
+    ) -> None:
         raise IllegalStateException(
             "core_wallets_service.remove_wallet_password is not implemented yet"
         )
 
-    def verify_wallets_are_available(self) -> None:
+    def verify_wallets_are_available(self, user_context: "UserContext") -> None:
         """Throws a RuntimeError if wallets are not available (encrypted or not)."""
-        self.verify_wallet_is_synced()
+        self.verify_wallet_is_synced(user_context)
+        c = user_context.global_container
 
         # JAVA TODO This check may be redundant, but the AppStartupState is new and unused
         # prior to commit 838595cb03886c3980c40df9cfe5f19e9f8a0e39. I would prefer
         # to leave this check in place until certain AppStartupState will always work
         # as expected.
-        if not self.wallets_manager.are_wallets_available():
+        if not c.wallets_manager.are_wallets_available():
             raise NotAvailableException("wallet is not yet available")
 
-    def verify_wallet_is_available_and_encrypted(self) -> None:
+    def verify_wallet_is_available_and_encrypted(
+        self, user_context: "UserContext"
+    ) -> None:
         """Throws a RuntimeError if wallets are not available or not encrypted."""
-        self.verify_wallet_is_synced()
+        self.verify_wallet_is_synced(user_context)
+        c = user_context.global_container
 
-        if not self.wallets_manager.are_wallets_available():
+        if not c.wallets_manager.are_wallets_available():
             raise NotAvailableException("wallet is not yet available")
 
-        if not self.wallets_manager.are_wallets_encrypted():
+        if not c.wallets_manager.are_wallets_encrypted():
             raise FailedPreconditionException("wallet is not encrypted with a password")
 
-    def verify_encrypted_wallet_is_unlocked(self) -> None:
+    def verify_encrypted_wallet_is_unlocked(self, user_context: "UserContext") -> None:
         """Throws a RuntimeError if wallets are encrypted and locked."""
-        if self.wallets_manager.are_wallets_encrypted() and self.temp_password is None:
+        c = user_context.global_container
+        if (
+            c.wallets_manager.are_wallets_encrypted()
+            and self.user_temp_passwords[user_context.user_id] is None
+        ):
             raise FailedPreconditionException("wallet is locked")
 
-    def verify_wallet_is_synced(self) -> None:
+    def verify_wallet_is_synced(self, user_context: "UserContext") -> None:
         """Throws a RuntimeError if wallets is not synced yet."""
-        if not self.app_startup_state.wallet_synced.get():
+        c = user_context.global_container
+        if not c.app_startup_state.wallet_synced.get():
             raise NotAvailableException("wallet not synced yet")
 
-    def verify_application_is_fully_initialized(self) -> None:
+    def verify_application_is_fully_initialized(
+        self, user_context: "UserContext"
+    ) -> None:
         """Throws a RuntimeError if application is not fully initialized."""
-        if not self.app_startup_state.application_fully_initialized.get():
+        c = user_context.global_container
+        if not c.app_startup_state.application_fully_initialized.get():
             raise NotAvailableException("server is not fully initialized")
 
-    def get_valid_bsq_address(self, address: str):
+    def get_valid_bsq_address(self, user_context: "UserContext", address: str):
         """Returns an Address for the string, or raises RuntimeError if invalid."""
         try:
-            return self.bsq_formatter.get_address_from_bsq_address(address)
+            return user_context.global_container.bsq_formatter.get_address_from_bsq_address(
+                address
+            )
         except Exception as e:
-            logger.error("", exc_info=e)
+            user_context.logger.error("", exc_info=e)
             raise IllegalArgumentException(f"{address} is not a valid bsq address")
 
     def _verify_wallet_currency_code_is_valid(self, currency_code: str) -> None:
@@ -449,34 +478,36 @@ class CoreWalletsService:
                 f"wallet does not support {currency_code}"
             )
 
-    def _maybe_set_wallets_manager_key(self) -> None:
+    def _maybe_set_wallets_manager_key(self, user_context: "UserContext") -> None:
         """
         Unlike the UI, a daemon cannot capture the user's wallet encryption password
         during startup. This method will set the wallet service's aesKey if necessary.
         """
-        if self.temp_password is None:
+        if self.user_temp_passwords[user_context.user_id] is None:
             raise IllegalStateException(
                 "cannot use None key, unlockwallet timeout may have expired"
             )
+        c = user_context.global_container
 
         if (
-            self.btc_wallet_service.password is None
-            or self.bsq_wallet_service.password is None
+            c.btc_wallet_service.password is None
+            or c.bsq_wallet_service.password is None
         ):
-            password = self.temp_password
-            self.wallets_manager.set_password(password)
-            self.wallets_manager.maybe_add_segwit_keychains(password)
+            password = self.user_temp_passwords[user_context.user_id]
+            c.wallets_manager.set_password(password)
+            c.wallets_manager.maybe_add_segwit_keychains(password)
 
-    def _get_bsq_balances(self) -> "BsqBalanceInfo":
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+    def _get_bsq_balances(self, user_context: "UserContext") -> "BsqBalanceInfo":
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
-        available_balance = self.bsq_wallet_service.available_balance
-        unverified_balance = self.bsq_wallet_service.unverified_balance
-        unconfirmed_change_balance = self.bsq_wallet_service.unconfirmed_change_balance
-        locked_for_voting_balance = self.bsq_wallet_service.locked_for_voting_balance
-        lockup_bonds_balance = self.bsq_wallet_service.lockup_bonds_balance
-        unlocking_bonds_balance = self.bsq_wallet_service.unlocking_bonds_balance
+        available_balance = c.bsq_wallet_service.available_balance
+        unverified_balance = c.bsq_wallet_service.unverified_balance
+        unconfirmed_change_balance = c.bsq_wallet_service.unconfirmed_change_balance
+        locked_for_voting_balance = c.bsq_wallet_service.locked_for_voting_balance
+        lockup_bonds_balance = c.bsq_wallet_service.lockup_bonds_balance
+        unlocking_bonds_balance = c.bsq_wallet_service.unlocking_bonds_balance
 
         return BsqBalanceInfo(
             available_balance.value,
@@ -487,19 +518,20 @@ class CoreWalletsService:
             unlocking_bonds_balance.value,
         )
 
-    def _get_btc_balances(self) -> "BtcBalanceInfo":
-        self.verify_wallets_are_available()
-        self.verify_encrypted_wallet_is_unlocked()
+    def _get_btc_balances(self, user_context: "UserContext") -> "BtcBalanceInfo":
+        self.verify_wallets_are_available(user_context)
+        self.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
-        available_balance = self.balances.available_balance
+        available_balance = c.balances.available_balance
         if available_balance is None:
             raise NotAvailableException("balance is not yet available")
 
-        reserved_balance = self.balances.reserved_balance
+        reserved_balance = c.balances.reserved_balance
         if reserved_balance is None:
             raise NotAvailableException("reserved balance is not yet available")
 
-        locked_balance = self.balances.locked_balance
+        locked_balance = c.balances.locked_balance
         if locked_balance is None:
             raise NotAvailableException("locked balance is not yet available")
 
@@ -520,21 +552,23 @@ class CoreWalletsService:
         return amount_as_coin
 
     def _get_tx_fee_rate_from_param_or_preference_or_fee_service(
-        self, tx_fee_rate: str
+        self, user_context: "UserContext", tx_fee_rate: str
     ) -> "Coin":
         # A non txFeeRate String value overrides the fee service and custom fee.
         if not tx_fee_rate:
-            return self.btc_wallet_service.get_tx_fee_for_withdrawal_per_vbyte()
+            return (
+                user_context.global_container.btc_wallet_service.get_tx_fee_for_withdrawal_per_vbyte()
+            )
         return Coin.value_of(int(tx_fee_rate))
 
     def _get_key_crypter_scrypt(self):
         raise IllegalStateException("wallet encrypter is not available")
 
-    def _get_address_entry(self, address_string: str):
+    def _get_address_entry(self, user_context: "UserContext", address_string: str):
         address_entry = next(
             (
                 entry
-                for entry in self.btc_wallet_service.get_address_entry_list_as_immutable_list()
+                for entry in user_context.global_container.btc_wallet_service.get_address_entry_list_as_immutable_list()
                 if address_string == entry.get_address_string()
             ),
             None,
@@ -545,33 +579,39 @@ class CoreWalletsService:
 
         return address_entry
 
-    def _get_transaction_with_id(self, tx_id: str) -> "Transaction":
+    def _get_transaction_with_id(
+        self, user_context: "UserContext", tx_id: str
+    ) -> "Transaction":
         if len(tx_id) != 64:
             raise IllegalArgumentException(f"{tx_id} is not a transaction id")
 
         try:
-            tx = self.btc_wallet_service.get_transaction(tx_id)
+            tx = user_context.global_container.btc_wallet_service.get_transaction(tx_id)
             if tx is None:
                 raise NotFoundException(f"tx with id {tx_id} not found")
             return tx
         except IllegalArgumentException as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise IllegalStateException(
                 f"could not get transaction with id {tx_id}\ncause: {str(ex).lower()}"
             )
 
-    def _get_transaction_confidence(self, tx_id: str) -> "TransactionConfidence":
+    def _get_transaction_confidence(
+        self, user_context: "UserContext", tx_id: str
+    ) -> "TransactionConfidence":
         if len(tx_id) != 64:
             raise IllegalArgumentException(f"{tx_id} is not a transaction id")
 
-        self._get_transaction_with_id(tx_id) # raises if not found
+        self._get_transaction_with_id(user_context, tx_id)  # raises if not found
         try:
-            confidence = self.btc_wallet_service.get_confidence_for_tx_id(tx_id)
+            confidence = user_context.global_container.btc_wallet_service.get_confidence_for_tx_id(
+                tx_id
+            )
             if confidence is None:
                 raise IllegalStateException(f"wallet not initialized yet")
             return confidence
         except IllegalArgumentException as ex:
-            logger.error(str(ex))
+            user_context.logger.error(str(ex))
             raise IllegalStateException(
                 f"could not get confidence for txid {tx_id}\ncause: {str(ex).lower()}"
             )

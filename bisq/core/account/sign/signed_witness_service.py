@@ -1,5 +1,6 @@
 import base64
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption
 from bisq.common.crypto.hash import get_ripemd160_hash
 from bisq.common.crypto.sig import Sig
@@ -8,7 +9,6 @@ from bisq.core.offer.offer_restrictions import OfferRestrictions
 from electrum_min.bitcoin import ecdsa_sign_usermessage
 from utils.time import get_time_ms
 from typing import TYPE_CHECKING, Collection, Optional, Union
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness_verification_method import SignedWitnessVerificationMethod
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bitcoinj.base.coin import Coin
@@ -26,22 +26,21 @@ if TYPE_CHECKING:
     from bisq.core.support.dispute.arbitration.arbitrator.arbitrator_manager import ArbitratorManager
     from bisq.core.user.user import User
     from bisq.core.account.witness.account_age_witness import AccountAgeWitness
-
-logger = get_logger(__name__)
-
+ 
 
 class SignedWitnessService:
     SIGNER_AGE_DAYS = 30
     SIGNER_AGE_MS = int(timedelta(days=SIGNER_AGE_DAYS).total_seconds() * 1000)
     MINIMUM_TRADE_AMOUNT_FOR_SIGNING = OfferRestrictions.TOLERATED_SMALL_TRADE_AMOUNT.divide(4)
 
-    def __init__(self, key_ring: 'KeyRing',
+    def __init__(self,key_ring: 'KeyRing',
                  p2p_service: 'P2PService',
                  arbitrator_manager: 'ArbitratorManager',
                  signed_witness_storage_service: 'SignedWitnessStorageService',
                  append_only_data_store_service: 'AppendOnlyDataStoreService',
                  user: 'User',
                  filter_manager: 'FilterManager'):
+        self.logger = get_ctx_logger(__name__)
         self.key_ring = key_ring
         self.p2p_service = p2p_service
         self.arbitrator_manager = arbitrator_manager
@@ -87,10 +86,9 @@ class SignedWitnessService:
         if self.p2p_service.is_bootstrapped:
             self.on_bootstrap_complete()
         else:
-            outer = self
             class Listener(BootstrapListener):
-                def on_data_received(self):
-                    outer.on_bootstrap_complete()
+                def on_data_received(self_):
+                    self.on_bootstrap_complete()
             
             self.p2p_service.add_p2p_service_listener(Listener())
         # JAVA TODO: Enable cleaning of signed witness list when necessary
@@ -174,7 +172,7 @@ class SignedWitnessService:
                 not self.verify_signer(signed_witness)):
             return False
 
-        logger.info(f"Publish own signedWitness {str(signed_witness)}")
+        self.logger.info(f"Publish own signedWitness {str(signed_witness)}")
         self.publish_signed_witness(signed_witness)
         return True
     
@@ -203,12 +201,12 @@ class SignedWitnessService:
 
             if self.is_signed_account_age_witness(account_age_witness):
                 err = f"Arbitrator trying to sign already signed accountagewitness {str(account_age_witness)}"
-                logger.warning(err)
+                self.logger.warning(err)
                 return err
             
             if peers_pub_key is None:
                 err = f"Trying to sign accountAgeWitness {str(account_age_witness)} \nwith owner pubkey=null"
-                logger.warning(err)
+                self.logger.warning(err)
                 return err
             
             account_age_witness_hash = account_age_witness.get_hash()
@@ -223,16 +221,16 @@ class SignedWitnessService:
                 trade_amount=trade_amount.value,
             )
             self.publish_signed_witness(signed_witness)
-            logger.info(f"Arbitrator signed witness {signed_witness}")
+            self.logger.info(f"Arbitrator signed witness {signed_witness}")
             return ""
         else:
             # Any peer can sign with DSA key
             if self.is_signed_account_age_witness(account_age_witness):
-                logger.warning(f"Trader trying to sign already signed accountagewitness {str(account_age_witness)}")
+                self.logger.warning(f"Trader trying to sign already signed accountagewitness {str(account_age_witness)}")
                 return None
             
             if self.is_sufficient_trade_amount_for_signing(trade_amount):
-                logger.warning("Trader tried to sign account with too little trade amount")
+                self.logger.warning("Trader tried to sign account with too little trade amount")
                 return None
             
             signature = Sig.sign(self.key_ring.signature_key_pair.private_key, account_age_witness.get_hash())
@@ -246,7 +244,7 @@ class SignedWitnessService:
                 trade_amount=trade_amount.value,
             )
             self.publish_signed_witness(signed_witness)
-            logger.info(f"Trader signed witness {signed_witness}")
+            self.logger.info(f"Trader signed witness {signed_witness}")
             return signed_witness
     
     # Arbitrators sign with EC key
@@ -260,7 +258,7 @@ class SignedWitnessService:
                                                          time=child_sign_time)
         
     def self_sign_and_publish_account_age_witness(self, account_age_witness: 'AccountAgeWitness'):
-        logger.info(f"Sign own accountAgeWitness {str(account_age_witness)}")
+        self.logger.info(f"Sign own accountAgeWitness {str(account_age_witness)}")
         self.sign_and_publish_account_age_witness(account_age_witness,
                                                   peers_pub_key=self.key_ring.signature_key_pair.public_key,
                                                   trade_amount=SignedWitnessService.MINIMUM_TRADE_AMOUNT_FOR_SIGNING)
@@ -287,12 +285,12 @@ class SignedWitnessService:
                 self.verify_signature_with_ec_key_result_cache[_hash] = True
                 return True
             else:
-                logger.warning("Provided EC key is not in list of valid arbitrators.")
+                self.logger.warning("Provided EC key is not in list of valid arbitrators.")
                 self.verify_signature_with_ec_key_result_cache[_hash] = False
                 return False
         except Exception as e:
-            logger.warning(f"verifySignature signedWitness failed. signedWitness={signed_witness}")
-            logger.warning(f"Caused by {repr(e)}")
+            self.logger.warning(f"verifySignature signedWitness failed. signedWitness={signed_witness}")
+            self.logger.warning(f"Caused by {repr(e)}")
             self.verify_signature_with_ec_key_result_cache[_hash] = False
             return False
         
@@ -308,8 +306,8 @@ class SignedWitnessService:
             self.verify_signature_with_dsa_key_result_cache[_hash] = True
             return True
         except Exception as e:
-            logger.warning(f"verifySignature signedWitness failed. signedWitness={str(signed_witness)}")
-            logger.warning(f"Caused by {repr(e)}")
+            self.logger.warning(f"verifySignature signedWitness failed. signedWitness={str(signed_witness)}")
+            self.logger.warning(f"Caused by {repr(e)}")
             self.verify_signature_with_dsa_key_result_cache[_hash] = False
             return False
         
@@ -471,7 +469,7 @@ class SignedWitnessService:
 
     def publish_signed_witness(self, signed_witness: 'SignedWitness'):
         if signed_witness.get_hash_as_byte_array() not in self.signed_witness_map:
-            logger.info(f"broadcast signed witness {signed_witness}")
+            self.logger.info(f"broadcast signed witness {signed_witness}")
             # We set reBroadcast to True to achieve better resilience
             self.p2p_service.add_persistable_network_payload(signed_witness, True)
             self.add_to_map(signed_witness)

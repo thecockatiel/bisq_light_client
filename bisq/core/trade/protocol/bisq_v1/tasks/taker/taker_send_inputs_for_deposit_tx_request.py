@@ -1,5 +1,6 @@
+from typing import TYPE_CHECKING
 from bisq.common.crypto.sig import Sig
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.network.p2p.send_direct_message_listener import SendDirectMessageListener
 from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_request import (
@@ -10,10 +11,15 @@ from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from utils.preconditions import check_argument, check_not_none
 from utils.time import get_time_ms
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 
 class TakerSendInputsForDepositTxRequest(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -118,7 +124,7 @@ class TakerSendInputsForDepositTxRequest(TradeTask):
                 burning_man_selection_height=burning_man_selection_height,
             )
 
-            logger.info(
+            self.logger.info(
                 f"Send {request.__class__.__name__} with offer ID {request.trade_id} and UID {request.uid} to peer {self.trade.trading_peer_node_address}"
             )
 
@@ -127,13 +133,13 @@ class TakerSendInputsForDepositTxRequest(TradeTask):
             class Listener(SendDirectMessageListener):
 
                 def on_arrived(self_):
-                    logger.info(
+                    self.logger.info(
                         f"{request.__class__.__name__} arrived at peer: offer ID={request.trade_id}; UID={request.uid}"
                     )
                     self.complete()
 
                 def on_fault(self_, error_message: str):
-                    logger.error(
+                    self.logger.error(
                         f"Sending {request.__class__.__name__} failed: UID={request.uid}; peer={self.trade.trading_peer_node_address}; error={error_message}"
                     )
                     self.append_to_error_message(

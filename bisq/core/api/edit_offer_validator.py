@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 import grpc_pb2
@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
     from bisq.core.offer.open_offer import OpenOffer
 
-logger = get_logger(__name__)
 
 DECIMAL_ZERO = Decimal("0")
 
@@ -81,6 +80,7 @@ class EditOfferValidator:
         new_enable: int,
         edit_type: grpc_pb2.EditOfferRequest.EditType,
     ):
+        self.logger = get_ctx_logger(__name__)
         self._currently_open_offer = currently_open_offer
         self._new_price = "0" if not new_price.strip() else new_price
         # TODO: check the comment below and make the change ?
@@ -105,7 +105,7 @@ class EditOfferValidator:
         self._is_zero_edited_trigger_price = Decimal(self._new_trigger_price).is_zero()
 
     def validate(self) -> "EditOfferValidator":
-        logger.info(f"Verifying 'editoffer' params for editType {self._edit_type}")
+        self.logger.info(f"Verifying 'editoffer' params for editType {self._edit_type}")
         self._check_not_bsq_swap_offer()
 
         if self._edit_type == grpc_pb2.EditOfferRequest.EditType.ACTIVATION_STATE_ONLY:
@@ -155,13 +155,13 @@ class EditOfferValidator:
             if self._currently_open_offer.get_offer().is_use_market_based_price
             else "fixed price"
         )
-        logger.info(
+        self.logger.info(
             f"Attempting to {enable_description} {pricing_description} offer with id '{self._currently_open_offer.get_id()}'."
         )
 
     def _validate_edited_fixed_price(self):
         if self._currently_open_offer.get_offer().is_use_market_based_price:
-            logger.info(
+            self.logger.info(
                 f"Attempting to change mkt price margin based offer with id '{self._currently_open_offer.get_id()}' to fixed price offer."
             )
 
@@ -179,7 +179,7 @@ class EditOfferValidator:
 
     def _validate_edited_market_price_margin(self):
         if not self._currently_open_offer.get_offer().is_use_market_based_price:
-            logger.info(
+            self.logger.info(
                 f"Attempting to change fixed price offer with id '{self._currently_open_offer.get_id()}' to mkt price margin based offer."
             )
 

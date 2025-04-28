@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from utils.preconditions import check_argument
@@ -10,8 +10,6 @@ from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.provider.mempool.fee_validation_status import FeeValidationStatus
 from bisq.core.trade.model.tradable import Tradable
 import pb_pb2 as protobuf
-
-logger = get_logger(__name__)
 
 
 class OpenOffer(Tradable):
@@ -27,6 +25,8 @@ class OpenOffer(Tradable):
         mediator_node_address: Optional["NodeAddress"] = None,
         refund_agent_node_address: Optional["NodeAddress"] = None,
     ):
+        self.logger = get_ctx_logger(__name__)
+
         if trigger_price is None:
             trigger_price = 0
 
@@ -153,12 +153,12 @@ class OpenOffer(Tradable):
     def get_bsq_swap_offer_payload(self):
         check_argument(
             self.offer.bsq_swap_offer_payload is not None,
-            "get_bsq_swap_offer_payload must be called only when BsqSwapOfferPayload is the expected payload"
+            "get_bsq_swap_offer_payload must be called only when BsqSwapOfferPayload is the expected payload",
         )
         return self.offer.bsq_swap_offer_payload
 
     def _on_timed_out(self):
-        logger.debug("Timeout for resetting OpenOfferState.RESERVED reached")
+        self.logger.debug("Timeout for resetting OpenOfferState.RESERVED reached")
         if self.state == OpenOfferState.RESERVED:
             # we do not need to persist that as at startup any RESERVED state would be reset to AVAILABLE anyway
             self.state = OpenOfferState.AVAILABLE
@@ -166,7 +166,9 @@ class OpenOffer(Tradable):
     def start_timeout(self):
         self.stop_timeout()
 
-        UserThread.run_after(self._on_timed_out, timedelta(seconds=OpenOffer.TIMEOUT_SEC))
+        UserThread.run_after(
+            self._on_timed_out, timedelta(seconds=OpenOffer.TIMEOUT_SEC)
+        )
 
     def stop_timeout(self):
         if self._timeout_timer:

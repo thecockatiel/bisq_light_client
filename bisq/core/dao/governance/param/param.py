@@ -19,12 +19,11 @@
 from enum import Enum
 from bisq.common.config.config import Config
 from bisq.common.protocol.proto_util import ProtoUtil
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.locale.res import Res
 import pb_pb2 as protobuf
 from bisq.core.dao.governance.param.param_type import ParamType
 
-logger = get_logger(__name__)
 
 def _get_btc_recipient_network_address():
     network = Config.BASE_CURRENCY_NETWORK_VALUE
@@ -216,6 +215,7 @@ class Param(Enum):
             assert param is not None, f"param must not be None"
             return param
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"from_proto: {e}")
             return Param.UNDEFINED
         

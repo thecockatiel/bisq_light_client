@@ -1,11 +1,11 @@
+import contextvars
 from pathlib import Path
 from typing import Optional
 from bisq.common.file.file_util import rename_file
-from bisq.common.setup.log_setup import get_logger
 from concurrent.futures import ThreadPoolExecutor
 import tempfile
 
-logger = get_logger(__name__)
+from bisq.common.setup.log_setup import get_ctx_logger
 
 class JsonFileManager:
     _INSTANCES: list["JsonFileManager"] = []
@@ -23,6 +23,7 @@ class JsonFileManager:
             try:
                 self.dir.mkdir(parents=True, exist_ok=True)
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Failed to create directory: {e}")
 
         JsonFileManager._INSTANCES.append(self)
@@ -40,7 +41,8 @@ class JsonFileManager:
             self.executor.shutdown()
 
     def write_to_disc_threaded(self, json_data: str, file_name: str):
-        self.get_executor().submit(self.write_to_disc, json_data, file_name)
+        ctx = contextvars.copy_context()
+        self.get_executor().submit(ctx.run, self.write_to_disc, json_data, file_name)
 
     def write_to_disc(self, json_data: str, file_name: str):
         json_file = self.dir.joinpath(f"{file_name}.json")
@@ -53,4 +55,5 @@ class JsonFileManager:
                 temp_file.close()
                 rename_file(Path(temp_file_path), json_file)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Error writing to storage file {json_file}", exc_info=e)

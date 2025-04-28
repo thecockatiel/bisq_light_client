@@ -3,11 +3,31 @@ from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 import re
+from contextvars import ContextVar
+from typing import Optional
+from contextlib import contextmanager
 
 from bisq.common.util.utilities import get_sys_info
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException
+from utils.preconditions import check_argument
 
 DEFAULT_LOG_LEVEL = logging.INFO
 
+ctx = ContextVar[Optional[logging.Logger]]('logger', default=None)
+
+def get_ctx_logger(name: str):
+    logger = ctx.get()
+    if not logger:
+        raise IllegalStateException("context is expected to contain a logger")
+    return logger.getChild(name)
+
+@contextmanager
+def logger_context(value: logging.Logger):
+    token = ctx.set(value)
+    try:
+        yield
+    finally:
+        ctx.reset(token)
 
 # https://stackoverflow.com/a/35804945
 def addLoggingLevel(levelName, levelNum, methodName=None):
@@ -63,28 +83,40 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 
 addLoggingLevel("TRACE", logging.DEBUG - 5)
 
+
+class BisqLogger(logging.Logger):
+    def getChild(self, name: str):
+        return super().getChild(abbreviate_dotted_words(name))
+
+
+logging.setLoggerClass(BisqLogger)
+
 # Create formatter with pattern matching Java configuration
 formatter = logging.Formatter(
     fmt="%(asctime)s [%(threadName)s] %(levelname)-5s %(name)-15s: %(message)s",
     datefmt="%b-%d %H:%M:%S",
 )
 
-bisq_logger = logging.getLogger("bisq_light")
-# add basic logging to stdout
+_rolling_ext_re = re.compile(r"^\.(\d+)+$")
+
 stdout_handler = logging.StreamHandler()
 stdout_handler.setFormatter(formatter)
 stdout_handler.setLevel(DEFAULT_LOG_LEVEL)
-bisq_logger.addHandler(stdout_handler)
-bisq_logger.propagate = False
+
+base_logger = logging.getLogger()
+base_logger.addHandler(stdout_handler)
+base_logger_file_handler = None
+shared_logger = base_logger.getChild("shared")
+shared_logger.propagate = False
+shared_logger.addHandler(stdout_handler)
 
 
-def get_logger(name: str) -> logging.Logger:
-    if name.startswith("bisq_light."):
-        name = name[11:]
-    return bisq_logger.getChild(name)
+def get_base_logger(name: str):
+    return base_logger.getChild(name)
 
 
-_rolling_ext_re = re.compile(r"^\.(\d+)+$")
+def get_base_logger(name: str) -> logging.Logger:
+    return shared_logger.getChild(name)
 
 
 class CustomRotatingFileHandler(RotatingFileHandler):
@@ -99,32 +131,102 @@ class CustomRotatingFileHandler(RotatingFileHandler):
         return default_name
 
 
-def configure_logging(log_file: Path, log_level="INFO"):
+abbreviate_pattern = re.compile(r"\b(\w+)(?=\.\w+)")
+
+
+def abbreviate_dotted_words(words: str):
+    return abbreviate_pattern.sub(lambda m: m.group(1)[0], words)
+
+
+def setup_aggregated_logger(app_data_dir: Path, log_level="INFO"):
+    global base_logger_file_handler
+    log_dir = app_data_dir.joinpath("all_logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = str(log_dir.joinpath("bisq.log"))
+    file_handler = CustomRotatingFileHandler(
+        filename=log_file,
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=20,
+        encoding="utf-8",
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(log_level)
+    base_logger_file_handler = file_handler
+    base_logger.addHandler(file_handler)
+    shared_logger.addHandler(file_handler)
+
+    base_logger.info(f"Aggregated log file at: {log_file}")
+    base_logger.info(get_sys_info())
+
+
+user_loggers: dict[str, logging.Logger] = {}
+user_file_handlers: dict[str, CustomRotatingFileHandler] = {}
+
+def get_user_log_file_path(user_data_dir: Path):
+    return str(user_data_dir.joinpath("bisq.log"))
+
+def get_user_logger(user_id: str, user_data_dir: Path, log_level="INFO"):
+    if user_id in user_loggers:
+        return user_loggers[user_id]
+
     log_level = getattr(logging, log_level.upper(), DEFAULT_LOG_LEVEL)
 
-    # Create and configure rotating file handler with custom class
-    if log_file:
-        file_handler = CustomRotatingFileHandler(
-            filename=log_file,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=20,
-            encoding="utf-8",
-        )
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(log_level)
-        bisq_logger.addHandler(file_handler)
+    user_loggers[user_id] = user_logger = logging.getLogger(f"user_{user_id}")
+    user_logger.setLevel(log_level)
+    user_logger.propagate = False
 
-    bisq_logger.setLevel(log_level)
+    # add file handler
+    log_file = get_user_log_file_path(user_data_dir)
 
-    if log_file:
-        bisq_logger.info(f"Log file at: {log_file}")
-    bisq_logger.info(get_sys_info())
+    file_handler = CustomRotatingFileHandler(
+        filename=log_file,
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=20,
+        encoding="utf-8",
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(log_level)
+    user_logger.addHandler(file_handler)
+    if base_logger_file_handler:
+        user_logger.addHandler(
+            base_logger_file_handler
+        )  # we want each user logger to log to the aggregated logger as well.
 
     # Set specific logger levels
-    get_logger("utils.tor").setLevel(logging.WARN)
+    user_logger.getChild("utils.tor").setLevel(logging.WARN)
+    
+    # we want shared logger logs to be logged in each user log files
+    # but not base logger
+    # so we keep the reference and add it to shared_logger handlers when we start the instance
+    user_file_handlers[user_id] = file_handler
+
+    return user_logger
 
 
-def set_custom_log_level(level):
-    if isinstance(level, str):
-        level = getattr(logging, level.upper(), DEFAULT_LOG_LEVEL)
-    bisq_logger.setLevel(level)
+def add_user_handler_to_shared(user_id: str):
+    if user_id not in user_file_handlers:
+        raise IllegalStateException(f"User `{user_id}` logger not initialized yet")
+    shared_logger.removeHandler(user_file_handlers[user_id])
+
+def remove_user_handler_from_shared(user_id: str): 
+    handler = user_file_handlers.get(user_id, None)
+    if handler:
+        shared_logger.removeHandler(handler)
+
+
+_current_user_logger: logging.Logger = None
+
+
+def switch_std_handler_to(user_id: str):
+    global _current_user_logger
+    check_argument(user_id in user_loggers, "user logger not initialized yet")
+    if _current_user_logger is not None:
+        _current_user_logger.removeHandler(stdout_handler)
+    _current_user_logger = user_loggers[user_id]
+    _current_user_logger.addHandler(stdout_handler)
+
+
+def setup_log_for_test(test_name: str, data_dir: Path):
+    user_logger = get_user_logger(test_name, data_dir, "TRACE")
+    switch_std_handler_to(test_name)
+    return user_logger

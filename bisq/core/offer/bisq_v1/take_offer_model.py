@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task_model import TaskModel
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.monetary.volume import Volume
@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.provider.price.price_feed_service import PriceFeedService
 
-logger = get_logger(__name__)
-
 
 class TakeOfferModel(TaskModel):
     def __init__(
@@ -34,6 +32,7 @@ class TakeOfferModel(TaskModel):
         offer_util: "OfferUtil",
         price_feed_service: "PriceFeedService",
     ):
+        self.logger = get_ctx_logger(__name__)
         # Immutable
         self.account_age_witness_service = account_age_witness_service
         self.btc_wallet_service = btc_wallet_service
@@ -125,7 +124,7 @@ class TakeOfferModel(TaskModel):
         self.tx_fee_from_fee_service = self.offer_util.get_tx_fee_by_vsize(
             self.tx_fee_per_vbyte_from_fee_service, self.fee_tx_vsize
         )
-        logger.info(
+        self.logger.info(
             f"{self.fee_service.__class__.__name__} txFeePerVbyte = {self.tx_fee_per_vbyte_from_fee_service}"
         )
 

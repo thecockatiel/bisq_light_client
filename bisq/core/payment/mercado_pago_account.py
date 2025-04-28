@@ -46,7 +46,7 @@ class MercadoPagoAccount(CountryBasedPaymentAccount):
     _SUPPORTED_CURRENCIES = []
 
     @classproperty
-    def SUPPORTED_CURRENCIES() -> list["TradeCurrency"]:
+    def SUPPORTED_CURRENCIES(cls) -> list["TradeCurrency"]:
         if not MercadoPagoAccount._SUPPORTED_CURRENCIES:
             MercadoPagoAccount._SUPPORTED_CURRENCIES = [
                 get_currency_by_country_code(country_code)

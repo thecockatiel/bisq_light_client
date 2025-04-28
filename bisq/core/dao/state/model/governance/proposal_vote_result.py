@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
 from utils.preconditions import check_argument
 from bisq.core.dao.state.model.governance.proposal import Proposal
-
-logger = get_logger(__name__)
 
 
 class ProposalVoteResult(PersistablePayload, ImmutableDaoStateModel):
@@ -86,6 +83,7 @@ class ProposalVoteResult(PersistablePayload, ImmutableDaoStateModel):
     @property
     def quorum(self) -> int:
         # Quorum is sum of all votes independent if accepted or rejected.
+        logger = get_ctx_logger(__name__)
         logger.debug(
             f"Quorum: proposalTxId: {self._proposal.tx_id}, "
             f"totalStake: {self._total_stake}, "

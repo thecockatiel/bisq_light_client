@@ -3,7 +3,6 @@ import secrets
 from typing import Optional
 import binascii
 from bisq.common.protocol.proto_util import ProtoUtil
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 import pb_pb2 as protobuf
 
@@ -13,7 +12,6 @@ from utils.formatting import to_camel_case, to_snake_case
 from utils.preconditions import check_argument
 from utils.reflection_utils import get_public_fields
 
-logger = get_logger(__name__)
 
 
 # todo: double check impl

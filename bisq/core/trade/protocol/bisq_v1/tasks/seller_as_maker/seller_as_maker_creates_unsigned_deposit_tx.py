@@ -1,14 +1,19 @@
+from typing import TYPE_CHECKING
 from bisq.common.crypto.hash import get_sha256_hash
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from utils.preconditions import check_argument, check_not_none
 
-
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 
 class SellerAsMakerCreatesUnsignedDepositTx(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -27,7 +32,7 @@ class SellerAsMakerCreatesUnsignedDepositTx(TradeTask):
 
             contract_hash = get_sha256_hash(check_not_none(self.trade.contract_as_json))
             self.trade.contract_hash = contract_hash
-            logger.debug(
+            self.logger.debug(
                 "\n\n------------------------------------------------------------\n"
                 + "Contract as json\n"
                 + self.trade.contract_as_json

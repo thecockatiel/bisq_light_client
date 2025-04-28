@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -8,7 +9,6 @@ from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.storage.messages.broadcast_message import BroadcastMessage
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 from bisq.core.network.p2p.peers.broadcast_handler import BroadcastHandler
 
@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
-logger = get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -35,6 +34,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         peer_manager: "PeerManager",
         max_connections: int,
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._broadcast_handlers: ThreadSafeSet["BroadcastHandler"] = ThreadSafeSet()
@@ -49,7 +49,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         )
 
     def shut_down(self, result_handler: Callable[[], None]) -> None:
-        logger.info("Broadcaster shutdown started")
+        self.logger.info("Broadcaster shutdown started")
         self._shut_down_requested = True
         self._shut_down_result_handler = result_handler
 
@@ -66,7 +66,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         self.maybe_broadcast_bundle()
 
     def do_shut_down(self) -> None:
-        logger.info("Broadcaster doShutDown started")
+        self.logger.info("Broadcaster doShutDown started")
         for handler in self._broadcast_handlers:
             handler.cancel()
         if self._timer:

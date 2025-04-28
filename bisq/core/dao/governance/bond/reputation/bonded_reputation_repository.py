@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
 from bisq.core.dao.governance.bond.bond_repository import BondRepository
@@ -28,6 +29,7 @@ class BondedReputationRepository(BondRepository["BondedReputation", "Reputation"
         bonded_roles_repository: "BondedRolesRepository",
     ):
         super().__init__(dao_state_service, bsq_wallet_service)
+        self.logger = get_ctx_logger(__name__)
         self._bonded_roles_repository = bonded_roles_repository
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

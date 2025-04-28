@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Callable
 from concurrent.futures import Future as ConcurrentFuture
+import contextvars
 from functools import partial
 import inspect
 import os
@@ -160,7 +161,8 @@ def run_in_thread(
     func: Callable[..., _T], *args: _R, **kwargs: _K
 ) -> asyncio.Future[_T]:
     """Run a function in a separate thread, and await its completion."""
-    return as_future(threads.deferToThread(func, *args, **kwargs))
+    ctx = contextvars.copy_context()
+    return as_future(threads.deferToThread(ctx.run, func, *args, **kwargs))
 
 def wait_future_blocking(
     future: asyncio.Future[_T], 
@@ -178,22 +180,33 @@ class FutureCallback(
     def __init__(
         self,
         on_success: Optional[Callable[[_T], None]] = None,
-        on_failure: Optional[Callable[[Exception], None]] = None,
+        on_failure: Optional[Callable[[BaseException], None]] = None,
+        on_cancel: Optional[Callable[[BaseException], None]] = None,
     ):
         self._on_success = on_success
         self._on_failure = on_failure
+        self._on_cancel = on_cancel
+        self._ctx = contextvars.copy_context()
 
     def on_success(self, result: _T):
         if self._on_success:
-            self._on_success(result)
+            self._ctx.run(self._on_success, result)
 
-    def on_failure(self, e: Exception):
+    def on_failure(self, e: BaseException):
         if self._on_failure:
-            self._on_failure(e)
+            self._ctx.run(self._on_failure, e)
+
+    def on_cancel(self, e: BaseException):
+        if self._on_cancel:
+            self._ctx.run(self._on_cancel, e)
+        else:
+            self.on_failure(e)
 
     def __call__(self, future: Union[asyncio.Future[_T], ConcurrentFuture[_T]]):
         try:
             result = future.result()
             self.on_success(result)
-        except Exception as e:
+        except asyncio.CancelledError as e:
+            self.on_cancel(e)
+        except BaseException as e:
             self.on_failure(e)

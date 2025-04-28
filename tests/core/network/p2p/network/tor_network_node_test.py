@@ -1,16 +1,15 @@
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from utils.aio import as_future, get_asyncio_loop
-from bisq.common.setup.log_setup import configure_logging, get_logger, set_custom_log_level
+from bisq.common.setup.log_setup import logger_context, setup_log_for_test
 from utils.random import next_random_int
 from pathlib import Path
 
 from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 
 # setup logging for this test
-testdata_dir = Path(__file__).parent.joinpath("testdata")
-testdata_dir.mkdir(parents=True, exist_ok=True)
-configure_logging(testdata_dir.joinpath('test.log'))
-set_custom_log_level("TRACE")
+data_dir = Path(__file__).parent.joinpath(".testdata")
+data_dir.mkdir(exist_ok=True, parents=True)
+logger = setup_log_for_test("tor_node_test", data_dir)
 
 from bisq.core.network.p2p.network.bridge_address_provider import BridgeAddressProvider
 from bisq.core.network.p2p.peers.keepalive.messages.ping import Ping
@@ -26,15 +25,13 @@ from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.network.p2p.network.setup_listener import SetupListener
 from utils.clock import Clock
 
-logger = get_logger(__name__)
-
 disabled = True
 
 @_unittest.skipIf(disabled, "Disabled test because it requires running 2 Tor instances")
 class TestTorNetworkNode(unittest.TestCase):
     def setUp(self):
         from bisq.core.protocol.network.core_network_proto_resolver import CoreNetworkProtoResolver
-        self.base_dir = testdata_dir.joinpath("nodes")
+        self.base_dir = data_dir.joinpath("nodes")
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.tor_dir_1 = self.base_dir.joinpath("tor_dir_1")
         self.tor_dir_2 = self.base_dir.joinpath("tor_dir_2")
@@ -46,25 +43,26 @@ class TestTorNetworkNode(unittest.TestCase):
                 return [
                 ]      
         
-        # Create separate TorMode instances with different hidden service directories
-        self.tor_mode1 = NewTor(self.base_dir, self.tor_dir_1, bridge_address_provider=CustomBridgeAddressProvider()) 
-        self.tor_mode2 = NewTor(self.base_dir, self.tor_dir_2, bridge_address_provider=CustomBridgeAddressProvider()) 
-        
-        self.node1 = TorNetworkNode(
-            service_port=80,
-            network_proto_resolver=CoreNetworkProtoResolver(Clock()),
-            tor_mode=self.tor_mode1,
-            ban_filter=None,
-            max_connections=10,
-        )
-        
-        self.node2 = TorNetworkNode(
-            service_port=80,
-            network_proto_resolver=CoreNetworkProtoResolver(Clock()),
-            tor_mode=self.tor_mode2,
-            ban_filter=None,
-            max_connections=10,
-        )
+        with logger_context(logger):
+            # Create separate TorMode instances with different hidden service directories
+            self.tor_mode1 = NewTor(self.base_dir, self.tor_dir_1, bridge_address_provider=CustomBridgeAddressProvider()) 
+            self.tor_mode2 = NewTor(self.base_dir, self.tor_dir_2, bridge_address_provider=CustomBridgeAddressProvider()) 
+            
+            self.node1 = TorNetworkNode(
+                service_port=80,
+                network_proto_resolver=CoreNetworkProtoResolver(Clock()),
+                tor_mode=self.tor_mode1,
+                ban_filter=None,
+                max_connections=10,
+            )
+            
+            self.node2 = TorNetworkNode(
+                service_port=80,
+                network_proto_resolver=CoreNetworkProtoResolver(Clock()),
+                tor_mode=self.tor_mode2,
+                ban_filter=None,
+                max_connections=10,
+            )
         
         self.node1_ready = asyncio.Event()
         self.node2_ready = asyncio.Event()
@@ -105,10 +103,9 @@ class TestTorNetworkNode(unittest.TestCase):
         return TestSetupListener()
 
     def create_message_listener(self, received_event: asyncio.Event):
-        outer = self
         class TestMessageListener(MessageListener):
-            def on_message(self, msg, connection):
-                outer.received_messages.append(msg)
+            def on_message(self_, msg, connection):
+                self.received_messages.append(msg)
                 received_event.set()
         return TestMessageListener()
 

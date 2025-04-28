@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
 
-logger = get_logger(__name__)
 
 
 class CoreNetworkCapabilities:
@@ -35,6 +34,9 @@ class CoreNetworkCapabilities:
 
         CoreNetworkCapabilities.maybe_apply_dao_full_mode(config)
 
+    @staticmethod
+    def print_capabilities():
+        logger = get_ctx_logger(__name__)
         logger.info(Capabilities.app.pretty_print())
 
     @staticmethod

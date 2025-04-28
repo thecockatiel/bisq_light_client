@@ -7,18 +7,18 @@ from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.locale.res import Res
 from bisq.core.support.support_type import SupportType
 from bisq.core.trade.model.bisq_v1.contract import Contract
-from bisq.common.setup.log_setup import get_logger
+from bisq.core.user.user import User
 import pb_pb2 as protobuf
 from utils.data import ObservableList, SimpleProperty, raise_required
 from utils.formatting import get_short_id
 from bisq.common.protocol.proto_util import ProtoUtil
 
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
@@ -120,6 +120,7 @@ class Dispute(NetworkPayload, PersistablePayload):
     cached_deposit_tx: Optional["Transaction"] = field(default=None)  # transient
     
     def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
         self.id = self.trade_id + "_" + self.trader_id
         self.refresh_alert_level(True)
 
@@ -149,7 +150,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         network_node: "NetworkNode",
         peer_node_address: "NodeAddress",
         callback: "FileTransferSession.FtpCallback",
-        config: "Config",
+        user: "User",
     ) -> "FileTransferSender":
         return FileTransferSender(
             network_node=network_node,
@@ -157,7 +158,7 @@ class Dispute(NetworkPayload, PersistablePayload):
             trade_id=self.trade_id,
             trader_id=self.trader_id,
             trader_role=self.get_role_string_for_log_file(),
-            config=config,
+            user=user,
             callback=callback,
             is_test=False,
         )
@@ -267,7 +268,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         if chat_message not in self.chat_messages:
             self.chat_messages.append(chat_message)
         else:
-            logger.error("disputeDirectMessage already exists")
+            self.logger.error("disputeDirectMessage already exists")
             
     def remove_all_chat_messages(self):
         if len(self.chat_messages) > 1:
@@ -288,7 +289,7 @@ class Dispute(NetworkPayload, PersistablePayload):
         if self.remove_all_chat_messages():
             change += "chat messages;"
         if len(change) > 0:
-            logger.info(f"cleared sensitive data from {change} of dispute for trade {get_short_id(self.trade_id)}")
+            self.logger.info(f"cleared sensitive data from {change} of dispute for trade {get_short_id(self.trade_id)}")
         
     def re_open(self):
         self.dispute_state_property.value = DisputeState.REOPENED

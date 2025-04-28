@@ -57,3 +57,5 @@ class TableBuilderConstants:
     COL_HEADER_TX_MEMO = "Memo"
     COL_HEADER_VOLUME_RANGE = "{:<3}(min - max)"
     COL_HEADER_UUID = "ID"
+    COL_HEADER_USER_ID = "User ID"
+    COL_HEADER_ALIAS = "Alias"

@@ -1,15 +1,14 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future, get_asyncio_loop
 import socket
 import aiohttp
 import asyncio
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.network.tor_mode import TorMode
 from pathlib import Path
 from typing import Optional
 from utils.time import get_time_ms
 from aiohttp_socks import ProxyConnector, ProxyType
 
-logger = get_logger(__name__)
 
 class LimitedRunningTor(TorMode):
     """
@@ -29,6 +28,7 @@ class LimitedRunningTor(TorMode):
         proxy_password: Optional[str] = None,
     ):
         super().__init__(None)
+        self.logger = get_ctx_logger(__name__)
         self.proxy_host = proxy_host
         self.proxy_port = proxy_port
         self.proxy_username = proxy_username
@@ -83,7 +83,7 @@ class LimitedRunningTor(TorMode):
                         client.shutdown(socket.SHUT_RDWR)
                         client.close()
                 except Exception as e:
-                    logger.error(f"Error handling validation request: {str(e)}")
+                    self.logger.error(f"Error handling validation request: {str(e)}")
                     return False
 
         # Start validation request handler
@@ -93,7 +93,7 @@ class LimitedRunningTor(TorMode):
         async with aiohttp.ClientSession(connector=proxy_connector, timeout=client_timeout) as session:
             while not connected and retry_times > 0 and ((get_time_ms() - ts1) <= two_minutes_in_millis):
                 try:
-                    logger.info(f"Trying to connect to limited running tor proxy and hidden service. Attempt {4 - retry_times} of 3.")
+                    self.logger.info(f"Trying to connect to limited running tor proxy and hidden service. Attempt {4 - retry_times} of 3.")
                     async with session.get(
                         f"http://{self.hiddenservice_hostname}:{self.hiddenservice_port}/validate",
                         headers={"X-Validation-Token": validation_token}
@@ -103,7 +103,7 @@ class LimitedRunningTor(TorMode):
                             received = await validation_task
                             if received:
                                 elapsed = get_time_ms() - ts1
-                                logger.info(
+                                self.logger.info(
                                     "\n################################################################\n"
                                     f"Tor proxy and hidden service validated successfully after {elapsed} ms."
                                     "\n################################################################"

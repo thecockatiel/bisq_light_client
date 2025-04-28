@@ -1,14 +1,12 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
 
 if TYPE_CHECKING:
     from bitcoinj.core.transaction_output import TransactionOutput
-
-logger = get_logger(__name__)
 
 
 class UnconfirmedTxOutput(PersistablePayload, ImmutableDaoStateModel):
@@ -67,6 +65,7 @@ class UnconfirmedTxOutput(PersistablePayload, ImmutableDaoStateModel):
                 tx_id=parent_transaction.get_tx_id(),
             )
         else:
+            logger = get_ctx_logger(__name__)
             logger.warning(
                 "parentTransaction of transactionOutput is None. "
                 "This must not happen. "

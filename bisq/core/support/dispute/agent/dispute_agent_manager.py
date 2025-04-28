@@ -1,5 +1,6 @@
 import base64
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, TypeVar, Generic, List
 from abc import ABC, abstractmethod
 
@@ -8,7 +9,6 @@ from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 
 T = TypeVar('T', bound='DisputeAgent')
 
-logger = get_logger(__name__)
-
 # TODO: cryptography usages needs double check.
 
 class DisputeAgentManager(Generic[T], ABC):
@@ -36,12 +34,13 @@ class DisputeAgentManager(Generic[T], ABC):
     RETRY_REPUBLISH_SEC: int = 5
     REPEATED_REPUBLISH_AT_STARTUP_SEC: int = 60
 
-    def __init__(self, 
+    def __init__(self,
                  key_ring: 'KeyRing',
                  dispute_agent_service: 'DisputeAgentService[T]',
                  user: 'User',
                  filter_manager: 'FilterManager',
                  use_dev_privilege_keys: bool):
+        self.logger = get_ctx_logger(__name__)
         self.public_keys: list[str] = [DevEnv.DEV_PRIVILEGE_PUB_KEY] if use_dev_privilege_keys else self.get_pub_key_list()
         self.key_ring = key_ring
         self.dispute_agent_service = dispute_agent_service
@@ -148,13 +147,13 @@ class DisputeAgentManager(Generic[T], ABC):
             
             if not is_in_public_key_list:
                 if DevEnv.DEV_PRIVILEGE_PUB_KEY == pub_key_hex:
-                    logger.info(
+                    self.logger.info(
                         f"We got the DEV_PRIVILEGE_PUB_KEY in our list of publicKeys. "
                         f"RegistrationPubKey={agent.registration_pub_key.hex()}, "
                         f"nodeAddress={agent.node_address.get_full_address()}"
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"We got an disputeAgent which is not in our list of publicKeys. "
                         f"RegistrationPubKey={agent.registration_pub_key.hex()}, "
                         f"nodeAddress={agent.node_address.get_full_address()}"
@@ -167,7 +166,7 @@ class DisputeAgentManager(Generic[T], ABC):
             )
             
             if not is_sig_valid:
-                logger.warning(f"Sig check for disputeAgent failed. DisputeAgent={agent}")
+                self.logger.warning(f"Sig check for disputeAgent failed. DisputeAgent={agent}")
             
             if is_in_public_key_list and is_sig_valid:
                 filtered[agent.node_address] = agent
@@ -181,7 +180,7 @@ class DisputeAgentManager(Generic[T], ABC):
         self.observable_map[dispute_agent.node_address] = dispute_agent
         
         def on_success():
-            logger.info("DisputeAgent successfully saved in P2P network")
+            self.logger.info("DisputeAgent successfully saved in P2P network")
             result_handler()
             
             if len(self.observable_map) > 0:
@@ -203,7 +202,7 @@ class DisputeAgentManager(Generic[T], ABC):
             del self.observable_map[registered_dispute_agent.node_address]
             
             def on_success():
-                logger.debug("DisputeAgent successfully removed from P2P network")
+                self.logger.debug("DisputeAgent successfully removed from P2P network")
                 result_handler()
             
             self.dispute_agent_service.remove_dispute_agent(
@@ -271,7 +270,7 @@ class DisputeAgentManager(Generic[T], ABC):
             Encryption.verify_ec_message_is_from_pubkey(key_to_sign_as_hex, signature_base64, registration_pub_key_ec)
             return True
         except:
-            logger.warning("verify_signature failed")
+            self.logger.warning("verify_signature failed")
             return False
 
     def stop_retry_republish_timer(self) -> None:

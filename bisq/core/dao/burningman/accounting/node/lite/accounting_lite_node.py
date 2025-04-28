@@ -1,6 +1,7 @@
+import contextvars
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.burningman.accounting.exceptions.block_hash_not_connecting_exception import (
     BlockHashNotConnectingException,
@@ -42,9 +43,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listener):
     """
     Main class for lite nodes which receive the BSQ transactions from a full node (e.g. seed nodes).
@@ -72,6 +70,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
             accounting_block_parser,
             preferences,
         )
+        self.logger = get_ctx_logger(__name__)
 
         self._wallets_setup = wallets_setup
         self._bsq_wallet_service = bsq_wallet_service
@@ -157,7 +156,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
             self._wallets_setup.is_download_complete
             and height_of_last_block == self._bsq_wallet_service.get_best_chain_height()
         ):
-            logger.info(
+            self.logger.info(
                 f"No block request needed as we have already the most recent block. "
                 f"heightOfLastBlock={height_of_last_block}, bsqWalletService.getBestChainHeight()={self._bsq_wallet_service.get_best_chain_height()}"
             )
@@ -181,7 +180,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
     def _process_accounting_blocks(self, blocks: list["AccountingBlock"]):
         def process_blocks():
             ts = get_time_ms()
-            logger.info(
+            self.logger.info(
                 f"We received blocks from height {blocks[0].height} to {blocks[-1].height}"
             )
 
@@ -190,11 +189,13 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 try:
                     self._burning_man_accounting_service.add_block(block)
                 except BlockHeightNotConnectingException as e:
-                    logger.info(
+                    self.logger.info(
                         f"Height not connecting. This could happen if we received multiple responses and had already applied a previous one. {e}"
                     )
                 except BlockHashNotConnectingException as e:
-                    logger.warning(f"Interrupt loop because a reorg is required. {e}")
+                    self.logger.warning(
+                        f"Interrupt loop because a reorg is required. {e}"
+                    )
                     requires_reorg = True
                     break
 
@@ -204,8 +205,11 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 )
             )
 
+        ctx = contextvars.copy_context()
         threading.Thread(
-            process_blocks, name="AccountingLiteNode@process_blocks"
+            target=ctx.run,
+            args=(process_blocks,),
+            name="AccountingLiteNode@process_blocks",
         ).start()
 
     def _handle_post_block_processing(
@@ -230,13 +234,15 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 self.on_initial_block_requests_complete()
 
         # JAVA: 2833 blocks takes about 24 sec
-        logger.info(
+        self.logger.info(
             f"processAccountingBlocksAsync for {blocks_length} blocks took {get_time_ms() - ts} ms"
         )
 
     def _process_new_accounting_block(self, accounting_block: "AccountingBlock"):
         block_height = accounting_block.height
-        logger.info(f"onNewBlockReceived: accountingBlock at height {block_height}")
+        self.logger.info(
+            f"onNewBlockReceived: accountingBlock at height {block_height}"
+        )
 
         try:
             self._pending_accounting_blocks.remove(accounting_block)
@@ -270,13 +276,13 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 and accounting_block not in self._pending_accounting_blocks
             ):
                 self._pending_accounting_blocks.append(accounting_block)
-                logger.info(
+                self.logger.info(
                     f"We received a accountingBlock with a future accountingBlock height. We store it as pending and try to apply it at the next accountingBlock. "
                     f"heightForNextBlock={height_for_next_block}, accountingBlock: height/truncatedHash={accounting_block.height}/{accounting_block.truncated_hash}"
                 )
 
                 self._request_blocks_counter += 1
-                logger.warning(
+                self.logger.warning(
                     f"We are trying to call requestBlocks with heightForNextBlock {height_for_next_block} after a delay of {self._request_blocks_counter ** 2} min."
                 )
                 if self._request_blocks_counter <= 5:
@@ -292,12 +298,12 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                         timedelta(seconds=self._request_blocks_counter**2 * 60),
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"We tried {self._request_blocks_counter} times to call requestBlocks with heightForNextBlock {height_for_next_block}."
                     )
         except BlockHashNotConnectingException:
             last_block = self._burning_man_accounting_service.get_last_block()
-            logger.warning(
+            self.logger.warning(
                 f"Block not connecting:\n"
                 f"New block height/hash/previousBlockHash={accounting_block.height}/{accounting_block.truncated_hash}/{accounting_block.truncated_previous_block_hash}, "
                 f"latest block height/hash={last_block.height if last_block else 'lastBlock not present'}/{last_block.truncated_hash if last_block else 'lastBlock not present'}"
@@ -319,7 +325,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                 self._check_for_block_received_timer.stop()
 
             wallet_block_height = e.new_value
-            logger.info(
+            self.logger.info(
                 f"New block at height {wallet_block_height} from bsqWalletService"
             )
 
@@ -330,7 +336,7 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
                     self._burning_man_accounting_service.get_block_height_of_last_block()
                 )
                 if height_of_last_block < wallet_block_height:
-                    logger.warning(
+                    self.logger.warning(
                         f"We did not receive a block from the network {AccountingLiteNode.CHECK_FOR_BLOCK_RECEIVED_DELAY_SEC} seconds after we saw the new block in BitcoinJ. "
                         f"We request from our seed nodes missing blocks from block height {height_of_last_block + 1}."
                     )

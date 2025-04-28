@@ -2,7 +2,8 @@ from collections.abc import Callable
 import logging
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
-from bisq.common.setup.log_setup import get_logger
+
+from bisq.common.setup.log_setup import get_ctx_logger
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
@@ -12,9 +13,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class PaymentAccounts:
     def __init__(
         self,
@@ -22,6 +20,7 @@ class PaymentAccounts:
         account_age_witness_service: "AccountAgeWitnessService",
         validator: "Callable[[Offer, PaymentAccount], bool]" = None,
     ) -> None:
+        self.logger = get_ctx_logger(__name__)
         if validator is None:
             from bisq.core.payment.payment_account_util import PaymentAccountUtil
 
@@ -50,7 +49,7 @@ class PaymentAccounts:
         return accounts[0] if accounts else None
 
     def _log_accounts(self, accounts: list["PaymentAccount"]) -> None:
-        if logger.isEnabledFor(logging.DEBUG):
+        if self.logger.isEnabledFor(logging.DEBUG):
             message = ["Valid accounts:"]
             for account in accounts:
                 account_name = account.account_name
@@ -61,7 +60,7 @@ class PaymentAccounts:
                 )
                 message.append(f"name = {account_name}; witness hex = {witness_hex};")
 
-            logger.debug("\n".join(message))
+            self.logger.debug("\n".join(message))
 
     # Accounts ranked by trade limit
     def _compare_by_trade_limit(self, account: "PaymentAccount") -> int:

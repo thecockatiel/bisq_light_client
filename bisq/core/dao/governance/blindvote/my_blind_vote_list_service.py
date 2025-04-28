@@ -1,9 +1,9 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.config.config import Config
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
@@ -58,8 +58,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.dao.governance.myvote.my_vote_list_service import MyVoteListService
 
-logger = get_logger(__name__)
-
 
 class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupService):
     """
@@ -82,6 +80,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
         my_vote_list_service: "MyVoteListService",
         my_proposal_list_service: "MyProposalListService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.dao_state_service = dao_state_service
         self.period_service = period_service
@@ -189,7 +188,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
             self._add_to_p2p_network(
                 blind_vote,
                 lambda error_message: (
-                    logger.error(error_message),
+                    self.logger.error(error_message),
                     exception_handler(PublishToP2PNetworkException(error_message)),
                 ),
             )
@@ -201,7 +200,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
 
             self._publish_tx(result_handler, exception_handler, blind_vote_tx)
         except Exception as e:
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(e), exc_info=e)
             exception_handler(e)
 
     def get_currently_available_merit(self) -> int:
@@ -228,7 +227,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
         vote_with_proposal_tx_id_list_obj = VoteWithProposalTxIdList(
             vote_with_proposal_tx_id_list
         )
-        logger.info(
+        self.logger.info(
             f"voteWithProposalTxIdList used in blind vote. voteWithProposalTxIdList={vote_with_proposal_tx_id_list_obj}"
         )
         return BlindVoteConsensus.get_encrypted_votes(
@@ -239,7 +238,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
         # We cannot use hash of whole blindVote data because we create the merit signature with the blindVoteTxId
         # So we use the encryptedVotes for the hash only.
         hash = BlindVoteConsensus.get_hash_of_encrypted_votes(encrypted_votes)
-        logger.info(
+        self.logger.info(
             f"Sha256Ripemd160 hash of encryptedVotes: {bytes_as_hex_string(hash)}"
         )
         return BlindVoteConsensus.get_op_return_data(hash)
@@ -278,7 +277,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
             if blind_vote_tx_id:
                 pub_key = issuance.pub_key
                 if not pub_key:
-                    logger.error(
+                    self.logger.error(
                         f"We did not have a pubKey in our issuance object. txId={issuance.tx_id}, issuance={issuance}"
                     )
                     continue
@@ -287,7 +286,7 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
                     bytes.fromhex(pub_key)
                 )
                 if not key:
-                    logger.error(
+                    self.logger.error(
                         f"We did not find the key for our compensation request. txId={issuance.tx_id}"
                     )
                     continue
@@ -297,8 +296,8 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
 
                 # Java Implementation uses BitcoinJ EC keys
                 # We need to use a compatible way to sign the txId
-                signature = (
-                    key.sign_message(bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.password)
+                signature = key.sign_message(
+                    bytes.fromhex(blind_vote_tx_id), self.bsq_wallet_service.password
                 )
                 signature_as_bytes = ecdsa_der_sig_from_ecdsa_sig64(signature[1:])
             else:
@@ -307,7 +306,9 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
 
             merits.append(Merit(issuance, signature_as_bytes))
 
-        return MeritList(sorted(merits, key=lambda merit: java_cmp_str(merit.issuance.tx_id)))
+        return MeritList(
+            sorted(merits, key=lambda merit: java_cmp_str(merit.issuance.tx_id))
+        )
 
     def _publish_tx(
         self,
@@ -315,14 +316,16 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
         exception_handler: Callable[[Exception], None],
         blind_vote_tx: "Transaction",
     ):
-        logger.info(f"blindVoteTx={blind_vote_tx}")
+        self.logger.info(f"blindVoteTx={blind_vote_tx}")
 
         class Listener(TxBroadcasterCallback):
-            def on_success(self, transaction: "Transaction"):
-                logger.info(f"BlindVote tx published. txId={transaction.get_tx_id()}")
+            def on_success(self_, transaction: "Transaction"):
+                self.logger.info(
+                    f"BlindVote tx published. txId={transaction.get_tx_id()}"
+                )
                 result_handler()
 
-            def on_failure(self, exception: Exception):
+            def on_failure(self_, exception: Exception):
                 exception_handler(exception)
 
         self.wallets_manager.publish_and_commit_bsq_tx(
@@ -388,12 +391,12 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
         )
 
         if success:
-            logger.info(
+            self.logger.info(
                 f"We added a blindVotePayload to the P2P network as append only data. blindVoteTxId={blind_vote.tx_id}"
             )
         else:
             msg = f"Adding of blindVotePayload to P2P network failed. blindVoteTxId={blind_vote.tx_id}"
-            logger.error(msg)
+            self.logger.error(msg)
             if error_message_handler:
                 error_message_handler(msg)
 

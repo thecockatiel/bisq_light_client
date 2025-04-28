@@ -1,19 +1,21 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
 if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
     from bisq.core.btc.exceptions.tx_broadcast_exception import TxBroadcastException
     from bitcoinj.core.transaction import Transaction
 
 
-logger = get_logger(__name__)
-
-
 class TakerPublishFeeTx(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -65,13 +67,13 @@ class TakerPublishFeeTx(TradeTask):
 
     def _on_failure(self, exception: "TxBroadcastException"):
         if not self.completed:
-            logger.error(str(exception))
+            self.logger.error(str(exception))
             self.trade.error_message = (
                 "An error occurred.\n" + "Error message:\n" + str(exception)
             )
             self.failed(exc=exception)
         else:
-            logger.warning(
+            self.logger.warning(
                 "We got the _on_failure callback called after the timeout has been triggered a complete()."
             )
 
@@ -87,6 +89,6 @@ class TakerPublishFeeTx(TradeTask):
 
                 self.complete()
         else:
-            logger.warning(
+            self.logger.warning(
                 "We got the _on_success callback called after the timeout has been triggered a complete()."
             )

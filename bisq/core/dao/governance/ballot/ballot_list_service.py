@@ -1,13 +1,13 @@
 from collections.abc import Callable
 import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from utils.concurrency import ThreadSafeSet
 from bisq.core.dao.state.model.governance.ballot_list import BallotList
-from utils.data import ObservableChangeEvent, ObservableList
+from utils.data import ObservableChangeEvent
 from bisq.core.dao.governance.proposal.storage.appendonly.proposal_payload import (
     ProposalPayload,
 )
@@ -27,9 +27,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.model.governance.vote import Vote
 
 
-logger = get_logger(__name__)
-
-
 class BallotListService(PersistedDataHost, DaoSetupService):
     """
     Takes the proposals from the append only store and makes Ballots out of it (vote is null).
@@ -44,6 +41,7 @@ class BallotListService(PersistedDataHost, DaoSetupService):
         validator_provider: "ProposalValidatorProvider",
         persistence_manager: "PersistenceManager[BallotList]",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.proposal_service = proposal_service
         self.period_service = period_service
         self.validator_provider = validator_provider
@@ -77,13 +75,13 @@ class BallotListService(PersistedDataHost, DaoSetupService):
 
     def _register_proposal_as_ballot(self, proposal: "Proposal") -> None:
         ballot = Ballot(proposal)  # vote is None
-        if logger.isEnabledFor(logging.INFO):  # TODO: JAVA SANITY CHECK
-            logger.debug(
+        if self.logger.isEnabledFor(logging.INFO):  # TODO: JAVA SANITY CHECK
+            self.logger.debug(
                 "We create a new ballot with a proposal and add it to our list. "
                 f"Vote is None at that moment. proposalTxId={proposal.tx_id}"
             )
         if ballot in self.ballot_list:
-            logger.warning(f"Ballot {ballot} already exists on our ballotList")
+            self.logger.warning(f"Ballot {ballot} already exists on our ballotList")
         else:
             self.ballot_list.append(ballot)
             for listener in self.listeners:

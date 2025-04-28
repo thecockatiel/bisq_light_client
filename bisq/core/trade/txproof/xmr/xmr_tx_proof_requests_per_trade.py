@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 from bisq.common.handlers.fault_handler import FaultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.locale.res import Res
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.txproof.asset_tx_proof_requests_per_trade import (
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from bisq.core.support.dispute.mediation.mediation_manager import MediationManager
     from bisq.core.support.dispute.dispute import Dispute
 
-logger = get_logger(__name__)
 
 class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
 
@@ -37,6 +36,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
         filter_manager: "FilterManager",
         refund_manager: "RefundManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.socks5_proxy_provider = socks5_proxy_provider
         self.trade = trade
         self.auto_confirm_settings = auto_confirm_settings
@@ -109,13 +109,13 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
 
         for service_address in service_addresses:
             if self.filter_manager.is_auto_conf_explorer_banned(service_address):
-                logger.warning(f"Filtered out auto-confirmation address: {service_address}")
+                self.logger.warning(f"Filtered out auto-confirmation address: {service_address}")
                 continue #  #4683: filter for auto-confirm explorers
 
             model = XmrTxProofModel.from_trade(self.trade, service_address, self.auto_confirm_settings)
             request = XmrTxProofRequest(self.socks5_proxy_provider, model)
 
-            logger.info(f"{request} created")
+            self.logger.info(f"{request} created")
             self.requests.add(request)
 
             def handle_result(result: XmrTxProofRequestResult) -> None:
@@ -141,12 +141,12 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                     if self.num_success_results < self.num_required_success_results:
                         # Request is success but not all have completed yet.
                         remaining = self.num_required_success_results - self.num_success_results
-                        logger.info(f"{request} succeeded. We have {remaining} remaining request(s) open.")
+                        self.logger.info(f"{request} succeeded. We have {remaining} remaining request(s) open.")
                         asset_tx_proof_result = self.get_asset_tx_proof_result_for_pending(result)
                     else:
                         # All our services have returned a SUCCESS result so we
                         # have completed on the service level.
-                        logger.info(
+                        self.logger.info(
                             f"All {self.num_required_success_results} tx proof requests for trade "
                             f"{self.trade.get_short_id()} have been successful."
                         )
@@ -159,14 +159,14 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                         )
                     
                 elif result == XmrTxProofRequestResult.FAILED:
-                    logger.warning(
+                    self.logger.warning(
                         f"{request} failed. This might not mean that the XMR transfer was invalid "
                         f"but you have to check yourself if the XMR transfer was correct. {result}"
                     )
                     asset_tx_proof_result = AssetTxProofResult.FAILED
                     
                 else:  # ERROR or default
-                    logger.warning(
+                    self.logger.warning(
                         f"{request} resulted in an error. This might not mean that the XMR transfer "
                         f"was invalid but can be a network or service problem. {result}"
                     )
@@ -248,7 +248,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
     def get_asset_tx_proof_result_for_pending(self, result: "XmrTxProofRequestResult") -> "AssetTxProofResult":
         detail = result.detail
         num_confirmations = detail.num_confirmations if detail else 0
-        logger.info(f"{result} returned with num_confirmations {num_confirmations}")
+        self.logger.info(f"{result} returned with num_confirmations {num_confirmations}")
 
         detail_string = ""
         if detail == XmrTxProofRequestDetail.PENDING_CONFIRMATIONS:
@@ -272,7 +272,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
         trade_amount = trade.get_amount()
         trade_limit = Coin.value_of(self.auto_confirm_settings.trade_limit)
         if trade_amount and trade_amount > trade_limit:
-            logger.warning(
+            self.logger.warning(
                 f"Trade amount {trade_amount.to_friendly_string()} is higher than limit from auto-conf setting {trade_limit.to_friendly_string()}."
             )
             return True

@@ -1,14 +1,14 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from bisq.common.config.config_file_option import ConfigFileOption
 from bisq.common.config.config_file_reader import ConfigFileReader
-from bisq.common.setup.log_setup import get_logger
 from typing import Optional
 
-logger = get_logger(__name__)
 
 class ConfigFileEditor:
     
     def __init__(self, file: Path):
+        self.logger = get_ctx_logger(__name__)
         self.file = file
         self.reader = ConfigFileReader(file)
             
@@ -28,7 +28,7 @@ class ConfigFileEditor:
                         if existing_option.arg != arg:
                             new_option = ConfigFileOption(name, arg)
                             new_lines.append(str(new_option))
-                            logger.warning(f"Overwrote existing config file option '{existing_option}' as '{new_option}'")
+                            self.logger.warning(f"Overwrote existing config file option '{existing_option}' as '{new_option}'")
                             continue
                 new_lines.append(line)
                 
@@ -51,7 +51,7 @@ class ConfigFileEditor:
             if ConfigFileOption.is_option(line):
                 option = ConfigFileOption.parse(line)
                 if option.name == name:
-                    logger.debug(f"Cleared existing config file option '{option}'")
+                    self.logger.debug(f"Cleared existing config file option '{option}'")
                     continue
             new_lines.append(line)
         try:
@@ -64,6 +64,6 @@ class ConfigFileEditor:
         try:
             if not file.exists():
                 file.touch()
-                logger.info(f"Created config file '{file}'")
+                self.logger.info(f"Created config file '{file}'")
         except IOError as ex:
             raise IOError(f"Could not create config file: {ex}")

@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import Iterable, Optional
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.direct_message import DirectMessage
 from bisq.core.network.p2p.extended_data_size_permission import (
     ExtendedDataSizePermission,
@@ -9,9 +9,6 @@ from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.dao.node.full.raw_block import RawBlock
 import pb_pb2 as protobuf
 from bisq.core.dao.node.messages.get_blocks_request import GetBlocksRequest
-
-
-logger = get_logger(__name__)
 
 
 class GetBlocksResponse(
@@ -24,6 +21,7 @@ class GetBlocksResponse(
         request_nonce: int,
         message_version: Optional[int] = None,
     ):
+        self.logger = get_ctx_logger(__name__)
         if message_version is None:
             super().__init__()
         else:
@@ -39,16 +37,17 @@ class GetBlocksResponse(
                 request_nonce=self.request_nonce,
             )
         )
-        logger.info(
+        self.logger.info(
             f"Sending a GetBlocksResponse with {builder.ByteSize() / 1000.0} kB"
         )
         return builder
 
     @staticmethod
     def from_proto(
-        proto: protobuf.GetBlocksResponse, message_version: int
+        proto: protobuf.GetBlocksResponse, message_version: int,
     ) -> "GetBlocksResponse":
         blocks_list = tuple(RawBlock.from_proto(pb) for pb in proto.raw_blocks)
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"\n\n<< Received a GetBlocksResponse with {len(blocks_list)} blocks and {proto.ByteSize() / 1000.0} kB size\n"
         )

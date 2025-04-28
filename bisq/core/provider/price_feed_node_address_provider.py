@@ -1,10 +1,9 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import List, Optional
 import random
-
-from bisq.common.setup.log_setup import get_logger
+ 
 from bisq.common.config.config import Config
-
-logger = get_logger(__name__)
+ 
 
 class PriceFeedNodeAddressProvider:
     DEFAULT_NODES = [
@@ -13,6 +12,7 @@ class PriceFeedNodeAddressProvider:
     ]
 
     def __init__(self, config: "Config", providers: List[str], use_localhost_for_p2p: bool):
+        self.logger = get_ctx_logger(__name__)
         self.config = config
         self.providers_from_program_args = providers
         self.use_localhost_for_p2p = use_localhost_for_p2p
@@ -32,7 +32,7 @@ class PriceFeedNodeAddressProvider:
         self.select_next_provider_base_url()
 
         if banned_nodes:
-            logger.info(f"Excluded provider nodes from filter: nodes={banned_nodes}, selected provider baseUrl={self.base_url}, providerList={self.provider_list}")
+            self.logger.info(f"Excluded provider nodes from filter: nodes={banned_nodes}, selected provider baseUrl={self.base_url}, providerList={self.provider_list}")
 
     def select_next_provider_base_url(self) -> None:
         if self.provider_list:
@@ -43,10 +43,10 @@ class PriceFeedNodeAddressProvider:
             self.index += 1
 
             if len(self.provider_list) == 1 and self.config.base_currency_network.is_mainnet():
-                logger.warning("We only have one provider")
+                self.logger.warning("We only have one provider")
         else:
             self.base_url = ""
-            logger.warning(f"We do not have any providers. That can be if all providers are filtered or providers_from_program_args is set but empty. "
+            self.logger.warning(f"We do not have any providers. That can be if all providers are filtered or providers_from_program_args is set but empty. "
                   f"banned_nodes={self.banned_nodes}. providers_from_program_args={self.providers_from_program_args}")
 
     def _fill_provider_list(self) -> None:

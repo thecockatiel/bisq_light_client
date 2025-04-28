@@ -1,13 +1,13 @@
 import asyncio
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_http_client import XmrTxProofHttpClient
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_request_detail import XmrTxProofRequestDetail
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_request_result import XmrTxProofRequestResult
 from bisq.core.util.json_util import JsonUtil
-from utils.aio import run_in_loop
+from utils.aio import FutureCallback, run_in_loop
 from datetime import timedelta
 from bisq.common.handlers.fault_handler import FaultHandler
 from bisq.core.trade.txproof.asset_tx_proof_request import AssetTxProofRequest, AssetTxProofRequestResult
@@ -19,8 +19,7 @@ from utils.time import get_time_ms
 if TYPE_CHECKING:
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
     from bisq.core.trade.txproof.xmr.xmr_tx_proof_model import XmrTxProofModel
-    
-logger = get_logger(__name__)
+
 
 class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
     """
@@ -31,6 +30,8 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
     MAX_REQUEST_PERIOD = timedelta(hours=12)
     
     def __init__(self, socks5_proxy_provider: "Socks5ProxyProvider", model: "XmrTxProofModel"):
+        super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.tx_proof_parser = XmrTxProofParser()
         self.raw_tx_parser = XmrRawTxParser()
         self.model = model
@@ -53,11 +54,11 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
         if self.terminated:
             # the XmrTransferProofService has asked us to terminate i.e. not make any further api calls
             # this scenario may happen if a re-request is scheduled from the callback below
-            logger.warning(f"Not starting {self} as we have already terminated.")
+            self.logger.warning(f"Not starting {self} as we have already terminated.")
             return
         
         if self.http_client.has_pending_request:
-            logger.warning(f"We have a pending request open. We ignore that request. httpClient {self.http_client}")
+            self.logger.warning(f"We have a pending request open. We ignore that request. httpClient {self.http_client}")
             return
         
         # Timeout handling is delegated to the connection timeout handling in httpClient.
@@ -78,40 +79,39 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
         
         self.request_future = future = run_in_loop(do_request())
         
-        def on_done(f: asyncio.Future[Optional["XmrTxProofRequestResult"]]):
-            try:
-                self.result = result = f.result()
-                
-                if self.terminated:
-                    logger.warning(f"We received {result} but {self} was terminated already. We do not process result.")
-                    return
-                
-                if result == XmrTxProofRequestResult.PENDING:
-                    if self._is_timeout_reached():
-                        logger.warning(f"{self} took too long without a success or failure/error result We give up. "
-                                       "Might be that the transaction was never published.")
-                        # If we reached our timeout we return with an error.
-                        UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.NO_RESULTS_TIMEOUT)))
-                    else:
-                        UserThread.run_after(lambda: self.request_from_service(result_handler, fault_handler), XmrTxProofRequest.REPEAT_REQUEST_PERIOD)
-                        # We update our listeners
-                        UserThread.execute(lambda: result_handler(result))
-                elif result == XmrTxProofRequestResult.SUCCESS:
-                    logger.info(f"{result} succeeded")
-                    UserThread.execute(lambda: result_handler(result))
-                    self.terminate()
-                elif result in [XmrTxProofRequestResult.FAILED, XmrTxProofRequestResult.ERROR]:
-                    UserThread.execute(lambda: result_handler(result))
-                    self.terminate()
+        def on_success(result: Optional["XmrTxProofRequestResult"]):
+            self.result = result
+            
+            if self.terminated:
+                self.logger.warning(f"We received {result} but {self} was terminated already. We do not process result.")
+                return
+            
+            if result == XmrTxProofRequestResult.PENDING:
+                if self._is_timeout_reached():
+                    self.logger.warning(f"{self} took too long without a success or failure/error result We give up. "
+                                    "Might be that the transaction was never published.")
+                    # If we reached our timeout we return with an error.
+                    UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.NO_RESULTS_TIMEOUT)))
                 else:
-                    logger.warning(f"Unexpected result {result}")
+                    UserThread.run_after(lambda: self.request_from_service(result_handler, fault_handler), XmrTxProofRequest.REPEAT_REQUEST_PERIOD)
+                    # We update our listeners
+                    UserThread.execute(lambda: result_handler(result))
+            elif result == XmrTxProofRequestResult.SUCCESS:
+                self.logger.info(f"{result} succeeded")
+                UserThread.execute(lambda: result_handler(result))
+                self.terminate()
+            elif result in [XmrTxProofRequestResult.FAILED, XmrTxProofRequestResult.ERROR]:
+                UserThread.execute(lambda: result_handler(result))
+                self.terminate()
+            else:
+                self.logger.warning(f"Unexpected result {result}")
+            
+        def on_failure(e):
+            error_message = f"{self} failed with error {e}"
+            fault_handler(error_message, e)
+            UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.CONNECTION_FAILURE.with_error(error_message))))
                 
-            except Exception as e:
-                error_message = f"{self} failed with error {e}"
-                fault_handler(error_message, e)
-                UserThread.execute(lambda: result_handler(XmrTxProofRequestResult.ERROR.with_detail(XmrTxProofRequestDetail.CONNECTION_FAILURE.with_error(error_message))))
-                
-        future.add_done_callback(on_done)
+        future.add_done_callback(FutureCallback(on_success, on_failure))
         
         return future
         
@@ -119,32 +119,32 @@ class XmrTxProofRequest(AssetTxProofRequest[AssetTxProofRequestResult]):
         # The rawtransaction endpoint is not documented in explorer docs.
         # Example request: https://xmrblocks.bisq.services/api/rawtransaction/5e665addf6d7c6300670e8a89564ed12b5c1a21c336408e2835668f9a6a0d802
         param = f"/api/rawtransaction/{self.model.tx_hash}"
-        logger.info(f"Param {param} for rawtransaction request {self}")
+        self.logger.info(f"Param {param} for rawtransaction request {self}")
         json = await self.http_client.get(param)
         try:
             pretty_json = JsonUtil.object_to_json(JsonUtil.parse_json(json))
-            logger.info(f"Response json from rawtransaction request {self}\n{pretty_json}")
+            self.logger.info(f"Response json from rawtransaction request {self}\n{pretty_json}")
         except Exception as e:
-            logger.error(f"Pretty print caused a {e}: raw json={json}")
+            self.logger.error(f"Pretty print caused a {e}: raw json={json}")
         
         result = self.raw_tx_parser.parse(json)
-        logger.info(f"Result from rawtransaction request {self}\n{result}")
+        self.logger.info(f"Result from rawtransaction request {self}\n{result}")
         return result
     
     async def _get_result_from_tx_proof_request(self):
         # The API use the viewkey param for txKey if txprove is true
         # https://github.com/moneroexamples/onion-monero-blockchain-explorer/blob/9a37839f37abef0b8b94ceeba41ab51a41f3fbd8/src/page.h#L5254
         param = f"/api/outputs?txhash={self.model.tx_hash}&address={self.model.recipient_address}&viewkey={self.model.tx_key}&txprove=1"
-        logger.info(f"Param {param} for {self}")
+        self.logger.info(f"Param {param} for {self}")
         json = await self.http_client.get(param)
         try:
             pretty_json = JsonUtil.object_to_json(JsonUtil.parse_json(json))
-            logger.info(f"Response json from {self}\n{pretty_json}")
+            self.logger.info(f"Response json from {self}\n{pretty_json}")
         except Exception as e:
-            logger.error(f"Pretty print caused a {e}: raw json={json}")
+            self.logger.error(f"Pretty print caused a {e}: raw json={json}")
         
         result = self.tx_proof_parser.parse(json, model=self.model)
-        logger.info(f"Result from {self}\n{result}")
+        self.logger.info(f"Result from {self}\n{result}")
         return result
 
     def terminate(self):

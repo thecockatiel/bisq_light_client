@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from enum import Enum, IntEnum
 import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.crypto.encryption import ECPrivkey, Encryption
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.math_utils import MathUtils
 from bisq.common.util.utilities import bytes_as_hex_string
@@ -47,9 +47,6 @@ if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.core.account.sign.signed_witness_service import SignedWitnessService
     from bisq.core.account.witness.account_age_witness_storage_service import AccountAgeWitnessStorageService
-
-logger = get_logger(__name__)
-
 
 class AccountAgeWitnessService:
     RELEASE = datetime(2017, 11, 11)
@@ -110,6 +107,7 @@ class AccountAgeWitnessService:
         preferences: "Preferences",
         filter_manager: "FilterManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.key_ring = key_ring
         self.p2p_service = p2p_service
         self.user = user
@@ -127,7 +125,9 @@ class AccountAgeWitnessService:
         self.account_age_witness_cache  = ThreadSafeDict[StorageByteArray, "AccountAgeWitness"]()
 
         self.account_age_witness_utils = AccountAgeWitnessUtils(
-            self, signed_witness_service, key_ring
+            self,
+            signed_witness_service,
+            key_ring,
         )
 
         # We need to add that early (before on_all_services_initialized) as it will be used at startup.
@@ -152,10 +152,9 @@ class AccountAgeWitnessService:
         if self.p2p_service.is_bootstrapped:
             self._on_bootstrapped()
         else:
-            outer = self
             class Listener(BootstrapListener):
-                def on_data_received(self):
-                    outer._on_bootstrapped()
+                def on_data_received(self_):
+                    self._on_bootstrapped()
             self.p2p_service.add_p2p_service_listener(Listener())
 
     def _on_bootstrapped(self):
@@ -274,7 +273,7 @@ class AccountAgeWitnessService:
         if now is None:
             now = datetime.now()
         now_ms = int(now.timestamp() * 1000)
-        logger.debug(f"get_account_age now={now_ms}, account_age_witness.date={account_age_witness.date}")
+        self.logger.debug(f"get_account_age now={now_ms}, account_age_witness.date={account_age_witness.date}")
         return now_ms - account_age_witness.date
 
     # Return -1 if no witness found
@@ -362,7 +361,7 @@ class AccountAgeWitnessService:
         if factor > 0:
             limit = MathUtils.round_double_to_long(max_trade_limit.value * factor)
 
-        logger.debug(
+        self.logger.debug(
             f"limit={Coin.value_of(limit).to_friendly_string()}, "
             f"factor={factor}, "
             f"accountAgeWitnessHash={bytes_as_hex_string(account_age_witness.get_hash())}"
@@ -469,7 +468,7 @@ class AccountAgeWitnessService:
         # need still be called, so we leave also the rest for sake of simplicity.
         if not peers_witness:
             peers_witness = self.get_new_witness(peers_payment_account_payload, peers_pub_key_ring)
-            logger.warning("We did not find the peers witness data. That is expected with peers using an older version.")
+            self.logger.warning("We did not find the peers witness data. That is expected with peers using an older version.")
 
         # Check if date in witness is not older than the release date of that feature
         if not self.is_date_after_release_date(peers_witness.date, self.RELEASE, error_message_handler):
@@ -502,7 +501,7 @@ class AccountAgeWitnessService:
             peers_current_date,
             error_message_handler
         ):
-            logger.error(f"verify_peers_trade_limit failed: peers_payment_account_payload {peers_payment_account_payload}")
+            self.logger.error(f"verify_peers_trade_limit failed: peers_payment_account_payload {peers_payment_account_payload}")
             return False
 
         # Check if the signature is correct
@@ -557,7 +556,7 @@ class AccountAgeWitnessService:
                 f"Witness date is set earlier than release date of ageWitness feature. "
                 f"ageWitnessReleaseDate={age_witness_release_date}, witnessDate={witness_date}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             error_message_handler(msg)
             
         return result
@@ -576,7 +575,7 @@ class AccountAgeWitnessService:
                 f"Peers current date is further than 1 day off to our current date. "
                 f"PeersCurrentDate={peers_current_date}; myCurrentDate={datetime.now()}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             error_message_handler(msg)
             
         return result
@@ -593,7 +592,7 @@ class AccountAgeWitnessService:
                 f"witnessHash is not matching peers hash. "
                 f"witnessHash={bytes_as_hex_string(witness_hash)}, hash={bytes_as_hex_string(hash_bytes)}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             error_message_handler(msg)
         return result
 
@@ -637,7 +636,7 @@ class AccountAgeWitnessService:
                 f"PaymentMethod={offer.payment_method.id}\n"
                 f"CurrencyCode={offer.currency_code}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             error_message_handler(msg)
             
         return result
@@ -652,7 +651,7 @@ class AccountAgeWitnessService:
         try:
             result = Sig.verify(peers_public_key, nonce, signature)
         except Exception as e:
-            logger.warning(e)
+            self.logger.warning(e)
             result = False
 
         if not result:
@@ -662,7 +661,7 @@ class AccountAgeWitnessService:
                 f"nonce(hex)={bytes_as_hex_string(nonce)}, "
                 f"signature={bytes_as_hex_string(signature)}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             error_message_handler(msg)
 
         return result
@@ -752,7 +751,7 @@ class AccountAgeWitnessService:
             )
             
         except Exception as e:
-            logger.warning(f"Trader failed to sign witness, exception {e}")
+            self.logger.warning(f"Trader failed to sign witness, exception {e}")
             
         return None
 
@@ -878,7 +877,7 @@ class AccountAgeWitnessService:
         assert isinstance(account_age_witness, AccountAgeWitness), f"expected AccountAgeWitness but got {type(account_age_witness)}"
         # Add hash to sign state info when running in debug mode
         hash_str = ""
-        if logger.isEnabledFor(logging.DEBUG):
+        if self.logger.isEnabledFor(logging.DEBUG):
             hash_str = (
                 f"{bytes_as_hex_string(account_age_witness.get_hash())}\n" +
                 self.signed_witness_service.owner_pub_key_as_string(account_age_witness)
@@ -942,7 +941,7 @@ class AccountAgeWitnessService:
                             self.get_my_witness(unsigned.payment_account_payload)
                         )
                     except Exception as e:
-                        logger.warning(f"Self signing failed, exception {e}")
+                        self.logger.warning(f"Self signing failed, exception {e}")
 
     def get_unsigned_signer_pub_keys(self) -> set["SignedWitness"]:
         return self.signed_witness_service.get_unsigned_signer_pub_keys()
@@ -965,7 +964,7 @@ class AccountAgeWitnessService:
                     self.trade_amount_is_sufficient(trade.amount_property.value))
                     
         except Exception as e:
-            logger.exception(e, exc_info=e)
+            self.logger.exception(e, exc_info=e)
             return False
 
     def get_sign_info_from_account(self, payment_account: "PaymentAccount") -> str:

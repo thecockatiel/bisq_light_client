@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.listeners.bsq_balance_listener import BsqBalanceListener
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.trade.model.bsq_swap.bsq_swap_calculation import BsqSwapCalculation
@@ -18,8 +18,6 @@ if TYPE_CHECKING:
         OpenBsqSwapOfferService,
     )
     from bisq.core.offer.open_offer import OpenOffer
-
-logger = get_logger(__name__)
 
 
 class OpenBsqSwapOffer:
@@ -41,6 +39,7 @@ class OpenBsqSwapOffer:
         btc_wallet_service: "BtcWalletService",
         bsq_wallet_service: "BsqWalletService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.open_offer = open_offer
         self.open_bsq_swap_offer_service = open_bsq_swap_offer_service
         self.fee_service = fee_service
@@ -67,7 +66,7 @@ class OpenBsqSwapOffer:
             if new_tx_fee_per_vbyte != self.tx_fee_per_vbyte:
                 self.tx_fee_per_vbyte = new_tx_fee_per_vbyte
                 self._evaluate_funded_state()
-                logger.info(
+                self.logger.info(
                     f"Updated because of fee change. tx_fee_per_vbyte={self.tx_fee_per_vbyte}, hasMissingFunds={self.has_missing_funds}"
                 )
 
@@ -98,7 +97,7 @@ class OpenBsqSwapOffer:
                     self.wallet_balance = self.bsq_wallet_service.verified_balance
                     self._evaluate_funded_state()
                     self.apply_funding_state()
-                    logger.info(
+                    self.logger.info(
                         f"Updated because of BSQ wallet balance change. wallet_balance={self.wallet_balance}, has_missing_funds={self.has_missing_funds}"
                     )
 
@@ -116,7 +115,7 @@ class OpenBsqSwapOffer:
                     self.wallet_balance = new_balance
                     self._evaluate_funded_state()
                     self.apply_funding_state()
-                    logger.info(
+                    self.logger.info(
                         f"Updated because of BTC wallet balance change. wallet_balance={self.wallet_balance}, has_missing_funds={self.has_missing_funds}"
                     )
 

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional, Set
-from concurrent.futures import Future
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING, Optional
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_response import GetPeersResponse
+from utils.aio import FutureCallback
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
@@ -14,8 +14,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.peers.peerexchange.messages.get_peers_request import GetPeersRequest
-    
-logger = get_logger(__name__)
+
 
 class GetPeersRequestHandler:
     # We want to keep timeout short here
@@ -30,6 +29,7 @@ class GetPeersRequestHandler:
             pass
             
     def __init__(self, network_node: "NetworkNode", peer_manager: "PeerManager", listener: "GetPeersRequestHandler.Listener"):
+        self.logger = get_ctx_logger(__name__)
         self.network_node = network_node
         self.peer_manager = peer_manager
         self.listener = listener
@@ -53,35 +53,34 @@ class GetPeersRequestHandler:
         def timeout_handler():
             if not self.stopped:
                 error_message = f"A timeout occurred at sending getPeersResponse:{get_peers_response} on connection:{connection}"
-                logger.debug(error_message + " / PeerExchangeHandshake=" + str(self))
-                logger.debug("timeoutTimer called. this=" + str(self))
+                self.logger.debug(error_message + " / PeerExchangeHandshake=" + str(self))
+                self.logger.debug("timeoutTimer called. this=" + str(self))
                 self.handle_fault(error_message, CloseConnectionReason.SEND_MSG_TIMEOUT, connection)
             else:
-                logger.trace("We have stopped already. We ignore that timeoutTimer.run call.")
+                self.logger.trace("We have stopped already. We ignore that timeoutTimer.run call.")
         
         self.timeout_timer = UserThread.run_after(timeout_handler, timedelta(seconds=self.TIMEOUT_SEC))
 
         future = self.network_node.send_message(connection, get_peers_response)
-        
-        def on_done(future: Future):
-            try:
-                future.result()
-                if not self.stopped:
-                    logger.trace("GetPeersResponse sent successfully")
-                    self.cleanup()
-                    self.listener.on_complete()
-                else:
-                    logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onSuccess call.")
-            except Exception as e:
-                if not self.stopped:
-                    error_message = f"Sending getPeersResponse to {connection} failed. That is expected if the peer is offline. " \
-                                f"getPeersResponse={get_peers_response}. Exception: {str(e)}"
-                    logger.info(error_message)
-                    self.handle_fault(error_message, CloseConnectionReason.SEND_MSG_FAILURE, connection)
-                else:
-                    logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
-        
-        future.add_done_callback(on_done)
+
+        def on_success(r):
+            if not self.stopped:
+                self.logger.trace("GetPeersResponse sent successfully")
+                self.cleanup()
+                self.listener.on_complete()
+            else:
+                self.logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onSuccess call.")
+ 
+        def on_failure(e):
+            if not self.stopped:
+                error_message = f"Sending getPeersResponse to {connection} failed. That is expected if the peer is offline. " \
+                            f"getPeersResponse={get_peers_response}. Exception: {str(e)}"
+                self.logger.info(error_message)
+                self.handle_fault(error_message, CloseConnectionReason.SEND_MSG_FAILURE, connection)
+            else:
+                self.logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
+
+        future.add_done_callback(FutureCallback(on_success, on_failure))
         
         self.peer_manager.add_to_reported_peers(
             get_peers_request.reported_peers,

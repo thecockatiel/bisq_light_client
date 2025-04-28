@@ -8,13 +8,13 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
 from bisq.common.crypto.sig import Sig
+from bisq.common.setup.log_setup import get_ctx_logger
 from electrum_min.bitcoin import usermessage_magic
 from electrum_min.crypto import sha256d
 import electrum_ecc as ecc
 from electrum_ecc import ECPrivkey, ECPubkey, string_to_number
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 
 try:
@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     except:
         # not available in old versions
         pass
-
-logger = get_logger(__name__)
 
 class Encryption:
     ASYM_KEY_ALGO = "RSA"
@@ -52,6 +50,7 @@ class Encryption:
             public_key = private_key.public_key()
             return KeyPair(private_key, public_key)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Could not create key.", exc_info=e)
             raise RuntimeError("Could not create key.") from e
 
@@ -69,6 +68,7 @@ class Encryption:
             ciphertext = encryptor.update(padded_data) + encryptor.finalize()
             return ciphertext
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("error in encrypt", exc_info=e)
             raise CryptoException(e) from e
 
@@ -98,6 +98,7 @@ class Encryption:
                 output.write(hmac_value)
                 return output.getvalue()
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Could not create hmac", exc_info=e)
             raise RuntimeError("Could not create hmac") from e
 
@@ -108,6 +109,7 @@ class Encryption:
             hmac_test = Encryption.get_hmac(message, secret_key)
             return hmac.compare_digest(hmac_test, hmac_value)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Could not verify hmac", exc_info=e)
             raise RuntimeError("Could not verify hmac") from e
 
@@ -154,6 +156,7 @@ class Encryption:
             )
             return encrypted
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Couldn't encrypt payload", exc_info=e)
             raise CryptoException("Couldn't encrypt payload") from e
 
@@ -185,6 +188,7 @@ class Encryption:
             key_bytes = secrets.token_bytes(bits // 8)  # Convert bits to bytes
             return key_bytes
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Couldn't generate key", exc_info=e)
             raise RuntimeError("Couldn't generate key") from e
 
@@ -226,6 +230,7 @@ class Encryption:
             key = serialization.load_der_public_key(public_key_bytes)
             return key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Error creating public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
             )
@@ -237,6 +242,7 @@ class Encryption:
             key = serialization.load_der_private_key(private_key_bytes, password=None)
             return key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Error creating private key from bytes. Key bytes as hex=REDACTED, error={str(e)}"
             )
@@ -252,6 +258,7 @@ class Encryption:
             key = ECPrivkey.from_secret_scalar(string_to_number(bytes.fromhex(key)))
             return key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Error creating private key from bytes. Key bytes as hex=REDACTED, error={str(e)}"
             )
@@ -263,6 +270,7 @@ class Encryption:
             key = ECPubkey(public_key_bytes)
             return key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Error creating ec public key from bytes. Key bytes as hex={bytes_as_hex_string(public_key_bytes)}, error={str(e)}"
             )

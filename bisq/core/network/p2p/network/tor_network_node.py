@@ -1,5 +1,5 @@
 from python_socks import ProxyType
-from utils.aio import as_future, get_asyncio_loop, run_in_thread, wait_future_blocking
+from utils.aio import FutureCallback, as_future, get_asyncio_loop, run_in_thread, wait_future_blocking
 from asyncio import Future
 from bisq.core.network.p2p.network.limited_running_tor import LimitedRunningTor
 from typing import TYPE_CHECKING, Optional
@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import timedelta
 import socket
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.network.hidden_service_socket import HiddenServiceSocket
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.common.user_thread import UserThread
@@ -28,8 +28,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
     from bisq.common.timer import Timer
     from bisq.core.network.p2p.network.ban_filter import BanFilter
-    
-logger = get_logger(__name__)
+
 
 # NOTE: removed experimental stream isolation
 # NOTE: the setup used here finishes for new tor instance and publishing hidden service at the same time. unlike java version which does it in two steps.
@@ -47,6 +46,7 @@ class TorNetworkNode(NetworkNode):
         super().__init__(
             service_port, network_proto_resolver, ban_filter, config
         )
+        self.logger = get_ctx_logger(__name__)
         
         if isinstance(tor_mode, LimitedRunningTor):
             self.service_port = tor_mode.hiddenservice_port
@@ -113,15 +113,15 @@ class TorNetworkNode(NetworkNode):
         return self.socks_proxy
 
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None):
-        logger.info(f"TorNetworkNode shutdown started at {get_time_ms()}")
+        self.logger.info(f"TorNetworkNode shutdown started at {get_time_ms()}")
         if self.__shutdown_in_progress:
-            logger.warning("We got shutDown already called")
+            self.logger.warning("We got shutDown already called")
             return
         
         self.__shutdown_in_progress = True
 
         def timeout_handler():
-            logger.error(f"A timeout occurred at shutDown at {get_time_ms()}")
+            self.logger.error(f"A timeout occurred at shutDown at {get_time_ms()}")
             if shut_down_complete_handler:
                 shut_down_complete_handler()
 
@@ -143,9 +143,9 @@ class TorNetworkNode(NetworkNode):
                 if self.tor:
                     f = as_future(self.tor.quit())
                     self.tor = None
-                logger.info(f"Tor shutdown completed at {get_time_ms()}")
+                self.logger.info(f"Tor shutdown completed at {get_time_ms()}")
             except Exception as e:
-                logger.error("Shutdown torNetworkNode failed with exception", exc_info=e)
+                self.logger.error("Shutdown torNetworkNode failed with exception", exc_info=e)
             finally:
                 if self.shut_down_timeout_timer:
                     self.shut_down_timeout_timer.stop()
@@ -153,7 +153,7 @@ class TorNetworkNode(NetworkNode):
                     if shut_down_complete_handler:
                         shut_down_complete_handler()
                 if f:
-                    f.add_done_callback(on_finish)
+                    f.add_done_callback(FutureCallback(on_finish, on_finish))
                 else:
                     on_finish()
 
@@ -183,7 +183,7 @@ class TorNetworkNode(NetworkNode):
             node_address = NodeAddress.from_full_address(f"{self.hidden_service_socket.service_name}:{self.hidden_service_socket.hidden_service_port}")
             self.node_address_property.set(node_address)
             
-            logger.info(
+            self.logger.info(
                 "\n################################################################\n"
                 f"Tor hidden service published after {get_time_ms() - ts} ms. Socket={self.hidden_service_socket}\n"
                 "################################################################"
@@ -197,7 +197,7 @@ class TorNetworkNode(NetworkNode):
             UserThread.execute(start)
 
         except Exception as e:
-            logger.error(f"Starting tor node failed: {e}", exc_info=e)
+            self.logger.error(f"Starting tor node failed: {e}", exc_info=e)
             if isinstance(e.__cause__, IOError) or "Trying to add hidden service" in str(e):
                 def notify_failure():
                     for listener in self.setup_listeners:
@@ -208,5 +208,5 @@ class TorNetworkNode(NetworkNode):
                     for listener in self.setup_listeners:
                         listener.on_request_custom_bridges()
                 UserThread.execute(request_bridges)
-                logger.warning("We shutdown as starting tor with the default bridges failed. We request user to add custom bridges.")
+                self.logger.warning("We shutdown as starting tor with the default bridges failed. We request user to add custom bridges.")
                 self.shut_down()

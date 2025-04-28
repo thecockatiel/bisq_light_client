@@ -1,8 +1,7 @@
-from collections.abc import Callable
 import itertools
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.crypto.encryption import ECPrivkey
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.address_entry_exception import AddressEntryException
 from bisq.core.btc.exceptions.insufficient_funds_exception import (
     InsufficientFundsException,
@@ -39,8 +38,6 @@ if TYPE_CHECKING:
     from bitcoinj.crypto.deterministic_key import DeterministicKey
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
 
-logger = get_logger(__name__)
-
 
 # TODO
 class BtcWalletService(WalletService, DaoStateListener):
@@ -53,6 +50,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         fee_service: "FeeService",
     ):
         super().__init__(wallets_setup, preferences, fee_service)
+        self.logger = get_ctx_logger(__name__)
         self.address_entry_list = address_entry_list
 
         wallets_setup.add_setup_completed_handler(self._on_setup_completed)
@@ -163,7 +161,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             counter += 1
             if counter >= 10:
                 assert result_tx is not None, "result_tx should not be None"
-                logger.error(f"Could not calculate the fee. Tx={result_tx}")
+                self.logger.error(f"Could not calculate the fee. Tx={result_tx}")
                 break
 
             tx = Transaction(self.params)
@@ -220,7 +218,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(result_tx)
 
-        # self.print_tx("BTC wallet: Signed Tx", result_tx)
+        # WalletService.print_tx("BTC wallet: Signed Tx", result_tx)
         return result_tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -260,7 +258,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(tx)
 
-        # self.print_tx("BTC wallet: Signed tx", tx)
+        # WalletService.print_tx("BTC wallet: Signed tx", tx)
         return tx
 
     def _add_inputs_for_miner_fee(
@@ -292,7 +290,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             counter += 1
             if counter >= 10:
                 assert result_tx is not None, "result_tx should not be None"
-                logger.error(f"Could not calculate the fee. Tx={result_tx}")
+                self.logger.error(f"Could not calculate the fee. Tx={result_tx}")
                 break
 
             tx = Transaction(self.params)
@@ -361,7 +359,7 @@ class BtcWalletService(WalletService, DaoStateListener):
                 and connected_output.is_for_wallet(self.wallet),
                 "tx_input.connected_output is not in our wallet. That must not happen.",
             )
-            self.check_script_sig(tx, tx_input, i)
+            WalletService.check_script_sig(tx, tx_input, i)
         return tx
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -474,7 +472,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             counter += 1
             if counter >= 10:
                 assert result_tx is not None, "result_tx should not be None"
-                logger.error(f"Could not calculate the fee. Tx={result_tx}")
+                self.logger.error(f"Could not calculate the fee. Tx={result_tx}")
                 break
 
             tx = Transaction(self.params)
@@ -555,7 +553,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         WalletService.check_wallet_consistency(self.wallet)
         WalletService.verify_transaction(result_tx)
 
-        self.print_tx("BTC wallet: Signed tx", result_tx)
+        WalletService.print_tx("BTC wallet: Signed tx", result_tx)
         return result_tx
 
     def get_num_inputs(self, tx: "Transaction") -> tuple[int, int]:
@@ -667,7 +665,9 @@ class BtcWalletService(WalletService, DaoStateListener):
                     self.wallet.fresh_receive_address()
                 )
                 entry = AddressEntry(key, context, offer_id, segwit=True)
-                logger.info(f"get_or_create_address_entry: new AddressEntry={entry}")
+                self.logger.info(
+                    f"get_or_create_address_entry: new AddressEntry={entry}"
+                )
                 self.address_entry_list.add_address_entry(entry)
                 return entry
 
@@ -725,7 +725,7 @@ class BtcWalletService(WalletService, DaoStateListener):
             # NOTE: we only use segwit
             key = self.wallet.find_key_from_address(self.wallet.fresh_receive_address())
             entry = AddressEntry(key, context, segwit=True)
-            logger.info(
+            self.logger.info(
                 f"get_or_create_address_entry_with_context: add new AddressEntry {entry}"
             )
             self.address_entry_list.add_address_entry(entry)
@@ -772,7 +772,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         self, offer_id: str, context: AddressEntryContext
     ) -> None:
         if context == AddressEntryContext.MULTI_SIG:
-            logger.error(
+            self.logger.error(
                 "swap_trade_entry_to_available_entry called with MULTI_SIG context. "
                 "This is not permitted as we must not reuse those address entries and there "
                 "are no redeemable funds on those addresses. Only the keys are used for creating "
@@ -782,7 +782,7 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         for entry in self.get_address_entry_list_as_immutable_list():
             if offer_id == entry.offer_id and context == entry.context:
-                logger.info(
+                self.logger.info(
                     f"swap addressEntry with address {entry.get_address_string()} and offerId {entry.offer_id} from context {context} to available"
                 )
                 self.address_entry_list.swap_to_available(entry)
@@ -804,7 +804,7 @@ class BtcWalletService(WalletService, DaoStateListener):
     def set_coin_locked_in_multi_sig_address_entry(
         self, address_entry: "AddressEntry", value: int
     ) -> None:
-        logger.info(
+        self.logger.info(
             f"Set coinLockedInMultiSig for addressEntry {address_entry} to value {value}"
         )
         self.address_entry_list.set_coin_locked_in_multi_sig_address_entry(
@@ -812,7 +812,7 @@ class BtcWalletService(WalletService, DaoStateListener):
         )
 
     def reset_address_entries_for_open_offer(self, offer_id: str) -> None:
-        logger.info(f"reset_address_entries_for_open_offer offerId={offer_id}")
+        self.logger.info(f"reset_address_entries_for_open_offer offerId={offer_id}")
         self.swap_trade_entry_to_available_entry(
             offer_id, AddressEntryContext.OFFER_FUNDING
         )
@@ -859,13 +859,13 @@ class BtcWalletService(WalletService, DaoStateListener):
         if multi_sig_address_entry:
             multi_sig_key_pair = multi_sig_address_entry.key_pair
             if pub_key != multi_sig_address_entry.pub_key:
-                logger.error(
+                self.logger.error(
                     f"Pub Key from AddressEntry does not match key pair from trade data. Trade ID={trade_id}\n"
                     "We try to find the keypair in the wallet with the pubKey we found in the trade data."
                 )
                 multi_sig_key_pair = self.wallet.find_key_from_pub_key(pub_key, None)
         else:
-            logger.error(
+            self.logger.error(
                 f"multiSigAddressEntry not found for trade ID={trade_id}.\n"
                 "We try to find the keypair in the wallet with the pubKey we found in the trade data."
             )
@@ -944,11 +944,11 @@ class BtcWalletService(WalletService, DaoStateListener):
                 self.wallet.complete_tx(send_request)
                 tx = send_request.tx
                 tx_vsize = tx.get_vsize()
-                self.print_tx("FeeEstimationTransaction", tx)
+                WalletService.print_tx("FeeEstimationTransaction", tx)
                 if not self._tx_fee_estimation_not_satisfied(counter, tx):
                     break
                 if counter == 10:
-                    logger.error(f"Could not calculate the fee. Tx={tx}")
+                    self.logger.error(f"Could not calculate the fee. Tx={tx}")
                     break
             return tx
         except InsufficientMoneyException as e:
@@ -1002,12 +1002,14 @@ class BtcWalletService(WalletService, DaoStateListener):
                 self.wallet.complete_tx(send_request)
                 tx = send_request.tx
                 tx_vsize = tx.get_vsize()
-                self.print_tx("FeeEstimationTransactionForMultipleAddresses", tx)
+                WalletService.print_tx(
+                    "FeeEstimationTransactionForMultipleAddresses", tx
+                )
                 if not self._tx_fee_estimation_not_satisfied(counter, tx):
                     # satisfied
                     break
                 if counter == 10:
-                    logger.error(f"Could not calculate the fee. Tx={tx}")
+                    self.logger.error(f"Could not calculate the fee. Tx={tx}")
                     break
             return tx
         except InsufficientMoneyException as e:
@@ -1123,7 +1125,7 @@ class BtcWalletService(WalletService, DaoStateListener):
 
         future.add_done_callback(FutureCallback(on_success, on_error))
 
-        self.print_tx("sendFunds", send_request.tx)
+        WalletService.print_tx("sendFunds", send_request.tx)
 
         # For better redundancy in case the broadcast via Electrum fails we also
         # publish the tx via mempool nodes.
@@ -1171,7 +1173,8 @@ class BtcWalletService(WalletService, DaoStateListener):
             "address_entry.get_address() must not be None",
         )
         send_request.coin_selector = BtcCoinSelector(
-            address_entry.get_address(), self._preferences.get_ignore_dust_threshold()
+            address_entry.get_address(),
+            self._preferences.get_ignore_dust_threshold(),
         )
         send_request.change_address = address_entry.get_address()
         return send_request
@@ -1274,7 +1277,9 @@ class BtcWalletService(WalletService, DaoStateListener):
         try:
             change = coin_selector.get_change(required, coin_selection)
         except InsufficientMoneyException as e:
-            logger.error(f"Missing funds in get_inputs_and_change. missing={e.missing}")
+            self.logger.error(
+                f"Missing funds in get_inputs_and_change. missing={e.missing}"
+            )
             raise InsufficientMoneyException(e.missing)
 
         dummy_tx = Transaction(self.params)

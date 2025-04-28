@@ -13,7 +13,6 @@ from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin
 import pb_pb2 as protobuf
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
@@ -29,9 +28,6 @@ from bisq.common.protocol.proto_util import ProtoUtil
 
 if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
-
-
-logger = get_logger(__name__)
 
 
 @total_ordering

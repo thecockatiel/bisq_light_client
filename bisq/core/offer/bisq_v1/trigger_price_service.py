@@ -1,10 +1,10 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.core.locale.res import Res
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.provider.mempool.fee_validation_status import FeeValidationStatus
 from utils.data import ObservableChangeEvent, SimpleProperty
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.monetary.altcoin import Altcoin
@@ -22,9 +22,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
 
 
-logger = get_logger(__name__)
-
-
 class TriggerPriceService:
     def __init__(
         self,
@@ -33,6 +30,7 @@ class TriggerPriceService:
         mempool_service: "MempoolService",
         price_feed_service: "PriceFeedService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.open_offer_manager = open_offer_manager
         self.mempool_service = mempool_service
@@ -135,7 +133,7 @@ class TriggerPriceService:
             )
             trigger_price = open_offer.trigger_price
 
-            logger.info(
+            self.logger.info(
                 f"Market price exceeded the trigger price of the open offer.\n"
                 f"We deactivate the open offer with ID {offer.short_id}.\n"
                 f"Currency: {currency_code};\n"
@@ -184,7 +182,7 @@ class TriggerPriceService:
         self.open_offer_manager.deactivate_open_offer(
             open_offer, lambda: None, lambda e: None
         )
-        logger.info(message)
+        self.logger.info(message)
         if self.offer_disabled_handler is not None:
             self.offer_disabled_handler(message)  # shows notification on screen
         # tells the UI layer (Open Offers View) to update its contents

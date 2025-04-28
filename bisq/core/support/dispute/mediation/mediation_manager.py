@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, cast
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
@@ -28,6 +28,7 @@ from bisq.core.support.support_type import SupportType
 from bisq.common.version import Version
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
 from bisq.core.trade.protocol.bisq_v1.dispute_protocol import DisputeProtocol
+from bisq.core.user.user import User
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
@@ -56,7 +57,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.trade.trade_manager import TradeManager
 
-logger = get_logger(__name__)
 
 
 class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, FileTransferSession.FtpCallback):
@@ -75,6 +75,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         mediation_dispute_list_service: "MediationDisputeListService",
         config: "Config",
         price_feed_service: "PriceFeedService",
+        user: "User",
     ):
         super().__init__(
             p2p_service,
@@ -91,6 +92,8 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             config,
             price_feed_service,
         )
+        self.logger = get_ctx_logger(__name__)
+        self._user = user
         
         self.p2p_service.network_node.add_message_listener(self) # listening for FileTransferPart message
 
@@ -103,7 +106,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
 
     def on_support_message(self, message: "SupportMessage") -> None:
         if self.can_process_message(message):
-            logger.info(
+            self.logger.info(
                 f"Received {message.__class__.__name__} with tradeId {message.get_trade_id()} and uid {message.uid}"
             )
 
@@ -116,7 +119,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             elif isinstance(message, DisputeResultMessage):
                 self.on_dispute_result_message(message)
             else:
-                logger.warning(
+                self.logger.warning(
                     f"Unsupported message at dispatch_message. message={message}"
                 )
 
@@ -181,7 +184,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         uid = dispute_result_message.uid
 
         if dispute is None:
-            logger.warning(
+            self.logger.warning(
                 f"We got a dispute result msg but we don't have a matching dispute. "
                 f"That might happen when we get the disputeResultMessage before the dispute was created. "
                 f"We try again after 2 sec. to apply the disputeResultMessage. TradeId = {trade_id}"
@@ -194,7 +197,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
                 )
                 self.delay_msg_map[uid] = timer
             else:
-                logger.warning(
+                self.logger.warning(
                     f"We got a dispute result msg after we already repeated to apply the message after a delay. "
                     f"That should never happen. TradeId = {trade_id}"
                 )
@@ -205,7 +208,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         if chat_message not in dispute.chat_messages:
             dispute.add_and_persist_chat_message(chat_message)
         else:
-            logger.warning(
+            self.logger.warning(
                 f"We got a dispute mail msg what we have already stored. TradeId = {chat_message.trade_id}"
             )
 
@@ -298,7 +301,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             self.p2p_service.network_node,
             dispute.contract.mediator_node_address,
             callback,
-            self.config,
+            self._user,
         )
 
     def process_file_part_received(self, ftp: "FileTransferPart") -> None:
@@ -308,13 +311,13 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         # we create a new session which is related to an open dispute from our list
         dispute = self._find_dispute_by_ids(ftp.trade_id, ftp.trader_id)
         if not dispute:
-            logger.error(
+            self.logger.error(
                 f"Received log upload request for unknown TradeId/TraderId {ftp.trade_id}/{ftp.trader_id}"
             )
             return
         
         if dispute.is_closed:
-            logger.error(f"Received a file transfer request for closed dispute {ftp.trade_id}")
+            self.logger.error(f"Received a file transfer request for closed dispute {ftp.trade_id}")
             return
         
         try:
@@ -326,7 +329,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             )
             session.process_file_part_received(ftp)
         except IOError as e:
-            logger.error(f"Unable to process a received file message: {e}")
+            self.logger.error(f"Unable to process a received file message: {e}")
 
     def on_message(self, network_envelope: "NetworkEnvelope", connection: "Connection") -> None:
         # mediator receiving log file data
@@ -334,7 +337,7 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
             self.process_file_part_received(network_envelope)
 
     def on_ftp_progress(self, progress_pct: float) -> None:
-        logger.trace(f"ftp progress: {progress_pct}")
+        self.logger.trace(f"ftp progress: {progress_pct}")
 
     def on_ftp_complete(self, session: "FileTransferSession") -> None:
         dispute = self._find_dispute_by_ids(session.full_trade_id, session.trader_id)

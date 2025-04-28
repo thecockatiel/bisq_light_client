@@ -30,7 +30,7 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
 
     # We don't allow to get further back than 767950 (the block height from Dec. 18th 2022).
     @classproperty
-    def MIN_SNAPSHOT_HEIGHT():
+    def MIN_SNAPSHOT_HEIGHT(cls):
         # TODO: double check for access timing
         if Config.BASE_CURRENCY_NETWORK_VALUE.is_regtest():
             return 0

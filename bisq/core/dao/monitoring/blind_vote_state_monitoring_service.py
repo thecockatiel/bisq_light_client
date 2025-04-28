@@ -1,8 +1,8 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.governance.blindvote.my_blind_vote_list import MyBlindVoteList
@@ -39,8 +39,6 @@ if TYPE_CHECKING:
         BlindVoteListService,
     )
 
-logger = get_logger(__name__)
-
 
 class BlindVoteStateMonitoringService(
     DaoSetupService,
@@ -65,7 +63,7 @@ class BlindVoteStateMonitoringService(
     """
 
     class Listener:
-        def on_blind_vote_state_block_chain_changed(self):
+        def on_blind_vote_state_block_chain_changed(self_):
             pass
 
     def __init__(
@@ -77,6 +75,7 @@ class BlindVoteStateMonitoringService(
         blind_vote_list_service: "BlindVoteListService",
         seed_node_repository: "SeedNodeRepository",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._blind_vote_state_network_service = blind_vote_state_network_service
         self._genesis_tx_info = genesis_tx_info
@@ -122,14 +121,14 @@ class BlindVoteStateMonitoringService(
             for i in range(genesis_block_height, block_height):
                 self._maybe_update_hash_chain(i)
             if self.blind_vote_state_block_chain:
-                logger.info(
+                self.logger.info(
                     f"updateHashChain for {block_height - genesis_block_height} blocks took {get_time_ms() - ts} ms"
                 )
 
         ts = get_time_ms()
         updated = self._maybe_update_hash_chain(block_height)
         if updated:
-            logger.info(
+            self.logger.info(
                 f"updateHashChain for block {block_height} took {get_time_ms() - ts} ms"
             )
 
@@ -334,9 +333,9 @@ class BlindVoteStateMonitoringService(
 
         if conflict_msg:
             if self.is_in_conflict_with_seed_node:
-                logger.warning(f"Conflict with seed nodes: {conflict_msg}")
+                self.logger.warning(f"Conflict with seed nodes: {conflict_msg}")
             elif self.is_in_conflict_with_non_seed_node:
-                logger.info(f"Conflict with non-seed nodes: {conflict_msg}")
+                self.logger.info(f"Conflict with non-seed nodes: {conflict_msg}")
 
         if notify_listeners and changed.get():
             for listener in self.listeners:

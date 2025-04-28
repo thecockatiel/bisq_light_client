@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.core.user.user_manager import UserManager
 from grpc_pb2_grpc import HelpServicer
 from grpc_pb2 import GetMethodHelpRequest, GetMethodHelpReply
 
@@ -8,21 +8,26 @@ if TYPE_CHECKING:
     from bisq.daemon.grpc.grpc_exception_handler import GrpcExceptionHandler
     from bisq.core.api.core_api import CoreApi
 
-logger = get_logger(__name__)
-
 
 class GrpcHelpService(HelpServicer):
 
-    def __init__(self, core_api: "CoreApi", exception_handler: "GrpcExceptionHandler"):
-        self.core_api = core_api
-        self.exception_handler = exception_handler
+    def __init__(
+        self,
+        core_api: "CoreApi",
+        exception_handler: "GrpcExceptionHandler",
+        user_manager: "UserManager",
+    ):
+        self._core_api = core_api
+        self._exception_handler = exception_handler
+        self._user_manager = user_manager
 
     def GetMethodHelp(
         self, request: "GetMethodHelpRequest", context: "ServicerContext"
     ):
+        user_context = self._user_manager.active_context
         try:
             return GetMethodHelpReply(
-                method_help=self.core_api.get_method_help(request.method_name)
+                method_help=self._core_api.get_method_help(request.method_name)
             )
         except Exception as e:
-            self.exception_handler.handle_exception(logger, e, context)
+            self._exception_handler.handle_exception(user_context.logger, e, context)

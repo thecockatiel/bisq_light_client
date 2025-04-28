@@ -1,10 +1,17 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 class SellerSignAndFinalizePayoutTx(TradeTask):
+    
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
     
     def run(self):
         try:
@@ -46,7 +53,7 @@ class SellerSignAndFinalizePayoutTx(TradeTask):
                 # everything looked ok. At the payout multiSigAddressEntryOptional was not present and payout
                 # could not be done. By changing the previous behaviour from fail if multiSigAddressEntryOptional
                 # is not present to only log a warning the payout worked.
-                logger.warning(
+                self.logger.warning(
                     f"sellerMultiSigPubKey from AddressEntry does not match trade data. "
                     f"Trade id={id}, multi_sig_address_entry={multi_sig_address_entry}"
                 )

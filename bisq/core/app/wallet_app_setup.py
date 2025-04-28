@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any, Literal, Optional, Union
+from bisq.common.setup.log_setup import get_ctx_logger
+from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.locale.res import Res
 from bitcoinj.core.reject_code import RejectCode
@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from bisq.core.offer.open_offer_manager import OpenOfferManager
     from bisq.core.trade.trade_manager import TradeManager
 
-logger = get_logger(__name__)
-
 
 # TODO
 class WalletAppSetup:
@@ -38,6 +36,7 @@ class WalletAppSetup:
         config: "Config",
         preferences: "Preferences",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.core_context = core_context
         self.wallets_manager = wallets_manager
         self.wallets_setup = wallets_setup
@@ -69,7 +68,9 @@ class WalletAppSetup:
         download_complete_handler: Callable[[], None],
         wallet_initialized_handler: Callable[[], None],
     ):
-        logger.info(f"Initialize WalletAppSetup with partial python port of BitcoinJ")
+        self.logger.info(
+            f"Initialize WalletAppSetup with partial python port of BitcoinJ"
+        )
 
         wallet_service_exception = SimpleProperty[Exception]()
 
@@ -100,7 +101,7 @@ class WalletAppSetup:
                     Res.get("mainView.footer.btcInfo.connectionFailed"),
                     self._get_btc_network_as_string(),
                 )
-                logger.error(exception)
+                self.logger.error(exception)
                 if isinstance(exception, TimeoutError):
                     self.wallet_service_error_msg_property.set(
                         Res.get("mainView.walletServiceErrorMsg.timeout")
@@ -153,7 +154,7 @@ class WalletAppSetup:
                 return
 
             reject_message = e.new_value.reject_message
-            logger.warning(f"We received reject message: {reject_message}")
+            self.logger.warning(f"We received reject message: {reject_message}")
 
             # JAVA TODO: Find out which reject messages are critical and which not.
             # We got a report where a "tx already known" message caused a failed trade but the deposit tx was valid.
@@ -167,7 +168,7 @@ class WalletAppSetup:
                 RejectCode.OTHER,
             ):
                 # We ignore those cases to avoid that not critical reject messages trigger a failed trade.
-                logger.warning(
+                self.logger.warning(
                     "We ignore that reject message as it is likely not critical."
                 )
 
@@ -178,7 +179,7 @@ class WalletAppSetup:
                 RejectCode.INSUFFICIENTFEE,
             ):
                 # We delay as we might get the rejected tx error before we have completed the create offer protocol
-                logger.warning(
+                self.logger.warning(
                     "We handle that reject message as it is likely critical."
                 )
                 tx_id = e.new_value.tx_id
@@ -202,13 +203,13 @@ class WalletAppSetup:
                                     )
 
                                 def on_success():
-                                    logger.warning(
+                                    self.logger.warning(
                                         f"We removed an open offer because the maker fee was rejected by the Bitcoin "
                                         f"network. OfferId={open_offer.get_short_id()}, txId={tx_id}"
                                     )
 
                                 open_offer_manager.remove_open_offer(
-                                    open_offer, on_success, logger.warning
+                                    open_offer, on_success, self.logger.warning
                                 )
 
                             UserThread.run_after(handle_offer, timedelta(seconds=1))

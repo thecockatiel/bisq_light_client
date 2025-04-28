@@ -2,11 +2,9 @@ from datetime import timedelta
 import threading
 import psutil
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from utils.formatting import readable_file_size
-
-logger = get_logger(__name__)
 
 
 class Profiler:
@@ -16,6 +14,7 @@ class Profiler:
 
     @staticmethod
     def print_system_load():
+        logger = get_ctx_logger(__name__)
         logger.info(Profiler.get_system_load())
 
     @staticmethod

@@ -1,6 +1,6 @@
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.model.bisq_v1.seller_as_taker_trade import SellerAsTakerTrade
 from bisq.core.trade.model.trade_phase import TradePhase
@@ -55,13 +55,13 @@ from bisq.core.trade.protocol.trade_message import TradeMessage
 from utils.preconditions import check_not_none
 
 
-logger = get_logger(__name__)
 
 
 class SellerAsTakerProtocol(SellerProtocol, TakerProtocol):
 
     def __init__(self, trade: "SellerAsTakerTrade"):
         super().__init__(trade)
+        self.logger = get_ctx_logger(__name__)
         offer = check_not_none(trade.get_offer())
         self.process_model.trade_peer.pub_key_ring = offer.pub_key_ring
 
@@ -141,7 +141,7 @@ class SellerAsTakerProtocol(SellerProtocol, TakerProtocol):
     def on_trade_message(self, message: "TradeMessage", peer: "NodeAddress"):
         super().on_trade_message(message, peer)
 
-        logger.info(
+        self.logger.info(
             f"Received {message.__class__.__name__} from {peer} with tradeId {message.trade_id} and uid {message.uid}"
         )
 

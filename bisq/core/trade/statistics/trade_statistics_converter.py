@@ -1,8 +1,9 @@
 from collections.abc import Collection
 from concurrent.futures import ThreadPoolExecutor
+import contextvars
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bisq.core.network.p2p.persistence.append_only_data_store_listener import (
@@ -29,8 +30,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.persistable_network_payload import (
         PersistableNetworkPayload,
     )
-
-logger = get_logger(__name__)
+ 
 
 
 class TradeStatisticsConverter:
@@ -44,6 +44,7 @@ class TradeStatisticsConverter:
         append_only_data_store_service: "AppendOnlyDataStoreService",
         storage_dir: Path,
     ):
+        self.logger = get_ctx_logger(__name__)
         append_only_data_store_service.add_service(trade_statistics_2_storage_service)
 
         self._executor: Optional["ThreadPoolExecutor"] = None
@@ -85,9 +86,9 @@ class TradeStatisticsConverter:
                         )
                         trade_statistics_2_store.unlink(missing_ok=True)
                     except Exception as e:
-                        logger.error(e, exc_info=e)
-
-                self._executor.submit(migrate_v2_data)
+                        self.logger.error(e, exc_info=e)
+                ctx = contextvars.copy_context()
+                self._executor.submit(ctx.run, migrate_v2_data)
 
             def on_data_received(self_):
                 pass
@@ -96,7 +97,7 @@ class TradeStatisticsConverter:
 
         # We listen to old TradeStatistics2 objects, convert and store them and rebroadcast
         class DataListener(AppendOnlyDataStoreListener):
-            def on_added(self, payload):
+            def on_added(self_, payload):
                 if isinstance(payload, TradeStatistics2):
                     trade_statistics_3 = (
                         TradeStatisticsConverter.convert_to_trade_statistics_3(payload)
@@ -130,6 +131,7 @@ class TradeStatisticsConverter:
             if isinstance(payload, TradeStatistics2) and payload.is_valid():
                 map_without_duplicates[StorageByteArray(payload.get_hash())] = payload
 
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"We convert the existing {len(map_without_duplicates)} trade statistics objects to the new format."
         )

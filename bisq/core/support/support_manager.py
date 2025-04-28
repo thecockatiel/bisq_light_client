@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
@@ -21,13 +21,13 @@ if TYPE_CHECKING:
         DecryptedMessageWithPubKey,
     )
     from bisq.core.network.p2p.node_address import NodeAddress
-
-logger = get_logger(__name__)
+ 
 
 class SupportManager(ABC):
 
     def __init__(self, p2p_service: "P2PService", wallets_setup: "WalletsSetup"):
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.wallets_setup = wallets_setup
 
@@ -130,12 +130,12 @@ class SupportManager(ABC):
         channel_open = self.channel_open(chat_message)
         
         if not channel_open:
-            logger.debug(f"We got a chatMessage but we don't have a matching chat. TradeId = {trade_id}")
+            self.logger.debug(f"We got a chatMessage but we don't have a matching chat. TradeId = {trade_id}")
             if uid not in self.delay_msg_map:
                 timer = UserThread.run_after(lambda: self.on_chat_message(chat_message), timedelta(seconds=1))
                 self.delay_msg_map[uid] = timer
             else:
-                logger.warning(f"We got a chatMessage after we already repeated to apply the message after a delay. That should never happen. TradeId = {trade_id}")
+                self.logger.warning(f"We got a chatMessage after we already repeated to apply the message after a delay. That should never happen. TradeId = {trade_id}")
             return
 
         self.cleanup_retry_map(uid)
@@ -151,12 +151,12 @@ class SupportManager(ABC):
     def on_ack_message(self, ack_message: "AckMessage") -> None:
         if ack_message.source_type == self.get_ack_message_source_type():
             if ack_message.success:
-                logger.info(
+                self.logger.info(
                     f"Received AckMessage for {ack_message.source_msg_class_name} "
                     f"with tradeId {ack_message.source_id} and uid {ack_message.source_uid}"
                 )
             else:
-                logger.warning(
+                self.logger.warning(
                     f"Received AckMessage with error state for {ack_message.source_msg_class_name} "
                     f"with tradeId {ack_message.source_id} and errorMessage={ack_message.error_message}"
                 )
@@ -185,37 +185,35 @@ class SupportManager(ABC):
         if peers_node_address is None or receiver_pub_key_ring is None:
             UserThread.run_after(lambda: message.send_message_error_property.set(Res.get("support.receiverNotKnown")), timedelta(seconds=1))
         else:
-            logger.info(
+            self.logger.info(
                 f"Send {message.__class__.__name__} to peer {peers_node_address}. "
                 f"tradeId={message.trade_id}, uid={message.uid}"
             )
-
-            outer = self
             
             class MailboxListener(SendMailboxMessageListener):
-                def on_arrived(self):
-                    logger.info(
+                def on_arrived(self_):
+                    self.logger.info(
                         f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}"
                     )
                     message.arrived_property.value = True
-                    outer.request_persistence()
+                    self.request_persistence()
 
-                def on_stored_in_mailbox(self):
-                    logger.info(
+                def on_stored_in_mailbox(self_):
+                    self.logger.info(
                         f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}"
                     )
                     message.stored_in_mailbox_property.value = True
-                    outer.request_persistence()
+                    self.request_persistence()
 
-                def on_fault(self, error_message: str):
-                    logger.error(
+                def on_fault(self_, error_message: str):
+                    self.logger.error(
                         f"{message.__class__.__name__} failed: Peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}"
                     )
                     message.send_message_error_property.value = error_message
-                    outer.request_persistence()
+                    self.request_persistence()
 
             self.mailbox_message_service.send_encrypted_mailbox_message(
                 peers_node_address,
@@ -246,26 +244,26 @@ class SupportManager(ABC):
         )
         peers_node_address = support_message.sender_node_address
         
-        logger.info(
+        self.logger.info(
             f"Send AckMessage for {ack_message.source_msg_class_name} to peer {peers_node_address}. "
             f"tradeId={trade_id}, uid={uid}"
         )
 
         class AckMailboxListener(SendMailboxMessageListener):
-            def on_arrived(self):
-                logger.info(
+            def on_arrived(self_):
+                self.logger.info(
                     f"AckMessage for {ack_message.source_msg_class_name} arrived at peer {peers_node_address}. "
                     f"tradeId={trade_id}, uid={uid}"
                 )
 
-            def on_stored_in_mailbox(self):
-                logger.info(
+            def on_stored_in_mailbox(self_):
+                self.logger.info(
                     f"AckMessage for {ack_message.source_msg_class_name} stored in mailbox for peer {peers_node_address}. "
                     f"tradeId={trade_id}, uid={uid}"
                 )
 
-            def on_fault(self, error_message: str):
-                logger.error(
+            def on_fault(self_, error_message: str):
+                self.logger.error(
                     f"AckMessage for {ack_message.source_msg_class_name} failed. Peer {peers_node_address}. "
                     f"tradeId={trade_id}, uid={uid}, errorMessage={error_message}"
                 )
@@ -312,7 +310,7 @@ class SupportManager(ABC):
 
         for decrypted_message_with_pub_key in self.decryped_mailbox_message_with_pub_keys:
             network_envelope = decrypted_message_with_pub_key.network_envelope
-            logger.trace(f"## decryptedMessageWithPubKey message={network_envelope.__class__.__name__}")
+            self.logger.trace(f"## decryptedMessageWithPubKey message={network_envelope.__class__.__name__}")
             if isinstance(network_envelope, SupportMessage):
                 self.on_support_message(network_envelope)
                 self.mailbox_message_service.remove_mailbox_msg(network_envelope)

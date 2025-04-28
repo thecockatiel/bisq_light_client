@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, cast
+from bisq.common.setup.log_setup import get_ctx_logger
+from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.locale.res import Res
 from bisq.core.monetary.altcoin import Altcoin
@@ -32,9 +32,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.closed_tradable_manager import ClosedTradableManager
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
     from bisq.core.util.coin.coin_formatter import CoinFormatter
-
-logger = get_logger(__name__)
-
+ 
 
 class ClosedTradableFormatter:
     # Resource bundle i18n keys with Desktop UI specific property names,
@@ -51,6 +49,7 @@ class ClosedTradableFormatter:
         btc_formatter: "CoinFormatter",
         bsq_wallet_service: "BsqWalletService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.closed_tradable_manager = closed_tradable_manager
         self.bsq_formatter = bsq_formatter
         self.btc_formatter = btc_formatter
@@ -198,25 +197,25 @@ class ClosedTradableFormatter:
             elif trade.dispute_state == TradeDisputeState.REFUND_REQUEST_CLOSED:
                 return Res.get("portfolio.closed.ticketClosed")
             else:
-                logger.error(
+                self.logger.error(
                     f"That must not happen. We got a pending state but we are in the closed trades list. state={trade.get_trade_state().name}"
                 )
                 return Res.get("shared.na")
         elif is_open_offer(tradable):
             state = cast_to_open_offer(tradable).state
-            logger.trace(f"OpenOffer state={state.name}")
+            self.logger.trace(f"OpenOffer state={state.name}")
             if state in [
                 OpenOfferState.AVAILABLE,
                 OpenOfferState.RESERVED,
                 OpenOfferState.CLOSED,
                 OpenOfferState.DEACTIVATED,
             ]:
-                logger.error(f"Invalid state {state.name}")
+                self.logger.error(f"Invalid state {state.name}")
                 return state.name
             elif state == OpenOfferState.CANCELED:
                 return Res.get("portfolio.closed.canceled")
             else:
-                logger.error(f"Unhandled state {state.name}")
+                self.logger.error(f"Unhandled state {state.name}")
                 return state.name
         elif is_bsq_swap_trade(tradable):
             tx_id = cast_to_bsq_swap_trade(tradable).tx_id
@@ -232,7 +231,7 @@ class ClosedTradableFormatter:
             ):
                 return Res.get("confidence.pending")
             else:
-                logger.warning(
+                self.logger.warning(
                     f"Unexpected confidence in a BSQ swap trade which has been moved to closed trades. "
                     f"This could happen at a wallet SPV resync or a reorg. confidence={confidence} tradeID={tradable.get_id()}"
                 )

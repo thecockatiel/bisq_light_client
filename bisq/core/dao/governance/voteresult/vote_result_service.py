@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+from bisq.common.setup.log_setup import get_ctx_logger
 import traceback
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.common.util.permutation_util import PermutationUtil
 from bisq.common.util.utilities import bytes_as_hex_string
@@ -75,9 +75,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.blindvote.blind_vote import BlindVote
 
 
-logger = get_logger(__name__)
-
-
 class VoteResultService(DaoStateListener, DaoSetupService):
     """
     Calculates the result of the voting at the VoteResult period.
@@ -97,6 +94,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         issuance_service: "IssuanceService",
         missing_data_request_service: "MissingDataRequestService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._proposal_list_presentation = proposal_list_presentation
         self._dao_state_service = dao_state_service
         self._period_service = period_service
@@ -132,7 +130,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
 
     def _maybe_calculate_vote_result(self, chain_height: int):
         if self._is_in_vote_result_phase(chain_height):
-            logger.info(f"CalculateVoteResult at chainHeight={chain_height}")
+            self.logger.info(f"CalculateVoteResult at chainHeight={chain_height}")
             current_cycle = self._period_service.current_cycle
             assert current_cycle is not None, "current_cycle must not be None"
             start_ts = get_time_ms()
@@ -167,7 +165,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                         majority_blind_vote_list_hash
                     )
                     if blind_vote_list:
-                        logger.debug(
+                        self.logger.debug(
                             "blindVoteListMatchingMajorityHash: {}".format(
                                 str(
                                     [
@@ -209,17 +207,17 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                         self._apply_accepted_proposals(
                             accepted_evaluated_proposals, chain_height
                         )
-                        logger.info("processAllVoteResults completed")
+                        self.logger.info("processAllVoteResults completed")
                     else:
                         msg = "We could not find a list which matches the majority so we cannot calculate the vote result. Please restart and resync the DAO state."
-                        logger.warning(msg)
+                        self.logger.warning(msg)
                         self.vote_result_exceptions.append(
                             VoteResultException(current_cycle, Exception(msg))
                         )
 
                 except Exception as e:
-                    logger.warning(str(e))
-                    logger.warning(
+                    self.logger.warning(str(e))
+                    self.logger.warning(
                         f"decryptedBallotsWithMeritsSet {decrypted_ballots_with_merits_set}"
                     )
                     traceback.print_exc()
@@ -227,11 +225,11 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                         VoteResultException(current_cycle, e)
                     )
             else:
-                logger.info(
+                self.logger.info(
                     f"There have not been any votes in that cycle. chainHeight={chain_height}"
                 )
 
-            logger.info(f"Evaluating vote result took {get_time_ms() - start_ts} ms")
+            self.logger.info(f"Evaluating vote result took {get_time_ms() - start_ts} ms")
 
     def _get_decrypted_ballots_with_merits_set(
         self, chain_height: int
@@ -258,7 +256,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             vote_reveal_tx, DaoPhase.Phase.VOTE_REVEAL
         )
         if not tx_in_phase:
-            logger.warning(
+            self.logger.warning(
                 f"We got a vote reveal tx with was not in the correct phase of that cycle. voteRevealTxId={vote_reveal_tx}"
             )
 
@@ -293,7 +291,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             if not self._period_service.is_tx_in_phase_and_cycle(
                 blind_vote_tx_id, DaoPhase.Phase.BLIND_VOTE, chain_height
             ):
-                logger.warning(
+                self.logger.warning(
                     f"We got a blind vote tx with was not in the correct phase and/or cycle. "
                     f"We ignore that vote reveal and blind vote tx. vote_reveal_tx={vote_reveal_tx}, blind_vote_tx_id={blind_vote_tx_id}"
                 )
@@ -338,7 +336,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             )
 
         except Exception as e:
-            logger.error(
+            self.logger.error(
                 f"Could not create DecryptedBallotsWithMerits from vote_reveal_tx_id {vote_reveal_tx_id} because of "
                 f"exception: {str(e)}"
             )
@@ -352,7 +350,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         hash_of_blind_vote_list: bytes,
         blind_vote_stake: int,
     ) -> "DecryptedBallotsWithMerits":
-        logger.warning(
+        self.logger.warning(
             f"We have a blindVoteTx but we do not have the corresponding blindVote payload.\n"
             "That can happen if the blindVote item was not properly broadcast. "
             f"We still add it to our result collection because it might be relevant for the majority "
@@ -366,7 +364,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         empty_ballot_list = BallotList([])
         empty_merit_list = MeritList([])
 
-        logger.debug(
+        self.logger.debug(
             f"Add entry to decrypted_ballots_with_merits_set: blind_vote_tx_id={blind_vote_tx_id}, "
             f"vote_reveal_tx_id={vote_reveal_tx_id}, blind_vote_stake={blind_vote_stake}, "
             f"ballot_list={empty_ballot_list}"
@@ -403,7 +401,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             # voteWithProposalTxIdList and create a ballot list with the proposal and the vote from
             # the voteWithProposalTxIdList
             ballot_list = self._create_ballot_list(vote_with_proposal_tx_id_list)
-            logger.debug(
+            self.logger.debug(
                 f"Add entry to decrypted_ballots_with_merits_set: blind_vote_tx_id={blind_vote_tx_id}, "
                 f"vote_reveal_tx_id={vote_reveal_tx_id}, blind_vote_stake={blind_vote_stake}, ballot_list={ballot_list}"
             )
@@ -418,7 +416,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         except VoteResultException.DecryptionException as decryption_exception:
             # We don't consider such vote reveal txs valid for the majority hash
             # calculation and don't add it to our result collection
-            logger.error(
+            self.logger.error(
                 f"Could not decrypt blind vote. This vote reveal and blind vote will be ignored. "
                 f"VoteRevealTxId={vote_reveal_tx_id}. DecryptionException={str(decryption_exception)}"
             )
@@ -461,11 +459,11 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 if ballot.vote is not None:
                     # If we had set a vote it was an own active vote
                     if vote is None:
-                        logger.warning(
+                        self.logger.warning(
                             f"Found local vote but no vote in blind vote data. ballot={ballot}"
                         )
                     elif ballot.vote != vote:
-                        logger.warning(
+                        self.logger.warning(
                             f"Found local vote but vote from blind vote does not match. ballot={ballot}, vote from blind vote={vote}"
                         )
 
@@ -476,7 +474,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 # We got a vote but we don't have the ballot (which includes the proposal)
                 # We add it to the missing list to handle it as exception later. We want all missing data so we
                 # do not throw here.
-                logger.warning(
+                self.logger.warning(
                     f"Missing ballot for proposal with txId={tx_id}. Optional tx={self._dao_state_service.get_tx(tx_id)}"
                 )
                 missing_ballots.append(tx_id)
@@ -488,7 +486,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         # treat the proposal as it was voted with a rejected vote.
         for tx_id, ballot in ballot_by_tx_id_map.items():
             if tx_id not in vote_by_tx_id_map:
-                logger.warning(
+                self.logger.warning(
                     f"Found proposal not in blind vote data - rejecting it. Proposal={ballot.proposal}",
                 )
                 ballots.append(Ballot(ballot.proposal, Vote(False)))
@@ -513,7 +511,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             aggregated_stake += stake
             stakes[hash_bytes] = aggregated_stake
 
-            logger.debug(
+            self.logger.debug(
                 f"blindVoteTxId={decrypted_ballots_with_merits.blind_vote_tx_id}, stake={stake}"
             )
         return stakes
@@ -538,7 +536,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             # Our local list is matching the majority hash
             return blind_votes
         else:
-            logger.warning(
+            self.logger.warning(
                 "Our local list of blind vote payloads does not match the majorityVoteListHash. "
                 "We try permuting our list to find a matching variant"
             )
@@ -554,7 +552,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             if permutated_list:
                 return permutated_list
             else:
-                logger.warning(
+                self.logger.warning(
                     "We did not find a permutation of our blindVote list which matches the majority view. "
                     "We will request the blindVote data from the peers."
                 )
@@ -576,16 +574,16 @@ class VoteResultService(DaoStateListener, DaoSetupService):
         result = PermutationUtil.find_matching_permutation(
             majority_vote_list_hash, blind_vote_list, predicate, 1000000
         )
-        logger.info(
+        self.logger.info(
             f"findPermutatedListMatchingMajority for {len(blind_vote_list)} items took {get_time_ms() - ts} ms."
         )
         if not result:
-            logger.info(
+            self.logger.info(
                 "We did not find a variation of the blind vote list which matches the majority hash."
             )
             return None
         else:
-            logger.info(
+            self.logger.info(
                 f"We found a variation of the blind vote list which matches the majority hash. variation={result}"
             )
             return result
@@ -600,13 +598,13 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             blind_vote_list
         )
         if do_log:
-            logger.debug(
+            self.logger.debug(
                 f"majorityVoteListHash {bytes_as_hex_string(majority_vote_list_hash)}"
             )
-            logger.debug(
+            self.logger.debug(
                 f"hashOfBlindVoteList {bytes_as_hex_string(hash_of_blind_vote_list)}"
             )
-            logger.debug(
+            self.logger.debug(
                 f"List of blindVoteTxIds {', '.join(vote.tx_id for vote in blind_vote_list)}"
             )
         return majority_vote_list_hash == hash_of_blind_vote_list
@@ -642,7 +640,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             )
             # Quorum is min. required BSQ stake to be considered valid
             reached_quorum = proposal_vote_result.quorum
-            logger.debug(
+            self.logger.debug(
                 f"proposalTxId: {proposal.tx_id}, required requiredQuorum: {required_quorum}, requiredVoteThreshold: {required_vote_threshold / 100.0}"
             )
             if reached_quorum >= required_quorum:
@@ -651,7 +649,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 # Threshold is percentage of accepted to total stake
                 reached_threshold = proposal_vote_result.threshold
 
-                logger.debug(
+                self.logger.debug(
                     f"reached threshold: {reached_threshold / 100.0} %, required threshold: {required_vote_threshold / 100.0} %"
                 )
                 # We need to exceed requiredVoteThreshold e.g. 50% is not enough but 50.01%.
@@ -664,12 +662,12 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     evaluated_proposals.add(
                         EvaluatedProposal(False, proposal_vote_result)
                     )
-                    logger.debug(
+                    self.logger.debug(
                         f"Proposal did not reach the requiredVoteThreshold. reachedThreshold={reached_threshold / 100.0} %, requiredVoteThreshold={required_vote_threshold / 100.0} %"
                     )
             else:
                 evaluated_proposals.add(EvaluatedProposal(False, proposal_vote_result))
-                logger.debug(
+                self.logger.debug(
                     f"Proposal did not reach the requiredQuorum. reachedQuorum={reached_quorum}, requiredQuorum={required_quorum}"
                 )
 
@@ -694,7 +692,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 )
                 evaluated_proposal = EvaluatedProposal(False, proposal_vote_result)
                 evaluated_proposals.add(evaluated_proposal)
-                logger.info(f"Proposal ignored by all voters: {evaluated_proposal}")
+                self.logger.info(f"Proposal ignored by all voters: {evaluated_proposal}")
 
         # Check if our issuance sum is not exceeding the limit
         sum_issuance = sum(
@@ -719,7 +717,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 f"We have a total issuance amount of {sum_issuance / 100} BSQ but our limit for a cycle is {limit / 100} BSQ. "
                 "We consider that cycle as invalid and have set all proposals as rejected."
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             assert (
                 self._dao_state_service.current_cycle is not None
             ), "daoStateService.getCurrentCycle() must not be null"
@@ -764,7 +762,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     ballot.vote, decrypted_ballots_with_merits.stake, sum_of_all_merits
                 )
                 vote_with_stake_list.append(vote_with_stake)
-                logger.debug(
+                self.logger.debug(
                     f"Add entry to vote_with_stake_list_by_proposal_map: proposalTxId={proposal.tx_id}, voteWithStake={vote_with_stake}"
                 )
         return vote_with_stake_by_proposal_map
@@ -782,7 +780,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             sum_of_all_merits = vote_with_stake.sum_of_all_merits
             stake = vote_with_stake.stake
             combined_stake = stake + sum_of_all_merits
-            logger.debug(
+            self.logger.debug(
                 f"proposalTxId={proposal.tx_id}, stake={stake}, sumOfAllMerits={sum_of_all_merits}, combinedStake={combined_stake}"
             )
             vote = vote_with_stake.vote
@@ -795,7 +793,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     num_rejected_votes += 1
             else:
                 num_ignored_votes += 1
-                logger.debug("Voter ignored proposal")
+                self.logger.debug("Voter ignored proposal")
 
         return ProposalVoteResult(
             proposal,
@@ -844,7 +842,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     proposals[0].proposal, chain_height
                 )
             elif len(proposals) > 1:
-                logger.warning(
+                self.logger.warning(
                     "There have been multiple winning param change proposals with the same item. "
                     "This is a sign of a social consensus failure. "
                     "We treat all requests as failed in such a case."
@@ -859,7 +857,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
             f"Param: {change_param_proposal.param.name} new value: {change_param_proposal.param_value}\n"
             "################################################################################\n"
         )
-        logger.info(msg)
+        self.logger.info(msg)
 
         self._dao_state_service.set_new_param(
             chain_height, change_param_proposal.param, change_param_proposal.param_value
@@ -892,7 +890,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     f"Role: {role.display_string}\n"
                     "################################################################################\n"
                 )
-                logger.info(msg)
+                self.logger.info(msg)
 
     def _apply_confiscate_bond(
         self, accepted_evaluated_proposals: set["EvaluatedProposal"]
@@ -910,7 +908,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     f"LockupTxId: {confiscate_bond_proposal.lockup_tx_id}\n"
                     "################################################################################\n"
                 )
-                logger.info(msg)
+                self.logger.info(msg)
 
     def _apply_remove_asset(
         self, accepted_evaluated_proposals: set["EvaluatedProposal"]
@@ -925,7 +923,7 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     f"Asset: {ticker_symbol}\n"
                     "################################################################################\n"
                 )
-                logger.info(msg)
+                self.logger.info(msg)
 
     def _get_accepted_evaluated_proposals(
         self, evaluated_proposals: set["EvaluatedProposal"]

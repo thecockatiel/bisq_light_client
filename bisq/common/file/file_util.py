@@ -7,11 +7,10 @@ import tempfile
 from typing import Optional, Union
 
 from bisq.common.file.resource_not_found_exception import ResourceNotFoundException
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.resources import p2p_resource_dir
 from utils.java_compat import java_cmp_str
 
-logger = get_logger(__name__)
 
 def unlink(path: Path):
     if path.is_file():
@@ -38,6 +37,7 @@ def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) ->
             except:
                 pass
             if not backup_dir.exists():
+                logger = get_ctx_logger(__name__)
                 logger.warning("make dir failed.\nBackupDir=" + str(backup_dir))
         
         orig_file = dir_path.joinpath(file_name)
@@ -54,6 +54,7 @@ def rolling_backup(dir_path: Path, file_name: str, num_max_backup_files: int) ->
                 except:
                     pass
                 if not backup_file_dir.exists():
+                    logger = get_ctx_logger(__name__)
                     logger.warning("make backupFileDir failed.\nBackupFileDir=" + str(backup_file_dir))
             
             backup_file = backup_file_dir.joinpath(f"{datetime.now().timestamp()}_{file_name}") 
@@ -82,6 +83,7 @@ def prune_backup(backup_dir_path: Path, num_max_backup_files: int) -> None:
                     except:
                         deleted = False
                     if not deleted:
+                        logger = get_ctx_logger(__name__)
                         logger.error("Failed to delete file: " + str(file_to_delete))
                     else:
                         prune_backup(backup_dir_path, num_max_backup_files)
@@ -101,6 +103,7 @@ def delete_directory(dir_path: Path, exclude: Optional[Path] = None, ignore_lock
         try:
             delete_file_if_exists(dir_path, ignore_locked_files)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Could not delete file. Error={str(e)}")
             raise IOError(e)
 
@@ -113,11 +116,13 @@ def delete_file_if_exists(file: Path, ignore_locked_files = True) -> None:
             if ignore_locked_files:
                 # We check if file is locked. On Windows all open files are locked by the OS
                 if is_file_locked(file):
+                    logger = get_ctx_logger(__name__)
                     logger.info(f"Failed to delete locked file: {file.absolute()}")
             else:
                 message = f"Failed to delete file: {file.absolute()}"
                 raise IOError(message)
     except Exception as e:
+        logger = get_ctx_logger(__name__)
         logger.error(str(e), exc_info=e)
         if isinstance(e, IOError):
             raise e
@@ -141,9 +146,11 @@ def does_file_contain_keyword(file_path: Path, keyword: str) -> bool:
                     return True
         return False
     except FileNotFoundError:
+        logger = get_ctx_logger(__name__)
         logger.error(f"File not found: {str(file_path)}")
         raise
     except Exception as e:
+        logger = get_ctx_logger(__name__)
         logger.error(f"Error searching file {str(file_path)}: {str(e)}")
         raise
     
@@ -157,6 +164,7 @@ def rename_file(file: Path, new_file: Path) -> None:
             unlink(canonical)
         file.rename(canonical)
     except Exception as e:
+        logger = get_ctx_logger(__name__)
         logger.error(f"Failed to rename {file} to {new_file}: {str(e)}")
         raise
 
@@ -166,6 +174,7 @@ def remove_and_backup_file(db_dir: Path, storate_file: Path, file_name: str, bac
         try:
             corrupted_backup_dir.mkdir(parents=True, exist_ok=True)
         except:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Failed to create corrupted backup dir: {corrupted_backup_dir}")
         return
     corrupted_file = corrupted_backup_dir.joinpath(file_name)
@@ -197,5 +206,6 @@ def get_usable_space(path: Path) -> int:
     try:
         return shutil.disk_usage(path).free
     except Exception as e:
+        logger = get_ctx_logger(__name__)
         logger.error(f"Failed to get usable space for {path}: {str(e)}")
         return 0

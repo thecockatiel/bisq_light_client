@@ -1,10 +1,8 @@
 import math
 import unittest
 from bisq.common.crypto.equihash import Equihash, EquihashPuzzleSolution, count_all_solutions_for_nonce, deserialize_equihash_puzzle_solution, find_equihash_solution
-from bisq.common.setup.log_setup import get_logger 
 import time
 
-logger = get_logger(__name__)
 
 SAMPLE_NO = 10000
 
@@ -97,10 +95,10 @@ class TestEquiHash(unittest.TestCase):
         
         duration = time.time() - start_time
         
-        logger.info(f"For Equihash-90-5 with real difficulty 2.0, adjusted difficulty {adjusted_difficulty} ...")
-        logger.info(f"Total elapsed solution time: {int(duration * 1000)} ms")
-        logger.info(f"Mean time to solve one puzzle: {int(duration * 1000 / total_count)} ms")
-        logger.info(f"Puzzle solution time per unit difficulty: {int(duration * 1000 / (2 * total_count))} ms")
+        print(f"For Equihash-90-5 with real difficulty 2.0, adjusted difficulty {adjusted_difficulty} ...")
+        print(f"Total elapsed solution time: {int(duration * 1000)} ms")
+        print(f"Mean time to solve one puzzle: {int(duration * 1000 / total_count)} ms")
+        print(f"Puzzle solution time per unit difficulty: {int(duration * 1000 / (2 * total_count))} ms")
         
     @unittest.skip("disabled")
     def test_solution_count_per_nonce_stats(self):
@@ -114,10 +112,10 @@ class TestEquiHash(unittest.TestCase):
 
         mean = sum(k * v for k, v in stats.items()) / SAMPLE_NO
 
-        logger.info("For Equihash-90-5...")
-        logger.info(f"Got puzzle solution count mean: {mean}")
-        logger.info(f"Got expected count stats: {expected_stats_from_poisson_distribution(mean)}")
-        logger.info(f"Got actual count stats: {stats}")
+        print("For Equihash-90-5...")
+        print(f"Got puzzle solution count mean: {mean}")
+        print(f"Got expected count stats: {expected_stats_from_poisson_distribution(mean)}")
+        print(f"Got actual count stats: {stats}")
 
 if __name__ == '__main__':
     unittest.main()

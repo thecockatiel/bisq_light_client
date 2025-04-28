@@ -1,5 +1,5 @@
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.trade.model.bisq_v1.seller_as_maker_trade import SellerAsMakerTrade
 from bisq.core.trade.model.trade_phase import TradePhase
@@ -58,12 +58,11 @@ from bisq.core.trade.protocol.bisq_v1.tasks.seller_as_maker.seller_as_maker_send
 from bisq.core.trade.protocol.trade_message import TradeMessage
 from bisq.core.trade.protocol.trade_task_runner import TradeTaskRunner
 
-logger = get_logger(__name__)
-
 
 class SellerAsMakerProtocol(SellerProtocol, MakerProtocol):
     def __init__(self, trade: "SellerAsMakerTrade"):
         super().__init__(trade)
+        self.logger = get_ctx_logger(__name__)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Handle take offer request
@@ -157,7 +156,7 @@ class SellerAsMakerProtocol(SellerProtocol, MakerProtocol):
     def on_trade_message(self, message: "TradeMessage", peer: "NodeAddress"):
         super().on_trade_message(message, peer)
 
-        logger.info(
+        self.logger.info(
             f"Received {message.__class__.__name__} from {peer} with tradeId "
             f"{message.trade_id} and uid {message.uid}"
         )

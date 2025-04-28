@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bitcoinj.core.transaction import Transaction
@@ -9,9 +8,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.btc.wallet.trade_wallet_service import TradeWalletService
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
-
-
-logger = get_logger(__name__)
 
 
 # TODO

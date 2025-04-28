@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from utils.data import SimplePropertyChangeEvent
@@ -14,13 +14,13 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.core.trade.protocol.trade_message import TradeMessage
 
-logger = get_logger(__name__)
 
 class SellerSendsDepositTxAndDelayedPayoutTxMessage(SendMailboxMessageTask):
     MAX_RESEND_ATTEMPTS = 7
 
     def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
         self.delay_in_sec = 4
         self.resend_counter = 0
         self.message: "DepositTxAndDelayedPayoutTxMessage" = None
@@ -111,7 +111,7 @@ class SellerSendsDepositTxAndDelayedPayoutTxMessage(SendMailboxMessageTask):
                         "We fail here and do not publish the deposit tx.")
             return
         
-        logger.info(f"We send the message again to the peer after a delay of {self.delay_in_sec} sec.")
+        self.logger.info(f"We send the message again to the peer after a delay of {self.delay_in_sec} sec.")
         if self.timer:
             self.timer.stop()
         self.timer = UserThread.run_after(self.run, timedelta(seconds=self.delay_in_sec))

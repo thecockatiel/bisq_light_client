@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import FutureCallback, as_future
 from datetime import timedelta
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.exceptions.tx_broadcast_exception import TxBroadcastException
@@ -14,8 +14,6 @@ from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bitcoinj.core.transaction import Transaction
 from bitcoinj.wallet.wallet import Wallet
 
-logger = get_logger(__name__)
-
 
 class TxBroadcaster:
     DEFAULT_BROADCAST_TIMEOUT_SEC = 5
@@ -28,6 +26,7 @@ class TxBroadcaster:
         callback: "TxBroadcasterCallback",
         timeout_sec: float = None,
     ):
+        logger = get_ctx_logger(__name__)
         if timeout_sec is None:
             timeout_sec = TxBroadcaster.DEFAULT_BROADCAST_TIMEOUT_SEC
 

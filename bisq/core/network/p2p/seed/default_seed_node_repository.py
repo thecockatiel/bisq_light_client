@@ -1,12 +1,11 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 import re
 from typing import Optional, List, Set, Collection
-from bisq.common.config.config import Config 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.config.config import Config
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
 from bisq.resources import core_resource_readlines
 
-logger = get_logger(__name__)
 
 # If a new BaseCurrencyNetwork type gets added we need to add the resource file for it as well!
 class DefaultSeedNodeRepository(SeedNodeRepository):
@@ -14,6 +13,7 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
     ENDING = ".seednodes"
 
     def __init__(self, config: Config):
+        self.logger = get_ctx_logger(__name__)
         self.config = config
         self.cache: Set[NodeAddress] = set()
 
@@ -21,28 +21,40 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
         try:
             if self.config.seed_nodes:
                 self.cache.clear()
-                self.cache.update(NodeAddress.from_full_address(s) for s in self.config.seed_nodes)
+                self.cache.update(
+                    NodeAddress.from_full_address(s) for s in self.config.seed_nodes
+                )
                 return
 
             self.cache.clear()
-            result = self.get_seed_node_addresses_from_property_file(self.config.base_currency_network.name.casefold())
+            result = self.get_seed_node_addresses_from_property_file(
+                self.config.base_currency_network.name.casefold()
+            )
             self.cache.update(result)
 
-            filter_provided_seed_nodes = {self.get_node_address(n) for n in self.config.filter_provided_seed_nodes if n}
+            filter_provided_seed_nodes = {
+                self.get_node_address(n)
+                for n in self.config.filter_provided_seed_nodes
+                if n
+            }
             self.cache.update(filter_provided_seed_nodes)
 
-            banned_seed_nodes = {self.get_node_address(n) for n in self.config.banned_seed_nodes if n}
+            banned_seed_nodes = {
+                self.get_node_address(n) for n in self.config.banned_seed_nodes if n
+            }
             self.cache.difference_update(banned_seed_nodes)
 
-            logger.info(f"Seed nodes: {self.cache}")
+            self.logger.info(f"Seed nodes: {self.cache}")
         except Exception as e:
-            logger.error("exception in DefaultSeedNodeRepository", exc_info=e)
+            self.logger.error("exception in DefaultSeedNodeRepository", exc_info=e)
             raise
 
     @staticmethod
     def get_seed_node_addresses_from_property_file(file_name: str) -> List[NodeAddress]:
         list = []
-        seed_node_file = core_resource_readlines(f"{file_name}{DefaultSeedNodeRepository.ENDING}")
+        seed_node_file = core_resource_readlines(
+            f"{file_name}{DefaultSeedNodeRepository.ENDING}"
+        )
         if seed_node_file:
             for line in seed_node_file:
                 matcher = DefaultSeedNodeRepository.pattern.match(line)
@@ -68,5 +80,5 @@ class DefaultSeedNodeRepository(SeedNodeRepository):
         try:
             return NodeAddress.from_full_address(n)
         except Exception as e:
-            logger.error("exception when filtering banned seednodes", exc_info=e)
+            self.logger.error("exception when filtering banned seednodes", exc_info=e)
             return None

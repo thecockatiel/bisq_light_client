@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
 import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, TypeVar, cast
 from collections.abc import Callable
 from bisq.common.crypto.hash import get_32_byte_hash
@@ -76,7 +77,6 @@ from bisq.core.network.p2p.storage.payload.requires_owner_is_online_payload impo
 )
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.p2p.storage.storage_map_value import StorageMapValue
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeDict, ThreadSafeSet
 from utils.data import SimpleProperty, combine_simple_properties
 from utils.formatting import to_truncated_string
@@ -118,7 +118,6 @@ if TYPE_CHECKING:
     from bisq.common.persistence.persistence_manager import PersistenceManager
 
 
-logger = get_logger(__name__)
 
 T = TypeVar("T", bound=NetworkPayload)
 
@@ -140,6 +139,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         clock: "Clock",
         max_sequence_number_map_size_before_purge: int,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.initial_request_applied = False
 
         self.broadcaster = broadcaster
@@ -323,11 +323,11 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             out_truncated=was_persistable_network_payloads_truncated,
             is_persistable_network_payload=True,
         )
-        logger.info(
+        self.logger.info(
             f"{len(filtered_persistable_network_payloads)} PersistableNetworkPayload entries remained after filtered by excluded keys. "
             + f"Original map had {len(map_for_data_response)} entries."
         )
-        logger.trace(
+        self.logger.trace(
             f"## buildGetDataResponse filteredPersistableNetworkPayloadHashes={[payload.get_hash().hex() for payload in filtered_persistable_network_payloads]}"
         )
 
@@ -346,11 +346,11 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             out_truncated=was_protected_storage_entries_truncated,
             is_persistable_network_payload=False,
         )
-        logger.info(
+        self.logger.info(
             f"{len(filtered_protected_storage_entries)} ProtectedStorageEntry entries remained after filtered by excluded keys. "
             f"Original map had {len(self.map)} entries."
         )
-        logger.trace(
+        self.logger.trace(
             f"## buildGetDataResponse filteredProtectedStorageEntryHashes={[StorageByteArray(get_32_byte_hash(entry.protected_storage_payload)) for entry in filtered_protected_storage_entries]}"
         )
 
@@ -386,7 +386,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 service_map = service.get_map()
 
             result.update(service_map)
-            logger.debug(
+            self.logger.debug(
                 f"We added {len(service_map)} entries from {service.__class__.__name__} to the excluded key set of our request"
             )
 
@@ -404,7 +404,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 service_map = service.get_map()
 
             result.update(service_map)
-            logger.info(
+            self.logger.info(
                 f"We added {len(service_map)} entries from {service.__class__.__name__} to be filtered by excluded keys"
             )
 
@@ -423,7 +423,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
     ) -> set[T]:
         """Generic function that filters a dict[StorageByteArray, (ProtectedStorageEntry || PersistableNetworkPayload)]
         by a given set of keys and peer capabilities."""
-
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"Filter {'PersistableNetworkPayload' if is_persistable_network_payload else 'ProtectedStorageEntry'} "
             f"data based on {len(known_hashes)} knownHashes"
@@ -596,6 +596,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         )
 
         if not should_transmit:
+            logger = get_ctx_logger(__name__)
             logger.debug(
                 "We do not send the message to the peer because they do not support the required capability for that message type.\n"
                 f"storagePayload is: {to_truncated_string(payload)}"
@@ -624,7 +625,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             ):
                 # We rebroadcast high priority data after a delay for better resilience
                 def rebroadcast():
-                    logger.info(
+                    self.logger.info(
                         f"Rebroadcast {protected_storage_entry.protected_storage_payload.__class__.__name__}"
                     )
                     self.broadcaster.broadcast(
@@ -640,7 +641,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 protected_storage_entry, sender, None, False
             )
 
-        logger.info(
+        self.logger.info(
             f"Processing {len(protected_storage_entries)} protectedStorageEntries took {self.clock.millis() - ts} ms."
         )
 
@@ -662,7 +663,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                     payload, sender, False, False, False
                 )
 
-        logger.info(
+        self.logger.info(
             f"Processing {len(persistable_network_payload_set)} persistableNetworkPayloads took {self.clock.millis() - ts} ms."
         )
 
@@ -691,9 +692,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         # Batch processing can cause performance issues, so do all of the removes first, then update the listeners
         # to let them know about the removes.
-        if logger.isEnabledFor(logging.DEBUG):
+        if self.logger.isEnabledFor(logging.DEBUG):
             for item in to_remove_list:
-                logger.debug(
+                self.logger.debug(
                     f"We found an expired data entry. We remove the protectedData:\n\t{to_truncated_string(item[1])}"
                 )
 
@@ -785,7 +786,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 # test set up (many nodes/connections over 1 router)
                 # JAVA TODO investigate what causes the disconnections.
                 # Usually the are: SOCKET_TIMEOUT ,TERMINATED (EOFException)
-                logger.debug(
+                self.logger.debug(
                     f"Backdating {protected_storage_entry} due to closeConnectionReason={close_connection_reason}"
                 )
                 protected_storage_entry.back_date()
@@ -825,11 +826,11 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         re_broadcast: bool,
         check_date: bool,
     ) -> bool:
-        logger.debug(f"add_persistable_network_payload payload={payload}")
+        self.logger.debug(f"add_persistable_network_payload payload={payload}")
 
         # Payload hash size does not match expectation for that type of message
         if not payload.verify_hash_size():
-            logger.warning(
+            self.logger.warning(
                 "add_persistable_network_payload failed due to unexpected hash size"
             )
             return False
@@ -841,7 +842,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
         # Store already knows about this payload. Ignore it unless caller specifically requests a republish
         if payload_hash_already_in_store and not re_broadcast:
-            logger.debug(
+            self.logger.debug(
                 "add_persistable_network_payload failed due to duplicate payload"
             )
             return False
@@ -850,7 +851,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         # If not in tolerance, ignore it
         if check_date and isinstance(payload, DateTolerantPayload):
             if not payload.is_date_in_tolerance(self.clock):
-                logger.warning(
+                self.logger.warning(
                     f"add_persistable_network_payload failed due to payload time outside tolerance.\n"
                     f"Payload={payload}; now={self.clock.millis()}"
                 )
@@ -890,7 +891,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             hash_as_byte_array = StorageByteArray(hash_bytes)
             self.append_only_data_store_service.put(hash_as_byte_array, payload)
         else:
-            logger.warning("We got a hash exceeding our permitted size")
+            self.logger.warning("We got a hash exceeding our permitted size")
 
     def add_protected_storage_entry(
         self,
@@ -920,13 +921,13 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         if stored_entry is not None and not self.has_sequence_nr_increased(
             protected_storage_entry.sequence_number, hash_of_payload
         ):
-            logger.trace(f"## hasSequenceNrIncreased is false. hash={hash_of_payload}")
+            self.logger.trace(f"## hasSequenceNrIncreased is false. hash={hash_of_payload}")
             return False
 
         if self.has_already_removed_add_once_payload(
             protected_storage_payload, hash_of_payload
         ):
-            logger.trace(
+            self.logger.trace(
                 "## We have already removed that AddOncePayload by a previous removeDataMessage. "
                 f"We ignore that message. ProtectedStoragePayload: {protected_storage_payload}"
             )
@@ -935,7 +936,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         # To avoid that expired data get stored and broadcast we check for expire date.
         if protected_storage_entry.is_expired(self.clock):
             peer = sender.get_full_address() if sender else "sender is null"
-            logger.trace(
+            self.logger.trace(
                 f"## We received an expired protectedStorageEntry from peer {peer}. "
                 f"ProtectedStoragePayload={protected_storage_entry.protected_storage_payload.__class__.__name__}"
             )
@@ -949,12 +950,12 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             and protected_storage_entry.sequence_number
             < sequence_number_map_value.sequence_nr
         ):
-            logger.trace(f"## sequenceNr too low hash={hash_of_payload}")
+            self.logger.trace(f"## sequenceNr too low hash={hash_of_payload}")
             return False
 
         # Verify the ProtectedStorageEntry is well formed and valid for the add operation
         if not protected_storage_entry.is_valid_for_add_operation():
-            logger.trace(f"## !isValidForAddOperation hash={hash_of_payload}")
+            self.logger.trace(f"## !isValidForAddOperation hash={hash_of_payload}")
             return False
 
         # If we have already seen an Entry with the same hash, verify the metadata is equal
@@ -962,14 +963,14 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             stored_entry is not None
             and not protected_storage_entry.matches_relevant_pub_key(stored_entry)
         ):
-            logger.trace(f"## !matchesRelevantPubKey hash={hash_of_payload}")
+            self.logger.trace(f"## !matchesRelevantPubKey hash={hash_of_payload}")
             return False
 
         # Test against filterPredicate set from FilterManager
         if self.filter_predicate is not None and not self.filter_predicate(
             protected_storage_entry.protected_storage_payload
         ):
-            logger.debug(
+            self.logger.debug(
                 f"filterPredicate test failed. hashOfPayload={hash_of_payload}"
             )
             return False
@@ -993,7 +994,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                 sender,
                 listener,
             )
-            logger.trace(
+            self.logger.trace(
                 f"## broadcasted ProtectedStorageEntry. hash={hash_of_payload}"
             )
 
@@ -1025,12 +1026,12 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         )
         hash_of_payload = StorageByteArray(get_32_byte_hash(protected_storage_payload))
 
-        # logger.trace("## call republishProtectedStorageEntry hash={}, map={}", hash_of_payload, self.print_map())
+        # self.logger.trace("## call republishProtectedStorageEntry hash={}, map={}", hash_of_payload, self.print_map())
 
         if self.has_already_removed_add_once_payload(
             protected_storage_payload, hash_of_payload
         ):
-            logger.trace(
+            self.logger.trace(
                 "## We have already removed that AddOncePayload by a previous removeDataMessage. "
                 f"We ignore that message. ProtectedStoragePayload: {protected_storage_payload}"
             )
@@ -1041,7 +1042,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             sender,
             listener,
         )
-        logger.trace(f"## broadcasted ProtectedStorageEntry. hash={hash_of_payload}")
+        self.logger.trace(f"## broadcasted ProtectedStorageEntry. hash={hash_of_payload}")
 
     def has_already_removed_add_once_payload(
         self,
@@ -1082,7 +1083,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             stored_data = self.map.get(hash_of_payload)
 
             if stored_data is None:
-                logger.debug(
+                self.logger.debug(
                     "We don't have data for that refresh message in our map. That is expected if we missed the data publishing."
                 )
                 return False
@@ -1120,7 +1121,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             self.broadcaster.broadcast(refresh_ttl_message, sender)
 
         except Exception as e:
-            logger.error(f"refreshTTL failed, missing data: {str(e)}", exc_info=e)
+            self.logger.error(f"refreshTTL failed, missing data: {str(e)}", exc_info=e)
             return False
 
         return True
@@ -1321,9 +1322,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         removed_protected_storage_entries = []
 
         for hash_of_payload, protected_storage_entry in entries_to_remove:
-            # logger.trace("## removeFromMapAndDataStore: hashOfPayload={hash_of_payload}, map before remove={self.print_map()}")
+            # self.logger.trace("## removeFromMapAndDataStore: hashOfPayload={hash_of_payload}, map before remove={self.print_map()}")
             self.map.remove(hash_of_payload)  # Remove if exists
-            # logger.trace("## removeFromMapAndDataStore: map after remove={self.print_map()}")
+            # self.logger.trace("## removeFromMapAndDataStore: map after remove={self.print_map()}")
 
             # We inform listeners even if the entry was not found in our map
             removed_protected_storage_entries.append(protected_storage_entry)
@@ -1336,7 +1337,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
                     hash_of_payload, protected_storage_entry
                 )
                 if previous is None:
-                    logger.warning(
+                    self.logger.warning(
                         "We cannot remove the protectedStorageEntry from the protectedDataStoreService as it does not exist."
                     )
 
@@ -1349,23 +1350,23 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         if hash_of_data in self.sequence_number_map:
             stored_sequence_number = self.sequence_number_map[hash_of_data].sequence_nr
             if new_sequence_number > stored_sequence_number:
-                # logger.debug(f"Sequence number has increased (>). sequenceNumber = {new_sequence_number} / "
+                # self.logger.debug(f"Sequence number has increased (>). sequenceNumber = {new_sequence_number} / "
                 #            f"storedSequenceNumber={stored_sequence_number} / hashOfData={hash_of_data}")
                 return True
             elif new_sequence_number == stored_sequence_number:
                 if new_sequence_number == 0:
-                    logger.debug(
+                    self.logger.debug(
                         "Sequence number is equal to the stored one and both are 0. "
                         "That is expected for network_messages which never got updated (mailbox msg)."
                     )
                 else:
-                    logger.debug(
+                    self.logger.debug(
                         f"Sequence number is equal to the stored one. sequenceNumber = {new_sequence_number} / "
                         f"storedSequenceNumber={stored_sequence_number}"
                     )
                 return False
             else:
-                logger.debug(
+                self.logger.debug(
                     f"Sequence number is invalid. sequenceNumber = {new_sequence_number} / "
                     f"storedSequenceNumber={stored_sequence_number}. That can happen if the data owner gets "
                     "an old delayed data storage message."
@@ -1395,7 +1396,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
 
     def print_data(self, info: str):
         """Print debug info about the current data set."""
-        if logger.isEnabledFor(logging.TRACE):
+        if self.logger.isEnabledFor(logging.TRACE):
             sb = ["\n\n------------------------------------------------------------\n"]
             sb.append(f"Data set {info} operation")
 
@@ -1431,7 +1432,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             sb.append(
                 "\n------------------------------------------------------------\n"
             )
-            logger.debug("".join(sb))
+            self.logger.debug("".join(sb))
 
     def print_map(self) -> str:
         """Print debug info about the current map entries."""

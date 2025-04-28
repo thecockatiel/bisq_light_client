@@ -1,10 +1,10 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.protocol.persistable.navigation_path import NavigationPath
 from bisq.common.protocol.persistable.persistence_proto_resolver import (
     PersistenceProtoResolver,
 )
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.sign.signed_witness_store import SignedWitnessStore
 from bisq.core.account.witness.account_age_witness_store import AccountAgeWitnessStore
 from bisq.core.btc.model.address_entry_list import AddressEntryList
@@ -48,6 +48,7 @@ from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.trade.statistics.trade_statistics_2_store import TradeStatistics2Store
 from bisq.core.trade.statistics.trade_statistics_3_store import TradeStatistics3Store
 from bisq.core.user.preferences_payload import PreferencesPayload
+from bisq.core.user.user_manager_payload import UserManagerPayload
 from bisq.core.user.user_payload import UserPayload
 import pb_pb2 as protobuf
 from utils.di import DependencyProvider
@@ -59,8 +60,7 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from utils.clock import Clock
-
-logger = get_logger(__name__)
+ 
 
 # fmt: off
 proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistenceProtoResolver"], "PersistableEnvelope"]] = {
@@ -95,6 +95,8 @@ proto_map: dict[str, Callable[[protobuf.PersistableEnvelope, "CorePersistencePro
     "removed_payloads_map": lambda p, resolver: RemovedPayloadsMap.from_proto(p.removed_payloads_map),
     "bsq_block_store": lambda p, resolver: BsqBlockStore.from_proto(p.bsq_block_store),
     "burning_man_accounting_store": lambda p, resolver: BurningManAccountingStore.from_proto(p.burning_man_accounting_store),
+    # bisq light related:
+    "user_manager_payload": lambda p, resolver: UserManagerPayload.from_proto(p.user_manager_payload),
 }
 # fmt: on
 
@@ -106,13 +108,14 @@ class CorePersistenceProtoResolver(CoreProtoResolver, PersistenceProtoResolver):
         btc_wallet_service_provider: DependencyProvider["BtcWalletService"],
         network_proto_resolver: "NetworkProtoResolver",
     ):
+        self.logger = get_ctx_logger(__name__)
         super().__init__(clock)
         self._btc_wallet_service_provider = btc_wallet_service_provider
         self._network_proto_resolver = network_proto_resolver
 
     def from_proto(self, proto: protobuf.PersistableEnvelope) -> "PersistableEnvelope":
         if proto is None:
-            logger.error(
+            self.logger.error(
                 "PersistableEnvelope.from_proto: PB.PersistableEnvelope is null"
             )
             raise ProtobufferException("PB.PersistableEnvelope is null")

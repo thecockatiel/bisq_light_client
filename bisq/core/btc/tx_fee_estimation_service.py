@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, List, Tuple
-from bisq.common.setup.log_setup import get_logger
 from utils.preconditions import check_argument
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
@@ -9,9 +9,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.user.preferences import Preferences
-    
-    
-logger = get_logger(__name__)
 
 
 class TxFeeEstimationService:
@@ -42,6 +39,7 @@ class TxFeeEstimationService:
         btc_wallet_service: "BtcWalletService",
         preferences: "Preferences",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.fee_service = fee_service
         self.btc_wallet_service = btc_wallet_service
         self.preferences = preferences
@@ -93,7 +91,7 @@ class TxFeeEstimationService:
             if is_taker:
                 # If we cannot do the estimation, we use the vsize o the largest of our txs which is the deposit tx.
                 estimated_tx_vsize = TxFeeEstimationService.DEPOSIT_TX_VSIZE
-            logger.info(
+            self.logger.info(
                 "We cannot do the fee estimation because there are not enough funds in the wallet. This is expected "
                 f"if the user pays from an external wallet. In that case we use an estimated tx vsize of {estimated_tx_vsize} vbytes.",
             )
@@ -108,7 +106,7 @@ class TxFeeEstimationService:
             # We use at least the vsize of the deposit tx to not underpay it.
             vsize = max(TxFeeEstimationService.DEPOSIT_TX_VSIZE, average_vsize)
             tx_fee = tx_fee_per_vbyte.multiply(vsize)
-            logger.info(
+            self.logger.info(
                 f"Fee estimation resulted in a tx vsize of {estimated_tx_vsize} vbytes.\n"
                 f"We use an average between the taker fee tx and the deposit tx (233 vbytes) which results in {average_vsize} vbytes.\n"
                 f"The deposit tx has 233 vbytes, we use that as our min value. Vsize for fee calculation is {vsize} vbytes.\n"
@@ -117,7 +115,7 @@ class TxFeeEstimationService:
         else:
             vsize = estimated_tx_vsize
             tx_fee = tx_fee_per_vbyte.multiply(vsize)
-            logger.info(
+            self.logger.info(
                 f"Fee estimation resulted in a tx vsize of {vsize} vbytes and a tx fee of {tx_fee.value} Sat."
             )
 
@@ -134,13 +132,13 @@ class TxFeeEstimationService:
                 [amount], estimated_tx_vsize, tx_fee_per_vbyte, btc_wallet_service
             )
         except InsufficientMoneyException:
-            logger.info(
+            self.logger.info(
                 "We cannot do the fee estimation because there are not enough funds in the wallet. This is expected "
                 f"if the user pays from an external wallet. In that case we use an estimated tx vsize of {estimated_tx_vsize} vbytes."
             )
 
         tx_fee = tx_fee_per_vbyte.multiply(estimated_tx_vsize)
-        logger.info(
+        self.logger.info(
             f"Fee estimation resulted in a tx vsize of {estimated_tx_vsize} vbytes and a tx fee of {tx_fee.value} Sat.",
         )
 
@@ -162,8 +160,8 @@ class TxFeeEstimationService:
     # Worst case would be that the last vsize we got reported is > 20% off to
     # the real tx vsize but as fee estimation is anyway a educated guess in the best case we don't worry too much.
     # If we have underpaid the tx might take longer to get confirmed.
-    @staticmethod
     def get_estimated_tx_vsize(
+        self,
         output_values: List[Coin],
         initial_estimated_tx_vsize: int,
         tx_fee_per_vbyte: Coin,
@@ -186,7 +184,7 @@ class TxFeeEstimationService:
             counter += 1
 
         if not is_in_tolerance:
-            logger.warning(
+            self.logger.warning(
                 f"We could not find a tx which satisfies our tolerance requirement of 20%. realTxVsize={real_tx_vsize}, estimatedTxVsize={estimated_tx_vsize}"
             )
         return estimated_tx_vsize

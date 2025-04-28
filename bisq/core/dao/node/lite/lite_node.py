@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.node.bsq_node import BsqNode
 from bisq.core.dao.node.messages.new_block_broadcast_message import (
@@ -32,10 +32,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bitcoinj.core.block import Block as BitcoinJBlock
 
-
-logger = get_logger(__name__)
-
-
 class LiteNode(BsqNode):
     """
     Main class for lite nodes which receive the BSQ transactions from a full node (e.g. seed nodes).
@@ -62,6 +58,7 @@ class LiteNode(BsqNode):
             p2p_service,
             export_json_files_service,
         )
+        self.logger = get_ctx_logger(__name__)
 
         self._lite_node_network_service = lite_node_network_service
         self._bsq_wallet_service = bsq_wallet_service
@@ -108,7 +105,7 @@ class LiteNode(BsqNode):
                 self._check_for_block_received_timer.stop()
 
             wallet_block_height = e.new_value
-            logger.info(
+            self.logger.info(
                 f"New block at height {wallet_block_height} from bsqWalletService"
             )
 
@@ -117,7 +114,7 @@ class LiteNode(BsqNode):
             def check_for_block_received():
                 dao_chain_height = self._dao_state_service.chain_height
                 if dao_chain_height < wallet_block_height:
-                    logger.warning(
+                    self.logger.warning(
                         f"We did not receive a block from the network {LiteNode.CHECK_FOR_BLOCK_RECEIVED_DELAY_SEC} seconds after we saw the new block in BitcoinJ. "
                         f"We request from our seed nodes missing blocks from block height {dao_chain_height + 1}."
                     )
@@ -180,7 +177,7 @@ class LiteNode(BsqNode):
             self._wallets_setup.is_download_complete
             and chain_height == self._bsq_wallet_service.get_best_chain_height()
         ):
-            logger.info(
+            self.logger.info(
                 "No block request needed as we have already the most recent block. "
                 f"daoStateService.getChainHeight()={chain_height}, "
                 f"bsqWalletService.getBestChainHeight()={self._bsq_wallet_service.get_best_chain_height()}"
@@ -207,7 +204,7 @@ class LiteNode(BsqNode):
     ):
         if block_list:
             self.chain_tip_height = block_list[-1].height
-            logger.info(
+            self.logger.info(
                 f"We received blocks from height {block_list[0].height} to {self.chain_tip_height}"
             )
 
@@ -248,7 +245,7 @@ class LiteNode(BsqNode):
         on_parsing_complete: Callable[[], None],
     ):
         duration = get_time_ms() - ts
-        logger.info(
+        self.logger.info(
             f"Parsing {len(block_list)} blocks took {duration / 1000:.2f} seconds "
             f"({duration / 1000 / 60:.2f} min.) / {duration / len(block_list):.2f} ms in average / block"
         )
@@ -258,7 +255,7 @@ class LiteNode(BsqNode):
             self._dao_state_service.chain_height
             < self._bsq_wallet_service.get_best_chain_height()
         ):
-            logger.info(
+            self.logger.info(
                 f"We have completed batch processing of {len(block_list)} blocks but we have still "
                 f"{self._bsq_wallet_service.get_best_chain_height() - self._dao_state_service.chain_height} missing blocks and request again."
             )
@@ -266,7 +263,7 @@ class LiteNode(BsqNode):
                 self._dao_state_service.chain_height + 1
             )
         else:
-            logger.info(
+            self.logger.info(
                 f"We have completed batch processing of {len(block_list)} blocks and we have reached the chain tip of the wallet."
             )
             on_parsing_complete()
@@ -288,7 +285,7 @@ class LiteNode(BsqNode):
                 self.do_parse_block(block)
                 self._run_delayed_batch_processing(blocks, result_handler)
             except RequiredReorgFromSnapshotException as e:
-                logger.warning(
+                self.logger.warning(
                     f"doParseBlock failed at runDelayedBatchProcessing because of a blockchain reorg. {e}"
                 )
 
@@ -297,7 +294,7 @@ class LiteNode(BsqNode):
     #  We received a new block
     def _on_new_block_received(self, block: "RawBlock"):
         block_height = block.height
-        logger.info(
+        self.logger.info(
             f"onNewBlockReceived: block at height {block_height}, hash={block.hash}. Our DAO chainHeight={self.chain_tip_height}"
         )
 
@@ -308,7 +305,7 @@ class LiteNode(BsqNode):
         try:
             self.do_parse_block(block)
         except RequiredReorgFromSnapshotException as e:
-            logger.warning(
+            self.logger.warning(
                 f"doParseBlock failed at onNewBlockReceived because of a blockchain reorg. {e}"
             )
 

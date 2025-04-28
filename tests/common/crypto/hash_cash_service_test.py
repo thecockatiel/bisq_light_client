@@ -8,10 +8,8 @@ import asyncio
 from bisq.common.crypto.hash_cash_service import HashCashService
 from bisq.common.crypto.hash_cash_service_work import number_of_leading_zeros, to_num_leading_zeros
 from bisq.common.crypto.proof_of_work import ProofOfWork
-from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
-logger = get_logger(__name__)
 
 class TestHashCashService(unittest.TestCase):
     def test_number_of_leading_zeros(self):
@@ -70,7 +68,7 @@ class TestHashCashService(unittest.TestCase):
         string_builder = []
         for i in range(9):
             self.do_runs(i, string_builder)
-        logger.info(''.join(string_builder))
+        print(''.join(string_builder))
 
 if __name__ == '__main__':
     unittest.main()

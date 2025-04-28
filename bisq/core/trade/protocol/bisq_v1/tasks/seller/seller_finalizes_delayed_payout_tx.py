@@ -1,13 +1,21 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from utils.preconditions import check_argument
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
+
 
 class SellerFinalizesDelayedPayoutTx(TradeTask):
     
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
+
     def run(self):
         try:
             self.run_intercept_hook()
@@ -34,7 +42,7 @@ class SellerFinalizesDelayedPayoutTx(TradeTask):
             )
             
             self.trade.apply_delayed_payout_tx(signed_delayed_payout_tx)
-            logger.info(f"DelayedPayoutTxBytes = {bytes_as_hex_string(self.trade.delayed_payout_tx_bytes)}")
+            self.logger.info(f"DelayedPayoutTxBytes = {bytes_as_hex_string(self.trade.delayed_payout_tx_bytes)}")
             
             self.process_model.trade_manager.request_persistence()
             

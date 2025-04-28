@@ -1,7 +1,7 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.common.version import Version
 from bisq.core.dao.governance.blindvote.vote_with_proposal_tx_id_list import (
@@ -24,8 +24,6 @@ if TYPE_CHECKING:
         BlindVoteListService,
     )
 
-logger = get_logger(__name__)
-
 
 class BlindVoteConsensus:
     """All consensus critical aspects are handled here."""
@@ -40,6 +38,7 @@ class BlindVoteConsensus:
     ) -> "BallotList":
         ballot_list = ballot_list_service.get_valid_ballots_of_cycle()
         sorted_list = sorted(ballot_list, key=lambda ballot: java_cmp_str(ballot.tx_id))
+        logger = get_ctx_logger(__name__)
         logger.info(f"Sorted ballotList: {sorted_list}")
         return BallotList(sorted_list)
 
@@ -48,13 +47,16 @@ class BlindVoteConsensus:
         blind_vote_list_service: "BlindVoteListService",
     ) -> list["BlindVote"]:
         blind_vote_list = blind_vote_list_service.get_blind_votes_in_phase_and_cycle()
-        return BlindVoteConsensus._get_sorted_blind_vote_list_of_cycle(blind_vote_list)
+        return BlindVoteConsensus._get_sorted_blind_vote_list_of_cycle(
+            blind_vote_list
+        )
 
     @staticmethod
     def _get_sorted_blind_vote_list_of_cycle(
         blind_vote_list: list["BlindVote"],
     ) -> list["BlindVote"]:
         sorted_list = sorted(blind_vote_list, key=lambda vote: java_cmp_str(vote.tx_id))
+        logger = get_ctx_logger(__name__)
         logger.debug(
             f"Sorted blindVote txId list: {[vote.tx_id for vote in sorted_list]}"
         )
@@ -67,10 +69,12 @@ class BlindVoteConsensus:
 
     @staticmethod
     def get_encrypted_votes(
-        vote_with_proposal_tx_id_list: "VoteWithProposalTxIdList", secret_key: bytes
+        vote_with_proposal_tx_id_list: "VoteWithProposalTxIdList",
+        secret_key: bytes,
     ) -> bytes:
         bytes_data = vote_with_proposal_tx_id_list.serialize()
         encrypted = Encryption.encrypt(bytes_data, secret_key)
+        logger = get_ctx_logger(__name__)
         logger.info(f"EncryptedVotes: {bytes_as_hex_string(encrypted)}")
         return encrypted
 
@@ -84,12 +88,13 @@ class BlindVoteConsensus:
         return get_sha256_ripemd160_hash(encrypted_votes)
 
     @staticmethod
-    def get_op_return_data(hash: bytes) -> bytes:
+    def get_op_return_data( hash: bytes) -> bytes:
         with BytesIO() as output_stream:
             output_stream.write(OpReturnType.BLIND_VOTE.type)
             output_stream.write(Version.BLIND_VOTE)
             output_stream.write(hash)
             bytes_data = output_stream.getvalue()
+            logger = get_ctx_logger(__name__)
             logger.info(f"OpReturnData: {bytes_as_hex_string(bytes_data)}")
             return bytes_data
 

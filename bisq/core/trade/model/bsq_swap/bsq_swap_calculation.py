@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.monetary.volume import Volume
@@ -35,7 +35,6 @@ Output seller:  BTC change                                                      
 Tx fee: Buyer tx fee + seller tx fee + buyer trade fee + seller trade fee                    1950 + 1850 + 50 + 150
 """
 
-logger = get_logger(__name__)
 
 class BsqSwapCalculation:
     MIN_SELLERS_TX_SIZE = 104
@@ -253,6 +252,7 @@ class BsqSwapCalculation:
             # We calculate more exact tx size based on resulted inputs and change
             change = inputs_and_change[1]
             if Restrictions.is_dust(change):
+                logger = get_ctx_logger(__name__)
                 logger.warning(
                     "We got a change below dust. We ignore that and use it as miner fee."
                 )

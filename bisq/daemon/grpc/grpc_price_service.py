@@ -1,7 +1,6 @@
 from decimal import Decimal
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
-from bisq.common.util.math_utils import MathUtils
+from bisq.common.setup.log_setup import logger_context
 from bisq.common.util.utilities import WaitableResultHandler
 from bisq.core.monetary.altcoin import Altcoin
 from bisq.core.monetary.price import Price
@@ -19,39 +18,55 @@ if TYPE_CHECKING:
     from grpc import ServicerContext
     from bisq.daemon.grpc.grpc_exception_handler import GrpcExceptionHandler
     from bisq.core.api.core_api import CoreApi
-
-logger = get_logger(__name__)
+    from bisq.core.user.user_manager import UserManager
 
 
 class GrpcPriceService(PriceServicer):
 
-    def __init__(self, core_api: "CoreApi", exception_handler: "GrpcExceptionHandler"):
-        self.core_api = core_api
-        self.exception_handler = exception_handler
+    def __init__(
+        self,
+        core_api: "CoreApi",
+        exception_handler: "GrpcExceptionHandler",
+        user_manager: "UserManager",
+    ):
+        self._core_api = core_api
+        self._exception_handler = exception_handler
+        self._user_manager = user_manager
 
     def GetMarketPrice(self, request: "MarketPriceRequest", context: "ServicerContext"):
+        user_context = self._user_manager.active_context
         try:
-            waitable_handler = WaitableResultHandler[float]()
-            self.core_api.get_market_price(request.currency_code, waitable_handler)
-            price = waitable_handler.wait()
-            reply = MarketPriceReply(price=price)
-            return reply
+            with logger_context(user_context.logger):
+                waitable_handler = WaitableResultHandler[float]()
+                self._core_api.get_market_price(
+                    user_context,
+                    request.currency_code,
+                    waitable_handler,
+                )
+                price = waitable_handler.wait()
+                reply = MarketPriceReply(price=price)
+                return reply
         except Exception as e:
-            self.exception_handler.handle_exception(logger, e, context)
+            self._exception_handler.handle_exception(user_context.logger, e, context)
 
     def GetAverageBsqTradePrice(
         self, request: "GetAverageBsqTradePriceRequest", context: "ServicerContext"
     ):
+        user_context = self._user_manager.active_context
         try:
-            prices = self.core_api.get_average_bsq_trade_price(request.days)
-            reply = self._build_get_average_bsq_trade_price_reply(prices)
-            return reply
+            with logger_context(user_context.logger):
+                prices = self._core_api.get_average_bsq_trade_price(
+                    user_context,
+                    request.days,
+                )
+                reply = self._build_get_average_bsq_trade_price_reply(prices)
+                return reply
         except Exception as e:
-            self.exception_handler.handle_exception(logger, e, context)
+            self._exception_handler.handle_exception(user_context.logger, e, context)
 
     @staticmethod
     def _build_get_average_bsq_trade_price_reply(
-        prices: tuple[Price, Price]
+        prices: tuple[Price, Price],
     ) -> "GetAverageBsqTradePriceReply":
         usd_price = Decimal(str(prices[0])).quantize(
             Decimal("1." + "0" * Fiat.SMALLEST_UNIT_EXPONENT), rounding="ROUND_HALF_UP"

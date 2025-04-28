@@ -1,13 +1,13 @@
 from collections.abc import Callable
 from concurrent.futures import Future
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.capabilities import Capabilities
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.connection import Connection
@@ -21,6 +21,7 @@ from bisq.core.network.p2p.prefixed_sealed_and_signed_message import (
 )
 from bisq.core.network.p2p.send_direct_message_listener import SendDirectMessageListener
 from bisq.core.network.utils.capability_utils import CapabilityUtils
+from utils.aio import FutureCallback
 from utils.concurrency import ThreadSafeSet
 from utils.data import (
     SimpleProperty,
@@ -61,8 +62,6 @@ if TYPE_CHECKING:
         HashMapChangedListener,
     )
 
-logger = get_logger(__name__)
-
 
 class P2PService(
     SetupListener, MessageListener, ConnectionListener, RequestDataManager.Listener
@@ -83,6 +82,7 @@ class P2PService(
         key_ring: "KeyRing",
         mailbox_message_service: "MailboxMessageService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._encryption_service = encryption_service
         self._key_ring = key_ring
 
@@ -137,7 +137,7 @@ class P2PService(
         pass
 
     def shut_down(self, shut_down_complete_handler: Callable[[], None]):
-        logger.info("P2PService shutdown started")
+        self.logger.info("P2PService shutdown started")
         self._shut_down_result_handlers.add(shut_down_complete_handler)
 
         # We need to make sure queued up messages are flushed out before we continue shut down other network services
@@ -147,7 +147,7 @@ class P2PService(
             self.do_shut_down()
 
     def do_shut_down(self):
-        logger.info("P2PService doShutDown started")
+        self.logger.info("P2PService doShutDown started")
         if self._p2p_data_storage is not None:
             self._p2p_data_storage.shut_down()
 
@@ -345,18 +345,18 @@ class P2PService(
                     for listener in self._decrypted_direct_message_listeners:
                         listener(decrypted_msg, node_address)
                 else:
-                    logger.error(
+                    self.logger.error(
                         "peersNodeAddress is expected to be available at onMessage for "
                         "processing PrefixedSealedAndSignedMessage."
                     )
 
             except CryptoException as e:
-                logger.warning(
+                self.logger.warning(
                     "Decryption of a direct message failed. This is not expected as the "
                     "direct message was sent to our node."
                 )
             except ProtobufferException as e:
-                logger.error(
+                self.logger.error(
                     f"ProtobufferException at decryptAndVerify: {str(e)}", exc_info=e
                 )
 
@@ -390,7 +390,7 @@ class P2PService(
         message: "NetworkEnvelope",
         send_direct_message_listener: "SendDirectMessageListener",
     ) -> None:
-        logger.debug(
+        self.logger.debug(
             f"Send encrypted direct message {message.__class__.__name__} to peer {peers_node_address}"
         )
 
@@ -420,20 +420,25 @@ class P2PService(
                 ),
             )
 
-            def on_done(future: Future):
-                try:
-                    future.result()
-                    send_direct_message_listener.on_arrived()
-                except Exception as e:
-                    logger.error(str(e), exc_info=e)
-                    send_direct_message_listener.on_fault(str(e))
-
             future = self._network_node.send_message(peers_node_address, sealed_msg)
-            future.add_done_callback(on_done)
+
+            def on_success(r):
+                send_direct_message_listener.on_arrived()
+
+            def on_failure(e):
+                self.logger.error(str(e), exc_info=e)
+                send_direct_message_listener.on_fault(str(e))
+
+            future.add_done_callback(
+                FutureCallback(
+                    on_success,
+                    on_failure,
+                )
+            )
 
         except CryptoException as e:
-            logger.error(str(message))
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(message))
+            self.logger.error(str(e), exc_info=e)
             send_direct_message_listener.on_fault(str(e))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -464,7 +469,7 @@ class P2PService(
                     None,
                 )
             except CryptoException as e:
-                logger.error(
+                self.logger.error(
                     "Signing at get_data_with_signed_seq_nr failed. That should never happen."
                 )
                 return False
@@ -481,7 +486,7 @@ class P2PService(
                     refresh_ttl_message, self._network_node.node_address_property.value
                 )
             except CryptoException as e:
-                logger.error(
+                self.logger.error(
                     "Signing at get_data_with_signed_seq_nr failed. That should never happen."
                 )
                 return False
@@ -502,7 +507,7 @@ class P2PService(
                     self._network_node.node_address_property.value,
                 )
             except CryptoException as e:
-                logger.error(
+                self.logger.error(
                     "Signing at get_data_with_signed_seq_nr failed. That should never happen."
                 )
                 return False

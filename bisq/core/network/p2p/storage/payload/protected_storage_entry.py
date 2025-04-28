@@ -1,6 +1,3 @@
-from dataclasses import dataclass
-from google.protobuf import message as Message
-
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.crypto.crypto_exception import CryptoException
@@ -9,6 +6,7 @@ from bisq.common.crypto.hash import get_32_byte_hash
 from bisq.common.crypto.sig import Sig, DSA
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.network.p2p.storage.data_and_seq_nr_pair import DataAndSeqNrPair
 from bisq.core.network.p2p.storage.payload.expirable_payload import ExpirablePayload
@@ -22,7 +20,6 @@ from bisq.core.network.p2p.storage.payload.protected_storage_payload import (
     ProtectedStoragePayload,
     wrap_in_storage_payload,
 )
-from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
 from utils.clock import Clock
 from utils.preconditions import check_argument
@@ -34,10 +31,8 @@ if TYPE_CHECKING:
     )
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 
-logger = get_logger(__name__)
 
 
-@dataclass
 class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
 
     def __init__(
@@ -50,6 +45,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
         owner_pub_key: Optional["DSA.DsaKey"] = None,
         owner_pub_key_bytes: Optional[bytes] = None,
     ):
+        self.logger = get_ctx_logger(__name__)
         if creation_time_stamp is None:
             creation_time_stamp = clock.millis()
 
@@ -156,7 +152,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
                         self.protected_storage_payload.get_owner_pub_key_bytes(), True
                     )
 
-                logger.warning(
+                self.logger.warning(
                     f"ProtectedStorageEntry::isValidForAddOperation() failed. Entry owner does not match Payload owner:\n"
                     f"ProtectedStorageEntry={res1}\nPayloadOwner={res2}"
                 )
@@ -177,7 +173,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
                 res2 = Sig.get_public_key_as_hex_string(
                     self.protected_storage_payload.get_owner_pub_key_bytes(), True
                 )
-            logger.warning(
+            self.logger.warning(
                 f"ProtectedStorageEntry::isValidForRemoveOperation() failed. Entry owner does not match Payload owner:\n"
                 f"ProtectedStorageEntry={res1}\nPayloadOwner={res2}"
             )
@@ -198,13 +194,13 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
                 self.owner_pub_key, hash_of_data_and_seq_nr, self.signature
             )
             if not result:
-                logger.warning(
+                self.logger.warning(
                     f"Invalid signature for {self.protected_storage_payload.__class__.__name__}.\n"
                     f"Serialized data as hex={self.protected_storage_payload.serialize_for_hash().hex()}"
                 )
             return result
         except CryptoException as e:
-            logger.error(
+            self.logger.error(
                 f"ProtectedStorageEntry::isSignatureValid() exception {str(e)}"
             )
             return False
@@ -214,7 +210,7 @@ class ProtectedStorageEntry(NetworkPayload, PersistablePayload):
     ) -> bool:
         result = protected_storage_entry.owner_pub_key_bytes == self.owner_pub_key_bytes
         if not result:
-            logger.warning(
+            self.logger.warning(
                 f"New data entry does not match our stored data. storedData.ownerPubKey={Sig.get_public_key_as_hex_string(protected_storage_entry.owner_pub_key)}\n"
                 f"ownerPubKey={Sig.get_public_key_as_hex_string(self.owner_pub_key)}"
             )

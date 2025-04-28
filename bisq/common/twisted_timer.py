@@ -1,3 +1,4 @@
+import contextvars
 from typing import TYPE_CHECKING
 from utils.aio import (
     is_async_callable,
@@ -47,39 +48,55 @@ class TwistedTimer(Timer):
             elif count <= 1:
                 log.err(failure)
 
-    def _run_later(self, delay: timedelta, callable: Callable[[], None]):
+    def _run_later(
+        self,
+        delay: timedelta,
+        callable: Callable[[], None],
+        ctx: contextvars.Context,
+    ):
         self._is_periodically = False
         self._stopped = False
-        self._callable = callable
         self._start_ts = get_time_ms()
         if is_async_callable(callable):
             self._callable = lambda: asyncio.run_coroutine_threadsafe(
-                callable(), get_asyncio_loop()
+                ctx.run(callable), get_asyncio_loop()
             )
+        else:
+            self._callable = lambda: ctx.run(callable)
+
         self._deferred = deferLater(reactor, delay.total_seconds(), self._callable)
         self._deferred.addErrback(self._on_error)
         return self
 
     def run_later(self, delay: timedelta, callable: Callable[[], None]):
-        reactor.callFromThread(self._run_later, delay, callable)
+        ctx = contextvars.copy_context()
+        reactor.callFromThread(self._run_later, delay, callable, ctx)
         return self
 
-    def _run_periodically(self, interval: timedelta, callable: Callable[[], None]):
+    def _run_periodically(
+        self,
+        interval: timedelta,
+        callable: Callable[[], None],
+        ctx: contextvars.Context,
+    ):
         self._is_periodically = True
         self._stopped = False
         self._callable = callable
         self._start_ts = get_time_ms()
         if is_async_callable(callable):
             self._callable = lambda: asyncio.run_coroutine_threadsafe(
-                callable(), get_asyncio_loop()
+                ctx.run(callable), get_asyncio_loop()
             )
+        else:
+            self._callable = lambda: ctx.run(callable)
         self._deferred = deferLater(reactor, interval.total_seconds(), self._callable)
         self._deferred.addErrback(self._on_error)
-        self._deferred.addBoth(lambda _: self._run_periodically(interval, callable))
+        self._deferred.addBoth(lambda _: self._run_periodically(interval, callable, ctx))
         return self
 
     def run_periodically(self, interval: timedelta, callable: Callable[[], None]):
-        reactor.callFromThread(self._run_periodically, interval, callable)
+        ctx = contextvars.copy_context()
+        reactor.callFromThread(self._run_periodically, interval, callable, ctx)
         return self
 
     def _stop(self):

@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Union
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.alert.alert import Alert
 from bisq.core.alert.private_notification_message import PrivateNotificationMessage
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
@@ -169,7 +170,6 @@ from bisq.core.filter.filter import Filter
 from bisq.core.trade.protocol.bisq_v1.messages.trader_signed_witness_message import (
     TraderSignedWitnessMessage,
 )
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_finalize_tx_request import (
     BsqSwapFinalizeTxRequest,
 )
@@ -192,7 +192,6 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_payload import NetworkPayload
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 
-logger = get_logger(__name__)
 
 # fmt: off
 proto_network_envelope_map: dict[str, Callable[[protobuf.NetworkEnvelope, "CoreNetworkProtoResolver", int], 'NetworkEnvelope']]  = {
@@ -301,6 +300,7 @@ proto_storage_payload_map: dict[str, Callable[[protobuf.StoragePayload], 'Networ
 # Singleton?
 class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
     def __init__(self, clock: Clock):
+        self.logger = get_ctx_logger(__name__)
         self.clock = clock
 
     def get_clock(self):
@@ -318,7 +318,7 @@ class CoreNetworkProtoResolver(CoreProtoResolver, NetworkProtoResolver):
         DAO related stuff and BTC node related stuff are not implemented.
         """
         if proto is None:
-            logger.error("CoreNetworkProtoResolver.fromProto: proto is null")
+            self.logger.error("CoreNetworkProtoResolver.fromProto: proto is null")
             raise ProtobufferException("proto is null")
         if isinstance(
             proto, (protobuf.PaymentAccountPayload, protobuf.PersistableNetworkPayload)

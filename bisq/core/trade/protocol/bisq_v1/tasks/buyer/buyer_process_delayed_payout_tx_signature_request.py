@@ -1,4 +1,3 @@
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_request import (
     DelayedPayoutTxSignatureRequest,
@@ -6,9 +5,6 @@ from bisq.core.trade.protocol.bisq_v1.messages.delayed_payout_tx_signature_reque
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.validator import Validator
 from utils.preconditions import check_argument, check_not_none
-
-logger = get_logger(__name__)
-
 
 class BuyerProcessDelayedPayoutTxSignatureRequest(TradeTask):
 

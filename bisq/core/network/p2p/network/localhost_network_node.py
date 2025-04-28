@@ -1,10 +1,10 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future, get_asyncio_loop, wait_future_blocking
 from collections.abc import Callable
 from asyncio import Future
 from electrum_min.util import wait_for2
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.network.p2p.network.setup_listener import SetupListener
 
-logger = get_logger(__name__)
 
 class LocalhostNetworkNode(NetworkNode):
     simulate_tor_delay_tor_node = 500
@@ -33,6 +32,7 @@ class LocalhostNetworkNode(NetworkNode):
     
     def __init__(self, service_port: int, network_proto_resolver: "NetworkProtoResolver", ban_filter: Optional["BanFilter"], config: "Config"):
         super().__init__(service_port, network_proto_resolver, ban_filter, config)
+        self.logger = get_ctx_logger(__name__)
         self.__create_socket_futures = ThreadSafeSet[Future]()
         
     async def start(self, setup_listener: Optional["SetupListener"] = None):
@@ -56,7 +56,7 @@ class LocalhostNetworkNode(NetworkNode):
                 server_socket.listen()
                 self.start_server(server_socket)
             except Exception as e:
-                logger.error("Exception at startServer: ", exc_info=e)
+                self.logger.error("Exception at startServer: ", exc_info=e)
 
             for listener in self.setup_listeners:
                 listener.on_hidden_service_published()

@@ -1,10 +1,7 @@
 from typing import List, Optional
-
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.preconditions import check_argument
-from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 
-logger = get_logger(__name__)
 
 class Version:
     # The application versions
@@ -16,6 +13,7 @@ class Version:
     # Holds a list of the tagged resource files for optimizing the getData requests.
     # This must not contain each version but only those where we add new version-tagged resource files for
     # historical data stores.
+    # fmt: off
     HISTORICAL_RESOURCE_FILE_VERSION_TAGS: List[str] = [
         "1.4.0", "1.5.0", "1.5.2", "1.5.5", "1.5.7", "1.6.0",
         "1.6.3", "1.6.5", "1.7.2", "1.7.4", "1.8.0", "1.8.1",
@@ -23,7 +21,8 @@ class Version:
         "1.9.10", "1.9.11", "1.9.13", "1.9.15", "1.9.16", "1.9.18", 
         "1.9.19"
     ]
-    
+    # fmt: on
+
     @staticmethod
     def get_major_version(version: str) -> int:
         return Version.get_sub_version(version, 0)
@@ -59,7 +58,10 @@ class Version:
     @staticmethod
     def get_sub_version(version: str, index: int) -> int:
         split = version.split(".")
-        check_argument(len(split) == 3, f"Version number must be in semantic version format (contain 2 '.'). version={version}")
+        check_argument(
+            len(split) == 3,
+            f"Version number must be in semantic version format (contain 2 '.'). version={version}",
+        )
         return int(split[index])
 
     # The version no. for the objects sent over the network. A change will break the serialization of old objects.
@@ -85,7 +87,7 @@ class Version:
     p2p_message_version = 0
 
     BSQ_TX_VERSION = "1"
-    
+
     def get_p2p_message_version() -> int:
         return Version.p2p_message_version
 
@@ -96,12 +98,15 @@ class Version:
         Version.BASE_CURRENCY_NETWORK = base_crypto_network_id
         # CRYPTO_NETWORK_ID is ordinal of enum. We use for changes at NETWORK_PROTOCOL_VERSION a multiplication with 10
         # to not mix up networks:
-        Version.p2p_message_version = Version.BASE_CURRENCY_NETWORK + 10 * Version.P2P_NETWORK_VERSION
+        Version.p2p_message_version = (
+            Version.BASE_CURRENCY_NETWORK + 10 * Version.P2P_NETWORK_VERSION
+        )
 
     def get_base_currency_network() -> int:
         return Version.BASE_CURRENCY_NETWORK
 
     def print_version():
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"Version{{"
             f"VERSION={Version.VERSION}, "
@@ -114,13 +119,13 @@ class Version:
         )
 
     def find_commit_hash() -> Optional[str]:
-        raise RuntimeError('Not implemented')
+        raise RuntimeError("Not implemented")
 
-    COMPENSATION_REQUEST = b'\x01'
-    REIMBURSEMENT_REQUEST = b'\x01'
-    PROPOSAL = b'\x01'
-    BLIND_VOTE = b'\x01'
-    VOTE_REVEAL = b'\x01'
-    LOCKUP = b'\x01'
-    ASSET_LISTING_FEE = b'\x01'
-    PROOF_OF_BURN = b'\x01'
+    COMPENSATION_REQUEST = b"\x01"
+    REIMBURSEMENT_REQUEST = b"\x01"
+    PROPOSAL = b"\x01"
+    BLIND_VOTE = b"\x01"
+    VOTE_REVEAL = b"\x01"
+    LOCKUP = b"\x01"
+    ASSET_LISTING_FEE = b"\x01"
+    PROOF_OF_BURN = b"\x01"

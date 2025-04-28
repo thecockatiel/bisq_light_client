@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import Config
@@ -6,7 +7,6 @@ from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.exceptions.tx_broadcast_exception import TxBroadcastException
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
@@ -33,8 +33,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
 
 
-logger = get_logger(__name__)
-
 
 class MyProposalListService(PersistedDataHost, DaoStateListener):
     """
@@ -53,6 +51,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
         persistence_manager: "PersistenceManager",
         pub_key_ring: "PubKeyRing",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.dao_state_service = dao_state_service
         self.period_service = period_service
@@ -109,11 +108,11 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
         error_message_handler: ErrorMessageHandler,
     ):
         class Listener(TxBroadcasterCallback):
-            def on_success(self, tx: "Transaction"):
-                logger.info(f"Proposal tx has been published. TxId={tx.get_tx_id()}")
+            def on_success(self_, tx: "Transaction"):
+                self.logger.info(f"Proposal tx has been published. TxId={tx.get_tx_id()}")
                 result_handler()
 
-            def on_failure(self, exception: "TxBroadcastException"):
+            def on_failure(self_, exception: "TxBroadcastException"):
                 error_message_handler(str(exception))
 
         self.wallets_manager.publish_and_commit_bsq_tx(
@@ -141,7 +140,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
                 TempProposalPayload(proposal, self.signature_pub_key)
             )
             if not success:
-                logger.warning(
+                self.logger.warning(
                     f"Removal of proposal from p2p network failed. proposal={proposal}"
                 )
 
@@ -150,7 +149,7 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
                     listener.on_list_changed(self.list)
                 self._request_persistence()
             else:
-                logger.warning(
+                self.logger.warning(
                     "We called remove at a proposal which was not in our list"
                 )
             return success
@@ -183,12 +182,12 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
     ):
         success = self._add_to_p2p_network_as_protected_data(proposal)
         if success:
-            logger.info(
+            self.logger.info(
                 f"TempProposalPayload has been added to P2P network. ProposalTxId={proposal.tx_id}"
             )
         else:
             msg = f"Adding of proposal to P2P network failed. proposal={proposal}"
-            logger.error(msg)
+            self.logger.error(msg)
             error_message_handler(msg)
 
     def _add_to_p2p_network_as_protected_data(self, proposal: "Proposal") -> bool:

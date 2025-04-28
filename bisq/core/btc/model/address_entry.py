@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.config.config import Config
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.common.protocol.proto_util import ProtoUtil
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
@@ -13,7 +13,6 @@ from utils.formatting import get_short_id
 if TYPE_CHECKING:
     from bitcoinj.crypto.deterministic_key import DeterministicKey
 
-logger = get_logger(__name__)
 
 # Every trade uses a addressEntry with a dedicated address for all transactions related to the trade.
 # That way we have a kind of separated trade wallet, isolated from other transactions and avoiding coin merge.
@@ -32,7 +31,8 @@ class AddressEntry(PersistablePayload):
                  segwit: bool = False,
                  pub_key: bytes = None,
                  pub_key_hash: bytes = None):
-        
+        self.logger = get_ctx_logger(__name__)
+
         if not key_pair and not (pub_key and pub_key_hash):
             raise ValueError("Either key_pair or pub_key and pub_key_hash must be provided.")
         
@@ -111,7 +111,7 @@ class AddressEntry(PersistablePayload):
             script_type = ScriptType.P2WPKH if self.segwit else ScriptType.P2PKH
             self._address = Address.from_key(self.key_pair, script_type, Config.BASE_CURRENCY_NETWORK_VALUE.parameters)
         if self._address is None:
-            logger.warning(f"Address is None at get_address(). key_pair={self.key_pair}")
+            self.logger.warning(f"Address is None at get_address(). key_pair={self.key_pair}")
         return self._address
 
     @property

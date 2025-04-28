@@ -1,18 +1,24 @@
-from bisq.common.config.config import Config
+from typing import TYPE_CHECKING
+from bisq.common.config.config import Config 
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.wallet.restrictions import Restrictions
-from bisq.core.exceptions.illegal_state_exception import IllegalStateException
+from bisq.core.exceptions.illegal_state_exception import IllegalStateException 
 from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response import (
     InputsForDepositTxResponse,
 )
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.validator import Validator
 from utils.preconditions import check_argument, check_not_none
-from bisq.common.setup.log_setup import get_logger
-
-logger = get_logger(__name__)
-
+ 
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 class TakerProcessesInputsForDepositTxResponse(TradeTask):
+        
+    def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
+        super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -86,7 +92,7 @@ class TakerProcessesInputsForDepositTxResponse(TradeTask):
                 self.process_model.btc_wallet_service.get_best_chain_height()
                 - lock_time
             )
-            logger.info(f"lock_time={lock_time}, delay={delay}")
+            self.logger.info(f"lock_time={lock_time}, delay={delay}")
 
             # Maker has to sign prepared_deposit_tx. He cannot manipulate the prepared_deposit_tx - so we avoid to have a
             # challenge protocol for passing the nonce we want to get signed.

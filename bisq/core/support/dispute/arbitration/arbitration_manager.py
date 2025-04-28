@@ -1,9 +1,11 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 import uuid
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
-from bisq.core.btc.exceptions.transaction_verification_exception import TransactionVerificationException
+from bisq.core.btc.exceptions.transaction_verification_exception import (
+    TransactionVerificationException,
+)
 from bisq.core.btc.exceptions.wallet_exception import WalletException
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.btc.wallet.wallet_service import WalletService
@@ -59,8 +61,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.trade.trade_manager import TradeManager
 
-logger = get_logger(__name__)
-
 
 class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
     def __init__(
@@ -94,6 +94,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             config,
             price_feed_service,
         )
+        self.logger = get_ctx_logger(__name__)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Implement template methods
@@ -104,7 +105,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
 
     def on_support_message(self, message: "SupportMessage") -> None:
         if self.can_process_message(message):
-            logger.info(
+            self.logger.info(
                 f"Received {message.__class__.__name__} with tradeId {message.get_trade_id()} and uid {message.uid}"
             )
 
@@ -119,7 +120,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             elif isinstance(message, PeerPublishedDisputePayoutTxMessage):
                 self.on_disputed_payout_tx_message(message)
             else:
-                logger.warning(
+                self.logger.warning(
                     f"Unsupported message at dispatch_message. message={message}"
                 )
 
@@ -143,9 +144,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         role = Res.get("shared.arbitrator").lower()
         link = "https://bisq.wiki/Arbitrator#Arbitrator_versus_Legacy_Arbitrator"
         # Arbitration is not used anymore
-        return Res.get(
-            "support.initialInfo", role, "", role, link
-        )  
+        return Res.get("support.initialInfo", role, "", role, link)
 
     def get_dispute_intro_for_peer(self, dispute_info: str) -> str:
         return Res.get("support.peerOpenedDispute", dispute_info, Version.VERSION)
@@ -168,12 +167,12 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         dispute_result = dispute_result_message.dispute_result
         chat_message = dispute_result.chat_message
         assert chat_message is not None, "chatMessage must not be None"
-        
+
         if (
             dispute_result.arbitrator_pub_key
             == self.btc_wallet_service.get_arbitrator_address_entry().pub_key
         ):
-            logger.error(
+            self.logger.error(
                 "Arbitrator received disputeResultMessage. That must never happen."
             )
             return
@@ -183,7 +182,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         uid = dispute_result_message.uid
 
         if dispute is None:
-            logger.warning(
+            self.logger.warning(
                 f"We got a dispute result msg but we don't have a matching dispute. "
                 f"That might happen when we get the disputeResultMessage before the dispute was created. "
                 f"We try again after 2 sec. to apply the disputeResultMessage. TradeId = {trade_id}"
@@ -196,7 +195,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                 )
                 self.delay_msg_map[uid] = timer
             else:
-                logger.warning(
+                self.logger.warning(
                     f"We got a dispute result msg after we already repeated to apply the message after a delay. "
                     f"That should never happen. TradeId = {trade_id}"
                 )
@@ -207,14 +206,14 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         if chat_message not in dispute.chat_messages:
             dispute.add_and_persist_chat_message(chat_message)
         else:
-            logger.warning(
+            self.logger.warning(
                 f"We got a dispute mail msg what we have already stored. TradeId = {chat_message.trade_id}"
             )
 
         dispute.is_closed = True
 
         if dispute.dispute_result_property.value is not None:
-            logger.warning(
+            self.logger.warning(
                 f"We already got a dispute result. That should only happen if a dispute needs to be closed "
                 f"again because the first close did not succeed. TradeId = {trade_id}"
             )
@@ -230,7 +229,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             # The tx publisher is the winner or in case both get 50% the buyer, as the buyer has more inventive to publish the tx as he receives
             # more BTC as he has deposited
             contract = dispute.contract
-            
+
             is_buyer = self.pub_key_ring == contract.buyer_pub_key_ring
             publisher = dispute_result.winner
 
@@ -244,23 +243,30 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                 elif publisher == DisputeResultWinner.SELLER:
                     publisher = DisputeResultWinner.BUYER
 
-            if (is_buyer and publisher == DisputeResultWinner.BUYER) or (not is_buyer and publisher == DisputeResultWinner.SELLER):
+            if (is_buyer and publisher == DisputeResultWinner.BUYER) or (
+                not is_buyer and publisher == DisputeResultWinner.SELLER
+            ):
                 payout_tx: Optional["Transaction"] = None
                 if trade_optional:
                     payout_tx = trade_optional.payout_tx
                 else:
-                    tradable_optional = self.closed_tradable_manager.get_tradable_by_id(trade_id)
+                    tradable_optional = self.closed_tradable_manager.get_tradable_by_id(
+                        trade_id
+                    )
                     if isinstance(tradable_optional, Trade):
                         payout_tx = tradable_optional.payout_tx
 
                 if payout_tx is None:
                     if dispute.deposit_tx_serialized:
                         multi_sig_pub_key = (
-                            contract.buyer_multi_sig_pub_key if is_buyer 
+                            contract.buyer_multi_sig_pub_key
+                            if is_buyer
                             else contract.seller_multi_sig_pub_key
                         )
-                        multi_sig_key_pair = self.btc_wallet_service.get_multi_sig_key_pair(
-                            trade_id, multi_sig_pub_key
+                        multi_sig_key_pair = (
+                            self.btc_wallet_service.get_multi_sig_key_pair(
+                                trade_id, multi_sig_pub_key
+                            )
                         )
                         signed_disputed_payout_tx = self.trade_wallet_service.trader_sign_and_finalize_disputed_payout_tx(
                             dispute.deposit_tx_serialized,
@@ -272,20 +278,21 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                             multi_sig_key_pair,
                             contract.buyer_multi_sig_pub_key,
                             contract.seller_multi_sig_pub_key,
-                            dispute_result.arbitrator_pub_key
+                            dispute_result.arbitrator_pub_key,
                         )
-                        
+
                         class TxCallback(TxBroadcasterCallback):
-                            
+
                             def on_success(self_, transaction: "Transaction"):
                                 # after successful publish we send peer the tx
                                 dispute.dispute_payout_tx_id = transaction.get_tx_id()
-                                self.send_peer_published_payout_tx_message(transaction, dispute, contract)
+                                self.send_peer_published_payout_tx_message(
+                                    transaction, dispute, contract
+                                )
                                 self.update_trade_or_open_offer_manager(trade_id)
 
                             def on_failure(self_, e: Exception):
-                                logger.error(e)
-
+                                self.logger.error(e)
 
                         self.trade_wallet_service.broadcast_tx(
                             signed_disputed_payout_tx,
@@ -295,41 +302,50 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                         success = True
                     else:
                         error_message = f"DepositTx is None. TradeId = {trade_id}"
-                        logger.warning(error_message)
+                        self.logger.warning(error_message)
                         success = False
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "We already got a payout tx. That might be the case if the other peer "
                         f"did not get the payout tx and opened a dispute. TradeId = {trade_id}"
                     )
                     dispute.dispute_payout_tx_id = payout_tx.get_tx_id()
-                    self.send_peer_published_payout_tx_message(payout_tx, dispute, contract)
+                    self.send_peer_published_payout_tx_message(
+                        payout_tx, dispute, contract
+                    )
                     success = True
             else:
-                logger.trace("We don't publish the tx as we are not the winning party.")
+                self.logger.trace(
+                    "We don't publish the tx as we are not the winning party."
+                )
                 # Clean up tangling trades
-                if dispute.dispute_result_property.value is not None and dispute.is_closed:
+                if (
+                    dispute.dispute_result_property.value is not None
+                    and dispute.is_closed
+                ):
                     self.update_trade_or_open_offer_manager(trade_id)
                 success = True
         except TransactionVerificationException as e:
             error_message = f"Error at trader_sign_and_finalize_disputed_payout_tx: {e}"
-            logger.error(error_message, exc_info=e)
+            self.logger.error(error_message, exc_info=e)
             success = False
-            
+
             # We prefer to close the dispute in that case. If there was no deposit tx and a random tx was used
             # we get a TransactionVerificationException. No reason to keep that dispute open...
             self.update_trade_or_open_offer_manager(trade_id)
-            
-            raise RuntimeError(error_message) 
+
+            raise RuntimeError(error_message)
         except (AddressFormatException, WalletException, SignatureDecodeException) as e:
             error_message = f"Error at trader_sign_and_finalize_disputed_payout_tx: {e}"
-            logger.error(error_message, exc_info=e)
+            self.logger.error(error_message, exc_info=e)
             success = False
             raise RuntimeError(error_message)
         finally:
             #    We use the chatMessage as we only persist those not the disputeResultMessage.
             # If we would use the disputeResultMessage we could not lookup for the msg when we receive the AckMessage.
-            self.send_ack_message(chat_message, dispute.agent_pub_key_ring, success, error_message)
+            self.send_ack_message(
+                chat_message, dispute.agent_pub_key_ring, success, error_message
+            )
 
         self.maybe_clear_sensitive_data()
         self.request_persistence()
@@ -342,7 +358,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
         trade_id = peer_published_payout_tx_message.trade_id
         dispute = self.find_own_dispute(trade_id)
         if dispute is None:
-            logger.debug(
+            self.logger.debug(
                 f"We got a peerPublishedPayoutTxMessage but we don't have a matching dispute. TradeId = {trade_id}"
             )
             if uid not in self.delay_msg_map:
@@ -355,7 +371,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
                 )
                 self.delay_msg_map[uid] = timer
             else:
-                logger.warning(
+                self.logger.warning(
                     f"We got a peerPublishedPayoutTxMessage after we already repeated to apply the message after a delay. "
                     f"That should never happen. TradeId = {trade_id}"
                 )
@@ -369,16 +385,15 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
 
         self.cleanup_retry_map(uid)
 
-        committed_dispute_payout_tx = (
-            WalletService.maybe_add_tx_to_wallet(
-                peer_published_payout_tx_message.transaction,
-                self.btc_wallet_service.wallet,
-            )
+        committed_dispute_payout_tx = WalletService.maybe_add_tx_to_wallet(
+            peer_published_payout_tx_message.transaction,
+            self.btc_wallet_service.wallet,
         )
 
         dispute.dispute_payout_tx_id = committed_dispute_payout_tx.get_tx_id()
         WalletService.print_tx(
-            "Disputed payoutTx received from peer", committed_dispute_payout_tx
+            "Disputed payoutTx received from peer",
+            committed_dispute_payout_tx,
         )
 
         # We can only send the ack msg if we have the peers_pub_key_ring which requires the dispute
@@ -406,7 +421,7 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             else contract.buyer_node_address
         )
 
-        logger.trace(
+        self.logger.trace(
             f"sendPeerPublishedPayoutTxMessage to peerAddress {peers_node_address}"
         )
 
@@ -418,26 +433,26 @@ class ArbitrationManager(DisputeManager["ArbitrationDisputeList"]):
             support_type=self.get_support_type(),
         )
 
-        logger.info(
+        self.logger.info(
             f"Send {message.__class__.__name__} to peer {peers_node_address}. "
             f"tradeId={message.trade_id}, uid={message.uid}"
         )
 
         class Listener(SendMailboxMessageListener):
-            def on_arrived(self):
-                logger.info(
+            def on_arrived(self_):
+                self.logger.info(
                     f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
                     f"tradeId={message.trade_id}, uid={message.uid}"
                 )
 
-            def on_stored_in_mailbox(self):
-                logger.info(
+            def on_stored_in_mailbox(self_):
+                self.logger.info(
                     f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
                     f"tradeId={message.trade_id}, uid={message.uid}"
                 )
 
-            def on_fault(self, error_message):
-                logger.error(
+            def on_fault(self_, error_message):
+                self.logger.error(
                     f"{message.__class__.__name__} failed: Peer {peers_node_address}. "
                     f"tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}"
                 )

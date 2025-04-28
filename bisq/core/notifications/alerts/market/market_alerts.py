@@ -1,7 +1,7 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 import uuid
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import (
     get_currency_pair,
@@ -28,9 +28,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.user.user import User
 
-logger = get_logger(__name__)
-
-
 class MarketAlerts:
 
     def __init__(
@@ -41,6 +38,7 @@ class MarketAlerts:
         price_feed_service: "PriceFeedService",
         key_ring: "KeyRing",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.offer_book_service = offer_book_service
         self.mobile_notification_service = mobile_notification_service
         self.user = user
@@ -56,7 +54,7 @@ class MarketAlerts:
             def on_added(self_, offer: "Offer"):
                 self._on_offer_added(offer)
 
-            def on_removed(self, offer: "Offer"):
+            def on_removed(self_, offer: "Offer"):
                 pass
 
         self.offer_book_service.add_offer_book_changed_listener(Listener())
@@ -216,7 +214,7 @@ class MarketAlerts:
                             market_alert_filter.add_alert_id(alert_id)
                             self.user.request_persistence()
                     except Exception as e:
-                        logger.error(f"Error sending notification: {e}", exc_info=e)
+                        self.logger.error(f"Error sending notification: {e}", exc_info=e)
 
     @staticmethod
     def get_test_msg():

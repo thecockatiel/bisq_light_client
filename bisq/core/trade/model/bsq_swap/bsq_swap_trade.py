@@ -1,4 +1,4 @@
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.monetary.price import Price
 from bisq.core.monetary.volume import Volume
 from bisq.core.offer.offer import Offer
@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
 
-logger = get_logger(__name__)
 
 class BsqSwapTrade(TradeModel):
     def __init__(self, 
@@ -33,6 +32,7 @@ class BsqSwapTrade(TradeModel):
                  state: "BsqSwapTradeState",
                  tx_id: Optional[str]):
         super().__init__(uid, offer, take_offer_date, trading_peer_node_address, error_message)
+        self.logger = get_ctx_logger(__name__)
         self._amount_as_long = amount.value
         self._tx_fee_per_vbyte = tx_fee_per_vbyte
         self._maker_fee_as_long = maker_fee_as_long
@@ -73,7 +73,7 @@ class BsqSwapTrade(TradeModel):
     @state.setter
     def state(self, state: "BsqSwapTradeState"):
         if state.value < self.state.value:
-            logger.warning("Unexpected state change to a previous state.\n"
+            self.logger.warning("Unexpected state change to a previous state.\n"
                            f"Old state is: {self.state.name}. New state is: {state.name}")
         self._state_property.value = state
 
@@ -140,7 +140,7 @@ class BsqSwapTrade(TradeModel):
             try:
                 self._volume = self.get_price().get_volume_by_amount(Coin.value_of(self._amount_as_long))
             except Exception as e:
-                logger.error(repr(e))
+                self.logger.error(repr(e))
                 return None
         return self._volume
     

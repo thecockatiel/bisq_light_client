@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.date_util import DateUtil
 from bisq.core.util.validation.btc_address_validator import BtcAddressValidator
 from utils.java_compat import java_cmp_str
@@ -9,9 +8,6 @@ from utils.java_compat import java_cmp_str
 if TYPE_CHECKING:
     from bisq.core.dao.burningman.model.burn_output_model import BurnOutputModel
     from bisq.core.dao.burningman.model.compensation_model import CompensationModel
-
-logger = get_logger(__name__)
-
 
 class BurningManCandidate:
     """

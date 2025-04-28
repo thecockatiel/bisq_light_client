@@ -17,6 +17,7 @@ from bisq.cli.opts.create_offer_option_parser import CreateOfferOptionParser
 from bisq.cli.opts.create_payment_account_option_parser import (
     CreatePaymentAccountOptionParser,
 )
+from bisq.cli.opts.delete_user_option_parser import DeleteUserOptionParser
 from bisq.cli.opts.edit_offer_option_parser import EditOfferOptionParser
 from bisq.cli.opts.get_address_balance_option_parser import (
     GetAddressBalanceOptionParser,
@@ -41,14 +42,17 @@ from bisq.cli.opts.register_dispute_agent_option_parser import (
 from bisq.cli.opts.remove_wallet_password_option_parser import (
     RemoveWalletPasswordOptionParser,
 )
+from bisq.cli.opts.restore_user_option_parser import RestoreUserOptionParser
 from bisq.cli.opts.send_bsq_option_parser import SendBsqOptionParser
 from bisq.cli.opts.send_btc_option_parser import SendBtcOptionParser
 from bisq.cli.opts.send_proto_option_parser import SendProtoOptionParser
 from bisq.cli.opts.set_tx_fee_rate_option_parser import SetTxFeeRateOptionParser
+from bisq.cli.opts.set_user_alias_option_parser import SetUserAliasOptionParser
 from bisq.cli.opts.set_wallet_password_option_parser import (
     SetWalletPasswordOptionParser,
 )
 from bisq.cli.opts.simple_method_option_parser import SimpleMethodOptionParser
+from bisq.cli.opts.switch_user_option_parser import SwitchUserOptionParser
 from bisq.cli.opts.take_bsq_swap_offer_option_parser import TakeBsqSwapOfferOptionParser
 from bisq.cli.opts.take_offer_option_parser import TakeOfferOptionParser
 from bisq.cli.opts.unlock_wallet_option_parser import UnlockWalletOptionParser
@@ -140,7 +144,7 @@ class CliMain:
             elif method == CliMethods.getnetwork:
                 return print(client.get_network())
             elif method == CliMethods.getdaostatus:
-                return print(client.get_dao_status())
+                return print(str(client.get_dao_status()).lower())
             elif method == CliMethods.getbalance:
                 currency_code = (
                     GetBalanceOptionParser(method_args).parse().get_currency_code()
@@ -534,9 +538,43 @@ class CliMain:
                 if reply.success:
                     print("proto message sent successfully")
                 else:
-                    raise IllegalStateException(f"error sending proto message: {reply.error_message}")
+                    raise IllegalStateException(
+                        f"error sending proto message: {reply.error_message}"
+                    )
+            elif method == CliMethods.switchuser:
+                opts = SwitchUserOptionParser(method_args).parse()
+                client.switch_user(opts.user_id)
+                print(f"switched to `{opts.user_id}` successfully.")
+            elif method == CliMethods.createnewuser:
+                reply = client.create_new_user()
+                print(f"user with id `{reply.user_id}` created successfully.")
+            elif method == CliMethods.deleteuser:
+                opts = DeleteUserOptionParser(method_args).parse()
+                reply = client.delete_user(opts.user_id, opts.delete_data)
+                print(f"user with id `{opts.user_id}` deleted successfully.")
+                if reply.created_new_user:
+                    print(
+                        f"user with id `{reply.new_user_id}` was created and started in it's place."
+                    )
+                elif reply.new_user_id:
+                    print(
+                        f"user with id `{reply.new_user_id}` was started in it's place."
+                    )
+            elif method == CliMethods.setuseralias:
+                opts = SetUserAliasOptionParser(method_args).parse()
+                client.set_user_alias(opts.user_id, opts.alias)
+                print(f"setting alias of user id `{opts.user_id}` to `{opts.alias}` done successfully.")
+            elif method == CliMethods.getuserslist:
+                users_list = client.get_users_list()
+                TableBuilder(TableType.USERS_TBL, users_list).build().print()
+            elif method == CliMethods.restoreuser:
+                opts = RestoreUserOptionParser(method_args).parse()
+                client.restore_user(opts.user_id)
+                print(f"Restored `{opts.user_id}` successfully.")
             else:
-                raise IllegalArgumentException(f"'{method_name}' is not a supported method")
+                raise IllegalArgumentException(
+                    f"'{method_name}' is not a supported method"
+                )
 
     @staticmethod
     def _get_parser():
@@ -941,6 +979,49 @@ class CliMain:
             p(row_format.format("", "[--new-wallet-password=<new-password>]", ""))
             p()
             p(row_format.format(CliMethods.stop.name, "", "Shut down the server"))
+            p()
+            p(
+                row_format.format(
+                    CliMethods.switchuser.name,
+                    "--user-id=<user_id>",
+                    "Shutdown current user and start the given user id",
+                )
+            )
+            p()
+            p(row_format.format(CliMethods.createnewuser.name, "", "Create a new user"))
+            p()
+            p(
+                row_format.format(
+                    CliMethods.deleteuser.name,
+                    "--user-id=<user_id> \\",
+                    "Delete the given user_id. keeps the user data by default.",
+                )
+            )
+            p(row_format.format("", "[--delete-data]", ""))
+            p()
+            p(
+                row_format.format(
+                    CliMethods.setuseralias.name,
+                    "--user-id=<user_id> --alias=<alias>",
+                    "Change the user alias.",
+                )
+            )
+            p()
+            p(
+                row_format.format(
+                    CliMethods.getuserslist.name,
+                    "",
+                    "Shows currently tracked users that you can switch to.",
+                )
+            )
+            p()
+            p(
+                row_format.format(
+                    CliMethods.restoreuser.name,
+                    "--user-id=<user_id>",
+                    "Allows you to restore a user-id, as long as it's directory structure is intact.",
+                )
+            )
             p()
             p("Method Help Usage: bisq-cli [options] <method> --help")
             p()

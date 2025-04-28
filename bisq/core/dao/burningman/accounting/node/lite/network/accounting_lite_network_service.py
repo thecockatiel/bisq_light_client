@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.burningman.accounting.node.lite.network.request_accounting_blocks_handler import (
     RequestAccountingBlocksHandler,
@@ -32,9 +31,6 @@ if TYPE_CHECKING:
     from bisq.common.timer import Timer
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
-
-
 # from LiteNodeNetworkService with edits
 class AccountingLiteNodeNetworkService(
     MessageListener, ConnectionListener, PeerManager.Listener
@@ -52,14 +48,14 @@ class AccountingLiteNodeNetworkService(
     class Listener(ABC):
         @abstractmethod
         def on_requested_blocks_received(
-            self,
+            self_,
             get_blocks_response: "GetAccountingBlocksResponse",
         ):
             pass
 
         @abstractmethod
         def on_new_block_received(
-            self, new_block_broadcast_message: "NewAccountingBlockBroadcastMessage"
+            self_, new_block_broadcast_message: "NewAccountingBlockBroadcastMessage"
         ):
             pass
 
@@ -74,6 +70,7 @@ class AccountingLiteNodeNetworkService(
         broadcaster: "Broadcaster",
         seed_nodes_repository: "SeedNodeRepository",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._broadcaster = broadcaster
@@ -168,20 +165,20 @@ class AccountingLiteNodeNetworkService(
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_all_connections_lost(self):
-        logger.info("on_all_connections_lost")
+        self.logger.info("on_all_connections_lost")
         self._close_all_handlers()
         self._stop_retry_timer()
         self._stopped = True
         self._try_with_new_seed_node(self._last_requested_block_height)
 
     def on_new_connection_after_all_connections_lost(self):
-        logger.info("on_new_connection_after_all_connections_lost")
+        self.logger.info("on_new_connection_after_all_connections_lost")
         self._close_all_handlers()
         self._stopped = False
         self._try_with_new_seed_node(self._last_requested_block_height)
 
     def on_awake_from_standby(self):
-        logger.info("on_awake_from_standby")
+        self.logger.info("on_awake_from_standby")
         self._close_all_handlers()
         self._stopped = False
         self._try_with_new_seed_node(self._last_requested_block_height)
@@ -197,12 +194,12 @@ class AccountingLiteNodeNetworkService(
                 new_block_broadcast_message.block.truncated_hash
             )
             if truncated_hash in self._received_block_messages:
-                logger.debug(
+                self.logger.debug(
                     f"We had that message already and do not further broadcast it. hash={truncated_hash}"
                 )
                 return
 
-            logger.info(
+            self.logger.info(
                 f"We received a NewAccountingBlockBroadcastMessage from peer {connection.peers_node_address} and broadcast it to our peers."
                 f" height={new_block_broadcast_message.block.height}, hash={truncated_hash}"
             )
@@ -221,12 +218,12 @@ class AccountingLiteNodeNetworkService(
         self, peers_node_address: "NodeAddress", start_block_height: int
     ):
         if self._stopped:
-            logger.warning("We have stopped already. We ignore that requestData call.")
+            self.logger.warning("We have stopped already. We ignore that requestData call.")
             return
 
         key = (peers_node_address, start_block_height)
         if key in self._request_blocks_handler_map:
-            logger.warning(
+            self.logger.warning(
                 f"We have started already a requestDataHandshake for startBlockHeight {start_block_height} to peer. nodeAddress={peers_node_address}\n"
                 "We start a cleanup timer if the handler has not closed by itself in between 2 minutes."
             )
@@ -238,7 +235,7 @@ class AccountingLiteNodeNetworkService(
             return
 
         if start_block_height < self._last_received_block_height:
-            logger.warning(
+            self.logger.warning(
                 f"startBlockHeight must not be smaller than lastReceivedBlockHeight. That should never happen. startBlockHeight={start_block_height}, lastReceivedBlockHeight={self._last_received_block_height}"
             )
             DevEnv.log_error_and_throw_if_dev_mode(
@@ -270,7 +267,7 @@ class AccountingLiteNodeNetworkService(
             def on_complete(
                 listener_self, get_blocks_response: "GetAccountingBlocksResponse"
             ):
-                logger.info(f"requestBlocksHandler to {peers_node_address} completed")
+                self.logger.info(f"requestBlocksHandler to {peers_node_address} completed")
                 self._stop_retry_timer()
 
                 # need to remove before listeners are notified as they cause the update call
@@ -286,7 +283,7 @@ class AccountingLiteNodeNetworkService(
                             get_blocks_response
                         )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "We got a response which is already obsolete because we received a"
                         " response from a request with a higher block height."
                         " This could theoretically happen, but is very unlikely."
@@ -297,7 +294,7 @@ class AccountingLiteNodeNetworkService(
                 error_message: str,
                 connection: Optional["Connection"] = None,
             ):
-                logger.warning(
+                self.logger.warning(
                     f"requestBlocksHandler with outbound connection failed.\n\tnodeAddress={peers_node_address}\n\tErrorMessage={error_message}"
                 )
 
@@ -328,13 +325,13 @@ class AccountingLiteNodeNetworkService(
             return
 
         if self._retry_timer:
-            logger.warning("We have a retry timer already running.")
+            self.logger.warning("We have a retry timer already running.")
             return
 
         self._retry_counter += 1
 
         if self._retry_counter > AccountingLiteNodeNetworkService.MAX_RETRY:
-            logger.warning(
+            self.logger.warning(
                 f"We tried {self._retry_counter} times but could not connect to a seed node."
             )
             for listener in self._listeners:
@@ -361,12 +358,12 @@ class AccountingLiteNodeNetworkService(
         if candidate_list:
             next_candidate = candidate_list[0]
             self._seed_node_addresses.discard(next_candidate)
-            logger.info(
+            self.logger.info(
                 f"We try requestBlocks from {next_candidate} with startBlockHeight={start_block_height}"
             )
             self._request_blocks(next_candidate, start_block_height)
         else:
-            logger.warning("No more seed nodes available we could try.")
+            self.logger.warning("No more seed nodes available we could try.")
             # TODO: LiteNodeNetworkService does the following but here we dont. investigate later
             # for listener in self._listeners:
             #     listener.on_no_seed_node_available()
@@ -381,7 +378,7 @@ class AccountingLiteNodeNetworkService(
         if node_address_optional:
             self._remove_from_request_blocks_handler_map(node_address_optional)
         else:
-            logger.trace(
+            self.logger.trace(
                 f"close_handler: nodeAddress not set in connection {connection}"
             )
 

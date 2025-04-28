@@ -12,7 +12,8 @@ from grpc_pb2_grpc import (
     WalletsStub,
 )
 from grpc_extra_pb2_grpc import (
-    DevCommandsStub
+    DevCommandsStub,
+    UserManagerCommandsStub
 )
 import atexit
 
@@ -42,6 +43,7 @@ class GrpcStubs:
         self.trades_service = TradesStub(self.channel)
         self.wallets_service = WalletsStub(self.channel)
         self.dev_commands_service = DevCommandsStub(self.channel)
+        self.user_manager_commands_service = UserManagerCommandsStub(self.channel)
 
     def close(self):
         if self.channel is not None:

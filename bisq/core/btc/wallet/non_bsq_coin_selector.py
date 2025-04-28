@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.bisq_default_coin_selector import BisqDefaultCoinSelector
 from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 
@@ -9,9 +8,6 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bitcoinj.core.transaction_output import TransactionOutput
-
-logger = get_logger(__name__)
-
 
 class NonBsqCoinSelector(BisqDefaultCoinSelector):
     """

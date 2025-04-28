@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from bisq.common.setup.log_setup import get_logger as get_bisq_logger
+from bisq.common.setup.log_setup import get_base_logger as get_bisq_logger
 
 def get_logger(name: str):
     logger = get_bisq_logger(name)

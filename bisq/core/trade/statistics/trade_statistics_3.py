@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.locale.currency_util import get_crypto_currency, get_fiat_currency
 from bisq.core.monetary.altcoin import Altcoin
@@ -14,7 +15,6 @@ from bisq.core.util.volume_util import VolumeUtil
 from bitcoinj.base.coin import Coin
 import pb_pb2 as protobuf
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.extra_data_map_validator import ExtraDataMapValidator
 from bisq.core.monetary.volume import Volume
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
@@ -38,10 +38,6 @@ from bisq.common.protocol.proto_util import ProtoUtil
 if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.core.trade.model.bsq_swap.bsq_swap_trade import BsqSwapTrade
-
-
-
-logger = get_logger(__name__)
 
 
 @total_ordering
@@ -73,6 +69,7 @@ class TradeStatistics3(
         hash: Optional[bytes] = None,
     ):
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.currency = currency
         self.price = price
         self.amount = amount
@@ -257,7 +254,7 @@ class TradeStatistics3(
                 if payment_method:
                     max_trade_limit = payment_method.get_max_trade_limit_as_coin(self.currency).value
             except Exception as e:
-                logger.warning("Error at is_valid().", exc_info=e)
+                self.logger.warning("Error at is_valid().", exc_info=e)
             valid_max_trade_limit = self.amount <= max_trade_limit
 
             currency_found = (get_crypto_currency(self.currency) is not None or 

@@ -1,7 +1,7 @@
 from collections.abc import Collection
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.burningman.burning_man_presentation_service import (
     BurningManPresentationService,
 )
@@ -18,8 +18,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.cycles_in_dao_state_service import CyclesInDaoStateService
     from bisq.core.dao.governance.proposal.proposal_service import ProposalService
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-logger = get_logger(__name__)
+ 
 
 
 class BurnTargetService:
@@ -48,6 +47,7 @@ class BurnTargetService:
         cycles_in_dao_state_service: "CyclesInDaoStateService",
         proposal_service: "ProposalService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._cycles_in_dao_state_service = cycles_in_dao_state_service
         self._proposal_service = proposal_service
@@ -137,7 +137,7 @@ class BurnTargetService:
             - burned_amount_from_burning_men
         )
 
-        logger.info(
+        self.logger.info(
             f"accumulated_reimbursements: {accumulated_reimbursements}\n"
             f"+ accumulated_estimated_btc_trade_fees: {accumulated_estimated_btc_trade_fees}\n"
             f"- burned_amount_from_legacy_burningman_dpt: {burned_amount_from_legacy_burningman_dpt}\n"

@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.governance.blindvote.blind_vote_consensus import BlindVoteConsensus
@@ -33,7 +33,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-logger = get_logger(__name__)
 
 # JAVA TODO Broadcast the winning list at the moment the reveal period is over and have the break
 # interval as time buffer for all nodes to receive that winning list. All nodes which are in sync with the
@@ -57,6 +56,7 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
         btc_wallet_service: "BtcWalletService",
         wallets_manager: "WalletsManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._blind_vote_list_service = blind_vote_list_service
         self._period_service = period_service
@@ -81,7 +81,7 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
     def _on_exceptions_changed(self, e: ObservableChangeEvent["VoteRevealException"]):
         if e.added_elements:
             for exception in e.added_elements:
-                logger.error(str(exception))
+                self.logger.error(str(exception))
 
     def start(self):
         pass
@@ -97,8 +97,8 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
         hash_of_blind_vote_list = VoteRevealConsensus.get_hash_of_blind_vote_list(
             blind_votes
         )
-        logger.debug(f"blindVoteList for creating hash: {blind_votes}")
-        logger.info(
+        self.logger.debug(f"blindVoteList for creating hash: {blind_votes}")
+        self.logger.info(
             f"Sha256Ripemd160 hash of hashOfBlindVoteList {bytes_as_hex_string(hash_of_blind_vote_list)}"
         )
         return hash_of_blind_vote_list
@@ -154,7 +154,7 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
                     and not is_last_block_in_phase
                     and is_blind_vote_tx_in_correct_phase_and_cycle
                 ):
-                    logger.info(
+                    self.logger.info(
                         f"We call revealVote at blockHeight {chain_height} for blindVoteTxId {blind_vote_tx_id}"
                     )
                     # Standard case that we are in the correct phase and cycle and create the reveal tx.
@@ -187,7 +187,7 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
                         # again. It would require a reset of the snapshot and parse all blocks again.
                         # As this is an exceptional case we prefer to have a simple solution instead and just
                         # publish the vote reveal tx but are aware that it is invalid.
-                        logger.warning(
+                        self.logger.warning(
                             f"We missed the vote reveal phase but publish now the tx to unlock our locked BSQ from the blind vote tx. BlindVoteTxId={blind_vote_tx_id}, blockHeight={chain_height}"
                         )
                         # We handle the exception here inside the stream iteration as we have not get triggered from an
@@ -232,7 +232,7 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
                 )
 
             vote_reveal_tx = self._get_vote_reveal_tx(stake_tx_output, op_return_data)
-            logger.info(f"voteRevealTx={vote_reveal_tx}")
+            self.logger.info(f"voteRevealTx={vote_reveal_tx}")
             self._publish_tx(vote_reveal_tx)
 
             # We don't want to wait for a successful broadcast to avoid issues if the broadcast succeeds delayed or at
@@ -254,12 +254,12 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
     def _publish_tx(self, vote_reveal_tx: "Transaction"):
         class Callback(TxBroadcasterCallback):
             def on_success(self_, transaction: "Transaction"):
-                logger.info("voteRevealTx successfully broadcast.")
+                self.logger.info("voteRevealTx successfully broadcast.")
                 for listener in self._vote_reveal_tx_published_listeners:
                     listener(transaction.get_tx_id())
 
             def on_failure(self_, exception: Exception):
-                logger.error(str(exception))
+                self.logger.error(str(exception))
                 self.vote_reveal_exceptions.append(
                     VoteRevealException(
                         "Publishing of voteRevealTx failed.",

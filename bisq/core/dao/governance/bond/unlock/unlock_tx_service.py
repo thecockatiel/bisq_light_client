@@ -1,10 +1,8 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
-from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
-from bisq.core.dao.governance.bond.lockup.lockup_reason import LockupReason
 from bisq.core.dao.state.model.blockchain.tx_type import TxType
 from bitcoinj.base.coin import Coin
 from utils.preconditions import check_argument
@@ -17,8 +15,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.wallets_manager import WalletsManager
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-logger = get_logger(__name__)
-
 
 class UnlockTxService:
     """Service for publishing the unlock transaction."""
@@ -30,6 +26,7 @@ class UnlockTxService:
         btc_wallet_service: "BtcWalletService",
         dao_state_sevice: "DaoStateService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._wallets_manager = wallets_manager
         self._bsq_wallet_service = bsq_wallet_service
         self._btc_wallet_service = btc_wallet_service
@@ -42,11 +39,12 @@ class UnlockTxService:
         exception_handler: Callable[[Exception], None],
     ):
         try:
+
             class Listener(TxBroadcasterCallback):
-                def on_success(self, tx: "Transaction"):
+                def on_success(self_, tx: "Transaction"):
                     result_handler(tx.get_tx_id())
 
-                def on_failure(self, exception):
+                def on_failure(self_, exception):
                     exception_handler(exception)
 
             unlock_tx = self._get_unlock_tx(lockup_tx_id)
@@ -80,5 +78,5 @@ class UnlockTxService:
         transaction = self._bsq_wallet_service.sign_tx_and_verify_no_dust_outputs(
             tx_with_btc_fee
         )
-        logger.info(f"Unlock tx: {transaction}")
+        self.logger.info(f"Unlock tx: {transaction}")
         return transaction

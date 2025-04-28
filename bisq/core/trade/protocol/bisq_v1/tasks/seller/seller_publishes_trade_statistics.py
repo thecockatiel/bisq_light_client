@@ -1,13 +1,21 @@
+from typing import TYPE_CHECKING
 from bisq.common.capability import Capability
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 
-logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 
 class SellerPublishesTradeStatistics(TradeTask):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -31,17 +39,17 @@ class SellerPublishesTradeStatistics(TradeTask):
                     self.trade, referral_id, is_tor_network_node
                 )
                 if trade_statistics.is_valid():
-                    logger.info("Publishing trade statistics")
+                    self.logger.info("Publishing trade statistics")
                     self.process_model.p2p_service.add_persistable_network_payload(
                         trade_statistics, True
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"Trade statistics are invalid. We do not publish. {trade_statistics}"
                     )
                 self.complete()
             else:
-                logger.info(
+                self.logger.info(
                     "Our peer does not have updated yet, so they will publish the trade statistics. "
                     "To avoid duplicates we do not publish from our side."
                 )

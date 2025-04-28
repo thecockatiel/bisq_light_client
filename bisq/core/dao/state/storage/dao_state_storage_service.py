@@ -1,18 +1,20 @@
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
+import contextvars
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from threading import current_thread
 from typing import TYPE_CHECKING, Optional
 from bisq.common.file.file_util import remove_and_backup_file
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.monitoring.model.dao_state_hash import DaoStateHash
 from bisq.core.dao.state.model.dao_state import DaoState
 from bisq.core.dao.state.storage.dao_state_store import DaoStateStore
 from bisq.core.network.p2p.persistence.store_service import StoreService
 import pb_pb2 as protobuf
+from utils.aio import FutureCallback
 from utils.time import get_time_ms
 
 
@@ -25,8 +27,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.storage.bsq_block_storage_service import (
         BsqBlocksStorageService,
     )
-
-logger = get_logger(__name__)
 
 
 class DaoStateStorageService(StoreService["DaoStateStore"]):
@@ -42,6 +42,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         persistence_manager: "PersistenceManager[DaoStateStore]",
     ):
         super().__init__(storage_dir, persistence_manager)
+        self.logger = get_ctx_logger(__name__)
         self._bsq_blocks_storage_service = bsq_blocks_storage_service
         self._storage_dir = storage_dir
 
@@ -93,16 +94,16 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
                     lambda: self._on_persistence_complete(ts, complete_handler)
                 )
             except Exception as e:
-                logger.error(
+                self.logger.error(
                     "Exception at persisting BSQ blocks and DaoState", exc_info=e
                 )
-
-        self._future = self._executor_service.submit(task)
+        ctx = contextvars.copy_context()
+        self._future = self._executor_service.submit(ctx.run, task)
 
     def _on_persistence_complete(self, ts: int, complete_handler: Callable[[], None]):
         # After we have written to disk we remove the daoStateAsProto in the store to avoid that it stays in
         # memory there until the next persist call.
-        logger.info(f"Persist daoState took {get_time_ms() - ts} ms")
+        self.logger.info(f"Persist daoState took {get_time_ms() - ts} ms")
         self.store.clear()
         # NOTE: we don't know if python's gc needs help or not, so we don't call GC directly
         UserThread.execute(complete_handler)
@@ -111,18 +112,22 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         self._executor_service.shutdown()
 
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
-        def handle_error(f: Future):
-            try:
-                f.result()
-            except Exception as e:
-                logger.error("Error at readFromResources", exc_info=e)
+        def handle_error(e):
+            self.logger.error("Error at readFromResources", exc_info=e)
 
         def task():
             current_thread().name = "copyBsqBlocksFromResources"
             self._bsq_blocks_storage_service.copy_from_resources(post_fix)
 
+            def on_read():
+                ctx = contextvars.copy_context()
+                self._executor_service.submit(ctx.run, inner_task).add_done_callback(
+                    FutureCallback(on_failure=handle_error)
+                )
+
             super(DaoStateStorageService, self).read_from_resources(
-                post_fix, lambda: self._executor_service.submit(inner_task).add_done_callback(handle_error)
+                post_fix,
+                on_read,
             )
 
         def inner_task():
@@ -137,7 +142,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
                     if block_list:
                         height_of_last_block = block_list[-1].height
                         if height_of_last_block != chain_height:
-                            logger.error(
+                            self.logger.error(
                                 "Error at readFromResources. "
                                 "heightOfLastBlock not same as chainHeight.\n"
                                 f"heightOfLastBlock={height_of_last_block}; chainHeight={chain_height}.\n"
@@ -153,14 +158,15 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
             current_thread().name = "Read-BsqBlocksStore-idle"
             UserThread.execute(complete_handler)
 
-        self._executor_service.submit(task).add_done_callback(handle_error)
+        ctx = contextvars.copy_context()
+        self._executor_service.submit(ctx.run, task).add_done_callback(FutureCallback(on_failure=handle_error))
 
     def get_persisted_bsq_state(self) -> DaoState:
         dao_state_as_proto = self.store.dao_state_as_proto
         if dao_state_as_proto is not None:
             ts = get_time_ms()
             dao_state = DaoState.from_proto(dao_state_as_proto, self._blocks)
-            logger.info(
+            self.logger.info(
                 f"Deserializing DaoState with {len(dao_state.blocks)} blocks took {get_time_ms() - ts} ms"
             )
             return dao_state
@@ -174,7 +180,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
             height_of_persisted_last_block == chain_height_of_persisted_dao_state
         )
         if not is_matching:
-            logger.warning(
+            self.logger.warning(
                 "heightOfPersistedLastBlock is not same as chainHeightOfPersistedDaoState.\n"
                 f"heightOfPersistedLastBlock={height_of_persisted_last_block}; "
                 f"chainHeightOfPersistedDaoState={chain_height_of_persisted_dao_state}"
@@ -196,7 +202,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
             # In copyFromResources we only check for the directory not the files inside.
             self._bsq_blocks_storage_service.make_blocks_directory()
         except Exception as e:
-            logger.error(str(e))
+            self.logger.error(str(e))
 
         # Reset to empty DaoState and DaoStateHashChain
         self.store.dao_state_as_proto = DaoState.get_bsq_state_clone_excluding_blocks(
@@ -210,9 +216,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         # resource files.
         self._remove_and_backup_dao_consensus_files(True)
 
-    def _remove_and_backup_dao_consensus_files(
-        self, remove_dao_state_store: bool
-    ):
+    def _remove_and_backup_dao_consensus_files(self, remove_dao_state_store: bool):
         # We delete all DAO related data. At re-start they will get rebuilt from resources.
         if remove_dao_state_store:
             self._remove_and_backup_file("DaoStateStore")

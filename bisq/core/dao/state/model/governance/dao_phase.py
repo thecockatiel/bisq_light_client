@@ -1,10 +1,8 @@
 from enum import IntEnum
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.state.model.immutable_dao_state_model import ImmutableDaoStateModel
 import pb_pb2 as protobuf
-
-logger = get_logger(__name__)
 
 
 class DaoPhase(PersistablePayload, ImmutableDaoStateModel):
@@ -44,6 +42,7 @@ class DaoPhase(PersistablePayload, ImmutableDaoStateModel):
     def from_proto(proto: "protobuf.DaoPhase") -> "DaoPhase":
         ordinal = proto.phase_ordinal
         if ordinal >= len(DaoPhase.Phase):
+            logger = get_ctx_logger(__name__)
             logger.warning(
                 f"We tried to access an ordinal outside of the DaoPhase.Phase enum bounds and set it to UNDEFINED. ordinal={ordinal}"
             )

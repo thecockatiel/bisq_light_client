@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
+import contextvars
 from datetime import datetime, timedelta
 import logging
 from socket import socket as Socket, SHUT_RDWR
@@ -10,6 +11,7 @@ from bisq.common.protocol.network.network_envelope import NetworkEnvelope
 from bisq.common.protocol.network.network_proto_resolver import (
     NetworkProtoResolver,
 )
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.ban_filter import BanFilter
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
@@ -21,7 +23,7 @@ from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
 )
 from bisq.core.network.p2p.network.server import Server
 from bisq.core.network.p2p.node_address import NodeAddress
-from bisq.common.setup.log_setup import get_logger
+from utils.aio import FutureCallback
 from utils.concurrency import AtomicBoolean, AtomicInt, ThreadSafeSet
 from utils.data import SimpleProperty
 from utils.formatting import to_truncated_string
@@ -35,8 +37,6 @@ if TYPE_CHECKING:
     from bisq.common.capabilities import Capabilities
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
-
 
 class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     CREATE_SOCKET_TIMEOUT = 120 * 1000
@@ -48,6 +48,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         ban_filter: Optional[BanFilter],
         config: "Config",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.service_port = service_port
         self.network_proto_resolver = network_proto_resolver
         self.ban_filter = ban_filter
@@ -91,16 +92,16 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         assert peers_node_address, "peers_node_address must not be null"
         threading.current_thread().name = f"NetworkNode.connectionExecutor:SendMessage-to-{to_truncated_string(peers_node_address.get_full_address(), 15)}"
         if peers_node_address == self.node_address_property.value:
-            logger.warning("We are sending a message to ourselves")
+            self.logger.warning("We are sending a message to ourselves")
 
         startTs = get_time_ms()
 
-        logger.debug(f"Start create socket to {peers_node_address.get_full_address()}")
+        self.logger.debug(f"Start create socket to {peers_node_address.get_full_address()}")
 
         socket: Socket = self.create_socket(peers_node_address)
 
         duration = get_time_ms() - startTs
-        logger.info(
+        self.logger.info(
             f"Socket creation to peersNodeAddress {peers_node_address.get_full_address()} took {duration} ms"
         )
 
@@ -114,7 +115,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             existing_connection = self.get_outbound_connection(peers_node_address)
 
         if existing_connection is not None:
-            logger.debug(
+            self.logger.debug(
                 f"We found in the meantime a connection for peers_node_address {peers_node_address.get_full_address()}, "
                 "so we use that for sending the message.\n"
                 "That can happen if Tor needs long for creating a new outbound connection.\n"
@@ -125,7 +126,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 socket.close()
             except Exception as e:
                 if not self.__shut_down_in_progress.get():
-                    logger.error("Error at closing socket", exc_info=e)
+                    self.logger.error("Error at closing socket", exc_info=e)
 
             existing_connection.send_message(network_envelope)
             return existing_connection
@@ -139,8 +140,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 config=self._config,
                 ban_filter=self.ban_filter,
             )
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug(
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(
                     f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                     "NetworkNode created new outbound connection:"
                     f"\nmy_node_address={self.node_address_property.value}"
@@ -161,10 +162,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             executor = self.send_message_executor
         
         peers_node_address = None
+        ctx = contextvars.copy_context()
         if isinstance(peers_node_address_or_connection, NodeAddress):
             peers_node_address: "NodeAddress" = peers_node_address_or_connection
         
-            logger.debug(
+            self.logger.debug(
                 f"Send {network_envelope.__class__.__name__} to {peers_node_address}. Message details: {network_envelope}"
             )
 
@@ -177,34 +179,31 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             if connection:
                 future = executor.submit(
-                    self._send_message_using_connection, connection, network_envelope
+                   ctx.run, self._send_message_using_connection, connection, network_envelope
                 )
             else:
-                logger.debug(
+                self.logger.debug(
                     f"We have not found any connection for peerAddress {peers_node_address}.\n\t"
                     "We will create a new outbound connection."
                 )
 
                 future = self.connection_executor.submit(
-                    self._make_connection, peers_node_address, network_envelope
+                    ctx.run, self._make_connection, peers_node_address, network_envelope
                 )
         else:
             peers_node_address = peers_node_address_or_connection.peers_node_address
             future = executor.submit(
-                        self._send_message_using_connection, peers_node_address_or_connection, network_envelope
+                        ctx.run, self._send_message_using_connection, peers_node_address_or_connection, network_envelope
                     )
         
-        def on_done(f: "Future"):
-            try:
-                f.result()
-            except Exception as e:
-                logger.debug(f"onFailure at sendMessage: peersNodeAddress={peers_node_address}\n\tmessage={network_envelope.__class__.__name__}\n\tthrowable={e}")
+        def on_failure(e): 
+            self.logger.debug(f"onFailure at sendMessage: peersNodeAddress={peers_node_address}\n\tmessage={network_envelope.__class__.__name__}\n\tthrowable={e}")
 
-        future.add_done_callback(on_done)
+        future.add_done_callback(FutureCallback(on_failure=on_failure))
         return future
 
     def lookup_outbound_connection(self, peers_node_address: "NodeAddress"):
-        logger.trace(
+        self.logger.trace(
             f"lookupOutboundConnection for peersNodeAddress={peers_node_address.get_full_address()}"
         )
         self.print_outbound_connections()
@@ -220,7 +219,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
 
     def lookup_inbound_connection(self, peers_node_address: "NodeAddress"):
-        logger.trace(f"lookupInboundConnection for peersNodeAddress={peers_node_address.get_full_address()}")
+        self.logger.trace(f"lookupInboundConnection for peersNodeAddress={peers_node_address.get_full_address()}")
         self.print_inbound_connections()
 
         return next(
@@ -237,13 +236,13 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         sb = f"outBoundConnections len()={len(self.outbound_connections)}\n\toutBoundConnections="
         for connection in self.outbound_connections:
             sb += f"{connection}\n\t"
-        logger.debug(sb)
+        self.logger.debug(sb)
 
     def print_inbound_connections(self):
         sb = f"inBoundConnections len()={len(self.inbound_connections)}\n\toutBoundConnections="
         for connection in self.inbound_connections:
             sb += f"{connection}\n\t"
-        logger.debug(sb)
+        self.logger.debug(sb)
 
     def get_inbound_connection(
         self, peers_node_address: "NodeAddress"
@@ -253,11 +252,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
         if inbound_connection_optional is not None:
             connection = inbound_connection_optional
-            logger.trace(
+            self.logger.trace(
                 f"We have found a connection in inBoundConnections. Connection.uid={connection.uid}"
             )
             if connection.stopped.get():
-                logger.trace(
+                self.logger.trace(
                     f"We have a connection which is already stopped in inBoundConnections. Connection.uid={connection.uid}"
                 )
                 self.inbound_connections.discard(connection)
@@ -275,11 +274,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         )
         if outbound_connection_optional is not None:
             connection = outbound_connection_optional
-            logger.info(
+            self.logger.info(
                 f"We have found a connection in outBoundConnections. Connection.uid={connection.uid}"
             )
             if connection.stopped.get():
-                logger.info(
+                self.logger.info(
                     f"We have a connection which is already stopped in outBoundConnections. Connection.uid={connection.uid}"
                 )
                 self.outbound_connections.discard(connection)
@@ -309,7 +308,7 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
         return {conn.peers_node_address for conn in self.get_confirmed_connections()}
 
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None) -> None:
-        logger.info("NetworkNode shutdown started")
+        self.logger.info("NetworkNode shutdown started")
 
         if not self.__shut_down_in_progress.get_and_set(True):
 
@@ -321,17 +320,17 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             num_connections = len(all_connections)
 
             if num_connections == 0:
-                logger.info("Shutdown immediately because no connections are open.")
+                self.logger.info("Shutdown immediately because no connections are open.")
                 if shut_down_complete_handler:
                     shut_down_complete_handler()
                 return
 
-            logger.info(f"Shutdown {num_connections} connections")
+            self.logger.info(f"Shutdown {num_connections} connections")
 
             shutdown_completed = AtomicInt()
 
             def timeout_handler():
-                logger.info("Shutdown completed due timeout")
+                self.logger.info("Shutdown completed due timeout")
                 if shut_down_complete_handler:
                     shut_down_complete_handler()
 
@@ -342,11 +341,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
             def on_connection_shutdown(connection: "Connection"):
                 nonlocal shutdown_completed
                 shutdown_completed.get_and_increment()
-                logger.info(
+                self.logger.info(
                     f"Shutdown of node {connection.peers_node_address} completed"
                 )
                 if shutdown_completed.get() == num_connections:
-                    logger.info("Shutdown completed with all connections closed")
+                    self.logger.info("Shutdown completed with all connections closed")
                     timer.stop()
                     self.connection_executor.shutdown(wait=False, cancel_futures=True)
                     self.send_message_executor.shutdown(wait=False, cancel_futures=True)
@@ -459,6 +458,7 @@ class NetworkNodeServerConnectionListener(ConnectionListener):
     def __init__(self, network_node: "NetworkNode") -> None:
         super().__init__()
         self.network_node = network_node
+        self.logger = get_ctx_logger(__name__)
 
     def on_connection(self, connection: "Connection"):
         if not connection.stopped.get():
@@ -470,7 +470,7 @@ class NetworkNodeServerConnectionListener(ConnectionListener):
     def on_disconnect(
         self, close_connection_reason: "CloseConnectionReason", connection: "Connection"
     ):
-        logger.trace(
+        self.logger.trace(
             f"on_disconnect at server socket connectionListener\n\tconnection={connection}"
         )
         self.network_node.inbound_connections.discard(connection)

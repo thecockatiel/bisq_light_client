@@ -1,18 +1,15 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.voteresult.vote_result_exception import (
     VoteResultException,
 )
 from bisq.core.dao.state.model.governance.issuance_type import IssuanceType
-from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.dao.state.model.governance.merit_list import MeritList
 from utils.preconditions import check_argument
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-logger = get_logger(__name__)
 
 
 class MeritConsensus:
@@ -40,6 +37,7 @@ class MeritConsensus:
         tx = dao_state_service.get_tx(blind_vote_tx_id)
         blind_vote_tx_height = tx.block_height if tx else 0
         if blind_vote_tx_height == 0:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Error at get_merit_stake: blindVoteTx not found in daoStateService. blindVoteTxId={blind_vote_tx_id}"
             )
@@ -75,7 +73,9 @@ class MeritConsensus:
 
     @staticmethod
     def _is_signature_valid(
-        signature_from_merit: bytes, pub_key_as_hex: str, blind_vote_tx_id: str
+        signature_from_merit: bytes,
+        pub_key_as_hex: str,
+        blind_vote_tx_id: str,
     ) -> bool:
         # We verify if signature of hash of blindVoteTxId is correct. EC key from first input for blind vote tx is
         # used for signature.
@@ -91,10 +91,12 @@ class MeritConsensus:
                 signature_from_merit, bytes.fromhex(blind_vote_tx_id)
             )
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Signature verification of issuance failed: {str(e)}")
             return False
 
         if not result:
+            logger = get_ctx_logger(__name__)
             logger.error(
                 f"Signature verification of issuance failed: blindVoteTxId={blind_vote_tx_id}, pubKeyAsHex={pub_key_as_hex}"
             )
@@ -102,7 +104,10 @@ class MeritConsensus:
 
     @staticmethod
     def get_weighted_merit_amount(
-        amount: int, issuance_height: int, block_height: int, blocks_per_year: int
+        amount: int,
+        issuance_height: int,
+        block_height: int,
+        blocks_per_year: int,
     ) -> int:
         if issuance_height > block_height:
             raise ValueError(
@@ -140,15 +145,14 @@ class MeritConsensus:
         # weighted amount.
         # We need to multiply first before we divide!
         weighted_amount = (amount * inverse_age) // max_age
-
+        logger = get_ctx_logger(__name__)
         logger.debug(
             f"get_weighted_merit_amount: age={age}, inverse_age={inverse_age}, weighted_amount={weighted_amount}, amount={amount}"
         )
         return weighted_amount
 
     @staticmethod
-    def get_currently_available_merit(
-        merit_list: "MeritList", current_chain_height: int
+    def get_currently_available_merit(merit_list: "MeritList", current_chain_height: int
     ) -> int:
         # We need to take the chain height when the blindVoteTx got published so we get the same merit for the vote even at
         # later blocks (merit decreases with each block).
@@ -176,6 +180,7 @@ class MeritConsensus:
                     MeritConsensus.BLOCKS_PER_YEAR,
                 )
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.error(f"Error at get_currently_available_merit: {str(e)}")
 
         return total_merit

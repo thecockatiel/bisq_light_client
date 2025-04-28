@@ -1,9 +1,9 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterable, Optional
 
 from bisq.common.config.config import Config
 from bisq.common.crypto.encryption import ECPrivkey
 from bisq.common.crypto.hash import get_sha256_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
@@ -53,14 +53,16 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 
 
-logger = get_logger(__name__)
-
-
 # TODO
 class TradeWalletService:
     MIN_DELAYED_PAYOUT_TX_FEE = Coin.value_of(1000)
 
-    def __init__(self, wallets_setup: "WalletsSetup", preferences: "Preferences"):
+    def __init__(
+        self,
+        wallets_setup: "WalletsSetup",
+        preferences: "Preferences",
+    ):
+        self.logger = get_ctx_logger(__name__)
         self._wallets_setup = wallets_setup
         self._preferences = preferences
         self._wallet_config: Optional["WalletConfig"] = None
@@ -163,10 +165,10 @@ class TradeWalletService:
             return trading_fee_tx
         except Exception as e:
             if self._wallet and send_request and send_request.coin_selector:
-                logger.error(
+                self.logger.error(
                     f"Balance for coin selector at create_btc_trading_fee_tx = {self._wallet.get_coin_selector_balance(send_request.coin_selector).to_friendly_string()}"
                 )
-            logger.error(
+            self.logger.error(
                 f"create_btc_trading_fee_tx failed: trading_fee_tx={trading_fee_tx}, tx_outputs={trading_fee_tx.outputs}"
             )
             raise e
@@ -224,7 +226,9 @@ class TradeWalletService:
             # The reserved amount we need for the trade we send to our trade reserved_for_trade_address
             prepared_bsq_tx.add_output(
                 TransactionOutput.from_coin_and_address(
-                    reserved_funds_for_offer, reserved_for_trade_address, prepared_bsq_tx
+                    reserved_funds_for_offer,
+                    reserved_for_trade_address,
+                    prepared_bsq_tx,
                 )
             )
 
@@ -287,7 +291,7 @@ class TradeWalletService:
             )
             return result_tx
         except Exception as e:
-            logger.error(
+            self.logger.error(
                 f"complete_bsq_trading_fee_tx errored: prepared_bsq_tx={prepared_bsq_tx}"
             )
             raise e
@@ -1017,7 +1021,8 @@ class TradeWalletService:
         my_signature = my_multi_sig_key_pair.ecdsa_sign(sig_hash, self._password)
 
         WalletService.print_tx(
-            "prepared mediated payoutTx for sig creation", prepared_payout_tx
+            "prepared mediated payoutTx for sig creation",
+            prepared_payout_tx,
         )
         WalletService.verify_transaction(prepared_payout_tx)
 
@@ -1432,7 +1437,7 @@ class TradeWalletService:
             self._wallet.complete_tx(send_request)
         except Exception as e:
             if send_request and send_request.tx:
-                logger.warning(
+                self.logger.warning(
                     f"add_available_inputs_and_change_outputs: send_request.tx={send_request.tx}, send_request.tx.outputs={send_request.tx.outputs}"
                 )
             raise WalletException(e) from e
@@ -1458,7 +1463,7 @@ class TradeWalletService:
             if transaction_output.get_value().is_less_than(
                 Restrictions.get_min_non_dust_output()
             ):
-                logger.info(
+                self.logger.info(
                     f"Your transaction would have contained a dust output of {transaction_output}",
                 )
             else:
@@ -1467,13 +1472,13 @@ class TradeWalletService:
         # If dust was detected, keep_transaction_outputs will have fewer elements than original_transaction_outputs
         # Set the transaction outputs to what we saved in keep_transaction_outputs, thus discarding dust.
         if len(keep_transaction_outputs) != len(original_transaction_outputs):
-            logger.info(
+            self.logger.info(
                 "Dust output was detected and removed, the new output is as follows:"
             )
             transaction.clear_outputs()
             for transaction_output in keep_transaction_outputs:
                 transaction.add_output(transaction_output)
-                logger.info(f"{transaction_output}")
+                self.logger.info(f"{transaction_output}")
             return True  # Dust was removed
 
         return False  # No action necessary

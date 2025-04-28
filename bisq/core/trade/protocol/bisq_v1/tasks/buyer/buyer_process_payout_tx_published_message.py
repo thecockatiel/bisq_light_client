@@ -1,4 +1,5 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.trade.model.trade_state import TradeState
@@ -9,10 +10,15 @@ from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bisq.core.util.validator import Validator
 from utils.preconditions import check_argument
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 
 class BuyerProcessPayoutTxPublishedMessage(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -48,7 +54,7 @@ class BuyerProcessPayoutTxPublishedMessage(TradeTask):
                     self.trade.get_id()
                 )
             else:
-                logger.info(
+                self.logger.info(
                     f"We got the payout tx already set from BuyerSetupPayoutTxListener and do nothing here. trade ID={self.trade.get_id()}"
                 )
 

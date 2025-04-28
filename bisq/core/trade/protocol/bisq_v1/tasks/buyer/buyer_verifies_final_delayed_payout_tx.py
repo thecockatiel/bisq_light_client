@@ -1,4 +1,5 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.trade.bisq_v1.trade_data_validation import TradeDataValidation
 from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
@@ -6,10 +7,15 @@ from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
 )
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
-logger = get_logger(__name__)
-
+if TYPE_CHECKING:
+    from bisq.common.taskrunner.task_runner import TaskRunner
+    from bisq.core.trade.model.bisq_v1.trade import Trade
 
 class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -41,7 +47,7 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
                     selection_height, input_amount, trade_tx_fee
                 )
             )
-            logger.info(
+            self.logger.info(
                 f"Verify delayedPayoutTx using selectionHeight {selection_height} and receivers {delayed_payout_tx_receivers}"
             )
 
@@ -55,7 +61,7 @@ class BuyerVerifiesFinalDelayedPayoutTx(TradeTask):
                 != final_delayed_payout_tx.get_tx_id()
             ):
                 error_msg = "TxIds of buyersDelayedPayoutTx and finalDelayedPayoutTx must be the same."
-                logger.error(
+                self.logger.error(
                     f"{error_msg} \nbuyersDelayedPayoutTx={buyers_delayed_payout_tx}, \nfinalDelayedPayoutTx={final_delayed_payout_tx}, "
                     f"\nBtcWalletService.chainHeight={self.process_model.btc_wallet_service.get_best_chain_height()}, "
                     f"\nDaoState.chainHeight={self.process_model.dao_facade.chain_height}, "

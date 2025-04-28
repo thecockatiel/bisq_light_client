@@ -1,22 +1,18 @@
-import utils.aio
-from bisq.common.setup.log_setup import (
-    configure_logging,
-    get_logger,
-    set_custom_log_level,
-)
+from pathlib import Path
+from bisq.common.setup.log_setup import setup_log_for_test
+ 
 
 from utils.tor import is_tor_socks_port_async, parse_tor_hidden_service_port
 from utils.twisted_utils import cancel_delayed_calls, wrap_with_ensure_deferred
 
-configure_logging(None)
-set_custom_log_level("TRACE")
+data_dir = Path(__file__).parent.joinpath(".testdata")
+data_dir.mkdir(exist_ok=True, parents=True)
+logger = setup_log_for_test("run_tor", data_dir)
 
 import unittest as _unittest
 from twisted.trial import unittest
 
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
-
-logger = get_logger(__name__)
 
 disabled = True
 

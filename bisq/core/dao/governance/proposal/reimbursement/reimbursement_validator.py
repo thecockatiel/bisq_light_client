@@ -22,7 +22,9 @@ class ReimbursementValidator(ProposalValidator, ConsensusCritical):
     """Changes here can potentially break consensus!"""
 
     def __init__(
-        self, dao_state_service: "DaoStateService", period_service: "PeriodService"
+        self,
+        dao_state_service: "DaoStateService",
+        period_service: "PeriodService",
     ):
         super().__init__(dao_state_service, period_service)
 

@@ -1,6 +1,6 @@
 from collections import defaultdict
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.account.witness.account_age_witness_service import (
     AccountAgeWitnessService,
 )
@@ -15,8 +15,7 @@ from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
-
-logger = get_logger(__name__)
+ 
 
 
 class OfferFilterService:
@@ -28,6 +27,7 @@ class OfferFilterService:
         filter_manager: "FilterManager",
         account_age_witness_service: "AccountAgeWitnessService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.user = user
         self.preferences = preferences
         self.filter_manager = filter_manager
@@ -142,7 +142,7 @@ class OfferFilterService:
             my_trade_limit = 0
 
         offer_min_amount = offer.min_amount.value
-        logger.debug(
+        self.logger.debug(
             f"isInsufficientTradeLimit account={account.account_name if account else 'None'}, "
             f"myTradeLimit={Coin.value_of(my_trade_limit).to_friendly_string()}, "
             f"offerMinAmount={Coin.value_of(offer_min_amount).to_friendly_string()}"

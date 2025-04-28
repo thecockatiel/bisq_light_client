@@ -1,15 +1,16 @@
 from concurrent.futures import Future
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 from bisq.common.capabilities import Capabilities
 from bisq.common.capability import Capability
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.governance.blindvote.network.messages.republish_governance_data_request import (
     RepublishGovernanceDataRequest,
 )
+from utils.aio import FutureCallback
 
 
 if TYPE_CHECKING:
@@ -17,8 +18,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.node_address import NodeAddress
-
-logger = get_logger(__name__)
 
 
 class RepublishGovernanceDataHandler:
@@ -35,6 +34,7 @@ class RepublishGovernanceDataHandler:
         peer_manager: "PeerManager",
         seed_nodes_repository: "SeedNodeRepository",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._seed_node_addresses = set(seed_nodes_repository.get_seed_node_addresses())
@@ -62,50 +62,57 @@ class RepublishGovernanceDataHandler:
                 timedelta(seconds=RepublishGovernanceDataHandler.TIMEOUT_SEC),
             )
 
-        logger.info(f"Sending republishGovernanceDataRequest to peer {node_address}.")
+        self.logger.info(
+            f"Sending republishGovernanceDataRequest to peer {node_address}."
+        )
         future = self._network_node.send_message(
             node_address, republish_governance_data_request
         )
-        future.add_done_callback(lambda f: self._handle_send_result(f, node_address))
 
-    def _handle_timeout(self, node_address: "NodeAddress"):
-        # setup before sending to avoid race conditions
-        if not self._stopped:
-            logger.warning(
-                f"A timeout occurred while sending republishGovernanceDataRequest to nodeAddress: {node_address}"
-            )
-            self._connect_to_next_node()
-        else:
-            logger.warning(
-                "We have stopped already. We ignore that timeoutTimer.run call."
-                "Might be caused by a previous networkNode.sendMessage.onFailure."
-            )
-
-    def _handle_send_result(self, future: "Future", node_address: "NodeAddress"):
-        try:
-            future.result()
+        def on_success(r):
             if not self._stopped:
-                logger.info(
+                self.logger.info(
                     f"Sending of RepublishGovernanceDataRequest message to peer {node_address.get_full_address()} succeeded."
                 )
                 self._stop()
             else:
-                logger.debug(
+                self.logger.debug(
                     "We have stopped already. We ignore that networkNode.sendMessage.onSuccess call."
                     "Might be caused by a previous timeout."
                 )
-        except Exception as e:
+
+        def on_failure(e):
             if not self._stopped:
-                logger.info(
+                self.logger.info(
                     f"Sending republishGovernanceDataRequest to {node_address} failed. Exception: {e}"
                 )
                 self._handle_fault(node_address)
                 self._connect_to_next_node()
             else:
-                logger.debug(
+                self.logger.debug(
                     "We have stopped already. We ignore that networkNode.sendMessage.onFailure call."
                     "Might be caused by a previous timeout."
                 )
+
+        future.add_done_callback(
+            FutureCallback(
+                on_success,
+                on_failure,
+            )
+        )
+
+    def _handle_timeout(self, node_address: "NodeAddress"):
+        # setup before sending to avoid race conditions
+        if not self._stopped:
+            self.logger.warning(
+                f"A timeout occurred while sending republishGovernanceDataRequest to nodeAddress: {node_address}"
+            )
+            self._connect_to_next_node()
+        else:
+            self.logger.warning(
+                "We have stopped already. We ignore that timeoutTimer.run call."
+                "Might be caused by a previous networkNode.sendMessage.onFailure."
+            )
 
     def _connect_to_next_node(self):
         # First we try our connected seed nodes
@@ -138,7 +145,7 @@ class RepublishGovernanceDataHandler:
                 self._seed_node_addresses.discard(node_address)
                 self._send_republish_request(node_address)
             else:
-                logger.warning(
+                self.logger.warning(
                     "No more seed nodes available. We try any of our other peers."
                 )
                 self._connect_to_any_full_node()
@@ -175,7 +182,7 @@ class RepublishGovernanceDataHandler:
             for peer in selected_peers:
                 self._send_republish_request(peer.node_address)
         else:
-            logger.warning("No other nodes found. We try again in 60 seconds.")
+            self.logger.warning("No other nodes found. We try again in 60 seconds.")
             UserThread.run_after(self._connect_to_next_node, timedelta(seconds=60))
 
     def _handle_fault(self, node_address: "NodeAddress"):

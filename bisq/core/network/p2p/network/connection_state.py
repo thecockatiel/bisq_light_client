@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
@@ -11,13 +12,11 @@ from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.prefixed_sealed_and_signed_message import PrefixedSealedAndSignedMessage
-from bisq.common.setup.log_setup import get_logger
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
 
 class ConnectionState(MessageListener):
     # We protect the INITIAL_DATA_EXCHANGE PeerType for max. 4 minutes in case not all expected initialDataRequests
@@ -38,6 +37,7 @@ class ConnectionState(MessageListener):
         ConnectionState.expected_initial_data_responses += 1
 
     def __init__(self, connection: 'Connection'):
+        self.logger = get_ctx_logger(__name__)
         self.connection = connection
         self.peer_type = PeerType.PEER
         self.num_initial_data_requests = 0
@@ -108,7 +108,7 @@ class ConnectionState(MessageListener):
 
         self.stop_timer()
         self.peer_type = PeerType.PEER
-        logger.info(f"We have changed the peerType from INITIAL_DATA_EXCHANGE to PEER as we have received all "
+        self.logger.info(f"We have changed the peerType from INITIAL_DATA_EXCHANGE to PEER as we have received all "
                     f"expected initial data responses at connection with peer {self.connection.peers_node_address}/{self.connection.uid}.")
 
     def stop_timer(self):

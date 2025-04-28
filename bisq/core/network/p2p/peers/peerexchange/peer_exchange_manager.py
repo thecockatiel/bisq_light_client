@@ -1,6 +1,6 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.connection_listener import ConnectionListener
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.peerexchange.peer import Peer
     from bisq.core.network.p2p.network.network_node import NetworkNode
 
-logger = get_logger(__name__)
 
 
 class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Listener):
@@ -26,9 +25,11 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
     RETRY_DELAY_AFTER_ALL_CON_LOST_SEC = 3
     REQUEST_PERIODICALLY_INTERVAL_MIN = 10
 
-    def __init__(self, network_node: "NetworkNode",
+    def __init__(self,
+                 network_node: "NetworkNode",
                  seed_node_repository: "SeedNodeRepository",
                  peer_manager: "PeerManager"):
+        self.logger = get_ctx_logger(__name__)
         self.handler_map: dict["NodeAddress", "PeerExchangeHandler"] = {}
         
         self.retry_timer: Optional["Timer"] = None
@@ -79,7 +80,7 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
             for _ in range(min(8, self.peer_manager.get_max_connections())):
                 self.request_with_available_peers()
         else:
-            logger.info("We don't have any reported or persisted peers, so we need to wait until we receive from the seed node the initial peer list.")
+            self.logger.info("We don't have any reported or persisted peers, so we need to wait until we receive from the seed node the initial peer list.")
 
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -90,12 +91,12 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
         pass
 
     def on_disconnect(self, close_connection_reason, connection):
-        logger.debug(f"onDisconnect closeConnectionReason={close_connection_reason}, nodeAddressOpt={connection.peers_node_address}")
+        self.logger.debug(f"onDisconnect closeConnectionReason={close_connection_reason}, nodeAddressOpt={connection.peers_node_address}")
         self._close_handler(connection)
 
         if self.retry_timer is None:
             def retry_action():
-                logger.trace("ConnectToMorePeersTimer called from onDisconnect code path")
+                self.logger.trace("ConnectToMorePeersTimer called from onDisconnect code path")
                 self._stop_retry_timer()
                 self.request_with_available_peers()
 
@@ -135,25 +136,22 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
     def on_message(self, network_envelope, connection):
         if isinstance(network_envelope, GetPeersRequest):
             if self.stopped:
-                logger.warning("We have stopped already. We ignore that onMessage call.")
+                self.logger.warning("We have stopped already. We ignore that onMessage call.")
                 return 
 
             class Listener(GetPeersRequestHandler.Listener):
-                def __init__(self, peer_manager: "PeerManager"):
-                    self.peer_manager = peer_manager
-                
-                def on_complete(self):
-                    logger.trace(f"PeerExchangeHandshake completed.\nConnection={connection}")
+                def on_complete(self_):
+                    self.logger.trace(f"PeerExchangeHandshake completed.\nConnection={connection}")
 
-                def on_fault(self, error_message, connection):
-                    logger.trace(f"PeerExchangeHandshake failed.\nerrorMessage={error_message}\n"
+                def on_fault(self_, error_message, connection):
+                    self.logger.trace(f"PeerExchangeHandshake failed.\nerrorMessage={error_message}\n"
                                             f"connection={connection}")
                     self.peer_manager.handle_connection_fault(connection=connection)
 
             get_peers_request_handler = GetPeersRequestHandler(
                 self.network_node,
                 self.peer_manager,
-                Listener(self.peer_manager)
+                Listener()
             )
             get_peers_request_handler.handle(network_envelope, connection)
             
@@ -163,78 +161,73 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def request_reported_peers(self, node_address: "NodeAddress", remaining_node_addresses: list["NodeAddress"]):
-        logger.debug(f"requestReportedPeers nodeAddress={node_address}; remainingNodeAddresses.size={len(remaining_node_addresses)}")
+        self.logger.debug(f"requestReportedPeers nodeAddress={node_address}; remainingNodeAddresses.size={len(remaining_node_addresses)}")
         
         if self.stopped:
-            logger.trace("We have stopped already. We ignore that requestReportedPeers call.")
+            self.logger.trace("We have stopped already. We ignore that requestReportedPeers call.")
             return
         
         if node_address not in self.handler_map:
             class Listener(PeerExchangeHandler.Listener):
-                def __init__(self, outer: "PeerExchangeManager", node_address: "NodeAddress", remaining_node_addresses: list["NodeAddress"]):
-                    self.outer = outer
-                    self.node_address = node_address
-                    self.remaining_node_addresses = remaining_node_addresses
+                def on_complete(self_):
+                    self.handler_map.pop(node_address)
+                    self.request_with_available_peers()
 
-                def on_complete(self):
-                    self.outer.handler_map.pop(self.node_address)
-                    self.outer.request_with_available_peers()
+                def on_fault(self_, error_message: str, connection: Optional["Connection"]):
+                    self.logger.debug(f"PeerExchangeHandshake of outbound connection failed.\n\terrorMessage={error_message}\n\t"
+                                f"nodeAddress={node_address}")
 
-                def on_fault(self, error_message: str, connection: Optional["Connection"]):
-                    logger.debug(f"PeerExchangeHandshake of outbound connection failed.\n\terrorMessage={error_message}\n\t"
-                                f"nodeAddress={self.node_address}")
-
-                    self.outer.peer_manager.handle_connection_fault(node_address=self.node_address)
-                    self.outer.handler_map.pop(self.node_address)
+                    self.peer_manager.handle_connection_fault(node_address=node_address)
+                    self.handler_map.pop(node_address)
                     
-                    if self.remaining_node_addresses:
-                        if not self.outer.peer_manager.has_sufficient_connections():
-                            logger.debug("There are remaining nodes available for requesting peers. "
+                    if remaining_node_addresses:
+                        if not self.peer_manager.has_sufficient_connections():
+                            self.logger.debug("There are remaining nodes available for requesting peers. "
                                          "We will try getReportedPeers again.")
-                            next_candidate = random.choice(self.remaining_node_addresses)
+                            next_candidate = random.choice(remaining_node_addresses)
                             try:
-                                self.remaining_node_addresses.remove(next_candidate)
+                                remaining_node_addresses.remove(next_candidate)
                             except:
                                 pass
-                            self.outer.request_reported_peers(next_candidate, self.remaining_node_addresses)
+                            self.request_reported_peers(next_candidate, remaining_node_addresses)
                         else:
                             # That path will rarely be reached
-                            logger.debug("We have already sufficient connections.")
+                            self.logger.debug("We have already sufficient connections.")
                     else:
-                        logger.debug("There is no remaining node available for requesting peers. "
+                        self.logger.debug("There is no remaining node available for requesting peers. "
                                     "That is expected if no other node is online.\n\t"
                                     "We will try again after a pause.")
-                        if self.outer.retry_timer is None:
+                        if self.retry_timer is None:
                             def retry_action():
-                                if not self.outer.stopped:
-                                    logger.trace("retryTimer called from requestReportedPeers code path")
-                                    self.outer._stop_retry_timer()
-                                    self.outer.request_with_available_peers()
+                                if not self.stopped:
+                                    self.logger.trace("retryTimer called from requestReportedPeers code path")
+                                    self._stop_retry_timer()
+                                    self.request_with_available_peers()
                                 else:
-                                    self.outer._stop_retry_timer()
-                                    logger.warning("We have stopped already. We ignore that retryTimer.run call.")
+                                    self._stop_retry_timer()
+                                    self.logger.warning("We have stopped already. We ignore that retryTimer.run call.")
 
-                            self.outer.retry_timer = UserThread.run_after(retry_action, timedelta(seconds=PeerExchangeManager.RETRY_DELAY_SEC))
+                            self.retry_timer = UserThread.run_after(retry_action, timedelta(seconds=PeerExchangeManager.RETRY_DELAY_SEC))
 
             peer_exchange_handler = PeerExchangeHandler(
                 self.network_node,
                 self.peer_manager,
-                Listener(self, node_address, remaining_node_addresses)
+                Listener()
             )
             self.handler_map[node_address] = peer_exchange_handler
             peer_exchange_handler.send_get_peers_request_after_random_delay(node_address)
         else:
-            logger.trace(f"We have started already a peerExchangeHandler. "
+            self.logger.trace(f"We have started already a peerExchangeHandler. "
                         f"We ignore that call. nodeAddress={node_address}")
 
 
     def request_with_available_peers(self):
         if self.stopped:
-            logger.trace("We have stopped already. We ignore that request_with_available_peers call.")
+            self.logger.trace("We have stopped already. We ignore that request_with_available_peers call.")
             return
         
         if self.peer_manager.has_sufficient_connections():
-            logger.debug("We have already sufficient connections.")
+            self.logger.debug("We have already sufficient connections.")
             return
         
         # We create a new list of not connected candidates
@@ -261,8 +254,8 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
         random.shuffle(filtered_seed_node_addresses)
         node_list.extend(filtered_seed_node_addresses)
 
-        logger.debug(f"Number of peers in list for connect_to_more_peers: {len(node_list)}")
-        logger.trace(f"Filtered connect_to_more_peers list: list={node_list}")
+        self.logger.debug(f"Number of peers in list for connect_to_more_peers: {len(node_list)}")
+        self.logger.trace(f"Filtered connect_to_more_peers list: list={node_list}")
         
         if node_list:
             # Don't shuffle as we want the seed nodes at the last entries
@@ -273,16 +266,16 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
                 pass
             self.request_reported_peers(next_candidate, node_list)
         else:
-            logger.debug("No more peers are available for request_reported_peers. We will try again after a pause.")
+            self.logger.debug("No more peers are available for request_reported_peers. We will try again after a pause.")
             if self.retry_timer is None:
                 def retry_action():
                     if not self.stopped:
-                        logger.trace("retryTimer called from request_with_available_peers code path")
+                        self.logger.trace("retryTimer called from request_with_available_peers code path")
                         self._stop_retry_timer()
                         self.request_with_available_peers()
                     else:
                         self._stop_retry_timer()
-                        logger.warning("We have stopped already. We ignore that retryTimer.run call.")
+                        self.logger.warning("We have stopped already. We ignore that retryTimer.run call.")
 
                 self.retry_timer = UserThread.run_after(retry_action, timedelta(seconds=PeerExchangeManager.RETRY_DELAY_SEC))
             
@@ -304,12 +297,12 @@ class PeerExchangeManager(MessageListener, ConnectionListener, PeerManager.Liste
         self._start_periodic_timer()
         
         if self.retry_timer is not None:
-            logger.debug("retryTimer already started")
+            self.logger.debug("retryTimer already started")
             return
         
         def retry_action():
             self.stopped = False
-            logger.trace("retryTimer called from restart")
+            self.logger.trace("retryTimer called from restart")
             self._stop_retry_timer()
             self.request_with_available_peers()
 

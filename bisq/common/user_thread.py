@@ -2,10 +2,10 @@ from datetime import timedelta
 import random
 from collections.abc import Callable
 from bisq.common.timer import Timer
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from bisq.common.twisted_timer import TwistedTimer
  
-logger = get_logger(__name__)
+logger = get_base_logger(__name__)
 
 class UserThread:
     """
@@ -16,10 +16,6 @@ class UserThread:
     Provides also methods for delayed and periodic executions.
     """
     timer_class: Timer = TwistedTimer
-
-    @classmethod
-    def set_timer_class(cls, timer_class: Timer):
-        cls.timer_class = timer_class
 
     @classmethod
     def execute(cls, runnable: Callable[[], None]):

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Set, List
+from typing import TYPE_CHECKING
 from bisq.core.support.dispute.agent.dispute_agent_service import DisputeAgentService
 from bisq.core.support.dispute.mediation.mediator.mediator import Mediator
 
@@ -11,7 +11,7 @@ class MediatorService(DisputeAgentService[Mediator]):
     def __init__(self, p2p_service: "P2PService", filter_manager: "FilterManager"):
         super().__init__(p2p_service, filter_manager)
 
-    def get_dispute_agent_set(self, banned_dispute_agents: List[str]) -> Set["Mediator"]:
+    def get_dispute_agent_set(self, banned_dispute_agents: list[str]) -> set["Mediator"]:
         return {
             data.protected_storage_payload
             for data in self.p2p_service.data_map.values()
@@ -20,7 +20,7 @@ class MediatorService(DisputeAgentService[Mediator]):
                  data.protected_storage_payload.node_address.get_full_address() not in banned_dispute_agents)
         }
 
-    def get_dispute_agents_from_filter(self) -> List[str]:
+    def get_dispute_agents_from_filter(self) -> list[str]:
         return self.filter_manager.get_filter().mediators if self.filter_manager.get_filter() else []
 
     def get_mediators(self):

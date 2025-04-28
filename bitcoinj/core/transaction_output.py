@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional, Union
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.address import Address
@@ -20,8 +20,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction_input import TransactionInput
 
 
-logger = get_logger(__name__)
-
 
 # TODO
 class TransactionOutput:
@@ -32,6 +30,7 @@ class TransactionOutput:
         parent_tx: Optional["Transaction"] = None,
         available_for_spending: bool = True,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.parent = parent_tx
         self._ec_tx_output = ec_tx_output
         self.spent_by: Optional["TransactionInput"] = None
@@ -146,7 +145,7 @@ class TransactionOutput:
                 return False
         except Exception as e:
             # Just means we didn't understand the output of this transaction: ignore it.
-            logger.debug(
+            self.logger.debug(
                 "Could not parse tx {} output script: {}".format(
                     (
                         self.parent.get_tx_id()

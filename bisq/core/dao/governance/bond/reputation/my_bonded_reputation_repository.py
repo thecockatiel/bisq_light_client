@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.wallet_transactions_change_listener import (
     WalletTransactionsChangeListener,
 )
@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.wallet.bsq_wallet_service import BsqWalletService
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-logger = get_logger(__name__)
-
 
 class MyBondedReputationRepository(DaoSetupService, WalletTransactionsChangeListener):
     """
@@ -37,6 +35,7 @@ class MyBondedReputationRepository(DaoSetupService, WalletTransactionsChangeList
         bsq_wallet_service: "BsqWalletService",
         my_reputation_list_service: "MyReputationListService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._bsq_wallet_service = bsq_wallet_service
         self._my_reputation_list_service = my_reputation_list_service
@@ -69,7 +68,7 @@ class MyBondedReputationRepository(DaoSetupService, WalletTransactionsChangeList
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def update(self):
-        logger.debug("update")
+        self.logger.debug("update")
         # It can be that the same salt/hash is in several lockupTxs, so we use the bondByLockupTxIdMap to eliminate
         # duplicates by the collection algorithm.
         bond_by_lockup_tx_id_map = dict[str, "MyBondedReputation"]()

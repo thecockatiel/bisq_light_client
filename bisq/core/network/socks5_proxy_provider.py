@@ -1,13 +1,9 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import Optional
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.p2p.network.socks5_proxy_internal_factory import (
     Socks5ProxyInternalFactory,
 )
-from bisq.common.setup.log_setup import get_logger
-
-logger = get_logger(__name__)
-
-
 class Socks5ProxyProvider:
     """
     By default there is only used the bisq internal Tor proxy, which is used for the P2P network
@@ -21,6 +17,7 @@ class Socks5ProxyProvider:
         socks5_proxy_btc_address: str = None,
         socks5_proxy_http_address: str = None,
     ):
+        self.logger = get_ctx_logger(__name__)
         # proxy used for btc network
         self.socks5_proxy_btc = self.get_proxy_from_address(socks5_proxy_btc_address)
 
@@ -51,8 +48,7 @@ class Socks5ProxyProvider:
     ):
         self._socks5_proxy_internal_factory = bisq_socks5_proxy_factory
 
-    @staticmethod
-    def get_proxy_from_address(socks5_proxy_address: str) -> Optional[Socks5Proxy]:
+    def get_proxy_from_address(self, socks5_proxy_address: str) -> Optional[Socks5Proxy]:
         if socks5_proxy_address:
             proxy = Socks5Proxy("", 0)
             if "socks5://" in socks5_proxy_address:
@@ -69,13 +65,13 @@ class Socks5ProxyProvider:
                             proxy.username = user_pass_tokens[0]
                             proxy.password = user_pass_tokens[1]
                         else:
-                            logger.error(
+                            self.logger.error(
                                 f"Incorrect format for socks5_proxy_address. Should be: username:password@host:port.\nsocks5_proxy_address={socks5_proxy_address}"
                             )
                             return None
                     socks5_proxy_address = tokens[1]
                 else:
-                    logger.error(
+                    self.logger.error(
                         f"Incorrect format for socks5_proxy_address. Should be: username:password@host:port.\nnsocks5_proxy_address={socks5_proxy_address}"
                     )
                     return None
@@ -83,7 +79,7 @@ class Socks5ProxyProvider:
             tokens = socks5_proxy_address.split(":")
             if len(tokens) == 2:
                 if not tokens[1].isdigit():
-                    logger.error(
+                    self.logger.error(
                         f"Port must be a number. socks5_proxy_address={socks5_proxy_address}"
                     )
                     return None
@@ -92,7 +88,7 @@ class Socks5ProxyProvider:
                 return proxy
                 # NOTE: in java implementation it instantly tests the connection to the proxy, should we also do it?
             else:
-                logger.error(
+                self.logger.error(
                     f"Incorrect format for socks5_proxy_address. Should be: host:port.\nsocks5_proxy_address={socks5_proxy_address}"
                 )
         return None

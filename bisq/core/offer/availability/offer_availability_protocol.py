@@ -1,6 +1,6 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task_runner import TaskRunner
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
@@ -23,14 +23,15 @@ if TYPE_CHECKING:
         DecryptedMessageWithPubKey,
     )
 
-logger = get_logger(__name__)
 
 class OfferAvailabilityProtocol:
     TIMEOUT_SEC = 90
 
-    def __init__(self, model: 'OfferAvailabilityModel', 
+    def __init__(self,
+                 model: 'OfferAvailabilityModel', 
                  result_handler: 'ResultHandler',
                  error_message_handler: 'ErrorMessageHandler'):
+        self.logger = get_ctx_logger(__name__)
         self.model = model
         self.result_handler = result_handler
         self.error_message_handler = error_message_handler
@@ -82,7 +83,7 @@ class OfferAvailabilityProtocol:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def handle_offer_availability_response(self, message: 'OfferAvailabilityResponse', peers_node_address: 'NodeAddress'):
-        logger.info(f"Received handleOfferAvailabilityResponse from {peers_node_address} with offerId {message.offer_id} and uid {message.uid}")
+        self.logger.info(f"Received handleOfferAvailabilityResponse from {peers_node_address} with offerId {message.offer_id} and uid {message.uid}")
 
         self.stop_timeout()
         self.start_timeout()
@@ -108,7 +109,7 @@ class OfferAvailabilityProtocol:
                 timedelta(seconds=OfferAvailabilityProtocol.TIMEOUT_SEC),
             )
         else:
-            logger.warning("timeoutTimer already created. That must not happen.")
+            self.logger.warning("timeoutTimer already created. That must not happen.")
 
     def stop_timeout(self):
         if self.timeout_timer is not None:
@@ -116,18 +117,18 @@ class OfferAvailabilityProtocol:
             self.timeout_timer = None
 
     def _handle_timeout(self):
-        logger.debug(f"Timeout reached at {self}")
+        self.logger.debug(f"Timeout reached at {self}")
         self.model.offer.state = OfferState.MAKER_OFFLINE
         self.error_message_handler("Timeout reached: Peer has not responded.")
 
     def handle_task_runner_success(self, info: str, message: Optional['OfferAvailabilityResponse']):
-        logger.debug(f"handleTaskRunnerSuccess {info}")
+        self.logger.debug(f"handleTaskRunnerSuccess {info}")
 
         if message is not None:
             self.send_ack_message(message, True, None)
 
     def handle_task_runner_fault(self, error_message: str, message: Optional['OfferAvailabilityResponse']):
-        logger.error(error_message)
+        self.logger.error(error_message)
 
         self.stop_timeout()
         self.error_message_handler(error_message)
@@ -141,7 +142,7 @@ class OfferAvailabilityProtocol:
         makers_node_address = self.model.peer_node_address
         makers_pub_key_ring = self.model.offer.pub_key_ring
         
-        logger.info(f"Send AckMessage for OfferAvailabilityResponse to peer {makers_node_address} "
+        self.logger.info(f"Send AckMessage for OfferAvailabilityResponse to peer {makers_node_address} "
                    f"with offerId {offer_id} and sourceUid {source_uid}")
 
         ack_message = AckMessage(
@@ -155,12 +156,12 @@ class OfferAvailabilityProtocol:
         )
         
         class MessageListener(SendDirectMessageListener):
-            def on_arrived(self):
-                logger.info(f"AckMessage for OfferAvailabilityResponse arrived at makersNodeAddress {makers_node_address}. "
+            def on_arrived(self_):
+                self.logger.info(f"AckMessage for OfferAvailabilityResponse arrived at makersNodeAddress {makers_node_address}. "
                         f"offerId={offer_id}, sourceUid={ack_message.source_uid}")
 
-            def on_fault(self, error_msg: str):
-                logger.error(f"AckMessage for OfferAvailabilityResponse failed. AckMessage={ack_message}, "
+            def on_fault(self_, error_msg: str):
+                self.logger.error(f"AckMessage for OfferAvailabilityResponse failed. AckMessage={ack_message}, "
                             f"makersNodeAddress={makers_node_address}, errorMessage={error_msg}")
             
 

@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, List
-import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.network.p2p.ack_message import AckMessage
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
@@ -14,8 +13,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.trade.model.bisq_v1.trade import Trade
     
-    
-logger = get_logger(__name__)
+     
 
 # JAVA TODO with the redesign of mailbox messages that is not required anymore. We leave it for now as we want to minimize
 # changes for the 1.5.0 release but we should clean up afterwards...
@@ -32,6 +30,7 @@ class CleanupMailboxMessagesService:
     """
     
     def __init__(self, p2p_service: "P2PService", mailbox_message_service: "MailboxMessageService"):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.mailbox_message_service = mailbox_message_service
 
@@ -42,13 +41,12 @@ class CleanupMailboxMessagesService:
             if self.p2p_service.is_bootstrapped:
                 self._cleanup_mailbox_messages(trades)
             else:
-                outer = self
                 class Listener(BootstrapListener):
-                    def on_data_received(self):
-                        outer._cleanup_mailbox_messages(trades)
+                    def on_data_received(self_):
+                        self._cleanup_mailbox_messages(trades)
                 self.p2p_service.add_p2p_service_listener(Listener())
         except Exception as e:
-            logger.error(f"Cleanup mailbox messages failed. {repr(e)}")
+            self.logger.error(f"Cleanup mailbox messages failed. {repr(e)}")
 
     def _cleanup_mailbox_messages(self, trades: List["Trade"]) -> None:
         for message in self.mailbox_message_service.get_my_decrypted_mailbox_messages():
@@ -74,7 +72,7 @@ class CleanupMailboxMessagesService:
         return False
 
     def _remove_entry_from_mailbox(self, mailbox_message: MailboxMessage, trade: "Trade") -> None:
-        logger.info(f"We found a pending mailbox message ({mailbox_message.__class__.__name__}) for trade {trade.get_id()}. "
+        self.logger.info(f"We found a pending mailbox message ({mailbox_message.__class__.__name__}) for trade {trade.get_id()}. "
                    "As the trade is closed we remove the mailbox message.")
         self.mailbox_message_service.remove_mailbox_msg(mailbox_message)
 
@@ -94,5 +92,5 @@ class CleanupMailboxMessagesService:
         if (peers_pub_key_ring is not None and
                 decrypted_message_with_pub_key.signature_pub_key != peers_pub_key_ring.signature_pub_key):
             is_valid = False
-            logger.warning("SignaturePubKey in decryptedMessageWithPubKey does not match the SignaturePubKey we have set for our trading peer.")
+            self.logger.warning("SignaturePubKey in decryptedMessageWithPubKey does not match the SignaturePubKey we have set for our trading peer.")
         return is_valid

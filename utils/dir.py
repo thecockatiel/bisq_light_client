@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 from typing import Union
 
 # taken from Electrum with modifications

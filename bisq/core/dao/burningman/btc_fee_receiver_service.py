@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
 import random
 
@@ -7,9 +6,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.core.dao.burningman.burning_man_service import BurningManService
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-
-logger = get_logger(__name__)
 
 
 class BtcFeeReceiverService(DaoStateListener):

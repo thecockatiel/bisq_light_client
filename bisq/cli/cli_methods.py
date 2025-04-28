@@ -54,3 +54,9 @@ class CliMethods(IntEnum):
 
     # bisq light specific
     sendproto = auto()
+    switchuser = auto()
+    createnewuser = auto()
+    deleteuser = auto()
+    setuseralias = auto()
+    getuserslist = auto()
+    restoreuser = auto()

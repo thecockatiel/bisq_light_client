@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.dao.governance.proposal.proposal_validation_exception import ProposalValidationException
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
@@ -20,8 +20,6 @@ from bitcoinj.core.address_format_exception import AddressFormatException
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
-
-logger = get_logger(__name__)
 
 # NOTE: locale change not supported in python impl
 
@@ -98,6 +96,7 @@ class BsqFormatter(CoinFormatter):
         elif param.param_type == ParamType.ADDRESS:
             return value
         else:
+            logger = get_ctx_logger(__name__)
             logger.warning(f"Param type {param.param_type} not handled at format_param_value")
             return Res.get("shared.na")
 
@@ -133,6 +132,7 @@ class BsqFormatter(CoinFormatter):
             else:
                 raise ProposalValidationException(validation_result.error_message)
         else:
+            logger = get_ctx_logger(__name__)
             logger.warning(f"Param type {param.param_type} not handled at parse_param_value_to_string")
             return Res.get("shared.na")
             

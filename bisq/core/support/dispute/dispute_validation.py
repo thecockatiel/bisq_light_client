@@ -1,11 +1,12 @@
+from collections.abc import Callable
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.sig import Sig
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.support.dispute.disput_validation_exceptions import DisputeValidationAddressException, DisputeValidationNodeAddressException, DisputeValidationReplayException
 from bisq.core.support.support_type import SupportType
 from bisq.core.util.json_util import JsonUtil 
-from typing import TYPE_CHECKING, Optional, List, Callable, Dict, Set
+from typing import TYPE_CHECKING
 
 from bisq.core.util.regex_validator_factory import RegexValidatorFactory
 from utils.preconditions import check_argument
@@ -20,7 +21,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.network_parameters import NetworkParameters
     from bitcoinj.core.transaction import Transaction
 
-logger = get_logger(__name__)
 
 class DisputeValidation:
     @staticmethod
@@ -94,6 +94,7 @@ class DisputeValidation:
     def _validate_node_address(dispute: "Dispute", node_address: "NodeAddress") -> None:
         if not RegexValidatorFactory.onion_address_regex_validator().validate(node_address.get_full_address()).is_valid:
             msg = f"Node address {node_address.get_full_address()} at dispute with trade ID {dispute.get_short_trade_id()} is not a valid address"
+            logger = get_ctx_logger(__name__)
             logger.error(msg)
             raise DisputeValidationNodeAddressException(dispute, msg)
 
@@ -106,6 +107,7 @@ class DisputeValidation:
             error_msg = (f"Donation address is not a valid DAO donation address.\n"
                         f"Address used in the dispute: {address_as_string}\n"
                         f"All DAO param donation addresses: {all_past_param_values}")
+            logger = get_ctx_logger(__name__)
             logger.error(error_msg)
             raise DisputeValidationAddressException(dispute, error_msg)
 
@@ -131,7 +133,7 @@ class DisputeValidation:
         #            f"dispute.getDonationAddressOfDelayedPayoutTx()={dispute.donation_address_of_delayed_payout_tx}")
 
     @staticmethod
-    def test_if_any_dispute_tried_replay(dispute_list: List["Dispute"], 
+    def test_if_any_dispute_tried_replay(dispute_list: list["Dispute"], 
                                         exception_handler: Callable[["DisputeValidationReplayException"], None]) -> None:
         tuple_maps = DisputeValidation._get_test_replay_hash_maps(dispute_list)
         disputes_per_trade_id, disputes_per_delayed_payout_tx_id, disputes_per_deposit_tx_id = tuple_maps
@@ -146,7 +148,7 @@ class DisputeValidation:
                 exception_handler(e)
 
     @staticmethod
-    def test_if_dispute_tries_replay(dispute: "Dispute", dispute_list: List["Dispute"]) -> None:
+    def test_if_dispute_tries_replay(dispute: "Dispute", dispute_list: list["Dispute"]) -> None:
         tuple_maps = DisputeValidation._get_test_replay_hash_maps(dispute_list)
         disputes_per_trade_id, disputes_per_delayed_payout_tx_id, disputes_per_deposit_tx_id = tuple_maps
 
@@ -156,12 +158,12 @@ class DisputeValidation:
                                                        disputes_per_deposit_tx_id)
 
     @staticmethod
-    def _get_test_replay_hash_maps(dispute_list: List["Dispute"]) -> tuple[Dict[str, Set[str]], 
-                                                                          Dict[str, Set[str]], 
-                                                                          Dict[str, Set[str]]]:
-        disputes_per_trade_id: Dict[str, Set[str]] = {}
-        disputes_per_delayed_payout_tx_id: Dict[str, Set[str]] = {}
-        disputes_per_deposit_tx_id: Dict[str, Set[str]] = {}
+    def _get_test_replay_hash_maps(dispute_list: list["Dispute"]) -> tuple[dict[str, set[str]], 
+                                                                          dict[str, set[str]], 
+                                                                          dict[str, set[str]]]:
+        disputes_per_trade_id: dict[str, set[str]] = {}
+        disputes_per_delayed_payout_tx_id: dict[str, set[str]] = {}
+        disputes_per_deposit_tx_id: dict[str, set[str]] = {}
 
         for dispute in dispute_list:
             uid = dispute.uid
@@ -187,9 +189,9 @@ class DisputeValidation:
 
     @staticmethod
     def _test_if_dispute_tries_replay(dispute_to_test: "Dispute",
-                                     disputes_per_trade_id: Dict[str, Set[str]],
-                                     disputes_per_delayed_payout_tx_id: Dict[str, Set[str]],
-                                     disputes_per_deposit_tx_id: Dict[str, Set[str]]) -> None:
+                                     disputes_per_trade_id: dict[str, set[str]],
+                                     disputes_per_delayed_payout_tx_id: dict[str, set[str]],
+                                     disputes_per_deposit_tx_id: dict[str, set[str]]) -> None:
         try:
             trade_id = dispute_to_test.trade_id
             delayed_payout_tx_id = dispute_to_test.delayed_payout_tx_id
@@ -217,6 +219,7 @@ class DisputeValidation:
                 check_argument(items is not None and len(items) <= 2, f"We found more than 2 disputes with the same depositTxId. Trade ID: {trade_id}")
                 
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Error at test_if_dispute_tries_replay: dispute_to_test={dispute_to_test}, "
                         f"disputes_per_trade_id={disputes_per_trade_id}, "
                         f"disputes_per_delayed_payout_tx_id={disputes_per_delayed_payout_tx_id}, "

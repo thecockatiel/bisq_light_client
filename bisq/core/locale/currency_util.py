@@ -3,7 +3,7 @@ from bisq.asset.asset import Asset
 from bisq.asset.coin import Coin
 from bisq.asset.coins.asset_registry import AssetRegistry
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.currency_data import (
@@ -20,7 +20,7 @@ from bisq.common.config.config import Config
 if TYPE_CHECKING:
     from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 
-logger = get_logger(__name__)
+logger = get_base_logger(__name__)
 
 # NOTE: ported from https://github.com/bisq-network/bisq/blob/release/v1.9.17/core/src/main/java/bisq/core/locale/CurrencyUtil.java
 

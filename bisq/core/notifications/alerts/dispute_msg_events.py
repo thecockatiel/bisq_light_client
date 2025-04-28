@@ -1,7 +1,7 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 import uuid
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.notifications.mobile_message import MobileMessage
 from bisq.core.notifications.mobile_message_type import MobileMessageType
@@ -18,8 +18,6 @@ if TYPE_CHECKING:
     from bisq.core.support.dispute.mediation.mediation_manager import MediationManager
     from bisq.core.support.refund.refund_manager import RefundManager
 
-logger = get_logger(__name__)
-
 
 class DisputeMsgEvents:
 
@@ -30,6 +28,7 @@ class DisputeMsgEvents:
         p2p_service: "P2PService",
         mobile_notification_service: "MobileNotificationService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.refund_manager = refund_manager
         self.mediation_manager = mediation_manager
         self.p2p_service = p2p_service
@@ -67,13 +66,13 @@ class DisputeMsgEvents:
         )
 
     def _set_dispute_listener(self, dispute: "Dispute"):
-        logger.debug(
+        self.logger.debug(
             f"We got a dispute added. id={dispute.id}, tradeId={dispute.trade_id}"
         )
 
         def on_chat_messages_changed(e: ObservableChangeEvent["ChatMessage"]):
             if e.added_elements:
-                logger.debug(
+                self.logger.debug(
                     f"We got a ChatMessage added. id={dispute.id}, tradeId={dispute.trade_id}"
                 )
                 for chat_message in e.added_elements:
@@ -96,4 +95,4 @@ class DisputeMsgEvents:
         try:
             self.mobile_notification_service.send_message(message)
         except Exception as e:
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(e), exc_info=e)

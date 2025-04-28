@@ -4,15 +4,14 @@ from typing import Optional
 import zipfile
 import uuid
 from bisq.common.file.file_util import does_file_contain_keyword
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.file_transfer_part import FileTransferPart
 from bisq.core.network.p2p.network.network_node import NetworkNode
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.support.dispute.mediation.file_transfer_session import FileTransferSession
-from bisq.common.setup.log_setup import get_logger
-from bisq.common.config.config import Config
+from bisq.core.user.user import User
 
-logger = get_logger(__name__)
 
 class FileTransferSender(FileTransferSession):
 
@@ -23,15 +22,16 @@ class FileTransferSender(FileTransferSession):
         trade_id: str,
         trader_id: int,
         trader_role: str,
-        config: "Config",
+        user: "User",
         callback: Optional[FileTransferSession.FtpCallback] = None,
         is_test: bool = False,
     ):
         super().__init__(
             network_node, peer_node_address, trade_id, trader_id, trader_role, callback
         )
-        self._config = config
-        self.zip_file_path = self._config.app_data_dir.joinpath(self.zip_id + ".zip")
+        self.logger = get_ctx_logger(__name__)
+        self._user = user
+        self.zip_file_path = self._user.data_dir.joinpath(self.zip_id + ".zip")
         self.is_test = is_test
     
     def create_zip_file_to_send(self):
@@ -41,7 +41,7 @@ class FileTransferSender(FileTransferSession):
         try:
             with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 # Get all .log files in app data directory
-                log_files = [f for f in self._config.app_data_dir.iterdir() if f.is_file()]
+                log_files = [f for f in self._user.data_dir.iterdir() if f.is_file()]
                 
                 for log_file in log_files:
                     filename = log_file.name
@@ -51,10 +51,10 @@ class FileTransferSender(FileTransferSession):
                             (filename.endswith('.log') and does_file_contain_keyword(log_file, trade_id))):
                         
                         archive_path = f"{zip_id}/{filename}"
-                        logger.info(f"Adding {filename} to zip file {zip_file_path}")
+                        self.logger.info(f"Adding {filename} to zip file {zip_file_path}")
                         zipf.write(log_file, archive_path)
         except Exception as ex:
-            logger.error(f"Error creating zip file: {str(ex)}", exc_info=ex)
+            self.logger.error(f"Error creating zip file: {str(ex)}", exc_info=ex)
             raise
 
     def init_send(self):
@@ -81,7 +81,7 @@ class FileTransferSender(FileTransferSession):
     def send_next_block(self):
         if self.data_awaiting_ack is not None:
             error_msg = "prep_next_block_to_send invoked, but we are still waiting for a previous ACK"
-            logger.warning(error_msg)
+            self.logger.warning(error_msg)
             raise RuntimeError(error_msg)
 
         with open(self.zip_file_path, "rb") as file:
@@ -89,7 +89,7 @@ class FileTransferSender(FileTransferSession):
             buff = file.read(self.FILE_BLOCK_SIZE)
 
         if not buff:  # EOF reached
-            logger.info(f"Success! We have reached the EOF, {self.file_offset_bytes} bytes sent. Removing zip file {self.zip_file_path}")
+            self.logger.info(f"Success! We have reached the EOF, {self.file_offset_bytes} bytes sent. Removing zip file {self.zip_file_path}")
             self.zip_file_path.unlink(True)
             if self.ftp_callback:
                 self.ftp_callback.on_ftp_complete(self)
@@ -109,7 +109,7 @@ class FileTransferSender(FileTransferSession):
 
     def retry_send(self):
         if self.transfer_is_in_progress:
-            logger.info("Retry send of current block")
+            self.logger.info("Retry send of current block")
             self.init_session_timer()
             self.upload_data()
         else:
@@ -123,17 +123,17 @@ class FileTransferSender(FileTransferSession):
             return
         
         ftp = self.data_awaiting_ack
-        logger.info(f"Send FileTransferPart seq {ftp.seq_num_or_file_length} length {len(ftp.message_data)} to peer {self.peer_node_address}, UID={ftp.uid}")
+        self.logger.info(f"Send FileTransferPart seq {ftp.seq_num_or_file_length} length {len(ftp.message_data)} to peer {self.peer_node_address}, UID={ftp.uid}")
         self.send_message(ftp, self.network_node, self.peer_node_address)
 
     def process_ack_for_file_part(self, ack_uid: str) -> bool:
         if self.data_awaiting_ack is None:
-            logger.warning(f"We received an ACK we were not expecting. {ack_uid}")
+            self.logger.warning(f"We received an ACK we were not expecting. {ack_uid}")
             return False
             
         if self.data_awaiting_ack.uid != ack_uid:
-            logger.warning("We received an ACK that has a different UID to what we were expecting. We ignore and wait for the correct ACK")
-            logger.info(f"Received {ack_uid} expecting {self.data_awaiting_ack.uid}")
+            self.logger.warning("We received an ACK that has a different UID to what we were expecting. We ignore and wait for the correct ACK")
+            self.logger.info(f"Received {ack_uid} expecting {self.data_awaiting_ack.uid}")
             return False
             
         # fileOffsetBytes gets incremented by the size of the block that was ack'd
@@ -150,7 +150,7 @@ class FileTransferSender(FileTransferSession):
             try:
                 self.send_next_block()
             except Exception as e:
-                logger.error(str(e), exc_info=e)
+                self.logger.error(str(e), exc_info=e)
                 
         UserThread.run_after(send_next, timedelta(milliseconds=100)) # to trigger continuing the file transfer
         return True
@@ -159,4 +159,4 @@ class FileTransferSender(FileTransferSession):
         progress_pct = (self.file_offset_bytes / self.expected_file_length if self.expected_file_length > 0 else 0.0)
         if self.ftp_callback:
             self.ftp_callback.on_ftp_progress(progress_pct)
-        logger.info(f"ftp progress: {progress_pct * 100:.0f}%")
+        self.logger.info(f"ftp progress: {progress_pct * 100:.0f}%")

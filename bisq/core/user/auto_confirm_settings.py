@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bitcoinj.base.coin import Coin
 from typing import List, Optional
 import pb_pb2 as protobuf
 
 from utils.concurrency import ThreadSafeSet
 
-logger = get_logger(__name__)
 
 class AutoConfirmSettings(PersistablePayload):
     class Listener(Callable[[], None], ABC):
         @abstractmethod
-        def on_change(self):
+        def on_change(self_):
             pass
         
         def __call__(self):
@@ -42,6 +41,7 @@ class AutoConfirmSettings(PersistablePayload):
                 service_addresses=service_addresses,
                 currency_code="XMR"
             )
+        logger = get_ctx_logger(__name__)
         logger.error(f"No AutoConfirmSettings supported yet for currency {currency_code}")
         return None
     

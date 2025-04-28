@@ -1,5 +1,6 @@
 from concurrent.futures import Future
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.timer import Timer
@@ -10,7 +11,7 @@ from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDat
 from bisq.core.network.p2p.peers.getdata.messages.get_data_response import (
     GetDataResponse,
 )
-from bisq.common.setup.log_setup import get_logger
+from utils.aio import FutureCallback
 from utils.concurrency import AtomicInt
 from utils.formatting import readable_file_size
 from utils.random import next_random_int
@@ -25,17 +26,15 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
 
-logger = get_logger(__name__)
-
 
 class RequestDataHandler(MessageListener):
     TIMEOUT_SEC = 240
 
     class Listener:
-        def on_complete(self, was_truncated: bool):
+        def on_complete(self_, was_truncated: bool):
             pass
 
-        def on_fault(self, error_message: str, connection: Optional["Connection"]):
+        def on_fault(self_, error_message: str, connection: Optional["Connection"]):
             pass
 
     def __init__(
@@ -45,6 +44,7 @@ class RequestDataHandler(MessageListener):
         peer_manager: "PeerManager",
         listener: "Listener",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._data_storage = data_storage
         self._peer_manager = peer_manager
@@ -64,7 +64,9 @@ class RequestDataHandler(MessageListener):
         self._peers_node_address = node_address
 
         if self._stopped:
-            logger.warning("We have stopped already. We ignore that requestData call.")
+            self.logger.warning(
+                "We have stopped already. We ignore that requestData call."
+            )
             return
 
         if is_preliminary_data_request:
@@ -85,47 +87,24 @@ class RequestDataHandler(MessageListener):
             )
 
         self._get_data_request_type = get_data_request.__class__.__name__
-        logger.info(
+        self.logger.info(
             f"\n\n>> We send a {self._get_data_request_type} to peer {node_address}\n"
         )
         self._network_node.add_message_listener(self)
         future = self._network_node.send_message(node_address, get_data_request)
-        future.add_done_callback(
-            lambda f: self._handle_request_data_done(f, node_address, get_data_request)
-        )
 
-    def _handle_request_data_timeout(
-        self, get_data_request: "GetDataRequest", node_address: "NodeAddress"
-    ):
-        # setup before sending to avoid race conditions
-        if not self._stopped:
-            error_message = f"A timeout occurred at sending getDataRequest: {get_data_request} on nodeAddress: {node_address}"
-            logger.debug(f"{error_message} / RequestDataHandler={self}")
-            self._handle_fault(
-                error_message, node_address, CloseConnectionReason.SEND_MSG_TIMEOUT
-            )
-        else:
-            logger.trace(
-                "We have stopped already. We ignore that timeoutTimer.run call. "
-                + "Might be caused by a previous networkNode.sendMessage.onFailure."
-            )
-
-    def _handle_request_data_done(
-        self,
-        future: Future["Connection"],
-        node_address: "NodeAddress",
-        get_data_request: "GetDataRequest",
-    ):
-        try:
-            future.result()
+        def on_success(r):
             if not self._stopped:
-                logger.trace(f"Send {get_data_request} to {node_address} succeeded.")
+                self.logger.trace(
+                    f"Send {get_data_request} to {node_address} succeeded."
+                )
             else:
-                logger.trace(
+                self.logger.trace(
                     "We have stopped already. We ignore that networkNode.sendMessage.onSuccess call."
                     + "Might be caused by a previous timeout."
                 )
-        except Exception as e:
+
+        def on_failure(e):
             if not self._stopped:
                 message = (
                     f"Sending getDataRequest to {node_address} failed. "
@@ -139,10 +118,33 @@ class RequestDataHandler(MessageListener):
                     CloseConnectionReason.SEND_MSG_FAILURE,
                 )
             else:
-                logger.trace(
+                self.logger.trace(
                     "We have stopped already. We ignore that networkNode.sendMessage.onFailure call. "
                     + "Might be caused by a previous timeout."
                 )
+
+        future.add_done_callback(
+            FutureCallback(
+                on_success,
+                on_failure,
+            )
+        )
+
+    def _handle_request_data_timeout(
+        self, get_data_request: "GetDataRequest", node_address: "NodeAddress"
+    ):
+        # setup before sending to avoid race conditions
+        if not self._stopped:
+            error_message = f"A timeout occurred at sending getDataRequest: {get_data_request} on nodeAddress: {node_address}"
+            self.logger.debug(f"{error_message} / RequestDataHandler={self}")
+            self._handle_fault(
+                error_message, node_address, CloseConnectionReason.SEND_MSG_TIMEOUT
+            )
+        else:
+            self.logger.trace(
+                "We have stopped already. We ignore that timeoutTimer.run call. "
+                + "Might be caused by a previous networkNode.sendMessage.onFailure."
+            )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // MessageListener implementation
@@ -161,7 +163,7 @@ class RequestDataHandler(MessageListener):
                     if get_data_response.request_nonce == self._nonce:
                         self._stop_timeout_timer()
                         if not connection.peers_node_address:
-                            logger.error(
+                            self.logger.error(
                                 "RequestDataHandler.onMessage: connection.peers_node_address must be present at that moment"
                             )
                             return
@@ -172,21 +174,21 @@ class RequestDataHandler(MessageListener):
                         self._cleanup()
                         self._listener.on_complete(get_data_response.was_truncated)
                     else:
-                        logger.warning(
+                        self.logger.warning(
                             f"Nonce not matching. That can happen rarely if we get a response after a canceled "
                             + "handshake (timeout causes connection close but peer might have sent a msg before "
                             + "connection was closed).\n\t"
                             + f"We drop that message. nonce={self._nonce} / requestNonce={get_data_response.request_nonce}"
                         )
-                    logger.info(
+                    self.logger.info(
                         f"Processing GetDataResponse took {get_time_ms() - ts} ms"
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "We have stopped already. We ignore that onDataRequest call."
                     )
             else:
-                logger.debug(
+                self.logger.debug(
                     "We got the message from another connection and ignore it on that handler. That is expected if we have several requests open."
                 )
 
@@ -216,7 +218,7 @@ class RequestDataHandler(MessageListener):
             val2 = value[1].get()
             sb += f"{key}: {val1} / {readable_file_size(val2)}\n"
         sb += "#################################################################\n"
-        logger.info(sb)
+        self.logger.info(sb)
 
     def _add_details(
         self,
@@ -243,7 +245,7 @@ class RequestDataHandler(MessageListener):
         reason: "CloseConnectionReason",
     ):
         self._cleanup()
-        logger.info(error_message)
+        self.logger.info(error_message)
         self._peer_manager.handle_connection_fault(node_address=node_address)
         self._listener.on_fault(error_message, None)
 

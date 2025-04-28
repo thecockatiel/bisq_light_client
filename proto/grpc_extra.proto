@@ -24,3 +24,73 @@ message SendProtoReply {
     string error_message = 2;
 }
 
+service UserManagerCommands {
+    rpc SwitchUser (SwitchUserRequest) returns (SwitchUserReply) {
+    }
+
+    rpc CreateNewUser (CreateNewUserRequest) returns (CreateNewUserReply) {
+    }
+
+    rpc DeleteUser (DeleteUserRequest) returns (DeleteUserReply) {
+    }
+
+    rpc SetUserAlias (SetUserAliasRequest) returns (SetUserAliasReply) {
+    }
+
+    rpc GetUsersList (CreateNewUserRequest) returns (GetUsersListReply) {
+    }
+
+    rpc RestoreUser (RestoreUserRequest) returns (RestoreUserReply) {
+    }
+}
+
+message SwitchUserRequest {
+    string user_id = 1;
+}
+
+message SwitchUserReply {
+}
+
+message CreateNewUserRequest {
+}
+
+message CreateNewUserReply {
+    string user_id = 1;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
+    bool delete_data = 2;
+}
+
+message DeleteUserReply {
+    string new_user_id = 1;
+    bool created_new_user = 2;
+}
+
+message SetUserAliasRequest {
+    string user_id = 1;
+    string alias = 2;
+}
+
+message SetUserAliasReply {
+}
+
+message GetUsersListRequest {
+}
+
+message GetUsersListReply {
+    repeated BriefUserInfo users_list = 1;
+}
+
+message BriefUserInfo {
+    string user_id = 1;
+    string alias = 2;
+}
+
+message RestoreUserRequest {
+    string user_id = 1;
+}
+
+message RestoreUserReply {
+}

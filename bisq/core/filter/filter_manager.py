@@ -1,4 +1,5 @@
 from datetime import datetime
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Callable, Optional, Collection
 from abc import ABC, abstractmethod
 import base64
@@ -11,7 +12,6 @@ from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.proof_of_work_service_instance_holder import (
     pow_service_for_version,
 )
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.provider.price_feed_node_address_provider import (
     PriceFeedNodeAddressProvider,
 )
@@ -40,9 +40,6 @@ if TYPE_CHECKING:
 
 # NOTE: removed preferences as not needed
 
-logger = get_logger(__name__)
-
-
 # TODO: cryptography usages needs double check.
 class FilterManager:
     # Class constants
@@ -54,7 +51,7 @@ class FilterManager:
 
     class Listener(Callable[["Filter"], None], ABC):
         @abstractmethod
-        def on_filter_added(self, filter: "Filter"):
+        def on_filter_added(self_, filter: "Filter"):
             pass
 
         def __call__(self, filter: "Filter"):
@@ -71,6 +68,7 @@ class FilterManager:
         ignore_dev_msg: bool = None,
         use_dev_privilege_keys: bool = None,
     ):
+        self.logger = get_ctx_logger(__name__)
         if ignore_dev_msg is None:
             ignore_dev_msg = config.ignore_dev_msg
         if use_dev_privilege_keys is None:
@@ -129,61 +127,57 @@ class FilterManager:
 
         # Add hash set changed listener
         class HashSetListener(HashMapChangedListener):
-            def __init__(self, outer: "FilterManager"):
-                self.outer = outer
 
             def on_added(
-                self, protected_storage_entries: Collection["ProtectedStorageEntry"]
+                self_, protected_storage_entries: Collection["ProtectedStorageEntry"]
             ):
                 for entry in protected_storage_entries:
                     payload = entry.protected_storage_payload
                     if isinstance(payload, Filter):
-                        self.outer.on_filter_added_from_network(payload)
+                        self.on_filter_added_from_network(payload)
 
             def on_removed(
-                self, protected_storage_entries: Collection["ProtectedStorageEntry"]
+                self_, protected_storage_entries: Collection["ProtectedStorageEntry"]
             ):
                 for entry in protected_storage_entries:
                     payload = entry.protected_storage_payload
                     if isinstance(payload, Filter):
-                        self.outer.on_filter_removed_from_network(payload)
+                        self.on_filter_removed_from_network(payload)
 
-        self._p2p_service.add_hash_set_changed_listener(HashSetListener(self))
+        self._p2p_service.add_hash_set_changed_listener(HashSetListener())
 
         # Add P2P service listener
         class ServiceListener(P2PServiceListener):
-            def __init__(self, outer: "FilterManager"):
-                self.outer = outer
 
-            def on_data_received(self):
+            def on_data_received(self_):
                 # We should have received all data at that point and if the filters were not set we
                 # clean up the persisted banned nodes in the options file as it might be that we missed the filter
                 # remove message if we have not been online.
-                if self.outer.filter_property.get() is None:
-                    self.outer.clear_banned_nodes()
+                if self.filter_property.get() is None:
+                    self.clear_banned_nodes()
 
-            def on_no_seed_node_available(self):
+            def on_no_seed_node_available(self_):
                 pass
 
-            def on_no_peers_available(self):
+            def on_no_peers_available(self_):
                 pass
 
-            def on_updated_data_received(self):
+            def on_updated_data_received(self_):
                 pass
 
-            def on_tor_node_ready(self):
+            def on_tor_node_ready(self_):
                 pass
 
-            def on_hidden_service_published(self):
+            def on_hidden_service_published(self_):
                 pass
 
-            def on_setup_failed(self, throwable):
+            def on_setup_failed(self_, throwable):
                 pass
 
-            def on_request_custom_bridges(self):
+            def on_request_custom_bridges(self_):
                 pass
 
-        self._p2p_service.add_p2p_service_listener(ServiceListener(self))
+        self._p2p_service.add_p2p_service_listener(ServiceListener())
 
     def set_filter_warning_handler(self, filter_warning_handler: Callable[[str], None]):
         self.filter_warning_handler = filter_warning_handler
@@ -191,14 +185,14 @@ class FilterManager:
         def on_filter(filter: "Filter"):
             if filter is not None and self.filter_warning_handler is not None:
                 if filter.seed_nodes:
-                    logger.info(
+                    self.logger.info(
                         f"One of the seed nodes got banned. {filter.seed_nodes}"
                     )
                     # Let's keep that more silent. Might be used in case a node is unstable and we don't want to confuse users.
                     # filter_warning_handler(Res.get("popup.warning.nodeBanned", Res.get("popup.warning.seed")))
 
                 if filter.price_relay_nodes:
-                    logger.info(
+                    self.logger.info(
                         f"One of the price relay nodes got banned. {filter.price_relay_nodes}"
                     )
                     # Let's keep that more silent. Might be used in case a node is unstable and we don't want to confuse users.
@@ -230,14 +224,14 @@ class FilterManager:
             return False
 
         if not self.is_valid_dev_privilege_key(priv_key_string):
-            logger.warning("Key is invalid")
+            self.logger.warning("Key is invalid")
             return False
 
         private_key = self.to_ec_key(priv_key_string)
         pub_key_as_hex = self.get_pub_key_as_hex(private_key)
 
         if self.is_privileged_dev_pub_key_banned(pub_key_as_hex):
-            logger.warning("Pub key is banned")
+            self.logger.warning("Pub key is banned")
             return False
 
         return True
@@ -266,15 +260,15 @@ class FilterManager:
         if Encryption.is_pubkeys_equal(
             filter.owner_pub_key, self._key_ring.signature_key_pair.public_key
         ):
-            logger.info(f"Remove invalid filter {filter}")
+            self.logger.info(f"Remove invalid filter {filter}")
             self.set_filter_signing_key(priv_key_string)
             signature_as_base64 = self.get_signature(Filter.clone_without_sig(filter))
             filter_with_sig = Filter.clone_with_sig(filter, signature_as_base64)
             result = self._p2p_service.remove_data(filter_with_sig)
             if not result:
-                logger.warning(f"Could not remove filter {filter}")
+                self.logger.warning(f"Could not remove filter {filter}")
         else:
-            logger.info(
+            self.logger.info(
                 "The invalid filter is not our own, so we cannot remove it from the network"
             )
 
@@ -284,17 +278,17 @@ class FilterManager:
 
         developers_filter = self.get_dev_filter()
         if developers_filter is None:
-            logger.warning("There is no persisted dev filter to be removed.")
+            self.logger.warning("There is no persisted dev filter to be removed.")
             return False
 
         if not self.is_valid_dev_privilege_key(priv_key_string):
-            logger.warning("Key is invalid.")
+            self.logger.warning("Key is invalid.")
             return False
 
         private_key = self.to_ec_key(priv_key_string)
         pub_key_as_hex = self.get_pub_key_as_hex(private_key)
         if developers_filter.signer_pub_key_as_hex != pub_key_as_hex:
-            logger.warning(
+            self.logger.warning(
                 f"pubKeyAsHex derived from private key does not match filterSignerPubKey. "
                 f"filterSignerPubKey={developers_filter.signer_pub_key_as_hex}, "
                 f"pubKeyAsHex derived from private key={pub_key_as_hex}"
@@ -302,7 +296,7 @@ class FilterManager:
             return False
 
         if self.is_privileged_dev_pub_key_banned(pub_key_as_hex):
-            logger.warning("Pub key is banned.")
+            self.logger.warning("Pub key is banned.")
             return False
 
         return True
@@ -311,7 +305,7 @@ class FilterManager:
         self.set_filter_signing_key(priv_key_string)
         filter_with_sig = self._user.developers_filter
         if filter_with_sig is None:
-            logger.warning(
+            self.logger.warning(
                 "remove_dev_filter: filter_with_sig == None. Should not happen as UI button is deactivated in that case"
             )
             return
@@ -319,7 +313,7 @@ class FilterManager:
         if self._p2p_service.remove_data(filter_with_sig):
             self._user.set_developers_filter(None)
         else:
-            logger.warning("Removing dev filter from network failed")
+            self.logger.warning("Removing dev filter from network failed")
 
     def add_listener(self, listener: Listener):
         self.listeners.add(listener)
@@ -430,7 +424,7 @@ class FilterManager:
                 ):
                     return True
             except Exception as e:
-                logger.error(
+                self.logger.error(
                     f"Error in are_peers_payment_account_data_banned: {str(e)}"
                 )
                 return False
@@ -463,7 +457,7 @@ class FilterManager:
                 ):
                     return True
             except Exception as e:
-                logger.error(f"Error in is_delayed_payout_payment_account: {str(e)}")
+                self.logger.error(f"Error in is_delayed_payout_payment_account: {str(e)}")
                 return False
 
         return False
@@ -517,22 +511,22 @@ class FilterManager:
 
         if not self.is_filter_public_key_in_list(filter_from_network):
             if filter_from_network.signer_pub_key_as_hex:
-                logger.warning(
+                self.logger.warning(
                     f"isFilterPublicKeyInList failed. Filter.getSignerPubKeyAsHex={filter_from_network.signer_pub_key_as_hex}"
                 )
             else:
-                logger.info(
+                self.logger.info(
                     "isFilterPublicKeyInList failed. Filter.getSignerPubKeyAsHex not set (expected case for pre v1.3.9 filter)"
                 )
             return
 
         if not self.is_signature_valid(filter_from_network):
-            logger.warning(f"verifySignature failed. Filter={filter_from_network}")
+            self.logger.warning(f"verifySignature failed. Filter={filter_from_network}")
             return
 
         if current_filter is not None:
             if current_filter.creation_date > filter_from_network.creation_date:
-                logger.info(
+                self.logger.info(
                     "We received a new filter from the network but the creation date is older than the "
                     "filter we have already. We ignore the new filter."
                 )
@@ -542,12 +536,12 @@ class FilterManager:
             if self.is_privileged_dev_pub_key_banned(
                 filter_from_network.signer_pub_key_as_hex
             ):
-                logger.warning(
+                self.logger.warning(
                     f"Pub key of filter is banned. currentFilter={current_filter}, newFilter={filter_from_network}"
                 )
                 return
             else:
-                logger.info(
+                self.logger.info(
                     "We received a new filter with a newer creation date and the signer is not banned. "
                     "We ignore the current (older) filter."
                 )
@@ -596,10 +590,10 @@ class FilterManager:
 
     def on_filter_removed_from_network(self, filter: Filter):
         if not self.is_filter_public_key_in_list(filter):
-            logger.warning(f"isFilterPublicKeyInList failed. Filter={filter}")
+            self.logger.warning(f"isFilterPublicKeyInList failed. Filter={filter}")
             return
         if not self.is_signature_valid(filter):
-            logger.warning(f"verifySignature failed. Filter={filter}")
+            self.logger.warning(f"verifySignature failed. Filter={filter}")
             return
 
         # We don't check for banned filter as we want to remove a banned filter anyway.
@@ -652,7 +646,7 @@ class FilterManager:
     def is_filter_public_key_in_list(self, filter: "Filter") -> bool:
         signer_pub_key_as_hex = filter.signer_pub_key_as_hex
         if not self.is_public_key_in_list(signer_pub_key_as_hex):
-            logger.info(
+            self.logger.info(
                 "Invalid filter (expected case for pre v1.3.9 filter as we still keep that in the network "
                 + "but the new version does not recognize it as valid filter): "
                 + "signerPubKeyAsHex from filter is not part of our pub key list. "
@@ -664,7 +658,7 @@ class FilterManager:
     def is_public_key_in_list(self, pub_key_as_hex: str) -> bool:
         is_public_key_in_list = pub_key_as_hex in self.public_keys
         if not is_public_key_in_list:
-            logger.info(
+            self.logger.info(
                 f"pubKeyAsHex is not part of our pub key list (expected case for pre v1.3.9 filter). "
                 f"pubKeyAsHex={pub_key_as_hex}, publicKeys={self.public_keys}"
             )
@@ -684,7 +678,7 @@ class FilterManager:
             )
             return pubkey.ecdsa_verify(sigdata, hash_bytes)
         except Exception as e:
-            logger.warning(f"verify_signature failed. filter={filter}")
+            self.logger.warning(f"verify_signature failed. filter={filter}")
             return False
 
     def to_ec_key(self, priv_key_string: str) -> ECPrivkey:

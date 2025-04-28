@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, Union
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.taskrunner.task import Task
 from bisq.common.user_thread import UserThread
 from bisq.common.timer import Timer
@@ -38,13 +38,12 @@ if TYPE_CHECKING:
     from bisq.core.trade.protocol.provider import Provider
     from bisq.core.trade.trade_manager import TradeManager
 
-logger = get_logger(__name__)
-
 
 class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, ABC):
 
     def __init__(self, trade_model: "TradeModel"):
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.trade_model = trade_model
         self.protocol_model: ProtocolModel["TradePeer"] = trade_model.get_trade_protocol_model()
         self.timer: Optional["Timer"] = None
@@ -94,7 +93,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
     def on_mailbox_message(
         self, message: "TradeMessage", peer_node_address: "NodeAddress"
     ) -> None:
-        logger.info(
+        self.logger.info(
             f"Received {message.__class__.__name__} as MailboxMessage from {peer_node_address} with tradeId {message.trade_id} and uid {message.uid}"
         )
 
@@ -152,7 +151,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
                 self.protocol_model.p2p_service.mailbox_message_service.remove_mailbox_msg(
                     mailbox_message
                 )
-                logger.info(
+                self.logger.info(
                     f"Remove {mailbox_message.__class__.__name__} from the P2P network as trade_model is already completed."
                 )
                 return
@@ -170,7 +169,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
             self.protocol_model.p2p_service.mailbox_message_service.remove_mailbox_msg(
                 mailbox_message
             )
-            logger.info(
+            self.logger.info(
                 f"Remove {mailbox_message.__class__.__name__} from the P2P network."
             )
 
@@ -181,7 +180,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
             self.protocol_model.p2p_service.mailbox_message_service.remove_mailbox_msg(
                 trade_message
             )
-            logger.info(
+            self.logger.info(
                 f"Remove {trade_message.__class__.__name__} from the P2P network."
             )
 
@@ -201,7 +200,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
     def expect(self, condition: "FluentProtocolCondition") -> "FluentProtocol":
         def result_handler(result: "FluentProtocolConditionResult"):
             if not result.is_valid:
-                logger.warning(result.info)
+                self.logger.warning(result.info)
                 self.handle_task_runner_fault(message=None, source=result.name, error_message=result.info)
                 
         return FluentProtocol(self).with_condition(condition).with_result_handler(result_handler)
@@ -233,7 +232,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
     def send_ack_message(self, message: "TradeMessage", result: bool, error_message: Optional[str] = None) -> None:
         peers_pub_key_ring = self.protocol_model.trade_peer.pub_key_ring
         if peers_pub_key_ring is None:
-            logger.error("We cannot send the ACK message as peers_pub_key_ring is None")
+            self.logger.error("We cannot send the ACK message as peers_pub_key_ring is None")
             return
 
         trade_id = message.trade_id
@@ -253,26 +252,26 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         peer = (self.trade_model.trading_peer_node_address if self.trade_model.trading_peer_node_address 
                 else self.protocol_model.temp_trading_peer_node_address)
 
-        logger.info(
+        self.logger.info(
             f"Send AckMessage for {ack_message.source_msg_class_name} to peer {peer}. "
             f"tradeId={trade_id}, sourceUid={source_uid}"
         )
 
         class AckMessageListener(SendMailboxMessageListener):
-            def on_arrived(self):
-                logger.info(
+            def on_arrived(self_):
+                self.logger.info(
                     f"AckMessage for {ack_message.source_msg_class_name} arrived at peer {peer}. "
                     f"tradeId={trade_id}, sourceUid={source_uid}"
                 )
 
-            def on_stored_in_mailbox(self):
-                logger.info(
+            def on_stored_in_mailbox(self_):
+                self.logger.info(
                     f"AckMessage for {ack_message.source_msg_class_name} stored in mailbox for peer {peer}. "
                     f"tradeId={trade_id}, sourceUid={source_uid}"
                 )
 
-            def on_fault(self, error_msg: str):
-                logger.error(
+            def on_fault(self_, error_msg: str):
+                self.logger.error(
                     f"AckMessage for {ack_message.source_msg_class_name} failed. Peer {peer}. "
                     f"tradeId={trade_id}, sourceUid={source_uid}, errorMessage={error_msg}"
                 )
@@ -292,7 +291,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         self.stop_timeout()
 
         def on_timeout():
-            logger.error(
+            self.logger.error(
                 f"Timeout reached. TradeID={self.trade_model.get_id()}, "
                 f"state={self.trade_model.get_trade_state()}, "
                 f"timeoutSec={timeout_sec}"
@@ -324,7 +323,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         if message is None and source is None:
             raise ValueError("Either message or source must be set.")
             
-        logger.info(
+        self.logger.info(
             f"TaskRunner successfully completed. Triggered from {source}, "
             f"tradeId={self.trade_model.get_id()}"
         )
@@ -348,7 +347,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         if message is None and source is None:
             raise IllegalArgumentException("Either message or source must be set.")
         
-        logger.error(
+        self.logger.error(
             f"Task runner failed with error {error_message}. Triggered from {source}"
         )
         
@@ -369,7 +368,7 @@ class TradeProtocol(DecryptedDirectMessageListener, DecryptedMailboxListener, AB
         if (peers_pub_key_ring is not None and 
                 message.signature_pub_key != peers_pub_key_ring.signature_pub_key):
             is_valid = False
-            logger.error("SignaturePubKey in message does not match the SignaturePubKey we have set for our trading peer.")
+            self.logger.error("SignaturePubKey in message does not match the SignaturePubKey we have set for our trading peer.")
         return is_valid
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

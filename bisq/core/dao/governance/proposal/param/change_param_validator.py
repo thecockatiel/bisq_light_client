@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.dao.governance.consensus_critical import ConsensusCritical
 
@@ -27,8 +27,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.model.governance.proposal import Proposal
 
-logger = get_logger(__name__)
-
 
 class ChangeParamValidator(ProposalValidator, ConsensusCritical):
     """
@@ -45,6 +43,7 @@ class ChangeParamValidator(ProposalValidator, ConsensusCritical):
         bsq_formatter: "BsqFormatter",
     ):
         super().__init__(dao_state_service, period_service)
+        self.logger = get_ctx_logger(__name__)
         self.bsq_formatter = bsq_formatter
 
     def validate_data_fields(self, proposal: "Proposal") -> None:
@@ -140,7 +139,7 @@ class ChangeParamValidator(ProposalValidator, ConsensusCritical):
             elif param.param_type == ParamType.ADDRESS:
                 self._validate_address_value(current_param_value, input_value)
             else:
-                logger.warning(
+                self.logger.warning(
                     "Param type {} not handled in switch case at validate_param_value",
                     param.param_type,
                 )

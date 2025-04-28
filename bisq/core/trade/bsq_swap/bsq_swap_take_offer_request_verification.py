@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from datetime import timedelta
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.util.coin.coin_util import CoinUtil
 from bisq.core.util.validator import Validator
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.trade.protocol.bsq_swap.messages.bsq_swap_request import BsqSwapRequest
 
-logger = get_logger(__name__)
-
 class BsqSwapTakeOfferRequestVerification:
     MINUTES_10_IN_MILLIS = int(timedelta(minutes=10).total_seconds()*1000)
     
@@ -28,6 +26,7 @@ class BsqSwapTakeOfferRequestVerification:
                  peer: 'NodeAddress',
                  request: 'BsqSwapRequest') -> bool:
         try:
+            logger = get_ctx_logger(__name__)
             logger.info(f"Received {request.__class__.__name__} from {peer} with tradeId {request.trade_id} and uid {request.uid}")
             
             assert request is not None, "Request cannot be None"
@@ -82,6 +81,7 @@ class BsqSwapTakeOfferRequestVerification:
         is_in_tolerance = diff < 0.5
         
         if not is_in_tolerance:
+            logger = get_ctx_logger(__name__)
             logger.warning(f"Miner fee from taker not in tolerance. myFee={my_fee}, peersFee={peers_fee}, diff={diff}")
         
         return is_in_tolerance

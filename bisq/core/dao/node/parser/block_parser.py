@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.node.parser.exceptions.block_hash_not_connecting_exception import (
     BlockHashNotConnectingException,
 )
@@ -16,9 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
 
-logger = get_logger(__name__)
-
-
 class BlockParser:
     """
     Parse a rawBlock and creates a block from it with an empty tx list.
@@ -26,6 +23,7 @@ class BlockParser:
     """
 
     def __init__(self, tx_parser: "TxParser", dao_state_service: "DaoStateService"):
+        self.logger = get_ctx_logger(__name__)
         self._tx_parser = tx_parser
         self._dao_state_service = dao_state_service
         self._genesis_tx_id = dao_state_service.genesis_tx_id
@@ -39,7 +37,7 @@ class BlockParser:
     def parse_block(self, raw_block: "RawBlock") -> Block:
         start_ts = get_time_ms()
         block_height = raw_block.height
-        logger.trace(f"Parse block at height={block_height}")
+        self.logger.trace(f"Parse block at height={block_height}")
 
         self._validate_if_block_is_connecting(raw_block)
 
@@ -54,7 +52,7 @@ class BlockParser:
         )
 
         if self._is_block_already_added(raw_block):
-            logger.warning("Block was already added.")
+            self.logger.warning("Block was already added.")
             DevEnv.log_error_and_throw_if_dev_mode(
                 f"Block was already added. rawBlock={raw_block}"
             )
@@ -81,7 +79,7 @@ class BlockParser:
         self._dao_state_service.on_parse_block_complete(block)
         duration = get_time_ms() - start_ts
         if duration > 10:
-            logger.info(
+            self.logger.info(
                 f"Parsing {len(raw_block.raw_txs)} transactions at block height {block_height} took {duration} ms"
             )
 

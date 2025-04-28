@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.node.genesis_tx_parser import GenesisTxParser
 from bisq.core.dao.node.parser.tx_input_parser import TxInputParser
@@ -18,15 +18,15 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
 
-logger = get_logger(__name__)
-
-
 class TxParser:
     """Verifies if a given transaction is a BSQ transaction."""
 
     def __init__(
-        self, period_service: "PeriodService", dao_state_service: "DaoStateService"
+        self,
+        period_service: "PeriodService",
+        dao_state_service: "DaoStateService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._period_service = period_service
         self._dao_state_service = dao_state_service
         self._tx_output_parser: Optional["TxOutputParser"] = None
@@ -126,23 +126,23 @@ class TxParser:
             block_height, temp_tx, remaining_input_value
         )
         if temp_tx.tx_type not in [TxType.IRREGULAR, TxType.INVALID]:
-            tx_type = self.evaluate_tx_type(
+            tx_type = TxParser.evaluate_tx_type(
                 temp_tx, optional_op_return_type, has_burnt_bsq, unlock_input_valid
             )
             temp_tx.tx_type = tx_type
         else:
             tx_type = temp_tx.tx_type
 
-        if self.is_tx_invalid(temp_tx, bsq_output_found, has_burnt_bond):
+        if TxParser.is_tx_invalid(temp_tx, bsq_output_found, has_burnt_bond):
             temp_tx.tx_type = TxType.INVALID
             # We consider all BSQ inputs as burned if the tx is invalid.
             temp_tx.burnt_bsq = accumulated_input_value
             self._tx_output_parser.invalidate_utxo_candidates()
-            logger.warning(
+            self.logger.warning(
                 f"We have destroyed BSQ because of an invalid tx. Burned BSQ={accumulated_input_value / 100}, tx={temp_tx}",
             )
         elif tx_type == TxType.IRREGULAR:
-            logger.warning(f"We have an irregular tx {temp_tx}")
+            self.logger.warning(f"We have an irregular tx {temp_tx}")
             self._tx_output_parser.commit_utxo_candidates()
         else:
             self._tx_output_parser.commit_utxo_candidates()
@@ -250,7 +250,7 @@ class TxParser:
                     TxOutputType.ISSUANCE_CANDIDATE_OUTPUT
                 )
             else:
-                logger.warning(
+                self.logger.warning(
                     "It can be that we have an opReturn which is correct from its structure but the whole tx "
                     "is not valid as the issuanceCandidate is not there. "
                     "As the BSQ fee is set it must be either a buggy tx or a manually crafted invalid tx."
@@ -308,7 +308,7 @@ class TxParser:
         # The leftover BSQ balance from the inputs is the BSQ fee in case we are in an OP_RETURN output
 
         if not self._period_service.is_in_phase(block_height, phase):
-            logger.warning(
+            self.logger.warning(
                 f"Tx with ID {tx_id} is not in required phase ({phase}). blockHeight={block_height}"
             )
             return False
@@ -318,7 +318,7 @@ class TxParser:
         ).value
         is_fee_correct = bsq_fee == param_value
         if not is_fee_correct:
-            logger.warning(
+            self.logger.warning(
                 f"Invalid fee. used fee={bsq_fee}, required fee={param_value}, txId={tx_id}"
             )
         return is_fee_correct
@@ -335,7 +335,7 @@ class TxParser:
         if temp_tx.tx_type == TxType.INVALID:
             # We got already set the invalid type in earlier checks and return early.
             return True
-
+        logger = get_ctx_logger(__name__)
         # We don't allow multiple opReturn outputs (they are non-standard but to be safe lets check it)
         num_op_return_outputs = sum(
             1 for output in temp_tx.temp_tx_outputs if output.is_op_return_output
@@ -399,13 +399,17 @@ class TxParser:
             return TxType.UNLOCK
 
         # TRANSFER_BSQ has no fee, no opReturn and no UNLOCK_OUTPUT at first output
-        logger.trace("No burned fee and no OP_RETURN, so this is a TRANSFER_BSQ tx.")
+        logger = get_ctx_logger(__name__)
+        logger.trace(
+            "No burned fee and no OP_RETURN, so this is a TRANSFER_BSQ tx."
+        )
         return TxType.TRANSFER_BSQ
 
     @staticmethod
     def evaluate_tx_type_from_op_return_type(
         temp_tx: "TempTx", op_return_type: OpReturnType
     ) -> "TxType":
+        logger = get_ctx_logger(__name__)
         if op_return_type == OpReturnType.PROPOSAL:
             return TxType.PROPOSAL
         elif op_return_type in [

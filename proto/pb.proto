@@ -1475,6 +1475,15 @@ message SbpAccountPayload {
     string bank_name = 3;
 }
 
+message UserManagerPayload {
+    string active_user_id = 1;
+    // holds [user_id -> alias] entries:
+    repeated StringMapEntry user_alias_entries = 2;
+    bool keep_alive_on_switch = 3;
+    bool init_all_at_once = 4;
+    int32 preliminary_request_preference = 5; // holds enum value
+}
+
 message PersistableEnvelope {
     oneof message {
         SequenceNumberMap sequence_number_map = 1;
@@ -1526,6 +1535,9 @@ message PersistableEnvelope {
         RemovedPayloadsMap removed_payloads_map = 34;
         BsqBlockStore bsq_block_store = 35;
         BurningManAccountingStore burning_man_accounting_store = 36;
+
+        // specific to bisq light client
+        UserManagerPayload user_manager_payload = 100;
     }
 }
 

@@ -1,9 +1,9 @@
 from collections.abc import Callable
 from datetime import datetime
+from bisq.common.setup.log_setup import get_ctx_logger
 from threading import RLock
 from typing import Optional
 from bisq.common.protocol.persistable.persistable_envelope import PersistableEnvelope
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.burningman.accounting.blockchain.accounting_block import (
     AccountingBlock,
 )
@@ -15,16 +15,17 @@ from bisq.core.dao.burningman.accounting.exceptions.block_hash_not_connecting_ex
 from bisq.core.dao.burningman.accounting.exceptions.block_height_not_connecting_exception import (
     BlockHeightNotConnectingException,
 )
-from bisq.core.dao.burningman.burning_man_accounting_const import BurningManAccountingConst
+from bisq.core.dao.burningman.burning_man_accounting_const import (
+    BurningManAccountingConst,
+)
 import pb_pb2 as protobuf
-
-logger = get_logger(__name__)
 
 
 class BurningManAccountingStore(PersistableEnvelope):
 
     def __init__(self, blocks: list[AccountingBlock]):
         self._lock = RLock()
+        self.logger = get_ctx_logger(__name__)
         self.blocks = blocks.copy()
 
     def add_if_new_block(self, new_block: AccountingBlock):
@@ -76,16 +77,17 @@ class BurningManAccountingStore(PersistableEnvelope):
                     ):
                         raise BlockHashNotConnectingException()
                 elif (
-                    new_block.height
-                    != BurningManAccountingConst.EARLIEST_BLOCK_HEIGHT
+                    new_block.height != BurningManAccountingConst.EARLIEST_BLOCK_HEIGHT
                 ):
                     raise BlockHeightNotConnectingException()
-                logger.info(
+                self.logger.info(
                     f"Add new accountingBlock at height {new_block.height} at {datetime.fromtimestamp(new_block.time_in_sec)} with {len(new_block.txs)} txs"
                 )
                 self.blocks.append(new_block)
             else:
-                logger.info(f"We have that block already. Height: {new_block.height}")
+                self.logger.info(
+                    f"We have that block already. Height: {new_block.height}"
+                )
 
     def to_proto_message(self):
         with self._lock:

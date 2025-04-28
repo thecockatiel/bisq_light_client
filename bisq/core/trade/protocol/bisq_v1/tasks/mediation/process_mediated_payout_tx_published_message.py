@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.support.dispute.mediation.mediation_result_state import (
@@ -17,13 +17,12 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
-
 
 class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -49,7 +48,7 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
                     )
                 )
                 self.trade.payout_tx = committed_mediated_payout_tx
-                logger.info(
+                self.logger.info(
                     f"MediatedPayoutTx received from peer. Txid: {committed_mediated_payout_tx.get_tx_id()}\nhex: {committed_mediated_payout_tx.bitcoin_serialize().hex()}"
                 )
 
@@ -72,7 +71,7 @@ class ProcessMediatedPayoutTxPublishedMessage(TradeTask):
                     self.trade.get_id()
                 )
             else:
-                logger.info(
+                self.logger.info(
                     f"We got the payout tx already set from BuyerSetupPayoutTxListener and do nothing here. trade ID={self.trade.get_id()}",
                 )
 

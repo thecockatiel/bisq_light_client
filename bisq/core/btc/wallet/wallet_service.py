@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, Union
 
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
@@ -40,8 +40,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction_confidence import TransactionConfidence
     from bitcoinj.core.transaction_output import TransactionOutput
 
-logger = get_logger(__name__)
-
 
 # TODO
 class WalletService(ABC):
@@ -54,6 +52,7 @@ class WalletService(ABC):
         fee_service: "FeeService",
     ):
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self._wallets_setup = wallets_setup
         self._preferences = preferences
         self._fee_service = fee_service
@@ -142,6 +141,7 @@ class WalletService(ABC):
                 Config.BASE_CURRENCY_NETWORK_VALUE.parameters, transaction
             )
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(e, exc_info=e)
             raise TransactionVerificationException(e)
 
@@ -152,7 +152,9 @@ class WalletService(ABC):
 
     @staticmethod
     def check_script_sig(
-        transaction: "Transaction", input: "TransactionInput", input_index: int
+        transaction: "Transaction",
+        input: "TransactionInput",
+        input_index: int,
     ):
         try:
             input.get_script_sig().correctly_spends(
@@ -166,6 +168,7 @@ class WalletService(ABC):
                 Script.ALL_VERIFY_FLAGS,
             )
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(e, exc_info=e)
             raise TransactionVerificationException(e)
 
@@ -344,7 +347,7 @@ class WalletService(ABC):
             if self._preferences.get_use_custom_withdrawal_tx_fee()
             else self._fee_service.get_tx_fee_per_vbyte()
         )
-        logger.info(f"tx fee = {fee.to_friendly_string()}")
+        self.logger.info(f"tx fee = {fee.to_friendly_string()}")
         return fee
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -364,7 +367,7 @@ class WalletService(ABC):
                 Restrictions.get_min_non_dust_output()
             ):
                 dust = dust.add(transaction_output.get_value())
-                logger.info(f"Dust TXO = {transaction_output}")
+                self.logger.info(f"Dust TXO = {transaction_output}")
         return dust
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -380,7 +383,7 @@ class WalletService(ABC):
     @property
     def is_chain_height_synced_within_tolerance(self) -> bool:
         return self._wallets_setup.is_chain_height_synced_within_tolerance
-    
+
     def get_cloned_transaction(self, tx: "Transaction") -> "Transaction":
         return Transaction(self.params, tx.bitcoin_serialize())
 
@@ -465,6 +468,7 @@ class WalletService(ABC):
 
     @staticmethod
     def print_tx(trade_prefix: str, tx: "Transaction") -> None:
+        logger = get_ctx_logger(__name__)
         logger.info(f"\n{trade_prefix}:\n{tx}")
 
     @staticmethod

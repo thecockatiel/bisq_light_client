@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from abc import ABC, abstractmethod
 import uuid
 from bisq.common.protocol.proto_util import ProtoUtil
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 import pb_pb2 as protobuf
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from bisq.core.locale.trade_currency import TradeCurrency
@@ -12,7 +12,6 @@ from bisq.common.protocol.proto_util import ProtoUtil
 from utils.time import get_time_ms
 from datetime import datetime
 
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.core.payment.payload.payment_method import PaymentMethod
@@ -97,6 +96,7 @@ class PaymentAccount(PersistablePayload, ABC):
             return account
             
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.warning(f"Could not load account: {payment_method_id}, exception: {str(e)}")
             return None
 

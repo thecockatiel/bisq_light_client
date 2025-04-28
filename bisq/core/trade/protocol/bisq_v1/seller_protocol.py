@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.model.bisq_v1.seller_trade import SellerTrade
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.model.trade_state import TradeState
@@ -58,13 +58,13 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.trade.protocol.trade_message import TradeMessage
 
-logger = get_logger(__name__)
 
 
 class SellerProtocol(DisputeProtocol):
 
     def __init__(self, trade: "SellerTrade"):
         super().__init__(trade)
+        self.logger = get_ctx_logger(__name__)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Mailbox
@@ -143,7 +143,7 @@ class SellerProtocol(DisputeProtocol):
             .with_precondition(
                 self.trade.payout_tx is None,
                 lambda: (
-                    logger.warning(
+                    self.logger.warning(
                         "We received a CounterCurrencyTransferStartedMessage but we have already created the payout tx "
                         "so we ignore the message. This can happen if the ACK message to the peer did not "
                         "arrive and the peer repeats sending us the message. We send another ACK msg."
@@ -207,7 +207,7 @@ class SellerProtocol(DisputeProtocol):
         ).execute_tasks()
 
     def on_trade_message(self, message: "TradeMessage", peer: "NodeAddress") -> None:
-        logger.info(
+        self.logger.info(
             f"Received {message.__class__.__name__} from {peer} with tradeId {message.trade_id} and uid {message.uid}"
         )
 

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.node.parser.op_return_parser import OpReturnParser
@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.node.parser.temp_tx_output import TempTxOutput
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-logger = get_logger(__name__)
 
 class TxOutputParser:
     """
@@ -70,6 +69,7 @@ class TxOutputParser:
     ACTIVATE_HARD_FORK_1_HEIGHT_REGTEST = 1
 
     def __init__(self, dao_state_service: "DaoStateService"):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
 
         self.available_input_value: int = 0
@@ -143,7 +143,7 @@ class TxOutputParser:
             else:
                 self._handle_btc_output(temp_tx_output, index)
         else:
-            logger.warning(f"TxOutput {temp_tx_output.get_key()} is confiscated")
+            self.logger.warning(f"TxOutput {temp_tx_output.get_key()} is confiscated")
             # We only burn that output
             self.available_input_value -= temp_tx_output.value
 

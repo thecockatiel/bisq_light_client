@@ -39,3 +39,6 @@ class OptLabel:
     OPT_TX_KEY = "tx-key"
     OPT_NODE_ADDRESS = "node-address"
     OPT_PROTO = "proto"
+    OPT_USER_ID = "user-id"
+    OPT_DELETE_DATA = "delete-data"
+    OPT_ALIAS = "alias"

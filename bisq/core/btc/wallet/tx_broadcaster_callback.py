@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 
 if TYPE_CHECKING:
     from bisq.core.btc.exceptions.tx_broadcast_timeout_exception import (
@@ -10,10 +10,11 @@ if TYPE_CHECKING:
     from bisq.core.btc.exceptions.tx_broadcast_exception import TxBroadcastException
     from bitcoinj.core.transaction import Transaction
 
-logger = get_logger(__name__)
-
 
 class TxBroadcasterCallback(ABC):
+
+    def __init__(self):
+        self.logger = get_ctx_logger(__name__)
 
     @abstractmethod
     def on_success(self, transaction: "Transaction"):
@@ -40,10 +41,10 @@ class TxBroadcasterCallback(ABC):
             # Long term we should implement better monitoring for Tor and the provided Bitcoin nodes to find out
             # why those delays happen and add some rollback behaviour to the app state in case the tx will never
             # get broadcast.
-            logger.warning(f"TxBroadcaster.onTimeout called: {repr(exception)}")
+            self.logger.warning(f"TxBroadcaster.onTimeout called: {repr(exception)}")
             self.on_success(tx)
         else:
-            logger.error(
+            self.logger.error(
                 f"TxBroadcaster.onTimeout: Tx is null. exception={repr(exception)}"
             )
             self.on_failure(tx)

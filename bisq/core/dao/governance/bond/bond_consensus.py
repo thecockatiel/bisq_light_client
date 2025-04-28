@@ -1,12 +1,9 @@
 from typing import Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import byte_array_to_integer, integer_to_byte_array
 from bisq.common.version import Version
 from bisq.core.dao.governance.bond.lockup.lockup_reason import LockupReason
 from bisq.core.dao.state.model.blockchain.op_return_type import OpReturnType
 from io import BytesIO
-
-logger = get_logger(__name__)
 
 
 class BondConsensus:

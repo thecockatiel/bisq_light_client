@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from typing import TYPE_CHECKING
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
@@ -25,6 +26,7 @@ class BlindVoteStorageService(
         persistenceManager: "PersistenceManager[BlindVoteStore]",
     ):
         super().__init__(storage_dir, persistenceManager)
+        self.logger = get_ctx_logger(__name__)
         # At startup it is true, so the data we receive from the seed node are not checked against the phase as we have
         # not started up the DAO domain at that moment.
         self.not_in_vote_reveal_phase = True

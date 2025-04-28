@@ -1,9 +1,9 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.myvote.my_vote_list import MyVoteList
 from bisq.core.dao.governance.myvote.my_vote import MyVote
 
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from bisq.common.persistence.persistence_manager import PersistenceManager
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
-logger = get_logger(__name__)
-
 
 class MyVoteListService(PersistedDataHost):
     """Creates and stores myVote items. Persist in MyVoteList."""
@@ -27,6 +25,7 @@ class MyVoteListService(PersistedDataHost):
         dao_state_service: "DaoStateService",
         persistence_manager: "PersistenceManager[MyVoteList]",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._persistence_manager = persistence_manager
         self._my_vote_list = MyVoteList()
@@ -66,13 +65,13 @@ class MyVoteListService(PersistedDataHost):
             secret_key,
             blind_vote,
         )
-        logger.info(f"Add new MyVote to myVotesList list.\nMyVote={my_vote}")
+        self.logger.info(f"Add new MyVote to myVotesList list.\nMyVote={my_vote}")
         self._my_vote_list.append(my_vote)
         self._request_persistence()
 
     def apply_reveal_tx_id(self, my_vote: "MyVote", vote_reveal_tx_id: str) -> None:
         my_vote.reveal_tx_id = vote_reveal_tx_id
-        logger.debug(
+        self.logger.debug(
             f"Applied revealTxId to myVote.\nmyVote={my_vote}\nvoteRevealTxId={vote_reveal_tx_id}"
         )
         self._request_persistence()

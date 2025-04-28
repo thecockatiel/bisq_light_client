@@ -9,11 +9,9 @@ from bisq.core.network.p2p.storage.payload.capability_requiring_payload import (
     CapabilityRequiringPayload,
 )
 from bisq.core.support.dispute.agent.dispute_agent import DisputeAgent
-from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
-logger = get_logger(__name__)
 
 class RefundAgent(DisputeAgent, CapabilityRequiringPayload):
     node_address: NodeAddress

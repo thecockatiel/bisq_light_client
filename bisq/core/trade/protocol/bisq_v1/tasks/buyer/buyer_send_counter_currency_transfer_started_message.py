@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.network.message_state import MessageState
@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from bisq.common.taskrunner.task_runner import TaskRunner
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-logger = get_logger(__name__)
 
 
 class BuyerSendCounterCurrencyTransferStartedMessage(SendMailboxMessageTask):
@@ -38,6 +37,7 @@ class BuyerSendCounterCurrencyTransferStartedMessage(SendMailboxMessageTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
         self.delay_in_min = 15
         self.resend_counter = 0
         self.message: Optional["CounterCurrencyTransferStartedMessage"] = None
@@ -145,14 +145,14 @@ class BuyerSendCounterCurrencyTransferStartedMessage(SendMailboxMessageTask):
             >= BuyerSendCounterCurrencyTransferStartedMessage.MAX_RESEND_ATTEMPTS
         ):
             self._cleanup()
-            logger.warning(
+            self.logger.warning(
                 "We never received an ACK message when sending the CounterCurrencyTransferStartedMessage to the peer. "
                 "We stop now and complete the protocol task."
             )
             self.complete()
             return
 
-        logger.info(
+        self.logger.info(
             f"We will send the message again to the peer after a delay of {self.delay_in_min} min."
         )
         if self.timer is not None:

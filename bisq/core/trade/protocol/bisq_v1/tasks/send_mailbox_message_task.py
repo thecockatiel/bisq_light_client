@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.send_mailbox_message_listener import (
     SendMailboxMessageListener,
 )
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.core.trade.protocol.bisq_v1.messages.trade_mailbox_message import (
@@ -21,6 +20,7 @@ class SendMailboxMessageTask(TradeTask, ABC):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     @abstractmethod
     def get_trade_mailbox_message(self, id: str) -> "TradeMailboxMessage":
@@ -51,14 +51,14 @@ class SendMailboxMessageTask(TradeTask, ABC):
             
             message: "TradeMailboxMessage" = self.get_trade_mailbox_message(id)
             
-            logger.info(
+            self.logger.info(
                 f"Send {message.__class__.__name__} to peer {peers_node_address}. "
                 f"tradeId={message.trade_id}, uid={message.uid}"
             )
             
             class Listener(SendMailboxMessageListener):
                 def on_arrived(self_):
-                    logger.info(
+                    self.logger.info(
                         f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}"
                     )
@@ -66,11 +66,11 @@ class SendMailboxMessageTask(TradeTask, ABC):
                     self.complete()
 
                 def on_stored_in_mailbox(self_):
-                    logger.info(f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}")
+                    self.logger.info(f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}")
                     self.on_stored_in_mailbox()
                     
                 def on_fault(self_, error_message: str):
-                    logger.error(f"{message.__class__.__name__} failed: Peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}")
+                    self.logger.error(f"{message.__class__.__name__} failed: Peer {peers_node_address}. tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}")
                     self.on_fault(error_message, message)
 
             self.process_model.p2p_service.mailbox_message_service.send_encrypted_mailbox_message(

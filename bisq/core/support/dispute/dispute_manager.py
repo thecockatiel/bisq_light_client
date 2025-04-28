@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Generic, Optional, TypeVar, Union
 import uuid
 from bisq.common.handlers.fault_handler import FaultHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.btc.wallet.restrictions import Restrictions
@@ -60,7 +60,6 @@ if TYPE_CHECKING:
 
 _T = TypeVar('T', bound='DisputeList[Dispute]')
 
-logger = get_logger(__name__)
 
 class DisputeManager(Generic[_T], SupportManager, ABC):
     def __init__(
@@ -81,6 +80,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     ):
         super().__init__(p2p_service, wallets_setup)
         
+        self.logger = get_ctx_logger(__name__)
         self.trade_wallet_service = trade_wallet_service
         self.btc_wallet_service = btc_wallet_service
         self.trade_manager = trade_manager
@@ -109,14 +109,14 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def get_peer_node_address(self, message: "ChatMessage") -> Optional["NodeAddress"]:
         dispute = self.find_dispute(message)
         if dispute is None:
-            logger.warning(f"Could not find dispute for tradeId = {message.trade_id} traderId = {message.trader_id}")
+            self.logger.warning(f"Could not find dispute for tradeId = {message.trade_id} traderId = {message.trader_id}")
             return None
         return self.get_node_address_pub_key_ring_tuble(dispute)[0]
     
     def get_peer_pub_key_ring(self, message: "ChatMessage") -> Optional["PubKeyRing"]:
         dispute = self.find_dispute(message)
         if dispute is None:
-            logger.warning(f"Could not find dispute for tradeId = {message.trade_id} traderId = {message.trader_id}")
+            self.logger.warning(f"Could not find dispute for tradeId = {message.trade_id} traderId = {message.trader_id}")
             return None
         return self.get_node_address_pub_key_ring_tuble(dispute)[1]
     
@@ -137,7 +137,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 dispute.add_and_persist_chat_message(message)
                 self.request_persistence()
             else:
-                logger.warning(f"We got a chatMessage that we have already stored. UId = {message.uid} TradeId = {message.trade_id}")
+                self.logger.warning(f"We got a chatMessage that we have already stored. UId = {message.uid} TradeId = {message.trade_id}")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Abstract methods
@@ -227,11 +227,11 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                         self.dao_facade
                     )
             except (DisputeValidationAddressException, DisputeValidationNodeAddressException) as e:
-                logger.error(e)
+                self.logger.error(e)
                 self.validation_exceptions.append(e)
 
         def on_dispute_replay_exception(e: Exception):
-            logger.error(e)
+            self.logger.error(e)
             self.validation_exceptions.append(e)
 
         DisputeValidation.test_if_any_dispute_tried_replay(disputes, on_dispute_replay_exception)
@@ -281,13 +281,13 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def find_own_dispute(self, trade_id: str) -> Optional["Dispute"]:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None")
+            self.logger.warning("disputes is None")
             return None
         
         return next((d for d in dispute_list if d.trade_id == trade_id), None)
 
     def maybe_clear_sensitive_data(self) -> None:
-        logger.info(f"{self.__class__.__name__} checking closed disputes eligibility for having sensitive data cleared")
+        self.logger.info(f"{self.__class__.__name__} checking closed disputes eligibility for having sensitive data cleared")
         safe_date = self.closed_tradable_manager.get_safe_date_for_sensitive_data_clearing()
         
         for dispute in self.get_dispute_list().list:
@@ -321,7 +321,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def on_open_new_dispute_message(self, open_new_dispute_message: "OpenNewDisputeMessage") -> None:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("dispute_list is None")
+            self.logger.warning("dispute_list is None")
             return
 
         error_message = None
@@ -343,13 +343,13 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     self.send_peer_opened_dispute_message(dispute, contract, peers_pub_key_ring)
                 else:
                     # valid case if both have opened a dispute and agent was not online.
-                    logger.debug(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
+                    self.logger.debug(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
             else:
                 error_message = f"We got a dispute msg what we have already stored. TradeId = {dispute.trade_id}"
-                logger.warning(error_message)
+                self.logger.warning(error_message)
         else:
             error_message = "Trader received openNewDisputeMessage. That must never happen."
-            logger.error(error_message)
+            self.logger.error(error_message)
 
         # We use the ChatMessage not the openNewDisputeMessage for the ACK
         messages = dispute.chat_messages
@@ -372,7 +372,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     self.dao_facade
                 )
         except DisputeValidationException as e:
-            logger.error(e)
+            self.logger.error(e)
             self.validation_exceptions.append(e)
             
         self.request_persistence()
@@ -394,14 +394,14 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
     def new_dispute_reverts_failed_trade(self, peer_opened_dispute_message: "PeerOpenedDisputeMessage", 
                                        dispute: "Dispute", trade: "Trade") -> None:
-        logger.info(f"Peer dispute ticket received, reverting failed trade {trade.get_short_id()} to pending")
+        self.logger.info(f"Peer dispute ticket received, reverting failed trade {trade.get_short_id()} to pending")
         self.failed_trades_manager.remove_trade(trade)
         self.trade_manager.add_trade_to_pending_trades(trade)
         self.peer_opened_dispute_for_trade(peer_opened_dispute_message, dispute, trade)
 
     def new_dispute_reverts_closed_trade(self, peer_opened_dispute_message: "PeerOpenedDisputeMessage", 
                                        dispute: "Dispute", trade: "Trade") -> None:
-        logger.info(f"Peer dispute ticket received, reverting closed trade {trade.get_short_id()} to pending")
+        self.logger.info(f"Peer dispute ticket received, reverting closed trade {trade.get_short_id()} to pending")
         self.closed_tradable_manager.remove(trade)
         self.trade_manager.add_trade_to_pending_trades(trade)
         self.peer_opened_dispute_for_trade(peer_opened_dispute_message, dispute, trade)
@@ -411,7 +411,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
         error_message = None
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None")
+            self.logger.warning("disputes is None")
             return
 
         try:
@@ -430,7 +430,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             # The peer sent us an invalid donation address. We do not return here as we don't want to break
             # mediation/arbitration and log only the issue. The dispute agent will run validation as well and will get
             # a popup displayed to react.
-            logger.warning(f"Donation address is invalid. {e}")
+            self.logger.warning(f"Donation address is invalid. {e}")
 
         if not self.is_agent(dispute):
             if dispute not in dispute_list:
@@ -441,13 +441,13 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     self.trade_manager.request_persistence()
                 else:
                     # valid case if both have opened a dispute and agent was not online.
-                    logger.debug(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
+                    self.logger.debug(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
             else:
                 error_message = f"We got a dispute msg what we have already stored. TradeId = {dispute.trade_id}"
-                logger.warning(error_message)
+                self.logger.warning(error_message)
         else:
             error_message = "Arbitrator received peerOpenedDisputeMessage. That must never happen."
-            logger.error(error_message)
+            self.logger.error(error_message)
 
         # We use the ChatMessage not the peerOpenedDisputeMessage for the ACK
         messages = dispute.chat_messages
@@ -465,12 +465,12 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def send_open_new_dispute_message(self, dispute: "Dispute", re_open: bool, result_handler: ResultHandler, fault_handler: FaultHandler) -> None:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None")
+            self.logger.warning("disputes is None")
             return
 
         if dispute in dispute_list:
             msg = f"We got a dispute msg what we have already stored. TradeId = {dispute.trade_id}"
-            logger.warning(msg)
+            self.logger.warning(msg)
             fault_handler(msg, DisputeAlreadyOpenException())
             return
 
@@ -509,7 +509,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 support_type=self.get_support_type()
             )
 
-            logger.info(
+            self.logger.info(
                 f"Send {open_new_dispute_message.__class__.__name__} to peer {agent_node_address}. "
                 f"tradeId={open_new_dispute_message.get_trade_id()}, "
                 f"openNewDisputeMessage.uid={open_new_dispute_message.uid}, "
@@ -520,7 +520,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             
             class Listener(SendMailboxMessageListener):
                 def on_arrived(self_):
-                    logger.info(
+                    self.logger.info(
                         f"{open_new_dispute_message.__class__.__name__} arrived at peer {agent_node_address}. "
                         f"tradeId={open_new_dispute_message.get_trade_id()}, "
                         f"openNewDisputeMessage.uid={open_new_dispute_message.uid}, "
@@ -534,7 +534,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     result_handler()
 
                 def on_stored_in_mailbox(self_):
-                    logger.info(
+                    self.logger.info(
                         f"{open_new_dispute_message.__class__.__name__} stored in mailbox for peer {agent_node_address}. "
                         f"tradeId={open_new_dispute_message.get_trade_id()}, "
                         f"openNewDisputeMessage.uid={open_new_dispute_message.uid}, "
@@ -548,7 +548,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     result_handler()
 
                 def on_fault(self_, error_message: str):
-                    logger.error(
+                    self.logger.error(
                         f"{open_new_dispute_message.__class__.__name__} failed: Peer {agent_node_address}. "
                         f"tradeId={open_new_dispute_message.get_trade_id()}, "
                         f"openNewDisputeMessage.uid={open_new_dispute_message.uid}, "
@@ -574,7 +574,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
         else:
             msg = (f"We got a dispute already open for that trade and trading peer.\n"
                   f"TradeId = {dispute.trade_id}")
-            logger.warning(msg)
+            self.logger.warning(msg)
             fault_handler(msg, DisputeAlreadyOpenException())
 
         self.request_persistence()
@@ -594,7 +594,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                                           pub_key_ring: "PubKeyRing") -> None:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None")
+            self.logger.warning("disputes is None")
             return
 
         dispute = Dispute(
@@ -630,7 +630,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
         
         # Valid case if both have opened a dispute and agent was not online
         if stored_dispute:
-            logger.info(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
+            self.logger.info(f"We got a dispute already open for that trade and trading peer. TradeId = {dispute.trade_id}")
             return
 
         dispute_info = self.get_dispute_info(dispute)
@@ -669,7 +669,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             support_type=self.get_support_type()
         )
 
-        logger.info(
+        self.logger.info(
             f"Send {peer_opened_dispute_message.__class__.__name__} to peer {peers_node_address}. "
             f"tradeId={peer_opened_dispute_message.get_trade_id()}, "
             f"peerOpenedDisputeMessage.uid={peer_opened_dispute_message.uid}, "
@@ -680,7 +680,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
         class Listener(SendMailboxMessageListener):
             def on_arrived(self_):
-                logger.info(
+                self.logger.info(
                     f"{peer_opened_dispute_message.__class__.__name__} arrived at peer {peers_node_address}. "
                     f"tradeId={peer_opened_dispute_message.get_trade_id()}, "
                     f"peerOpenedDisputeMessage.uid={peer_opened_dispute_message.uid}, "
@@ -693,7 +693,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 self.request_persistence()
 
             def on_stored_in_mailbox(self_):
-                logger.info(
+                self.logger.info(
                     f"{peer_opened_dispute_message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
                     f"tradeId={peer_opened_dispute_message.get_trade_id()}, "
                     f"peerOpenedDisputeMessage.uid={peer_opened_dispute_message.uid}, "
@@ -706,7 +706,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 self.request_persistence()
 
             def on_fault(self_, error_message: str):
-                logger.error(
+                self.logger.error(
                     f"{peer_opened_dispute_message.__class__.__name__} failed: Peer {peers_node_address}. "
                     f"tradeId={peer_opened_dispute_message.get_trade_id()}, "
                     f"peerOpenedDisputeMessage.uid={peer_opened_dispute_message.uid}, "
@@ -732,7 +732,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def send_dispute_result_message(self, dispute_result: "DisputeResult", dispute: "Dispute", summary_text: str) -> None:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None")
+            self.logger.warning("disputes is None")
             return
 
         chat_message = ChatMessage(
@@ -760,7 +760,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             support_type=self.get_support_type()
         )
 
-        logger.info(
+        self.logger.info(
             f"Send {dispute_result_message.__class__.__name__} to peer {peers_node_address}. "
             f"tradeId={dispute_result_message.get_trade_id()}, "
             f"disputeResultMessage.uid={dispute_result_message.uid}, "
@@ -771,7 +771,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
 
         class Listener(SendMailboxMessageListener):
             def on_arrived(self_):
-                logger.info(
+                self.logger.info(
                     f"{dispute_result_message.__class__.__name__} arrived at peer {peers_node_address}. "
                     f"tradeId={dispute_result_message.get_trade_id()}, "
                     f"disputeResultMessage.uid={dispute_result_message.uid}, "
@@ -784,7 +784,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 self.request_persistence()
 
             def on_stored_in_mailbox(self_):
-                logger.info(
+                self.logger.info(
                     f"{dispute_result_message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
                     f"tradeId={dispute_result_message.get_trade_id()}, "
                     f"disputeResultMessage.uid={dispute_result_message.uid}, "
@@ -797,7 +797,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 self.request_persistence()
 
             def on_fault(self_, error_message: str):
-                logger.error(
+                self.logger.error(
                     f"{dispute_result_message.__class__.__name__} failed: Peer {peers_node_address}. "
                     f"tradeId={dispute_result_message.get_trade_id()}, "
                     f"disputeResultMessage.uid={dispute_result_message.uid}, "
@@ -836,7 +836,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             else:
                 peer_node_address = contract.seller_node_address
         else:
-            logger.error("That must not happen. Trader cannot communicate to other trader.")
+            self.logger.error("That must not happen. Trader cannot communicate to other trader.")
         
         return (peer_node_address, receiver_pub_key_ring)
 
@@ -849,7 +849,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
             # If passed a trade_id string
             dispute_list = self.get_dispute_list()
             if dispute_list is None:
-                logger.warning("disputes is None")
+                self.logger.warning("disputes is None")
                 return None
             return next((d for d in dispute_list if d.trade_id == item), None)
             
@@ -868,7 +868,7 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def _find_dispute_by_ids(self, trade_id: str, trader_id: Optional[int] = None) -> Optional["Dispute"]:
         dispute_list = self.get_dispute_list()
         if dispute_list is None:
-            logger.warning("disputes is None") 
+            self.logger.warning("disputes is None") 
             return None
         if trader_id is None:
             return next((d for d in dispute_list if d.trade_id == trade_id), None)
@@ -939,17 +939,17 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
     def add_price_info_message(self, dispute: "Dispute", counter: int = 0) -> None:
         if not self.price_feed_service.has_prices:
             if counter < 3:
-                logger.info("Price provider has still no data. This is expected at startup. We try again in 10 sec.")
+                self.logger.info("Price provider has still no data. This is expected at startup. We try again in 10 sec.")
                 UserThread.run_after(lambda: self.add_price_info_message(dispute, counter + 1), timedelta(seconds=10))
             else:
-                logger.warning("Price provider still has no data after 3 repeated requests and 30 seconds delay. We give up.")
+                self.logger.warning("Price provider still has no data after 3 repeated requests and 30 seconds delay. We give up.")
             return
 
         contract = dispute.contract
         offer_payload = contract.offer_payload
         price_at_dispute_opening = self.get_price(offer_payload.currency_code)
         if price_at_dispute_opening is None:
-            logger.info(
+            self.logger.info(
                 f"Price provider did not provide a price for {offer_payload.currency_code}. "
                 "This is expected if this currency is not supported by the price providers."
             )
@@ -1020,14 +1020,14 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 rounded_to_long = MathUtils.round_double_to_long(scaled)
                 return Price.value_of(currency_code, rounded_to_long)
             except Exception as e:
-                logger.error(f"Exception at get_price / parse_to_fiat: {e}")
+                self.logger.error(f"Exception at get_price / parse_to_fiat: {e}")
                 return None
         else:
             return None
 
     def has_pending_message_at_shutdown(self) -> bool:
         if len(self.pending_outgoing_message) > 0:
-            logger.warning(f"{self.__class__.__name__} has an outgoing message pending: {self.pending_outgoing_message}")
+            self.logger.warning(f"{self.__class__.__name__} has an outgoing message pending: {self.pending_outgoing_message}")
             return True
         return False
 

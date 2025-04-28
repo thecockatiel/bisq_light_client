@@ -1,7 +1,7 @@
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, cast
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.bootstrap_listener import BootstrapListener
 from bisq.core.trade.model.bisq_v1.seller_trade import SellerTrade
@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.core.trade.model.tradable import Tradable
 
-logger = get_logger(__name__)
 
 class XmrTxProofService(AssetTxProofService):
     """
@@ -52,6 +51,7 @@ class XmrTxProofService(AssetTxProofService):
         wallets_setup: "WalletsSetup",
         socks5_proxy_provider: "Socks5ProxyProvider",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.filter_manager = filter_manager
         self.preferences = preferences
         self.trade_manager = trade_manager
@@ -104,7 +104,7 @@ class XmrTxProofService(AssetTxProofService):
         
         auto_confirm_settings = self.preferences.find_auto_confirm_settings("XMR")
         if not auto_confirm_settings:
-            logger.error("AutoConfirmSettings is not present")
+            self.logger.error("AutoConfirmSettings is not present")
             return
         
         # We register a listener to stop running services. For new trades we check anyway in the trade validation
@@ -169,7 +169,7 @@ class XmrTxProofService(AssetTxProofService):
         
         canonical_tx_key = CryptoUtil.to_canoninal_tx_key(tx_key)
         if tx_key != canonical_tx_key:
-            logger.error(f"Provided txKey is not in canonical form. txKey={tx_key}, canonicalTxKey={canonical_tx_key}")
+            self.logger.error(f"Provided txKey is not in canonical form. txKey={tx_key}, canonicalTxKey={canonical_tx_key}")
             trade.set_asset_tx_proof_result(AssetTxProofResult.INVALID_DATA.with_details(Res.get("portfolio.pending.autoConf.state.txKeyOrTxIdInvalid")))
             self.trade_manager.request_persistence()
             return
@@ -205,9 +205,9 @@ class XmrTxProofService(AssetTxProofService):
             trade.set_asset_tx_proof_result(asset_tx_proof_result)
             
             if asset_tx_proof_result == AssetTxProofResult.COMPLETED:
-                logger.info("###########################################################################################")
-                logger.info(f"We auto-confirm trade {trade.get_short_id()} as our all our services for the tx proof completed successfully")
-                logger.info("###########################################################################################")
+                self.logger.info("###########################################################################################")
+                self.logger.info(f"We auto-confirm trade {trade.get_short_id()} as our all our services for the tx proof completed successfully")
+                self.logger.info("###########################################################################################")
                 
                 cast(SellerProtocol, self.trade_manager.get_trade_protocol()).on_payment_received(lambda: None, lambda e: None)
                 
@@ -217,7 +217,7 @@ class XmrTxProofService(AssetTxProofService):
             self.trade_manager.request_persistence()
             
         def fault_handler(error_message: str, e: Exception):
-            logger.error(error_message, exc_info=e)
+            self.logger.error(error_message, exc_info=e)
             
         service.request_from_all_services(result_handler, fault_handler)
         
@@ -277,7 +277,7 @@ class XmrTxProofService(AssetTxProofService):
     
     def is_32_bit_hex_string_invalid(self, hex_string: Optional[str]) -> bool:
         if not hex_string or not hex_string.isalnum() or len(hex_string) != 64:
-            logger.warning(f"Invalid hexString: {hex_string}")
+            self.logger.warning(f"Invalid hexString: {hex_string}")
             return True
         return False
 
@@ -309,10 +309,10 @@ class XmrTxProofService(AssetTxProofService):
                 continue
 
             if tx_key.lower() == trade_tx_key.lower():
-                logger.warning(f"Peer used the XMR tx key already at another trade with trade ID {t.get_id()}. This might be a scam attempt.")
+                self.logger.warning(f"Peer used the XMR tx key already at another trade with trade ID {t.get_id()}. This might be a scam attempt.")
                 return True
             if tx_hash.lower() == trade_tx_hash.lower():
-                logger.warning(f"Peer used the XMR tx ID already at another trade with trade ID {t.get_id()}. This might be a scam attempt.")
+                self.logger.warning(f"Peer used the XMR tx ID already at another trade with trade ID {t.get_id()}. This might be a scam attempt.")
                 return True
 
         return False

@@ -1,20 +1,17 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
 from datetime import timedelta
 import time
 from typing import TYPE_CHECKING
 
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
-from bisq.common.setup.log_setup import get_logger
+from utils.aio import FutureCallback
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
 
 
 if TYPE_CHECKING:
-    from bisq.core.network.p2p.peers.getdata.messages.get_data_response import (
-        GetDataResponse,
-    )
     from bisq.common.timer import Timer
     from bisq.core.network.p2p.network.network_node import NetworkNode
     from bisq.core.network.p2p.storage.p2p_data_storage import P2PDataStorage
@@ -23,8 +20,6 @@ if TYPE_CHECKING:
         GetDataRequest,
     )
 
-logger = get_logger(__name__)
-
 
 class GetDataRequestHandler:
     TIMEOUT_SEC = 240
@@ -32,11 +27,11 @@ class GetDataRequestHandler:
 
     class Listener(ABC):
         @abstractmethod
-        def on_complete(self, serialized_size: int):
+        def on_complete(self_, serialized_size: int):
             pass
 
         @abstractmethod
-        def on_fault(self, error_message: str, connection: "Connection"):
+        def on_fault(self_, error_message: str, connection: "Connection"):
             pass
 
     def __init__(
@@ -45,6 +40,7 @@ class GetDataRequestHandler:
         data_storage: "P2PDataStorage",
         listener: "Listener",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.network_node = network_node
         self.data_storage = data_storage
         self.listener = listener
@@ -72,15 +68,15 @@ class GetDataRequestHandler:
         )
 
         if was_persistable_network_payloads_truncated.get():
-            logger.info(
+            self.logger.info(
                 f"The getDataResponse for peer {connection_info} got truncated."
             )
         if was_protected_storage_entries_truncated.get():
-            logger.info(
+            self.logger.info(
                 f"The getDataResponse for peer {connection_info} got truncated."
             )
 
-        logger.info(
+        self.logger.info(
             f"The getDataResponse to peer with {connection_info} contains {len(data_response.data_set)} ProtectedStorageEntries and {len(data_response.persistable_network_payload_set)} PersistableNetworkPayloads"
         )
 
@@ -100,36 +96,40 @@ class GetDataRequestHandler:
             )
 
         future = self.network_node.send_message(connection, data_response)
-        future.add_done_callback(lambda f: self.on_future_complete(f, data_response))
-        logger.info(f"handle GetDataRequest took {get_time_ms() - ts} ms")
 
-    def stop(self):
-        self._cleanup()
-
-    def on_future_complete(
-        self, future: "Future[Connection]", data_response: "GetDataResponse"
-    ):
-        connection = None
-        try:
-            connection = future.result()
-            if not connection:
+        def on_success(r):
+            if not r:
                 raise Exception("Future returned None, connection was expected")
             if not self.stopped:
-                logger.trace(
+                self.logger.trace(
                     f"Send DataResponse to {connection.peers_node_address} succeeded. getDataResponse={data_response}"
                 )
                 self.listener.on_complete(
                     data_response.to_proto_network_envelope().ByteSize()
                 )
                 self._cleanup()
-        except Exception as e:
+
+        def on_failure(e):
             if not self.stopped:
                 error_message = f"Sending getDataResponse to {connection} failed. That is expected if the peer is offline. getDataResponse={data_response}. Exception: {str(e)}"
                 self._handle_fault(
                     error_message, CloseConnectionReason.SEND_MSG_FAILURE, connection
                 )
             else:
-                logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
+                self.logger.trace(
+                    "We have stopped already. We ignore that networkNode.sendMessage.onFailure call."
+                )
+
+        future.add_done_callback(
+            FutureCallback(
+                on_success,
+                on_failure,
+            )
+        )
+        self.logger.info(f"handle GetDataRequest took {get_time_ms() - ts} ms")
+
+    def stop(self):
+        self._cleanup()
 
     def _handle_fault(
         self,
@@ -138,13 +138,13 @@ class GetDataRequestHandler:
         connection: "Connection",
     ):
         if not self.stopped:
-            logger.info(
+            self.logger.info(
                 f"{error_message}\ncloseConnectionReason={close_connection_reason}"
             )
             self._cleanup()
             self.listener.on_fault(error_message, connection)
         else:
-            logger.warning("We have already stopped (handleFault)")
+            self.logger.warning("We have already stopped (handleFault)")
 
     def _cleanup(self):
         self.stopped = True

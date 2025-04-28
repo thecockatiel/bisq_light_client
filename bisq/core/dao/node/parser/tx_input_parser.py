@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.state.model.blockchain.spent_info import SpentInfo
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 
@@ -9,8 +9,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
     from bisq.core.dao.state.model.blockchain.tx_output import TxOutput
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-logger = get_logger(__name__)
 
 
 class TxInputParser:
@@ -24,6 +22,7 @@ class TxInputParser:
         self.optional_spent_lockup_tx_output: Optional["TxOutput"] = None
         self.is_unlock_input_valid = True
         self._num_vote_reveal_inputs = 0
+        self.logger = get_ctx_logger(__name__)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -55,7 +54,7 @@ class TxInputParser:
                     # The connected tx output of the blind vote tx is our input for the reveal tx.
                     # We allow only one input from any blind vote tx otherwise the vote reveal tx is invalid.
                     if not self._is_vote_reveal_input_valid:
-                        logger.warning(
+                        self.logger.warning(
                             "We have a tx which has >1 connected txOutputs marked as BLIND_VOTE_LOCK_STAKE_OUTPUT. This is not a valid BSQ tx."
                         )
                 elif connected_tx_output_type == TxOutputType.LOCKUP_OUTPUT:
@@ -70,7 +69,7 @@ class TxInputParser:
                             block_height + connected_tx_output.lock_time
                         )
                     else:
-                        logger.warning(
+                        self.logger.warning(
                             "We have a tx which has >1 connected txOutputs marked as LOCKUP_OUTPUT. This is not a valid BSQ tx."
                         )
                 elif connected_tx_output_type == TxOutputType.UNLOCK_OUTPUT:
@@ -79,7 +78,7 @@ class TxInputParser:
                     if block_height < unlock_block_height:
                         self.accumulated_input_value -= input_value
                         self.burnt_bond_value += input_value
-                        logger.warning(
+                        self.logger.warning(
                             f"We got a tx which spends the output from an unlock tx but before the "
                             f"unlockTime has passed. That leads to burned BSQ! "
                             f"blockHeight={block_height}, unLockHeight={unlock_block_height}"
@@ -91,7 +90,7 @@ class TxInputParser:
                 )
                 self._dao_state_service.remove_unspent_tx_output(connected_tx_output)
         else:
-            logger.warning(
+            self.logger.warning(
                 f"Connected txOutput {tx_output_key} at input {input_index} of txId {tx_id} is confiscated"
             )
 

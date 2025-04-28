@@ -1,7 +1,7 @@
 from utils.aio import FutureCallback
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.node.messages.get_blocks_request import GetBlocksRequest
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.message_listener import MessageListener
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
 
 
 class RequestBlocksHandler(MessageListener):
@@ -30,11 +29,11 @@ class RequestBlocksHandler(MessageListener):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     class Listener:
-        def on_complete(self, get_blocks_response: "GetBlocksResponse"):
+        def on_complete(self_, get_blocks_response: "GetBlocksResponse"):
             pass
 
         def on_fault(
-            self, error_message: str, connection: Optional["Connection"] = None
+            self_, error_message: str, connection: Optional["Connection"] = None
         ):
             pass
 
@@ -50,6 +49,7 @@ class RequestBlocksHandler(MessageListener):
         start_block_height: int,
         listener: "RequestBlocksHandler.Listener",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self.node_address = node_address
@@ -65,7 +65,7 @@ class RequestBlocksHandler(MessageListener):
 
     def request_blocks(self):
         if self._stopped:
-            logger.warning("We have stopped already. We ignore that requestData call.")
+            self.logger.warning("We have stopped already. We ignore that requestData call.")
             return
 
         get_blocks_request = GetBlocksRequest(
@@ -75,7 +75,7 @@ class RequestBlocksHandler(MessageListener):
         )
 
         if self._timeout_timer is not None:
-            logger.warning("We had a timer already running and stop it.")
+            self.logger.warning("We had a timer already running and stop it.")
             self._timeout_timer.stop()
 
         def handle_timeout():
@@ -84,14 +84,14 @@ class RequestBlocksHandler(MessageListener):
                     f"A timeout occurred when sending getBlocksRequest: {get_blocks_request} "
                     f"on peersNodeAddress: {self.node_address}"
                 )
-                logger.debug(f"{error_message} / RequestDataHandler={self}")
+                self.logger.debug(f"{error_message} / RequestDataHandler={self}")
                 self._handle_fault(
                     error_message,
                     self.node_address,
                     CloseConnectionReason.SEND_MSG_TIMEOUT,
                 )
             else:
-                logger.warning(
+                self.logger.warning(
                     "We have stopped already. We ignore that timeoutTimer.run call. "
                     "Might be caused by a previous networkNode.sendMessage.onFailure."
                 )
@@ -102,7 +102,7 @@ class RequestBlocksHandler(MessageListener):
             timedelta(minutes=RequestBlocksHandler.TIMEOUT_MIN),
         )
 
-        logger.info(
+        self.logger.info(
             f"\n\n>> We request blocks from peer {self.node_address.get_full_address()} from block height {get_blocks_request.from_block_height}.\n"
         )
 
@@ -111,7 +111,7 @@ class RequestBlocksHandler(MessageListener):
         future = self._network_node.send_message(self.node_address, get_blocks_request)
 
         def on_success(result):
-            logger.debug(
+            self.logger.debug(
                 f"Sending of GetBlocksRequest message to peer {self.node_address.get_full_address()} succeeded."
             )
 
@@ -121,14 +121,14 @@ class RequestBlocksHandler(MessageListener):
                     f"Sending getBlocksRequest to {self.node_address} failed. That is expected if the peer is offline.\n\t"
                     f"getBlocksRequest={get_blocks_request}.\n\tException={str(e)}"
                 )
-                logger.error(error_message)
+                self.logger.error(error_message)
                 self._handle_fault(
                     error_message,
                     self.node_address,
                     CloseConnectionReason.SEND_MSG_FAILURE,
                 )
             else:
-                logger.warning(
+                self.logger.warning(
                     "We have stopped already. We ignore that networkNode.sendMessage.onFailure call."
                 )
 
@@ -141,28 +141,28 @@ class RequestBlocksHandler(MessageListener):
     def on_message(self, network_envelope: "NetworkEnvelope", connection: "Connection"):
         if isinstance(network_envelope, GetBlocksResponse):
             if self._stopped:
-                logger.warning(
+                self.logger.warning(
                     "We have stopped already. We ignore that onDataRequest call."
                 )
                 return
 
             optional_node_address = connection.peers_node_address
             if not optional_node_address:
-                logger.warning(
+                self.logger.warning(
                     "Peers node address is not present, that is not expected."
                 )
                 # We do not return here as in case the connection has been created from the peers side we might not
                 # have the address set. As we check the nonce later we do not care that much for the check if the
                 # connection address is the same as the one we used.
             elif optional_node_address != self.node_address:
-                logger.warning(
+                self.logger.warning(
                     "Peers node address is not the same we used for the request. This is not expected. We ignore that message."
                 )
                 return
 
             get_blocks_response = network_envelope
             if get_blocks_response.request_nonce != self._nonce:
-                logger.warning(
+                self.logger.warning(
                     f"Nonce not matching. That can happen rarely if we get a response after a canceled "
                     f"handshake (timeout causes connection close but peer might have sent a msg before "
                     f"connection was closed).\n\t"
@@ -171,7 +171,7 @@ class RequestBlocksHandler(MessageListener):
                 return
 
             self.terminate()
-            logger.info(
+            self.logger.info(
                 f"\n#################################################################\n"
                 f"We received from peer {self.node_address.get_full_address()} a BlocksResponse with {len(get_blocks_response.blocks)} blocks"
                 f"\n#################################################################\n"

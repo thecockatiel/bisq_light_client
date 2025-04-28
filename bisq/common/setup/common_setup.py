@@ -1,19 +1,17 @@
-from asyncio import CancelledError as AsyncioCancelledError
-from concurrent.futures import CancelledError
+from collections.abc import Callable
+import contextvars
 from datetime import timedelta
 import platform
 import sys
 import traceback
 import threading
 from types import TracebackType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
-from utils.debug_helpers import print_active_threads
-from bisq.common.ascii_logo import show_ascii_logo
 from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from signal import signal, SIGINT, SIGTERM
 
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
 from bisq.common.user_thread import UserThread
 from bisq.common.util.profiler import Profiler
@@ -24,13 +22,11 @@ if TYPE_CHECKING:
     from bisq.common.config.config import Config
 
 
-logger = get_logger(__name__)
-
-
 class CommonSetup:
     @staticmethod
     def setup_sig_int_handlers(graceful_shut_down_handler: GracefulShutDownHandler):
         shutdown_initiated = False
+        logger = get_ctx_logger(__name__)
 
         def signal_handler(sig: int, frame):
             nonlocal shutdown_initiated
@@ -48,7 +44,9 @@ class CommonSetup:
                 signal(SIGINT, signal_handler)
                 signal(SIGTERM, signal_handler)
             except Exception as e:
-                logger.warning(f"Could not set up signal handlers on windows: {e}")
+                logger.warning(
+                    f"Could not set up signal handlers on windows: {e}"
+                )
 
             if threading.current_thread() is threading.main_thread():
                 # Add keyboard interrupt handler as fallback
@@ -63,9 +61,10 @@ class CommonSetup:
                                 )
                             )
                             break
-
+                ctx = contextvars.copy_context()
                 keyboard_thread = threading.Thread(
-                    target=keyboard_interrupt_handler,
+                    target=ctx.run,
+                    args=(keyboard_interrupt_handler,),
                     daemon=True,
                     name="KeyboardInterruptHandlerThread",
                 )
@@ -80,6 +79,7 @@ class CommonSetup:
         uncaught_exception_handler: UncaughtExceptionHandler,
     ):
         original_excepthook = sys.excepthook
+        logger = get_ctx_logger(__name__)
 
         def exception_handler(
             exc_type: type[BaseException],
@@ -151,7 +151,6 @@ class CommonSetup:
 
     @staticmethod
     def setup(config: "Config", graceful_shut_down_handler: GracefulShutDownHandler):
-        show_ascii_logo()
         Version.set_base_crypto_network_id(config.base_currency_network.value)
         Version.print_version()
         Profiler.print_system_load()
@@ -161,3 +160,51 @@ class CommonSetup:
     @staticmethod
     def start_periodic_tasks():
         Profiler.print_system_load_periodically(timedelta(minutes=10))
+
+    @staticmethod
+    def _get_version_file(config: "Config"):
+        return config.app_data_dir.joinpath("version")
+
+    @staticmethod
+    def persist_bisq_version(config: "Config"):
+        version_file = CommonSetup._get_version_file(config)
+        try:
+            with version_file.open("w") as file_writer:
+                file_writer.write(Version.VERSION)
+        except Exception as e:
+            logger = get_ctx_logger(__name__)
+            logger.error(f"Writing Version failed. {e}", exc_info=e)
+
+    @staticmethod
+    def get_last_bisq_version(config: "Config") -> Optional[str]:
+        version_file = CommonSetup._get_version_file(config)
+        if not version_file.exists():
+            return None
+        try:
+            with version_file.open() as f:
+                # We only expect 1 line
+                return f.readline().strip()
+        except Exception as e:
+            logger = get_ctx_logger(__name__)
+            logger.error(e)
+        return None
+
+    @staticmethod
+    def is_downgrade(last_version: str):
+        return bool(last_version and Version.is_new_version(last_version, Version.VERSION))
+
+    @staticmethod
+    def has_downgraded(
+        config: "Config",
+        down_grade_prevention_handler: Optional[Callable[[str], None]] = None,
+    ) -> bool:
+        last_version = CommonSetup.get_last_bisq_version(config)
+        has_downgraded = CommonSetup.is_downgrade(last_version)
+        if has_downgraded:
+            logger = get_ctx_logger(__name__)
+            logger.error(
+                f"Downgrade from version {last_version} to version {Version.VERSION} is not supported"
+            )
+            if down_grade_prevention_handler is not None:
+                down_grade_prevention_handler(last_version)
+        return has_downgraded

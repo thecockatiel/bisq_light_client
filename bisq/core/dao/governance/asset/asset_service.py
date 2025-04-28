@@ -1,8 +1,8 @@
 from dataclasses import dataclass
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
 )
@@ -45,8 +45,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.util.coin.bsq_formatter import BsqFormatter
 
-logger = get_logger(__name__)
-
 
 @dataclass(frozen=True)
 class TradeAmountDateTuple:
@@ -66,6 +64,7 @@ class AssetService(DaoSetupService, DaoStateListener):
         dao_state_service: "DaoStateService",
         bsq_formatter: "BsqFormatter",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._bsq_wallet_service = bsq_wallet_service
         self._btc_wallet_service = btc_wallet_service
         self._wallets_manager = wallets_manager
@@ -190,7 +189,7 @@ class AssetService(DaoSetupService, DaoStateListener):
             transaction = self._bsq_wallet_service.sign_tx_and_verify_no_dust_outputs(
                 tx_with_btc_fee
             )
-            logger.info(f"Asset listing fee tx: {transaction}")
+            self.logger.info(f"Asset listing fee tx: {transaction}")
             return transaction
         except Exception as e:
             raise TxException(e)
@@ -207,13 +206,13 @@ class AssetService(DaoSetupService, DaoStateListener):
         error_message_handler: "ErrorMessageHandler",
     ):
         class Callback(TxBroadcasterCallback):
-            def on_success(self, tx: "Transaction"):
-                logger.info(
+            def on_success(self_, tx: "Transaction"):
+                self.logger.info(
                     f"Asset listing fee tx has been published. TxId={tx.get_tx_id()}"
                 )
                 result_handler()
 
-            def on_failure(self, exception: Exception):
+            def on_failure(self_, exception: Exception):
                 error_message_handler(str(exception))
 
         self._wallets_manager.publish_and_commit_bsq_tx(
@@ -308,7 +307,7 @@ class AssetService(DaoSetupService, DaoStateListener):
             for proposal in self._get_accepted_remove_asset_proposal_stream()
         )
         if is_removed:
-            logger.info(
+            self.logger.info(
                 f"Asset '{get_currency_name_and_code(ticker_symbol)}' was removed"
             )
         return is_removed

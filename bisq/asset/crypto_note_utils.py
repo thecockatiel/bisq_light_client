@@ -1,12 +1,12 @@
 from bisq.common.crypto.hash import get_keccak1600_hash
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 
-logger = get_logger(__name__)
 
 class CryptoNoteException(Exception):
     pass
 
 def get_raw_spend_key_and_view_key(address: str):
+    logger = get_ctx_logger(__name__)
     try:
         # See https://monerodocs.org/public-address/standard-address/
         decoded = MoneroBase58.decode(address)

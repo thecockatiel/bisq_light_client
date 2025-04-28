@@ -13,10 +13,9 @@ except:
 
 from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.key_conversion_exception import KeyConversionException
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 
-logger = get_logger(__name__)
 
 
 class PrehashedSha256:
@@ -46,6 +45,7 @@ class Sig:
             public_key = private_key.publickey()
             return KeyPair(private_key, public_key)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Could not create key.", exc_info=e)
             raise RuntimeError("Could not create key.") from e
 
@@ -98,6 +98,7 @@ class Sig:
             public_key = DSA.import_key(sig_public_key_bytes)
             return public_key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex={bytes_as_hex_string(sig_public_key_bytes)}, error={e}", exc_info=e)
             raise KeyConversionException(e) from e
 
@@ -107,6 +108,7 @@ class Sig:
             private_key = DSA.import_key(sig_private_key_bytes)
             return private_key
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error(f"Error creating sigPublicKey from bytes. sigPublicKeyBytes as hex=REDACTED, error={e}", exc_info=e)
             raise KeyConversionException(e) from e
 
@@ -115,6 +117,7 @@ class Sig:
         try:
             return sig_public_key.publickey().export_key("DER")
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Error encoding public key to bytes.", exc_info=e)
             raise KeyConversionException(e) from e
 
@@ -123,6 +126,7 @@ class Sig:
         try:
             return sig_private_key.export_key("DER", pkcs8=True)
         except Exception as e:
+            logger = get_ctx_logger(__name__)
             logger.error("Error encoding private key to bytes.", exc_info=e)
             raise KeyConversionException(e) from e
 

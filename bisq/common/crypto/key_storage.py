@@ -5,18 +5,17 @@ from cryptography.hazmat.primitives import serialization
 from bisq.common.crypto.key_entry import KeyEntry
 from bisq.common.crypto.key_pair import KeyPair
 from bisq.common.file.file_util import rolling_backup
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.dir import check_dir
 from bisq.common.crypto.encryption import DSA, rsa, Encryption
 
 if TYPE_CHECKING:
     from bisq.common.crypto.key_ring import KeyRing
 
-logger = get_logger(__name__)
-
 class KeyStorage:
     def __init__(self, storage_dir: Path):
         self.storage_dir = check_dir(storage_dir)
+        self.logger = get_ctx_logger(__name__)
 
     def all_key_files_exist(self) -> bool:
         return all([self.storage_dir.joinpath(f"{entry.file_name}.key").exists() for entry in [KeyEntry.MSG_SIGNATURE, KeyEntry.MSG_ENCRYPTION]])
@@ -38,7 +37,7 @@ class KeyStorage:
                 public_key = private_key.public_key()
             return KeyPair(private_key, public_key)
         except Exception as e:
-            logger.error(f"Could not load key {key_entry}: {e}")
+            self.logger.error(f"Could not load key {key_entry}: {e}")
             raise RuntimeError(f"Could not load key {key_entry}: {e}") from e
 
     def save_key_ring(self, key_ring: 'KeyRing'):
@@ -55,5 +54,5 @@ class KeyStorage:
             with open(file_path, 'wb') as fos:
                 fos.write(data)
         except Exception as e:
-            logger.error(f"Could not save key {name}", exc_info=e)
+            self.logger.error(f"Could not save key {name}", exc_info=e)
             raise RuntimeError(f"Could not save key {name}", e) from e

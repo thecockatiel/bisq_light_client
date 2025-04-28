@@ -2,11 +2,10 @@ from typing import List, Optional
 from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.protocol.persistable.persistable_list import PersistableList
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 import pb_pb2 as protobuf
 from bisq.core.network.p2p.mailbox.mailbox_item import MailboxItem
 
-logger = get_logger(__name__)
 
 class MailboxMessageList(PersistableList[MailboxItem]):
     def __init__(self, items: Optional[List[MailboxItem]] = None):
@@ -28,6 +27,7 @@ class MailboxMessageList(PersistableList[MailboxItem]):
                 if mailbox_item is not None:
                     items.append(mailbox_item)
             except ProtobufferException as e:
+                logger = get_ctx_logger(__name__)
                 logger.error(f"Error at MailboxItem.from_proto: {str(e)}", exc_info=e)
                 
         return MailboxMessageList(items)

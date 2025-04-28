@@ -1,13 +1,19 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.base.coin import Coin
 from utils.preconditions import check_argument, check_not_none
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
 
 
 class SellerAsTakerSignsDepositTx(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -83,6 +89,6 @@ class SellerAsTakerSignsDepositTx(TradeTask):
                 if contract is not None:
                     contract.print_diff(self.process_model.trade_peer.contract_as_json)
             except Exception as diff_exc:
-                logger.error("Failed to print contract diff", exc_info=diff_exc)
+                self.logger.error("Failed to print contract diff", exc_info=diff_exc)
 
             self.failed(exc=e)

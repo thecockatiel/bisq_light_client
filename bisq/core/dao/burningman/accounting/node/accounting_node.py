@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.crypto.encryption import ECPrivkey, Encryption
 from bisq.common.crypto.hash import get_sha256_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.state.dao_state_listener import DaoStateListener
@@ -28,8 +28,6 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
     from bisq.core.network.p2p.p2p_service import P2PService
 
-logger = get_logger(__name__)
-
 
 class AccountingNode(DaoSetupService, DaoStateListener, ABC):
     PERMITTED_PUB_KEYS = {
@@ -45,6 +43,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
         accounting_block_parser: "AccountingBlockParser",
         preferences: "Preferences",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._p2p_service = p2p_service
         self._dao_state_service = dao_state_service
         self._burning_man_accounting_service = burning_man_accounting_service
@@ -78,7 +77,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
             return
 
         if self._dao_state_service.parse_block_chain_complete:
-            logger.info(
+            self.logger.info(
                 "daoStateService.isParseBlockChainComplete is already true, "
                 "we call on_initial_dao_block_parsing_complete directly"
             )
@@ -118,7 +117,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
 
     def on_initialized(self):
         if self._p2p_service.is_bootstrapped():
-            logger.info(
+            self.logger.info(
                 "p2PService.isBootstrapped is already true, we call on_p2p_network_ready directly."
             )
             self.on_p2p_network_ready()
@@ -138,7 +137,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
         self._burning_man_accounting_service.on_initial_block_requests_complete()
 
     def apply_reorg(self):
-        logger.warning("apply_reorg called")
+        self.logger.warning("apply_reorg called")
         self._try_reorg_counter += 1
         if self._try_reorg_counter < 5:
             self._burning_man_accounting_service.purge_last_ten_blocks()
@@ -146,7 +145,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
             delay = self._try_reorg_counter * self._try_reorg_counter
             UserThread.run_after(self.start_request_blocks, timedelta(seconds=delay))
         else:
-            logger.warning(
+            self.logger.warning(
                 f"We tried {self._try_reorg_counter} times to request blocks again after a reorg signal but it is still failing.",
             )
 
@@ -163,6 +162,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
         blocks: Collection["AccountingBlock"],
     ) -> Optional[bytes]:
         ts = get_time_ms()
+        logger = get_ctx_logger(__name__)
         try:
             output_stream = bytearray()
             for accounting_block in blocks:
@@ -189,6 +189,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
         sha256_hash: bytes, pub_key: str, signature: bytes, use_dev_privilege_keys: bool
     ) -> bool:
         # TODO: check if works same as java
+        logger = get_ctx_logger(__name__)
         if pub_key not in AccountingNode.get_permitted_pub_keys(use_dev_privilege_keys):
             logger.warning(f"PubKey is not in supported key set. pubKey={pub_key}")
             return False

@@ -1,8 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Callable
-from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.wallet_service import WalletService
@@ -18,12 +17,11 @@ if TYPE_CHECKING:
     from bisq.common.taskrunner.task_runner import TaskRunner
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-logger = get_logger(__name__)
-
 class SetupPayoutTxListener(TradeTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
         self.trade_state_unsub: Optional[Callable[[], None]] = None
         self.confidence_listener: "AddressConfidenceListener" = None
 
@@ -78,7 +76,7 @@ class SetupPayoutTxListener(TradeTask):
             WalletService.print_tx("payoutTx received from network", wallet_tx)
             self.set_state()
         else:
-            logger.info(f"We had the payout tx already set. tradeId={self.trade.get_id()}, state={self.trade.get_trade_state()}")
+            self.logger.info(f"We had the payout tx already set. tradeId={self.trade.get_id()}, state={self.trade.get_trade_state()}")
 
         self.process_model.btc_wallet_service.reset_coin_locked_in_multi_sig_address_entry(self.trade.get_id())
         

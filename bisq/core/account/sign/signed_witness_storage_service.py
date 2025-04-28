@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource

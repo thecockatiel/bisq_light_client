@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.bisq_v1.trade_data_validation_exception import (
     TradeDataInvalidAmountException,
     TradeDataInvalidInputException,
@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction import Transaction
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
 
-logger = get_logger(__name__)
 
 # TODO: check after implementing bitcoinj layer
 class TradeDataValidation:
@@ -24,6 +23,7 @@ class TradeDataValidation:
                                  delayed_payout_tx: 'Transaction',
                                  btc_wallet_service: 'BtcWalletService',
                                  address_consumer: Optional[Callable[[str], None]] = None) -> None:
+        logger = get_ctx_logger(__name__)
         if delayed_payout_tx is None:
             error_msg = "DelayedPayoutTx must not be None"
             logger.error(error_msg)
@@ -116,6 +116,7 @@ class TradeDataValidation:
 
         if not maker_first_match and not taker_first_match:
             err_msg = "Maker/Taker txId in contract does not match deposit tx input"
+            logger = get_ctx_logger(__name__)
             logger.error(f"{err_msg}\n"
                         f"Contract Maker tx={contract_maker_tx_id} Contract Taker tx={contract_taker_tx_id}\n"
                         f"Deposit Input0={tx_id_input0} Deposit Input1={tx_id_input1}")

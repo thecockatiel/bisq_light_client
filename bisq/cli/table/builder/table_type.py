@@ -17,3 +17,4 @@ class TableType(IntEnum):
     PAYMENT_ACCOUNT_TBL = auto()
     TRADE_DETAIL_TBL = auto()
     TRANSACTION_TBL = auto()
+    USERS_TBL = auto()

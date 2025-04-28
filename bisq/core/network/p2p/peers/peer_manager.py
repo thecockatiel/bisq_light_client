@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from datetime import timedelta
 from typing import Optional, TYPE_CHECKING
@@ -16,7 +17,6 @@ from bisq.core.network.p2p.network.inbound_connection import InboundConnection
 from bisq.core.network.p2p.network.peer_type import PeerType
 from bisq.core.network.p2p.network.rule_violation import RuleViolation
 from bisq.core.network.p2p.peers.peerexchange.peer_list import PeerList
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
     from bisq.core.network.p2p.node_address import NodeAddress
 
-logger = get_logger(__name__)
 
 
 class PeerManager(ConnectionListener, PersistedDataHost):
@@ -53,15 +52,15 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
     class Listener(ABC):
         @abstractmethod
-        def on_all_connections_lost(self):
+        def on_all_connections_lost(self_):
             pass
 
         @abstractmethod
-        def on_new_connection_after_all_connections_lost(self):
+        def on_new_connection_after_all_connections_lost(self_):
             pass
 
         @abstractmethod
-        def on_awake_from_standby(self):
+        def on_awake_from_standby(self_):
             pass
 
     def __init__(
@@ -72,7 +71,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         persistence_manager: "PersistenceManager[PeerList]",
         max_connections: int,
     ):
-
+        self.logger = get_ctx_logger(__name__)
         self._shut_down_requested = False
         self._num_on_connections = 0
 
@@ -196,7 +195,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         if self._lost_all_connections:
             self._lost_all_connections = False
             self._stopped = False
-            logger.info(
+            self.logger.info(
                 "\n------------------------------------------------------------\n"
                 + f"Established a new connection from/to {connection.peers_node_address} after all connections lost.\n"
                 + "------------------------------------------------------------"
@@ -211,7 +210,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 peer.on_connection()
 
     def on_disconnect(self, close_connection_reason, connection):
-        logger.debug(
+        self.logger.debug(
             f"on_disconnect called: node_address={connection.peers_node_address}, reason={close_connection_reason}"
         )
         self.handle_connection_fault(connection=connection)
@@ -227,7 +226,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 if not previous_lost_all_connections:
                     # If we enter to 'All connections lost' we count the event.
                     self._num_all_connections_lost_events += 1
-                logger.warning(
+                self.logger.warning(
                     "\n------------------------------------------------------------\n"
                     + "All connections lost\n"
                     + "------------------------------------------------------------"
@@ -407,7 +406,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self._latest_live_peers.update(recent_peers)
 
         if old_num_latest_live_peers != len(self._latest_live_peers):
-            logger.info(f"Num of latest_live_peers={len(self._latest_live_peers)}")
+            self.logger.info(f"Num of latest_live_peers={len(self._latest_live_peers)}")
         return self._latest_live_peers
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +472,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             self._remove_too_old_persisted_peers()
             self.check_max_connections()
         else:
-            logger.debug(
+            self.logger.debug(
                 "We have stopped already. We ignore that check_max_connections_timer call."
             )
 
@@ -488,18 +487,18 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def check_max_connections(self) -> bool:
         all_connections = self._network_node.get_all_connections()
         size = len(all_connections)
-        logger.info(
+        self.logger.info(
             f"We have {size} connections open. Our limit is {self._max_connections}"
         )
 
         if size <= self._max_connections:
-            logger.debug(
+            self.logger.debug(
                 f"We have not exceeded the maxConnections limit of {size} "
                 "so don't need to close any connections."
             )
             return False
 
-        logger.info(
+        self.logger.info(
             "We have too many connections open. "
             "Lets try first to remove the inbound connections of type PEER."
         )
@@ -514,18 +513,18 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         )
 
         if not candidates:
-            logger.info(
+            self.logger.info(
                 "No candidates found. We check if we exceed our "
                 f"out_bound_peer_trigger of {self._out_bound_peer_trigger}"
             )
             if size <= self._out_bound_peer_trigger:
-                logger.info(
+                self.logger.info(
                     f"We have not exceeded out_bound_peer_trigger of {self._out_bound_peer_trigger} "
                     "so don't need to close any connections"
                 )
                 return False
 
-            logger.info(
+            self.logger.info(
                 f"We have exceeded out_bound_peer_trigger of {self._out_bound_peer_trigger}. "
                 "Lets try to remove outbound connection of type PEER."
             )
@@ -539,18 +538,18 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             )
 
             if not candidates:
-                logger.info(
+                self.logger.info(
                     "No candidates found. We check if we exceed our "
                     f"initial_data_exchange_trigger of {self._initial_data_exchange_trigger}"
                 )
                 if size <= self._initial_data_exchange_trigger:
-                    logger.info(
+                    self.logger.info(
                         f"We have not exceeded initial_data_exchange_trigger of {self._initial_data_exchange_trigger} "
                         "so don't need to close any connections"
                     )
                     return False
 
-                logger.info(
+                self.logger.info(
                     f"We have exceeded initial_data_exchange_trigger of {self._initial_data_exchange_trigger}. "
                     "Lets try to remove the oldest INITIAL_DATA_EXCHANGE connection"
                 )
@@ -565,17 +564,17 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 )
 
                 if not candidates:
-                    logger.info(
+                    self.logger.info(
                         "No candidates found. We check if we exceed our "
                         f"max_connections_absolute of {self._max_connections_absolute}"
                     )
                     if size <= self._max_connections_absolute:
-                        logger.info(
+                        self.logger.info(
                             f"We have not exceeded max_connections_absolute limit of {self._max_connections_absolute} "
                             "so don't need to close any connections"
                         )
                         return False
-                    logger.info(
+                    self.logger.info(
                         "We reached abs. max. connections. Lets try to remove ANY connection."
                     )
                     candidates = sorted(
@@ -585,7 +584,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
         if candidates:
             connection = candidates.pop(0)
-            logger.info(
+            self.logger.info(
                 f"check_max_connections: Num candidates (inbound/peer) for shut down={len(candidates)}. We close oldest connection to peer {connection.peers_node_address}"
             )
             if not connection.stopped:
@@ -597,7 +596,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 )
                 return True
 
-        logger.info(
+        self.logger.info(
             "No candidates found to remove. "
             f"size={size}, all_connections={all_connections}"
         )
@@ -620,7 +619,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
     def _close_anonymous_connection(self, connection: "Connection"):
         if not connection.stopped.get() and not connection.peers_node_address:
-            logger.info(
+            self.logger.info(
                 "removeAnonymousPeers: We close the connection as the peer address is still unknown. "
                 f"Peer: {connection.peers_node_address}"
             )
@@ -660,7 +659,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def _purge_reported_peers_if_exceeds(self):
         size = len(self._reported_peers)
         if size > PeerManager.MAX_REPORTED_PEERS:
-            logger.info(
+            self.logger.info(
                 f"We have already {size} reported peers which exceeds our limit of {PeerManager.MAX_REPORTED_PEERS}."
                 + "We remove random peers from the reported peers list."
             )
@@ -671,7 +670,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             for peer in peers_to_remove:
                 self._remove_reported_peer(peer)
         else:
-            logger.trace(
+            self.logger.trace(
                 f"No need to purge reported peers.\n\tWe don't have more then {PeerManager.MAX_REPORTED_PEERS} reported peers yet."
             )
 
@@ -689,14 +688,14 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 result += (
                     "\n------------------------------------------------------------\n"
                 )
-                logger.trace(result)
-            logger.debug(f"Number of reported peers: {len(self._reported_peers)}")
+                self.logger.trace(result)
+            self.logger.debug(f"Number of reported peers: {len(self._reported_peers)}")
 
     def _print_new_reported_peers(self, reported_peers: set["Peer"]):
         if PeerManager.PRINT_REPORTED_PEERS_DETAILS:
             peers_details = "\n\t".join(str(peer) for peer in reported_peers)
-            logger.trace(f"We received new reportedPeers:\n\t{peers_details}")
-        logger.debug(f"Number of new arrived reported peers: {len(reported_peers)}")
+            self.logger.trace(f"We received new reportedPeers:\n\t{peers_details}")
+        self.logger.debug(f"Number of new arrived reported peers: {len(reported_peers)}")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # //  Persisted peers
@@ -740,7 +739,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
     def _purge_persisted_peers_if_exceeds(self):
         size = len(self.get_persisted_peers())
         if size > PeerManager.MAX_PERSISTED_PEERS:
-            logger.trace(
+            self.logger.trace(
                 f"We have already {size} persisted peers which exceeds our limit of {PeerManager.MAX_PERSISTED_PEERS}."
                 + "We remove random peers from the persisted peers list."
             )
@@ -751,7 +750,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
             for peer in peers_to_remove:
                 self._remove_persisted_peer(peer)
         else:
-            logger.trace(
+            self.logger.trace(
                 f"No need to purge persisted peers.\n\tWe don't have more then {PeerManager.MAX_PERSISTED_PEERS} persisted peers yet."
             )
 
@@ -842,7 +841,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         for i, conn in enumerate(sorted_connections, 1):
             result += f"\nConnection {i}\n" f"{conn.connection_statistics.get_info()}\n"
 
-        logger.info(result)
+        self.logger.info(result)
 
     def _print_connected_peers(self):
         confirmed = self._network_node.get_confirmed_connections()
@@ -856,4 +855,4 @@ class PeerManager(ConnectionListener, PersistedDataHost):
                 result += f"\n{connection.peers_node_address} {connection.connection_state.peer_type.name}"
 
             result += "\n------------------------------------------------------------\n"
-            logger.debug(result)
+            self.logger.debug(result)

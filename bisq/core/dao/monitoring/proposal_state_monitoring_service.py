@@ -1,8 +1,8 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.governance.proposal.my_proposal_list import MyProposalList
@@ -37,8 +37,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.governance.proposal.proposal_service import ProposalService
 
-logger = get_logger(__name__)
-
 
 class ProposalStateMonitoringService(
     DaoSetupService,
@@ -63,7 +61,7 @@ class ProposalStateMonitoringService(
     """
 
     class Listener:
-        def on_proposal_state_block_chain_changed(self):
+        def on_proposal_state_block_chain_changed(self_):
             pass
 
     def __init__(
@@ -75,6 +73,7 @@ class ProposalStateMonitoringService(
         proposal_service: "ProposalService",
         seed_node_repository: "SeedNodeRepository",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._proposal_state_network_service = proposal_state_network_service
         self._genesis_tx_info = genesis_tx_info
@@ -120,14 +119,14 @@ class ProposalStateMonitoringService(
                 if is_hash_chain_updated:
                     hash_chain_updated = True
             if hash_chain_updated:
-                logger.info(
+                self.logger.info(
                     f"updateHashChain for {block_height - genesis_block_height} blocks took {get_time_ms() - ts} ms"
                 )
 
         ts = get_time_ms()
         updated = self._maybe_update_hash_chain(block_height)
         if updated:
-            logger.info(
+            self.logger.info(
                 f"updateHashChain for block {block_height} took {get_time_ms() - ts} ms"
             )
 
@@ -334,9 +333,9 @@ class ProposalStateMonitoringService(
 
         if conflict_msg:
             if self.is_in_conflict_with_seed_node:
-                logger.warning(f"Conflict with seed nodes: {conflict_msg}")
+                self.logger.warning(f"Conflict with seed nodes: {conflict_msg}")
             elif self.is_in_conflict_with_non_seed_node:
-                logger.info(f"Conflict with non-seed nodes: {conflict_msg}")
+                self.logger.info(f"Conflict with non-seed nodes: {conflict_msg}")
 
         if notify_listeners and changed.get():
             for listener in self.listeners:

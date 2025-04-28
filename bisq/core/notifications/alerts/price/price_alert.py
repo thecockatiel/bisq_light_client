@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import (
     get_currency_pair,
@@ -22,10 +22,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.user.user import User
 
-
-logger = get_logger(__name__)
-
-
 class PriceAlert:
 
     def __init__(
@@ -34,6 +30,7 @@ class PriceAlert:
         mobile_notification_service: "MobileNotificationService",
         user: "User",
     ):
+        self.logger = get_ctx_logger(__name__)
         self.price_feed_service = price_feed_service
         self.user = user
         self.mobile_notification_service = mobile_notification_service
@@ -85,7 +82,7 @@ class PriceAlert:
                         # If an alert got triggered we remove the filter.
                         self.user.remove_price_alert_filter()
                     except Exception as e:
-                        logger.error(e)
+                        self.logger.error(e)
 
     @staticmethod
     def get_test_msg() -> "MobileMessage":

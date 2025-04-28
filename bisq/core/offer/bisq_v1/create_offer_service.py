@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Tuple
 
 from bisq.core.btc.wallet.restrictions import Restrictions
@@ -9,7 +10,6 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.user.preferences_const import USE_SYMMETRIC_SECURITY_DEPOSIT
 from bisq.core.util.coin.coin_util import CoinUtil
 from bitcoinj.base.coin import Coin
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
 from bisq.core.offer.offer import Offer
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     from bisq.core.user.user import User
     from bisq.core.provider.price.price_feed_service import PriceFeedService
 
-logger = get_logger(__name__)
-
 class CreateOfferService:
     def __init__(self, 
                  offer_util: 'OfferUtil',
@@ -37,6 +35,7 @@ class CreateOfferService:
                  pub_key_ring: 'PubKeyRing',
                  user: 'User',
                  btc_wallet_service: 'BtcWalletService'):
+        self.logger = get_ctx_logger(__name__)
         self.offer_util = offer_util
         self.tx_fee_estimation_service = tx_fee_estimation_service
         self.price_feed_service = price_feed_service
@@ -62,7 +61,7 @@ class CreateOfferService:
                            buyer_security_deposit: float,
                            payment_account: 'PaymentAccount') -> 'Offer':
         
-        logger.info(f"create and get offer with offerId={offer_id}, "
+        self.logger.info(f"create and get offer with offerId={offer_id}, "
                      f"currencyCode={currency_code}, "
                      f"direction={direction}, "
                      f"price={price.value if price else 0}, "

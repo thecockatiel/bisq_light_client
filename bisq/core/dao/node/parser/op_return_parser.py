@@ -1,4 +1,4 @@
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.dao.governance.asset.asset_consensus import AssetConsensus
 from bisq.core.dao.governance.blindvote.blind_vote_consensus import BlindVoteConsensus
@@ -17,13 +17,13 @@ from bisq.core.dao.node.parser.temp_tx_output import TempTxOutput
 from bisq.core.dao.state.model.blockchain.op_return_type import OpReturnType
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
 
-logger = get_logger(__name__)
-
 
 class OpReturnParser:
     """Processes OpReturn output if valid and delegates validation to specific validators."""
 
+    @staticmethod
     def get_tx_output_type(temp_tx_output: TempTxOutput) -> TxOutputType:
+        logger = get_ctx_logger(__name__)
         non_zero_output = temp_tx_output.value != 0
         op_return_data = temp_tx_output.op_return_data
         assert op_return_data is not None, "op_return_data must not be None"

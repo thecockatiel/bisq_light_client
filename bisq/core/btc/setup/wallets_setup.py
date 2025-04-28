@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from bisq.common.file.file_util import (
@@ -7,7 +8,6 @@ from bisq.common.file.file_util import (
     rolling_backup,
 )
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from utils.data import SimpleProperty, SimplePropertyChangeEvent
@@ -20,9 +20,7 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
     from bisq.core.btc.model.address_entry_list import AddressEntryList
     from bisq.common.config.config import Config
-
-logger = get_logger(__name__)
-
+ 
 
 # TODO
 class WalletsSetup:
@@ -37,6 +35,7 @@ class WalletsSetup:
         config: "Config",
         wallet_dir: Path,
     ):
+        self.logger = get_ctx_logger(__name__)
         self._address_entry_list = address_entry_list
         self._preferences = preferences
         self._socks5_proxy_provider = socks5_proxy_provider
@@ -98,7 +97,7 @@ class WalletsSetup:
         def on_exception(e: Exception):
             timeout_timer.stop()
             self.wallet_config = None
-            logger.error("WalletsSetup.initialize failed", exc_info=e)
+            self.logger.error("WalletsSetup.initialize failed", exc_info=e)
             self.wallets_setup_failed_property.set(True)
             UserThread.execute(lambda: exception_handler(e))
 
@@ -110,10 +109,10 @@ class WalletsSetup:
         )
 
     def shut_down(self):
-        logger.info("wallets_setup.shut_down started")
+        self.logger.info("wallets_setup.shut_down started")
 
         def on_shutdown_complete():
-            logger.info("wallet_config shut down completed")
+            self.logger.info("wallet_config shut down completed")
             self.shut_down_complete_property.set(True)
 
         if self.wallet_config:
@@ -146,7 +145,7 @@ class WalletsSetup:
         try:
             delete_directory(self._wallet_dir.joinpath("backup"))
         except Exception as e:
-            logger.error(f"Could not delete directory: {e}", exc_info=e)
+            self.logger.error(f"Could not delete directory: {e}", exc_info=e)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Restore

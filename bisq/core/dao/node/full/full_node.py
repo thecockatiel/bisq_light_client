@@ -1,8 +1,4 @@
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.node.bsq_node import BsqNode
-
-logger = get_logger(__name__)
-
 
 # TODO: not going to implement for now
 class FullNode(BsqNode):

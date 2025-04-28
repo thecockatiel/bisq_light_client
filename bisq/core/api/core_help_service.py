@@ -1,18 +1,21 @@
 import os
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.exception.not_found_exception import NotFoundException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
+from bisq.core.user.user_manager import UserManager
 from bisq.resources import core_resource_readlines
-
-logger = get_logger(__name__)
 
 
 class CoreHelpService:
 
+    def __init__(self, user_manager: "UserManager"):
+        self._user_manager = user_manager
+
     def get_method_help(self, method_name: str):
         if not method_name:
             raise IllegalArgumentException("method name is required")
+
+        user_context = self._user_manager.active_context
 
         resource_file = os.path.join("help", f"{method_name}-help.txt")
         try:
@@ -21,10 +24,10 @@ class CoreHelpService:
                 raise IOError("File not found")
             return "".join(lines)
         except IOError as e:
-            logger.error("", exc_info=e)
+            user_context.logger.error("", exc_info=e)
             raise IllegalStateException(f"could not read {method_name} help doc")
         except Exception as e:
-            logger.error("", exc_info=e)
+            user_context.logger.error("", exc_info=e)
             raise NotFoundException(f"no help found for api method {method_name}")
 
     @staticmethod

@@ -1,14 +1,12 @@
 from pathlib import Path
 from typing import Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.api.model.payment_account_type_adapter import PaymentAccountTypeAdapter
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payment_account_factory import PaymentAccountFactory
 from bisq.core.util.json_util import JsonUtil
 import tempfile
-
-logger = get_logger(__name__)
 
 
 class PaymentAccountForm:
@@ -119,6 +117,7 @@ class PaymentAccountForm:
                 raise IllegalStateException(f"cannot create json file for a {payment_method_id} payment method")
         except Exception as ex:
             err_msg = f"cannot create a payment account form for a {payment_method_id} payment method. reason: {ex}"
+            logger = get_ctx_logger(__name__)
             logger.error(f"{err_msg.capitalize()}.", exc_info=ex)
             raise IllegalStateException(err_msg)
         return Path(file_path)
@@ -135,6 +134,7 @@ class PaymentAccountForm:
                 return file.read()
         except Exception as ex:
             err_msg = f"cannot read json string from file '{json_file}'"
+            logger = get_ctx_logger(__name__)
             logger.error(f"{err_msg.capitalize()}.", exc_info=ex)
             raise IllegalStateException(err_msg)
 

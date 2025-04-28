@@ -10,60 +10,60 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.payment.payload.sepa_account_payload import SepaAccountPayload
 
 class SepaAccount(CountryBasedPaymentAccount, BankAccount):
-        SUPPORTED_CURRENCIES: list["TradeCurrency"] = [FiatCurrency("EUR")]
+    SUPPORTED_CURRENCIES: list["TradeCurrency"] = [FiatCurrency("EUR")]
+    
+    def __init__(self):
+        super().__init__(PaymentMethod.SEPA)
+        self.set_single_trade_currency(SepaAccount.SUPPORTED_CURRENCIES[0])
         
-        def __init__(self):
-            super().__init__(PaymentMethod.SEPA)
-            self.set_single_trade_currency(SepaAccount.SUPPORTED_CURRENCIES[0])
-            
-        def create_payload(self) -> PaymentAccountPayload:
-            return SepaAccountPayload(self.payment_method.id, self.id, accepted_countries=get_all_sepa_countries())
+    def create_payload(self) -> PaymentAccountPayload:
+        return SepaAccountPayload(self.payment_method.id, self.id, accepted_countries=get_all_sepa_countries())
+    
+    @property
+    def bank_id(self):
+        return cast(SepaAccountPayload, self.payment_account_payload).bic
+    
+    @property
+    def holder_name(self):
+        return self.payment_account_payload.holder_name
+    
+    @holder_name.setter
+    def holder_name(self, holder_name: str):
+        self.payment_account_payload.holder_name = holder_name
+    
+    @property
+    def iban(self):
+        return cast(SepaAccountPayload, self.payment_account_payload).iban
+    
+    @iban.setter
+    def iban(self, iban: str):
+        cast(SepaAccountPayload, self.payment_account_payload).iban = iban
+    
+    @property
+    def bic(self):
+        return cast(SepaAccountPayload, self.payment_account_payload).bic
+    
+    @bic.setter
+    def bic(self, bic: str):
+        cast(SepaAccountPayload, self.payment_account_payload).bic = bic
+    
+    @property
+    def accepted_country_codes(self):
+        return cast(SepaAccountPayload, self.payment_account_payload).accepted_country_codes
+    
+    def add_accepted_country_code(self, country_code: str):
+        cast(SepaAccountPayload, self.payment_account_payload).add_accepted_country(country_code)
+    
+    def remove_accepted_country_code(self, country_code: str):
+        cast(SepaAccountPayload, self.payment_account_payload).remove_accepted_country(country_code)
         
-        @property
-        def bank_id(self):
-            return cast(SepaAccountPayload, self.payment_account_payload).bic
+    def on_persist_changes(self):
+        super().on_persist_changes()
+        cast(SepaAccountPayload, self.payment_account_payload).on_persist_changes()
         
-        @property
-        def holder_name(self):
-            return self.payment_account_payload.holder_name
+    def on_revert_changes(self):
+        super().revert_changes()
+        cast(SepaAccountPayload, self.payment_account_payload).revert_changes()
         
-        @holder_name.setter
-        def holder_name(self, holder_name: str):
-            self.payment_account_payload.holder_name = holder_name
-        
-        @property
-        def iban(self):
-            return cast(SepaAccountPayload, self.payment_account_payload).iban
-        
-        @iban.setter
-        def iban(self, iban: str):
-            cast(SepaAccountPayload, self.payment_account_payload).iban = iban
-        
-        @property
-        def bic(self):
-            return cast(SepaAccountPayload, self.payment_account_payload).bic
-        
-        @bic.setter
-        def bic(self, bic: str):
-            cast(SepaAccountPayload, self.payment_account_payload).bic = bic
-        
-        @property
-        def accepted_country_codes(self):
-            return cast(SepaAccountPayload, self.payment_account_payload).accepted_country_codes
-        
-        def add_accepted_country_code(self, country_code: str):
-            cast(SepaAccountPayload, self.payment_account_payload).add_accepted_country(country_code)
-        
-        def remove_accepted_country_code(self, country_code: str):
-            cast(SepaAccountPayload, self.payment_account_payload).remove_accepted_country(country_code)
-            
-        def on_persist_changes(self):
-            super().on_persist_changes()
-            cast(SepaAccountPayload, self.payment_account_payload).on_persist_changes()
-            
-        def on_revert_changes(self):
-            super().revert_changes()
-            cast(SepaAccountPayload, self.payment_account_payload).revert_changes()
-            
-        def get_supported_currencies(self) -> list[TradeCurrency]:
-            return SepaAccount.SUPPORTED_CURRENCIES
+    def get_supported_currencies(self) -> list[TradeCurrency]:
+        return SepaAccount.SUPPORTED_CURRENCIES

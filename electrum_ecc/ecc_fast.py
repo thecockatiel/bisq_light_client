@@ -6,17 +6,17 @@
 # Originally based on pycoin:
 # https://github.com/richardkiss/pycoin/blob/01b1787ed902df23f99a55deb00d8cd076a906fe/pycoin/ecdsa/native/secp256k1.py
 
+import logging
 import os
 import sys
-import logging
 import ctypes
 from ctypes import (
     c_int, c_uint, c_char, c_size_t, c_void_p,
     CFUNCTYPE, POINTER,
 )
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 
-_logger = get_logger(__name__)
+_logger = get_base_logger(__name__)
 _logger.setLevel(logging.DEBUG)
 
 

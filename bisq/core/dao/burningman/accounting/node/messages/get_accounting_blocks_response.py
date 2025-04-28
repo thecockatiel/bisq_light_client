@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import Iterable, Optional
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.burningman.accounting.blockchain.accounting_block import (
     AccountingBlock,
 )
@@ -14,8 +14,6 @@ from bisq.core.network.p2p.extended_data_size_permission import (
 from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 import pb_pb2 as protobuf
 
-
-logger = get_logger(__name__)
 
 
 # Taken from GetBlocksResponse
@@ -35,6 +33,7 @@ class GetAccountingBlocksResponse(
             super().__init__()
         else:
             super().__init__(message_version)
+        self.logger = get_ctx_logger(__name__)
         self.blocks = tuple(blocks) if not isinstance(blocks, tuple) else blocks
         self.request_nonce = request_nonce
         self.pub_key = pub_key
@@ -50,16 +49,17 @@ class GetAccountingBlocksResponse(
                 signature=self.signature,
             )
         )
-        logger.info(
+        self.logger.info(
             f"Sending a GetAccountingBlocksResponse with {builder.ByteSize() / 1000.0} kB"
         )
         return builder
 
     @staticmethod
     def from_proto(
-        proto: protobuf.GetAccountingBlocksResponse, message_version: int
+        proto: protobuf.GetAccountingBlocksResponse, message_version: int,
     ) -> "GetAccountingBlocksResponse":
         blocks_list = tuple(AccountingBlock.from_proto(pb) for pb in proto.blocks)
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"\n\n<< Received a GetAccountingBlocksResponse with {len(blocks_list)} blocks and {proto.ByteSize() / 1000.0} kB size\n"
         )

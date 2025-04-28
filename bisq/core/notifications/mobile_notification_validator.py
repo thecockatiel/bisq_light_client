@@ -1,12 +1,14 @@
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.notifications.mobile_model import MobileModel
 from bisq.core.notifications.mobile_model_os import MobileModelOS
 
 
-logger = get_logger(__name__)
-
-
 class MobileNotificationValidator:
+
+    def __init__(
+        self,
+    ):
+        self.logger = get_ctx_logger(__name__)
 
     def is_valid(self, key_and_token: str) -> bool:
         if not key_and_token:
@@ -14,7 +16,7 @@ class MobileNotificationValidator:
 
         tokens = key_and_token.split(MobileModel.PHONE_SEPARATOR)
         if len(tokens) != 4:
-            logger.error(
+            self.logger.error(
                 f"invalid pairing ID format: not 4 sections separated by {MobileModel.PHONE_SEPARATOR_WRITING}"
             )
             return False
@@ -24,7 +26,7 @@ class MobileNotificationValidator:
         phone_id = tokens[3]
 
         if len(key) != 32:
-            logger.error("invalid pairing ID format: key not 32 bytes")
+            self.logger.error("invalid pairing ID format: key not 32 bytes")
             return False
 
         if magic in [
@@ -32,18 +34,18 @@ class MobileNotificationValidator:
             MobileModelOS.IOS_DEV.magic_string,
         ]:
             if len(phone_id) != 64:
-                logger.error(
+                self.logger.error(
                     "invalid Bisq MobileModel ID format: iOS token not 64 bytes"
                 )
                 return False
         elif magic == MobileModelOS.ANDROID.magic_string:
             if len(phone_id) < 32:
-                logger.error(
+                self.logger.error(
                     "invalid Bisq MobileModel ID format: Android token too short (<32 bytes)"
                 )
                 return False
         else:
-            logger.error("invalid Bisq MobileModel ID format")
+            self.logger.error("invalid Bisq MobileModel ID format")
             return False
 
         return True

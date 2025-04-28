@@ -1,11 +1,9 @@
 from math import isnan, pow
 from typing import Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
-
-logger = get_logger(__name__)
 
 _infinities = (float("inf"), float("-inf"))
 
@@ -26,6 +24,7 @@ class MathUtils:
             rounded = dec.quantize(Decimal("0.1") ** precision, rounding=rounding_mode)
             return float(rounded)
         except (InvalidOperation, ValueError) as e:
+            logger = get_ctx_logger(__name__)
             logger.error(str(e))
             return 0.0
 
@@ -39,6 +38,7 @@ class MathUtils:
             rounded = dec.quantize(Decimal("1"), rounding=rounding_mode)
             return int(rounded)
         except (InvalidOperation, ValueError) as e:
+            logger = get_ctx_logger(__name__)
             logger.error(str(e))
             return 0
 

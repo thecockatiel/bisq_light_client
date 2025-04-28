@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
-import uuid
+from typing import TYPE_CHECKING
 from bisq.common.crypto.sig import Sig
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.network.p2p.send_direct_message_listener import SendDirectMessageListener
 from bisq.core.trade.model.trade_state import TradeState
@@ -11,12 +11,17 @@ from bisq.core.trade.protocol.bisq_v1.messages.inputs_for_deposit_tx_response im
 from bisq.core.trade.protocol.bisq_v1.model.process_model import ProcessModel
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from utils.time import get_time_ms
-from bisq.common.setup.log_setup import get_logger
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.common.taskrunner.task_runner import TaskRunner
+    from bisq.core.trade.model.bisq_v1.trade import Trade
 
 
 class MakerSendsInputsForDepositTxResponse(TradeTask, ABC):
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     @abstractmethod
     def get_prepared_deposit_tx(self) -> bytes:
@@ -84,14 +89,14 @@ class MakerSendsInputsForDepositTxResponse(TradeTask, ABC):
             )
             self.process_model.trade_manager.request_persistence()
             peers_node_address = self.trade.trading_peer_node_address
-            logger.info(
+            self.logger.info(
                 f"Send {message.__class__.__name__} to peer {peers_node_address}. "
                 f"tradeId={message.trade_id}, uid={message.uid}"
             )
 
             class Listener(SendDirectMessageListener):
                 def on_arrived(self_):
-                    logger.info(
+                    self.logger.info(
                         f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}"
                     )
@@ -102,7 +107,7 @@ class MakerSendsInputsForDepositTxResponse(TradeTask, ABC):
                     self.complete()
 
                 def on_fault(self_, error_message: str):
-                    logger.error(
+                    self.logger.error(
                         f"{message.__class__.__name__} failed: Peer {peers_node_address}. "
                         f"tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}"
                     )

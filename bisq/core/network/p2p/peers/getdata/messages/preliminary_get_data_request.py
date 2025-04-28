@@ -2,16 +2,14 @@ from dataclasses import dataclass, field
 
 from bisq.common.capabilities import Capabilities
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.anonymous_message import AnonymousMessage
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.supported_capabilities_message import (
     SupportedCapabilitiesMessage,
 )
-from bisq.common.setup.log_setup import get_logger
 
 import pb_pb2 as protobuf
-
-logger = get_logger(__name__)
 
 
 @dataclass
@@ -21,6 +19,9 @@ class PreliminaryGetDataRequest(
     supported_capabilities: Capabilities = field(
         default_factory=lambda: Capabilities.app
     )
+
+    def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
 
     def to_proto_network_envelope(self):
         request = protobuf.PreliminaryGetDataRequest(
@@ -33,7 +34,7 @@ class PreliminaryGetDataRequest(
         )
         envelope = self.get_network_envelope_builder()
         envelope.preliminary_get_data_request.CopyFrom(request)
-        logger.info(
+        self.logger.info(
             f"Sending a PreliminaryGetDataRequest with {request.ByteSize() / 1000} kB and {len(self.excluded_keys)} excluded key entries. Requester's version={self.version}"
         )
         return envelope
@@ -47,6 +48,7 @@ class PreliminaryGetDataRequest(
         supported_capabilities = Capabilities.from_int_list(
             proto.supported_capabilities
         )
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"Received a PreliminaryGetDataRequest with {proto.ByteSize() / 1000} kB and {len(excluded_keys)} excluded key entries. Requester's version={requesters_version}"
         )

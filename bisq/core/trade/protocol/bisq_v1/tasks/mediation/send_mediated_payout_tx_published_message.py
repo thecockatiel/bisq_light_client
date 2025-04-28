@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 import uuid
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.support.dispute.mediation.mediation_result_state import MediationResultState
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
 from bisq.core.trade.protocol.bisq_v1.tasks.send_mailbox_message_task import SendMailboxMessageTask
@@ -9,13 +9,13 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
 
 
 class SendMediatedPayoutTxPublishedMessage(SendMailboxMessageTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
 
     def get_trade_mailbox_message(self, id: str):
         payout_tx = self.trade.payout_tx
@@ -50,7 +50,7 @@ class SendMediatedPayoutTxPublishedMessage(SendMailboxMessageTask):
 
             if self.trade.payout_tx is None:
                 msg = "PayoutTx is None"
-                logger.error(msg)
+                self.logger.error(msg)
                 self.failed(msg)
                 return
                 

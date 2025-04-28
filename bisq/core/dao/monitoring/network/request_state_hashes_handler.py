@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
 from datetime import timedelta
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.network.close_connection_reason import CloseConnectionReason
 from bisq.core.network.p2p.network.message_listener import MessageListener
+from utils.aio import FutureCallback
 from utils.random import next_random_int
 
 if TYPE_CHECKING:
@@ -22,8 +22,6 @@ if TYPE_CHECKING:
     )
     from bisq.core.network.p2p.network.connection import Connection
 
-logger = get_logger(__name__)
-
 
 _Req = TypeVar("Req", bound="GetStateHashesRequest")
 _Res = TypeVar("Res", bound="GetStateHashesResponse")
@@ -35,12 +33,12 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
     class Listener(Generic[_Res], ABC):
         @abstractmethod
         def on_complete(
-            self, get_state_hashes_response: _Res, peers_node_address: Optional["NodeAddress"]
+            self_, get_state_hashes_response: _Res, peers_node_address: Optional["NodeAddress"]
         ) -> None:
             pass
 
         @abstractmethod
-        def on_fault(self, error_message: str, connection: Optional["Connection"]) -> None:
+        def on_fault(self_, error_message: str, connection: Optional["Connection"]) -> None:
             pass
 
     def __init__(
@@ -50,6 +48,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
         node_address: "NodeAddress",
         listener: "RequestStateHashesHandler.Listener[_Res]",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._node_address = node_address
@@ -89,7 +88,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                     timedelta(seconds=RequestStateHashesHandler.TIMEOUT_SEC),
                 )
 
-            logger.debug(
+            self.logger.debug(
                 f"We send to peer {self._node_address} a {get_state_hashes_request}."
             )
             self._network_node.add_message_listener(self)
@@ -100,7 +99,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 self._handle_send_message_result(get_state_hashes_request)
             )
         else:
-            logger.warning(
+            self.logger.warning(
                 "We have stopped already. We ignore that requestProposalsHash call."
             )
 
@@ -110,47 +109,46 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 f"A timeout occurred at sending getStateHashesRequest: {get_state_hashes_request} "
                 f"on peersNodeAddress: {self._node_address}"
             )
-            logger.debug(f"{error_message} / RequestStateHashesHandler={self}")
+            self.logger.debug(f"{error_message} / RequestStateHashesHandler={self}")
             self._handle_fault(error_message, self._node_address, CloseConnectionReason.SEND_MSG_TIMEOUT)
         else:
-            logger.trace(
+            self.logger.trace(
                 "We have stopped already. We ignore that timeout_timer.run call. "
                 "Might be caused by a previous network_node.send_message.on_failure."
             )
 
     def _handle_send_message_result(self, get_state_hashes_request: _Req):
-        def callback(future: Future):
-            try:
-                future.result()
-                if not self._stopped:
-                    logger.info(
-                        f"Sending of {get_state_hashes_request.__class__.__name__} message to peer {self._node_address.get_full_address()} succeeded."
-                    )
-                else:
-                    logger.trace(
-                        "We have stopped already. We ignore that network_node.send_message.on_success call. "
-                        "Might be caused by a previous timeout."
-                    )
-            except Exception as e:
-                if not self._stopped:
-                    error_message = (
-                        f"Sending getStateHashesRequest to {self._node_address} failed. "
-                        f"That is expected if the peer is offline.\n\tgetStateHashesRequest={get_state_hashes_request}."
-                        f"\n\tException={e}"
-                    )
-                    logger.error(error_message)
-                    self._handle_fault(
-                        error_message,
-                        self._node_address,
-                        CloseConnectionReason.SEND_MSG_FAILURE,
-                    )
-                else:
-                    logger.trace(
-                        "We have stopped already. We ignore that network_node.send_message.on_failure call. "
-                        "Might be caused by a previous timeout."
-                    )
+        def on_success(r): 
+            if not self._stopped:
+                self.logger.info(
+                    f"Sending of {get_state_hashes_request.__class__.__name__} message to peer {self._node_address.get_full_address()} succeeded."
+                )
+            else:
+                self.logger.trace(
+                    "We have stopped already. We ignore that network_node.send_message.on_success call. "
+                    "Might be caused by a previous timeout."
+                )
+        
+        def on_failure(e):
+            if not self._stopped:
+                error_message = (
+                    f"Sending getStateHashesRequest to {self._node_address} failed. "
+                    f"That is expected if the peer is offline.\n\tgetStateHashesRequest={get_state_hashes_request}."
+                    f"\n\tException={e}"
+                )
+                self.logger.error(error_message)
+                self._handle_fault(
+                    error_message,
+                    self._node_address,
+                    CloseConnectionReason.SEND_MSG_FAILURE,
+                )
+            else:
+                self.logger.trace(
+                    "We have stopped already. We ignore that network_node.send_message.on_failure call. "
+                    "Might be caused by a previous timeout."
+                )
 
-        return callback
+        return FutureCallback(on_success, on_failure)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // MessageListener implementation
@@ -171,7 +169,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                     if get_state_hashes_response.request_nonce == self.nonce:
                         self._stop_timeout_timer()
                         self._cleanup()
-                        logger.info(
+                        self.logger.info(
                             f"We received from peer {self._node_address.get_full_address()} a {get_state_hashes_response.__class__.__name__} with {len(get_state_hashes_response.state_hashes)} stateHashes"
                         )
                         self._listener.on_complete(
@@ -179,16 +177,16 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                             connection.peers_node_address,
                         )
                     else:
-                        logger.warning(
+                        self.logger.warning(
                             f"Nonce not matching. That can happen rarely if we get a response after a canceled "
                             f"handshake (timeout causes connection close but peer might have sent a msg before "
                             f"connection was closed).\n\t"
                             f"We drop that message. nonce={self.nonce} / requestNonce={get_state_hashes_response.request_nonce}"
                         )
                 else:
-                    logger.warning("We have stopped already.")
+                    self.logger.warning("We have stopped already.")
             elif connection.peers_node_address:
-                logger.debug(
+                self.logger.debug(
                     f"{self.__class__.__name__}: We got a message from another node. We ignore that."
                 )
 

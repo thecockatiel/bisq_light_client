@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.xmr.knaccc.monero.address.exceptions.invalid_wallet_address_exception import (
     InvalidWalletAddressException,
 )
@@ -12,8 +12,6 @@ from utils.time import get_time_ms
 if TYPE_CHECKING:
     from bisq.core.payment.asset_account import AssetAccount
     from bisq.core.payment.payment_account import PaymentAccount
-
-logger = get_logger(__name__)
 
 
 class XmrAccountDelegate:
@@ -54,6 +52,7 @@ class XmrAccountDelegate:
 
     def __init__(self, account: "AssetAccount"):
         self.account = account
+        self.logger = get_ctx_logger(__name__)
 
     def create_and_set_new_sub_address(self):
         account_index = int(self.account_index)
@@ -76,12 +75,12 @@ class XmrAccountDelegate:
             sub_address = wallet_address.get_subaddress_base58(
                 private_view_key, account_index, sub_address_index
             )
-            logger.info(
+            self.logger.info(
                 f"Created new sub_address {sub_address}. Took {get_time_ms() - ts} ms."
             )
             self.sub_address = sub_address
         except InvalidWalletAddressException as e:
-            logger.error("WalletAddress.get_subaddress_base58 failed", exc_info=e)
+            self.logger.error("WalletAddress.get_subaddress_base58 failed", exc_info=e)
             raise RuntimeError(e)
 
     def reset(self):

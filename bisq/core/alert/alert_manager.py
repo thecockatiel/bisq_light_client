@@ -1,8 +1,8 @@
 import base64
 from collections.abc import Collection
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.alert.alert import Alert
 from bisq.core.network.p2p.storage.hash_map_changed_listener import (
     HashMapChangedListener,
@@ -20,9 +20,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class AlertManager:
 
     def __init__(
@@ -33,6 +30,7 @@ class AlertManager:
         ignore_dev_msg: bool = False,
         use_dev_privilege_keys: bool = False,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.key_ring = key_ring
         self.user = user
@@ -95,7 +93,7 @@ class AlertManager:
             self.user.set_developers_alert(alert)
             result = self.p2p_service.add_protected_storage_entry(alert)
             if result:
-                logger.debug(
+                self.logger.debug(
                     f"Add alertMessage to network was successful. AlertMessage={alert}"
                 )
             return True
@@ -105,7 +103,7 @@ class AlertManager:
         alert = self.user.developers_alert
         if self._is_key_valid(priv_key_string) and alert is not None:
             if self.p2p_service.remove_data(alert):
-                logger.debug(
+                self.logger.debug(
                     f"Remove alertMessage from network was successful. AlertMessage={alert}"
                 )
 
@@ -146,5 +144,5 @@ class AlertManager:
             )
             return True
         except:
-            logger.warning("verify_signature failed")
+            self.logger.warning("verify_signature failed")
             return False

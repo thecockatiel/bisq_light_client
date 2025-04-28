@@ -1,9 +1,9 @@
 from collections.abc import Callable
 from datetime import timedelta, datetime
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterator, Optional, List
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.model.tradable_list import TradableList
 
@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.model.address_entry import AddressEntry
 
 
-logger = get_logger(__name__)
-
 
 class FailedTradesManager(PersistedDataHost):
     def __init__(
@@ -39,7 +37,7 @@ class FailedTradesManager(PersistedDataHost):
         dump_delayed_payout_tx: "DumpDelayedPayoutTx",
         allow_faulty_delayed_txs: bool,
     ):
-
+        self.logger = get_ctx_logger(__name__)
         self.failed_trades = TradableList["Trade"]()
         self.key_ring = key_ring
         self.price_feed_service = price_feed_service
@@ -104,7 +102,7 @@ class FailedTradesManager(PersistedDataHost):
             return
 
         if self.unfail_trade_callback(trade):
-            logger.info(f"Unfailing trade {trade.get_id()}")
+            self.logger.info(f"Unfailing trade {trade.get_id()}")
             if self.failed_trades.remove(trade):
                 self.request_persistence()
 
@@ -146,14 +144,14 @@ class FailedTradesManager(PersistedDataHost):
 
     def has_deposit_tx(self, failed_trade: "Trade") -> bool:
         if failed_trade.deposit_tx is None:
-            logger.warning(f"Failed trade {failed_trade.get_id()} has no deposit tx.")
+            self.logger.warning(f"Failed trade {failed_trade.get_id()} has no deposit tx.")
             return False
         return True
 
     def has_delayed_payout_tx_bytes(self, failed_trade: "Trade") -> bool:
         if failed_trade.delayed_payout_tx_bytes is not None:
             return True
-        logger.warning(
+        self.logger.warning(
             f"Failed trade {failed_trade.get_id()} has no delayedPayoutTxBytes."
         )
         return self.allow_faulty_delayed_txs
@@ -162,7 +160,7 @@ class FailedTradesManager(PersistedDataHost):
         self.persistence_manager.request_persistence()
 
     def maybe_clear_sensitive_data(self):
-        logger.info(
+        self.logger.info(
             "checking failed trades eligibility for having sensitive data cleared"
         )
         eligible_trades = [

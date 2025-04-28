@@ -3,7 +3,7 @@ import importlib
 import json
 import re
 from typing import Any, Generic, Type, TypeVar, Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.country_util import find_country_by_code
@@ -27,8 +27,6 @@ from utils.reflection_utils import FieldType, get_settable_fields
 
 _T = TypeVar("T", bound=PaymentAccount)
 
-logger = get_logger(__name__)
-
 
 class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
     JSON_COMMENTS = [
@@ -40,6 +38,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
     def __init__(
         self, payment_account_type: Type[_T], excluded_fields: list[str] = None
     ):
+        self.logger = get_ctx_logger(__name__)
         self.payment_account_type = payment_account_type
         self.payment_account_payload_type = self._get_payment_account_payload_type()
         self.payment_account_payload_super_type = self.payment_account_payload_type.__bases__[
@@ -116,7 +115,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
 
         for field in self.unique_settable_fields:
             # Write out a json element if field is settable
-            logger.debug(f"Append form with settable field: {field}")
+            self.logger.debug(f"Append form with settable field: {field}")
             if field == "country":
                 json_data[to_camel_case(field)] = "your two letter country code"
             else:
@@ -128,7 +127,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
     # is the only known exception to the rule.
     def _write_trade_currencies_field(self, json_data: dict, account: PaymentAccount):
         field_name = "tradeCurrencies"
-        logger.debug(f"Append form with non-settable field: {field_name}")
+        self.logger.debug(f"Append form with non-settable field: {field_name}")
         json_data[field_name] = (
             "comma delimited currency code list, e.g., gbp,eur,jpy,usd"
         )
@@ -140,7 +139,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
         self, json_data: dict, account: PaymentAccount
     ):
         field_name = "selectedTradeCurrency"
-        logger.debug(f"Append form with settable field: {field_name}")
+        self.logger.debug(f"Append form with settable field: {field_name}")
         json_data[field_name] = "primary trading currency code, e.g., eur"
 
     def read(self, json_str: str) -> PaymentAccount:
@@ -272,7 +271,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
             # Do a check in a calling
             # class to make sure the tradeCurrencies field is populated in the
             # PaymentAccount object, if it is required for the payment account method.
-            logger.warning(
+            self.logger.warning(
                 f"No trade currencies were found in the {account.payment_method.get_display_string()} account form."
             )
         return True
@@ -296,7 +295,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
             if trade_currency:
                 account.selected_trade_currency = trade_currency
             else:
-                logger.error(f"{field_value} is not a valid trade currency code.")
+                self.logger.error(f"{field_value} is not a valid trade currency code.")
         return True
 
     def _did_read_common_field(
@@ -338,7 +337,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
                 err_msg = (
                     f"cannot set the country on a {self.payment_account_type.__name__}"
                 )
-                logger.error(f"{err_msg.capitalize()}.")
+                self.logger.error(f"{err_msg.capitalize()}.")
                 raise IllegalStateException(f"programmer error: {err_msg}")
             return True
         else:
@@ -355,7 +354,7 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
             errMsg = (
                 f"cannot get the payload class for {self.payment_account_type.__name__}"
             )
-            logger.error(f"{errMsg.capitalize()}.", exc_info=e)
+            self.logger.error(f"{errMsg.capitalize()}.", exc_info=e)
             raise IllegalStateException(f"programmer error: {errMsg}")
 
     def _init_new_payment_account(self) -> PaymentAccount:
@@ -365,5 +364,5 @@ class PaymentAccountTypeAdapter(Generic[_T], TypeAdapter[_T]):
             return payment_account
         except Exception as ex:
             errMsg = f"cannot instantiate a new {self.payment_account_type.__name__}"
-            logger.error(f"{errMsg.capitalize()}.", exc_info=ex)
+            self.logger.error(f"{errMsg.capitalize()}.", exc_info=ex)
             raise IllegalStateException(f"programmer error: {errMsg}")

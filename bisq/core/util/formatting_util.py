@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING, Union
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.res import Res
 from utils.java.decimal_format import DecimalFormat
@@ -12,8 +12,7 @@ from utils.formatting import readable_file_size
 if TYPE_CHECKING:
     from bisq.core.monetary.altcoin import Altcoin
     from bisq.core.monetary.price import Price
-    
-logger = get_logger(__name__)
+
 
 class FormattingUtils:
     BTC_FORMATTER_KEY = "BTC"
@@ -34,6 +33,7 @@ class FormattingUtils:
                 # pre and post fixing
                 return coin_format.postfix_code().format(value)
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at format_coin_with_code: {e}")
                 return ""
         else:
@@ -52,6 +52,7 @@ class FormattingUtils:
                 else:
                     formatted_coin = coin_format.no_code().with_min_decimals(decimal_places).repeat_optional_decimals(1, decimal_places).format(value)
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at format_coin: {e}")
 
         if decimal_aligned:
@@ -75,6 +76,7 @@ class FormattingUtils:
                 else:
                     return res
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at format_fiat: {e}")
                 return Res.get("shared.na") + " " + fiat.currency_code
         else:
@@ -90,6 +92,7 @@ class FormattingUtils:
                 else:
                     return res
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at format_altcoin: {e}")
                 return Res.get("shared.na") + " " + altcoin.currency_code
         else:
@@ -109,6 +112,7 @@ class FormattingUtils:
                 else:
                     return res
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"Exception at format_altcoin_volume: {e}")
                 return Res.get("shared.na") + " " + altcoin.currency_code
         else:

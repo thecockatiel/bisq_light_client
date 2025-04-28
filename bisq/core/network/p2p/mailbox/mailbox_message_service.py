@@ -1,5 +1,7 @@
 from collections.abc import Callable, Collection
 from concurrent.futures import Future
+import contextvars
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Tuple
 import threading
 import random
@@ -9,7 +11,6 @@ from bisq.common.crypto.crypto_exception import CryptoException
 from bisq.common.crypto.hash import get_32_byte_hash
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.protobuffer_exception import ProtobufferException
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.mailbox.mailbox_message import MailboxMessage
 from bisq.core.network.p2p.network_not_ready_exception import NetworkNotReadyException
@@ -20,6 +21,7 @@ from bisq.core.network.p2p.storage.payload.mailbox_storage_payload import Mailbo
 from bisq.core.network.p2p.storage.payload.protected_mailbox_storage_entry import ProtectedMailboxStorageEntry
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 from bisq.core.network.utils.capability_utils import CapabilityUtils
+from utils.aio import FutureCallback
 from utils.concurrency import AtomicInt, ThreadSafeSet
 from bisq.core.network.p2p.mailbox.mailbox_message_list import MailboxMessageList
 from bisq.core.network.p2p.mailbox.mailbox_item import MailboxItem
@@ -48,7 +50,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
     from bisq.common.crypto.sig import DSA
 
-logger = get_logger(__name__)
 
 class MailboxMessageService:
     REPUBLISH_DELAY_SEC = 120  # 2 minutes in seconds
@@ -65,7 +66,7 @@ class MailboxMessageService:
         clock: "Clock",
         republish_mailbox_entries: bool,
     ) -> None:
-
+        self.logger = get_ctx_logger(__name__)
         self.network_node = network_node
         self.peer_manager = peer_manager
         self.p2p_data_storage = p2p_data_storage
@@ -146,7 +147,7 @@ class MailboxMessageService:
                         protected_entry
                     )
                 else:
-                    logger.info(
+                    self.logger.info(
                         f"Ignoring large persisted mailboxItem. If still valid will reload from seed nodes. "
                         f"Size={readable_file_size(serialized_size)}; date={date}; "
                         f"sender={protected_entry.mailbox_storage_payload.prefixed_sealed_and_signed_message.sender_node_address}"
@@ -164,7 +165,7 @@ class MailboxMessageService:
                     f"{readable_file_size(total)}{large_msg_info}"
                 )
 
-            logger.info(
+            self.logger.info(
                 f"Loaded {len(self.mailbox_message_list)} persisted mailbox messages with "
                 + f"{readable_file_size(total_size.get())}.\nPer day distribution:\n"
                 + '\n'.join(per_day)
@@ -213,7 +214,7 @@ class MailboxMessageService:
         send_mailbox_message_listener: "SendMailboxMessageListener"
     ):
         if peers_pub_key_ring is None:
-            logger.debug("send_encrypted_mailbox_message: peers_pub_key_ring is None. Ignoring the call.")
+            self.logger.debug("send_encrypted_mailbox_message: peers_pub_key_ring is None. Ignoring the call.")
             return
  
         assert peer is not None, "peer node address must not be None (send_encrypted_mailbox_message)"
@@ -243,32 +244,32 @@ class MailboxMessageService:
             prefixed_sealed_message = PrefixedSealedAndSignedMessage(
                 sender_node_address=self.network_node.node_address_property.value,
                 sealed_and_signed=encrypted_data
-            )   
-                
-            def on_done(future: Future):
-                try: 
-                    future.result()
-                    send_mailbox_message_listener.on_arrived()
-                except Exception as e:
-                    receiver_storage_public_key = peers_pub_key_ring.signature_pub_key
-                    ttl = mailbox_message.get_ttl()
-                    logger.trace(f"## We take TTL from {mailbox_message.__class__.__name__}. ttl={ttl}")
-                    self.add_mailbox_data(
-                        MailboxStoragePayload(
-                            prefixed_sealed_message,
-                            ttl,
-                            sender_pub_key_for_add_operation=self.key_ring.signature_key_pair.public_key,
-                            owner_pub_key=receiver_storage_public_key,
-                        ),
-                        receiver_storage_public_key,
-                        send_mailbox_message_listener
-                    )
+            )
 
             future = self.network_node.send_message(peer, prefixed_sealed_message)
-            future.add_done_callback(on_done)
+
+            def on_success(r):
+                send_mailbox_message_listener.on_arrived()
+
+            def on_failure(e):
+                receiver_storage_public_key = peers_pub_key_ring.signature_pub_key
+                ttl = mailbox_message.get_ttl()
+                self.logger.trace(f"## We take TTL from {mailbox_message.__class__.__name__}. ttl={ttl}")
+                self.add_mailbox_data(
+                    MailboxStoragePayload(
+                        prefixed_sealed_message,
+                        ttl,
+                        sender_pub_key_for_add_operation=self.key_ring.signature_key_pair.public_key,
+                        owner_pub_key=receiver_storage_public_key,
+                    ),
+                    receiver_storage_public_key,
+                    send_mailbox_message_listener
+                )
+
+            future.add_done_callback(FutureCallback(on_success, on_failure))
 
         except CryptoException as e:
-            logger.error("send_encrypted_message failed", exc_info=e)
+            self.logger.error("send_encrypted_message failed", exc_info=e)
             send_mailbox_message_listener.on_fault(f"send_encrypted_mailbox_message failed {str(e)}")
 
     def remove_mailbox_msg(self, mailbox_message: "MailboxMessage"):
@@ -298,7 +299,7 @@ class MailboxMessageService:
                 # We will get called the onRemoved handler which triggers removeMailboxItemFromMap as well.
                 # But as we use the uid from the decrypted data which is not available at onRemoved we need to
                 # call removeMailboxItemFromMap here. The onRemoved only removes foreign mailBoxMessages.
-                logger.trace(f"## remove_mailbox_msg uid={uid}")
+                self.logger.trace(f"## remove_mailbox_msg uid={uid}")
                 self.remove_mailbox_item_from_local_store(uid)
 
             UserThread.execute(delayed_removal)
@@ -322,7 +323,7 @@ class MailboxMessageService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_added(self, protected_storage_entries: Collection["ProtectedStorageEntry"]):
-        logger.trace("## on_added")
+        self.logger.trace("## on_added")
         
         entries: set["ProtectedStorageEntry"] = set()
         
@@ -338,7 +339,7 @@ class MailboxMessageService:
             self.process_single_mailbox_entry(entries)
 
     def on_removed(self, protected_storage_entries):
-        logger.trace("## on_removed")
+        self.logger.trace("## on_removed")
         
         # We can only remove the foreign mailbox messages as for our own we use the uid from the decrypted
         # payload which is not available here. But own mailbox messages get removed anyway after processing
@@ -372,7 +373,7 @@ class MailboxMessageService:
         def process():
             try:
                 mailbox_items = self.get_mailbox_items(protected_mailbox_storage_entries)
-                logger.info(
+                self.logger.info(
                     f"Batch processing of {len(protected_mailbox_storage_entries)} mailbox "
                     f"entries took {get_time_ms() - ts} ms"
                 )
@@ -380,21 +381,22 @@ class MailboxMessageService:
             except Exception as e:
                 future.set_exception(e)
 
-        def on_done(future: Future[set["MailboxItem"]]):
-            try:
-                decrypted_mailbox_message_with_entries = future.result()
-                if decrypted_mailbox_message_with_entries is None:
-                    raise Exception("decrypted_mailbox_message_with_entries cannot be None in batch processing future callback")
-                UserThread.execute(
-                    lambda: [self.handle_mailbox_item(item) for item in decrypted_mailbox_message_with_entries]
-                )
-            except Exception as e:
-                logger.error(f"Error in batch processing: {str(e)}")
-            
-        future.add_done_callback(on_done)
+        def on_success(decrypted_mailbox_message_with_entries: set["MailboxItem"]):
+            if decrypted_mailbox_message_with_entries is None:
+                raise Exception("decrypted_mailbox_message_with_entries cannot be None in batch processing future callback")
+            UserThread.execute(
+                lambda: [self.handle_mailbox_item(item) for item in decrypted_mailbox_message_with_entries]
+            )
         
+        def on_failure(e):
+            self.logger.error(f"Error in batch processing: {str(e)}")
+            
+        future.add_done_callback(FutureCallback(on_success, on_failure))
+        
+        ctx = contextvars.copy_context()
         threading.Thread(
-            target=process,
+            target=ctx.run,
+            args=(process,),
             name=f"process-mailbox-entry-{random.randint(0,1000)}"
         ).start()
 
@@ -430,7 +432,7 @@ class MailboxMessageService:
                 protected_mailbox_storage_entry.creation_time_stamp,
             )
         except ProtobufferException as e:
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(e), exc_info=e)
 
         return MailboxItem(protected_mailbox_storage_entry, None)
 
@@ -439,7 +441,7 @@ class MailboxMessageService:
         if uid not in self.mailbox_items_by_uid:
             self.mailbox_items_by_uid[uid] = mailbox_item
             self.mailbox_message_list.append(mailbox_item)
-            logger.trace(
+            self.logger.trace(
                 f"## handle_mailbox_item uid={uid}\nhash="
                 f"{StorageByteArray(get_32_byte_hash(mailbox_item.protected_mailbox_storage_entry.protected_storage_payload))}"
             )
@@ -458,7 +460,7 @@ class MailboxMessageService:
         mailbox_message: "MailboxMessage" = decrypted_message_with_pub_key.network_envelope
         sender = mailbox_message.sender_node_address
         
-        logger.info(
+        self.logger.info(
             f"Received a {mailbox_message.__class__.__name__} mailbox message with "
             f"uid {uid} and senderAddress {sender}"
         )
@@ -475,7 +477,7 @@ class MailboxMessageService:
             # be applied after restart, but the network got cleaned from pending mailbox messages.
             self.remove_mailbox_entry_from_network(mailbox_item.protected_mailbox_storage_entry)
         else:
-            logger.info("We are not bootstrapped yet, so we remove later once the mailBoxMessage got processed.")
+            self.logger.info("We are not bootstrapped yet, so we remove later once the mailBoxMessage got processed.")
 
     def add_mailbox_data(
         self,
@@ -501,7 +503,7 @@ class MailboxMessageService:
             )
 
             class BroadcastListener(BroadcastHandler.Listener):
-                def on_sufficiently_broadcast(self, broadcast_requests):
+                def on_sufficiently_broadcast(self_, broadcast_requests):
                     for request in broadcast_requests:
                         if not isinstance(request.message, AddDataMessage):
                             continue
@@ -509,7 +511,7 @@ class MailboxMessageService:
                             continue
                         send_mailbox_message_listener.on_stored_in_mailbox()
 
-                def on_not_sufficiently_broadcast(self, num_completed: int, num_failed: int):
+                def on_not_sufficiently_broadcast(self_, num_completed: int, num_failed: int):
                     send_mailbox_message_listener.on_fault(
                         f"Message was not sufficiently broadcast.\n"
                         f"numOfCompletedBroadcasts: {num_completed}.\n"
@@ -530,12 +532,12 @@ class MailboxMessageService:
                 # This should only fail if there are concurrent calls to addProtectedStorageEntry with the
                 # same ProtectedMailboxStorageEntry. This is an unexpected use case so if it happens we
                 # want to see it, but it is not worth throwing an exception.
-                logger.error(
+                self.logger.error(
                     "Unexpected state: adding mailbox message that already exists."
                 )
 
         except CryptoException:
-            logger.error("Signing at get_mailbox_data_with_signed_seq_nr failed.")
+            self.logger.error("Signing at get_mailbox_data_with_signed_seq_nr failed.")
 
     def remove_mailbox_entry_from_network(self, protected_mailbox_storage_entry: "ProtectedMailboxStorageEntry") -> None:
         mailbox_storage_payload = protected_mailbox_storage_entry.mailbox_storage_payload
@@ -554,14 +556,14 @@ class MailboxMessageService:
                     self.network_node.node_address_property.value
                 )
                 if result:
-                    logger.info("Removed mailboxEntry from network")
+                    self.logger.info("Removed mailboxEntry from network")
                 else:
-                    logger.warning("Removing mailboxEntry from network failed")
+                    self.logger.warning("Removing mailboxEntry from network failed")
             else:
-                logger.info("The mailboxEntry was already removed earlier.")
+                self.logger.info("The mailboxEntry was already removed earlier.")
                 
         except CryptoException as e:
-            logger.error(
+            self.logger.error(
                 f"Could not remove ProtectedMailboxStorageEntry from network. Error: {str(e)}",
                 exc_info=e
             )
@@ -574,12 +576,12 @@ class MailboxMessageService:
         if not self.republish_mailbox_entries:
             return
 
-        logger.info(
+        self.logger.info(
             f"We will republish our persisted mailbox messages after a delay of "
             f"{MailboxMessageService.REPUBLISH_DELAY_SEC} sec."
         )
         
-        logger.trace(f"## republish_mailbox_messages mailbox_items_by_uid={self.mailbox_items_by_uid.keys()}")
+        self.logger.trace(f"## republish_mailbox_messages mailbox_items_by_uid={self.mailbox_items_by_uid.keys()}")
 
         def delayed_republish():
             # In addProtectedStorageEntry we break early if we have already received a remove message for that entry.
@@ -600,7 +602,7 @@ class MailboxMessageService:
     # get lost. A long delay for republishing is preferred over too much network load.
     def republish_in_chunks(self, queue: list["ProtectedMailboxStorageEntry"]) -> None:
         chunk_size = 50
-        logger.info(
+        self.logger.info(
             f"Republish a bucket of {chunk_size} persisted mailbox messages out of {len(queue)}."
         )
         
@@ -632,7 +634,7 @@ class MailboxMessageService:
         if mailbox_item in self.mailbox_message_list:
             self.mailbox_message_list.remove(mailbox_item)
         
-        logger.trace(
+        self.logger.trace(
             f"## remove_mailbox_item_from_map uid={uid}\n"
             f"hash={StorageByteArray(get_32_byte_hash(mailbox_item.protected_mailbox_storage_entry.protected_storage_payload))}\n"
             f"mailbox_items_by_uid={self.mailbox_items_by_uid.keys()}"

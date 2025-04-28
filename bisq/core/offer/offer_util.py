@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
+from typing import TYPE_CHECKING, Optional
 import uuid
 from bisq.common.capabilities import Capabilities
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.payment.same_bank_account import SameBankAccount
@@ -42,7 +43,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.statistics.trade_statistics_manager import TradeStatisticsManager
     from bisq.core.user.preferences import Preferences
 
-logger = get_logger(__name__)
 
 # TODO: relies on transaction and trade statistics manager to be implemented
 class OfferUtil:
@@ -441,6 +441,7 @@ class OfferUtil:
     @staticmethod
     def get_invalid_maker_fee_tx_error_message(offer: 'Offer', 
                                               btc_wallet_service: 'BtcWalletService') -> Optional[str]:
+        logger = get_ctx_logger(__name__)
         offer_fee_payment_tx_id = offer.offer_fee_payment_tx_id
         if not offer_fee_payment_tx_id:
             return None

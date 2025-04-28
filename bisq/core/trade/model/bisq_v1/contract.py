@@ -4,6 +4,7 @@ from google.protobuf.message import Message
 from bisq.common.crypto.pub_key_ring import PubKeyRing
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.locale.currency_util import is_fiat_currency
 from bisq.core.monetary.price import Price
@@ -14,7 +15,6 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.util.json_util import JsonUtil
 from bisq.core.util.string_utils import string_difference
 from bisq.core.util.volume_util import VolumeUtil
-from bisq.common.setup.log_setup import get_logger
 from bitcoinj.base.coin import Coin
 import pb_pb2 as protobuf
 import re
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from bisq.core.protocol.core_proto_resolver import CoreProtoResolver
     from bisq.core.monetary.volume import Volume
 
-logger = get_logger(__name__)
 
 @dataclass
 class Contract(NetworkPayload):
@@ -65,6 +64,7 @@ class Contract(NetworkPayload):
     taker_payment_method_id: Optional[str] = field(default=None)
 
     def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
         # Either makerPaymentMethodId is set, or obtained from offerPayload.
         maker_payment_method_id = (
             self.maker_payment_method_id or self.offer_payload.payment_method_id
@@ -318,21 +318,21 @@ class Contract(NetworkPayload):
         my_json = JsonUtil.object_to_json(self)
         diff = string_difference(my_json, peers_contract_as_json)
         if diff:
-            logger.warning(f"Diff of both contracts: \n{diff}")
-            logger.warning(
+            self.logger.warning(f"Diff of both contracts: \n{diff}")
+            self.logger.warning(
                     "\n\n------------------------------------------------------------\n"
                     "Contract as json\n"
                     f"{my_json}"
                     "\n------------------------------------------------------------\n"
                 )
-            logger.warning(
+            self.logger.warning(
                     "\n\n------------------------------------------------------------\n"
                     "Peers contract as json\n"
                     f"{peers_contract_as_json}"
                     "\n------------------------------------------------------------\n"
                 )
         else:
-            logger.debug("Both contracts are the same")
+            self.logger.debug("Both contracts are the same")
         
     def __str__(self) -> str:
         return (

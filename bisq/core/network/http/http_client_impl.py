@@ -2,17 +2,15 @@ from typing import Literal, Union
 import uuid
 from requests import Session, Response
 
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.version import Version
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.network.http.http_client import HttpClient
 from bisq.core.network.http.http_client_utils import parse_and_validate_url
 from bisq.core.network.p2p.network.socks5_proxy import Socks5Proxy
 from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-from bisq.common.setup.log_setup import get_logger
 from utils.preconditions import check_argument
 from utils.time import get_time_ms
-
-logger = get_logger(__name__)
 
 
 class HttpClientImpl(HttpClient):
@@ -21,6 +19,7 @@ class HttpClientImpl(HttpClient):
     def __init__(
         self, base_url: str = None, socks5_proxy_provider: Socks5ProxyProvider = None
     ):
+        self.logger = get_ctx_logger(__name__)
         self._base_url = None
         self._base_url_host_is_onion = False
         self.socks5_proxy_provider = socks5_proxy_provider
@@ -56,7 +55,7 @@ class HttpClientImpl(HttpClient):
         try:
             self.session.close()
         except Exception as e:
-            logger.error(f"Error while closing http client session: {e}")
+            self.logger.error(f"Error while closing http client session: {e}")
         finally:
             self.session = Session()
 
@@ -102,7 +101,7 @@ class HttpClientImpl(HttpClient):
                 'https': f'socks5h://{socks5_proxy.host}:{socks5_proxy.port}',
             }
 
-        logger.debug(
+        self.logger.debug(
             f"_do_request: base_url={self.base_url}, url={url}, params={params}, httpMethod={http_method}, proxy={socks5_proxy}"
         )
 
@@ -132,7 +131,7 @@ class HttpClientImpl(HttpClient):
 
             response = response.text
 
-            logger.debug(
+            self.logger.debug(
                 f"Response from {self.base_url} {url} took {(get_time_ms() - ts)} ms. Data size:{len(response)}, response: {response}, param: {params}"
             )
 

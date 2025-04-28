@@ -1,6 +1,6 @@
 import itertools
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, Union
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.governance.bond.bond_consensus import BondConsensus
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.state.model.blockchain.tx_output_type import TxOutputType
@@ -35,9 +35,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class DaoStateService(DaoSetupService):
     """Provides access methods to DaoState data."""
 
@@ -47,6 +44,7 @@ class DaoStateService(DaoSetupService):
         genesis_tx_info: "GenesisTxInfo",
         bsq_formatter: "BsqFormatter",
     ) -> None:
+        self.logger = get_ctx_logger(__name__)
         self.dao_state = dao_state
         self.genesis_tx_info = genesis_tx_info
         self.bsq_formatter = bsq_formatter
@@ -75,7 +73,7 @@ class DaoStateService(DaoSetupService):
         self.allow_dao_state_change = True
         self._assert_dao_state_change()
 
-        logger.info(f"Apply snapshot with chain height {snapshot.chain_height}")
+        self.logger.info(f"Apply snapshot with chain height {snapshot.chain_height}")
 
         self.dao_state.chain_height = snapshot.chain_height
         self.dao_state.set_tx_cache(snapshot.tx_cache)
@@ -200,7 +198,7 @@ class DaoStateService(DaoSetupService):
     def on_new_block_with_empty_txs(self, block: "Block") -> None:
         self._assert_dao_state_change()
         if not self.dao_state.blocks and block.height != self.genesis_block_height:
-            logger.warning(
+            self.logger.warning(
                 "We don't have any blocks yet and we received a block which is not the genesis block. "
                 "We ignore that block as the first block needs to be the genesis block. "
                 f"That might happen in edge cases at reorgs. Received block={block}"
@@ -209,7 +207,7 @@ class DaoStateService(DaoSetupService):
             self.dao_state.add_block(block)
 
             if self.parse_block_chain_complete:
-                logger.info(f"New Block added at blockHeight {block.height}")
+                self.logger.info(f"New Block added at blockHeight {block.height}")
 
     # Third we add each successfully parsed BSQ tx to the last block
     def on_new_tx_for_last_block(self, block: "Block", tx: "Tx") -> None:
@@ -224,7 +222,7 @@ class DaoStateService(DaoSetupService):
             else:
                 # Not clear if this case can happen but at on_new_block_with_empty_txs we handle such a potential edge
                 # case as well, so we need to reflect that here as well.
-                logger.warning(
+                self.logger.warning(
                     "Block for parsing does not match last block. That might happen in edge cases at reorgs. "
                     f"Received block={block}"
                 )
@@ -232,7 +230,7 @@ class DaoStateService(DaoSetupService):
     # Fourth we get the onParseBlockComplete called after all rawTxs of blocks have been parsed
     def on_parse_block_complete(self, block: "Block") -> None:
         if self.parse_block_chain_complete:
-            logger.info(
+            self.logger.info(
                 f"Parse block completed: Block height {block.height}, {len(block._txs)} BSQ transactions."
             )
 
@@ -262,7 +260,7 @@ class DaoStateService(DaoSetupService):
 
     #  Called after parsing of all pending blocks is completed
     def on_parse_block_chain_complete(self) -> None:
-        logger.info("Parse blockchain completed")
+        self.logger.info("Parse blockchain completed")
         self.parse_block_chain_complete = True
 
         last_block = self.last_block
@@ -858,7 +856,7 @@ class DaoStateService(DaoSetupService):
         lockup_tx_output = self.get_lockup_tx_output(lockup_tx_id)
         if lockup_tx_output:
             if self.is_unspent(lockup_tx_output.get_key()):
-                logger.warning(
+                self.logger.warning(
                     f"confiscateBond: lockupTxOutput {lockup_tx_output.get_key()} is still unspent so we can confiscate it."
                 )
                 self._do_confiscate_bond(lockup_tx_id)
@@ -869,7 +867,7 @@ class DaoStateService(DaoSetupService):
                 unlock_tx_id = spent_info.tx_id
                 if self.is_unlocking_and_unspent_tx_id(unlock_tx_id):
                     # We found the unlock tx is still not spend
-                    logger.warning(
+                    self.logger.warning(
                         f"confiscateBond: lockupTxOutput {lockup_tx_output.get_key()} is still unspent so we can confiscate it."
                     )
                     self._do_confiscate_bond(lockup_tx_id)
@@ -877,15 +875,15 @@ class DaoStateService(DaoSetupService):
                     # We could be more radical here and confiscate the output if it is unspent but lock time is over,
                     # but it's probably better to stick to the rules that confiscation can only happen before lock time
                     # is over.
-                    logger.warning(
+                    self.logger.warning(
                         f"We could not confiscate the bond because the unlock tx was already spent or lock time has exceeded. unlockTxId={unlock_tx_id}"
                     )
         else:
-            logger.warning(f"No lockupTxOutput found for lockupTxId {lockup_tx_id}")
+            self.logger.warning(f"No lockupTxOutput found for lockupTxId {lockup_tx_id}")
 
     def _do_confiscate_bond(self, lockup_tx_id: str) -> None:
         self._assert_dao_state_change()
-        logger.warning(f"TxId {lockup_tx_id} added to confiscatedLockupTxIdList.")
+        self.logger.warning(f"TxId {lockup_tx_id} added to confiscatedLockupTxIdList.")
         self.dao_state.confiscated_lockup_tx_list.append(lockup_tx_id)
 
     def is_confiscated_output(self, tx_output_key: "TxOutputKey") -> bool:

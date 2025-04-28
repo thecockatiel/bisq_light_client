@@ -255,9 +255,7 @@ class GrpcClient:
     def get_offers(self, direction: str, currency_code: str):
         return self.offers_service_request.get_offers(direction, currency_code)
 
-    def get_offers_sorted_by_date(
-        self, currency_code: str, direction: str = None
-    ):
+    def get_offers_sorted_by_date(self, currency_code: str, direction: str = None):
         return self.offers_service_request.get_offers_sorted_by_date(
             currency_code, direction
         )
@@ -388,9 +386,59 @@ class GrpcClient:
         )
         return response.method_help
 
-    def send_proto(self, node_address: pb_pb2.NodeAddress, network_envelope: pb_pb2.NetworkEnvelope): 
-        request = grpc_extra_pb2.SendProtoRequest(destination_node_address=node_address, network_envelope=network_envelope)
+    def send_proto(
+        self, node_address: pb_pb2.NodeAddress, network_envelope: pb_pb2.NetworkEnvelope
+    ):
+        request = grpc_extra_pb2.SendProtoRequest(
+            destination_node_address=node_address, network_envelope=network_envelope
+        )
         response: grpc_extra_pb2.SendProtoReply = (
             self.grpc_stubs.dev_commands_service.SendProto(request)
+        )
+        return response
+
+    def switch_user(self, user_id: str):
+        request = grpc_extra_pb2.SwitchUserRequest(user_id=user_id)
+        response: grpc_extra_pb2.SwitchUserReply = (
+            self.grpc_stubs.user_manager_commands_service.SwitchUser(request)
+        )
+        return response
+
+    def create_new_user(self):
+        request = grpc_extra_pb2.CreateNewUserRequest()
+        response: grpc_extra_pb2.CreateNewUserReply = (
+            self.grpc_stubs.user_manager_commands_service.CreateNewUser(request)
+        )
+        return response
+
+    def delete_user(self, user_id: str, delete_data: bool):
+        request = grpc_extra_pb2.DeleteUserRequest(
+            user_id=user_id, delete_data=delete_data
+        )
+        response: grpc_extra_pb2.DeleteUserReply = (
+            self.grpc_stubs.user_manager_commands_service.DeleteUser(request)
+        )
+        return response
+
+    def set_user_alias(self, user_id: str, alias: str):
+        request = grpc_extra_pb2.SetUserAliasRequest(
+            user_id=user_id, alias=alias
+        )
+        response: grpc_extra_pb2.SetUserAliasReply = (
+            self.grpc_stubs.user_manager_commands_service.SetUserAlias(request)
+        )
+        return response
+
+    def get_users_list(self) -> list[grpc_extra_pb2.BriefUserInfo]:
+        request = grpc_extra_pb2.GetUsersListRequest()
+        response: grpc_extra_pb2.GetUsersListReply = (
+            self.grpc_stubs.user_manager_commands_service.GetUsersList(request)
+        )
+        return response.users_list
+
+    def restore_user(self, user_id: str):
+        request = grpc_extra_pb2.RestoreUserRequest(user_id=user_id)
+        response: grpc_extra_pb2.RestoreUserReply = (
+            self.grpc_stubs.user_manager_commands_service.RestoreUser(request)
         )
         return response

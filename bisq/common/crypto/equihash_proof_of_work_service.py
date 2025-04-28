@@ -1,3 +1,4 @@
+from utils.aio import FutureCallback
 from typing import Optional
 from bisq.common.crypto.equihash import (
     Equihash,
@@ -8,12 +9,10 @@ from bisq.common.crypto.equihash import (
 from bisq.common.crypto.hash import get_sha256_hash
 from bisq.common.crypto.proof_of_work_service import ProofOfWorkService
 from bisq.common.crypto.proof_of_work import ProofOfWork
-from bisq.common.setup.log_setup import get_logger
 
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.time import get_time_ms
 from concurrent.futures import ProcessPoolExecutor, Future
-
-logger = get_logger(__name__)
 
 
 class EquihashProofOfWorkService(ProofOfWorkService):
@@ -23,6 +22,7 @@ class EquihashProofOfWorkService(ProofOfWorkService):
     def __init__(self, version: int):
         super().__init__(version)
         self._process_pool_executor: Optional[ProcessPoolExecutor] = None
+        self.logger = get_ctx_logger(__name__)
 
     def mint(
         self, payload: bytes, challenge: bytes, difficulty: float
@@ -33,7 +33,7 @@ class EquihashProofOfWorkService(ProofOfWorkService):
         ):
             self._process_pool_executor = ProcessPoolExecutor(1)
         scaled_difficulty = EquihashProofOfWorkService._scaled_difficulty(difficulty)
-        logger.info(f"Got scaled & adjusted difficulty: {scaled_difficulty}")
+        self.logger.info(f"Got scaled & adjusted difficulty: {scaled_difficulty}")
 
         future = Future[ProofOfWork]()
         ts = get_time_ms()
@@ -43,25 +43,26 @@ class EquihashProofOfWorkService(ProofOfWorkService):
             self._get_seed(payload, challenge),
         )
 
-        def on_done(f: Future["EquihashPuzzleSolution"]):
-            try:
-                solution = f.result().serialize()
-                counter = int.from_bytes(solution[:8], byteorder="big")
-                proof_of_work = ProofOfWork(
-                    payload,
-                    counter,
-                    challenge,
-                    difficulty,
-                    get_time_ms() - ts,
-                    solution,
-                    self.version,
-                )
-                logger.info(f"Completed minting proofOfWork: {proof_of_work}")
-                future.set_result(proof_of_work)
-            except Exception as e:
-                future.set_exception(e)
+        def on_success(result: "EquihashPuzzleSolution"):
+            solution = result.serialize()
+            counter = int.from_bytes(solution[:8], byteorder="big")
+            proof_of_work = ProofOfWork(
+                payload,
+                counter,
+                challenge,
+                difficulty,
+                get_time_ms() - ts,
+                solution,
+                self.version,
+            )
+            self.logger.info(f"Completed minting proofOfWork: {proof_of_work}")
+            future.set_result(proof_of_work)
+                
 
-        executor_result.add_done_callback(on_done)
+        def on_failure(e):
+            future.set_exception(e)
+
+        executor_result.add_done_callback(FutureCallback(on_success, on_failure))
         return future
 
     def _get_seed(self, payload: bytes, challenge: bytes):

@@ -6,13 +6,12 @@ from google.protobuf import message
 from google.protobuf.any_pb2 import Any
 
 from bisq.common.proto import Proto
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from pb_pb2 import StringMapEntry
 from utils.ordered_containers import OrderedSet
 
 T = TypeVar('T', bound=message.Message)
 
-logger = get_logger(__name__)
 
 class ProtoUtil:
 
@@ -39,6 +38,7 @@ class ProtoUtil:
         except:
             try:
                 result = enum_type["UNDEFINED"]
+                logger = get_ctx_logger(__name__)
                 logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
                 return result
             except:
@@ -52,6 +52,7 @@ class ProtoUtil:
         except:
             try:
                 result = proto_enum_type.Value["UNDEFINED"]
+                logger = get_ctx_logger(__name__)
                 logger.debug(f"We try to lookup for an enum entry with name 'UNDEFINED' and use that if available, otherwise the enum is null. enum={result}")
                 return result
             except:
@@ -77,6 +78,7 @@ class ProtoUtil:
             try:
                 result.append(message_type.FromString(message.SerializeToString()))
             except Exception as e:
+                logger = get_ctx_logger(__name__)
                 logger.error(f"Message could not be cast. message={message}, message_type={message_type}")
         return result
 

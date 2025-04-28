@@ -7,17 +7,18 @@ from bisq.common.crypto.hash_cash_service_work import (
 )
 from bisq.common.crypto.proof_of_work_service import ProofOfWorkService
 from bisq.common.crypto.proof_of_work import ProofOfWork
-from bisq.common.setup.log_setup import get_logger
 
+from bisq.common.setup.log_setup import get_ctx_logger
+from utils.aio import FutureCallback
 from utils.time import get_time_ms
 from concurrent.futures import ProcessPoolExecutor, Future
 
-logger = get_logger(__name__)
 
 class HashCashService(ProofOfWorkService):
     def __init__(self):
         super().__init__(0)
         self._process_pool_executor: Optional[ProcessPoolExecutor] = None
+        self.logger = get_ctx_logger(__name__)
 
     def mint(
         self, payload: bytes, challenge: bytes, difficulty: float
@@ -37,24 +38,24 @@ class HashCashService(ProofOfWorkService):
             difficulty,
         )
 
-        def on_done(f: Future[tuple[int, bytes]]):
-            try:
-                counter, solution = f.result()
-                proof_of_work = ProofOfWork(
-                    payload,
-                    counter,
-                    challenge,
-                    difficulty,
-                    get_time_ms() - ts,
-                    solution,
-                    0,
-                )
-                logger.info(f"Completed minting proofOfWork: {proof_of_work}")
-                future.set_result(proof_of_work)
-            except Exception as e:
-                future.set_exception(e)
+        def on_success(result: tuple[int, bytes]):
+            counter, solution = result
+            proof_of_work = ProofOfWork(
+                payload,
+                counter,
+                challenge,
+                difficulty,
+                get_time_ms() - ts,
+                solution,
+                0,
+            )
+            self.logger.info(f"Completed minting proofOfWork: {proof_of_work}")
+            future.set_result(proof_of_work)
 
-        executor_result.add_done_callback(on_done)
+        def on_failure(e):
+            future.set_exception(e)
+
+        executor_result.add_done_callback(FutureCallback(on_success, on_failure))
         return future
 
     def verify(self, proof_of_work: ProofOfWork) -> bool:

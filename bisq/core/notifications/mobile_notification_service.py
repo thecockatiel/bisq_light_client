@@ -1,8 +1,9 @@
 import asyncio
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
+from utils.aio import FutureCallback
 from utils.preconditions import check_argument
 from bisq.core.notifications.mobile_message_type import MobileMessageType
 from bisq.core.notifications.mobile_model_os import MobileModelOS
@@ -24,9 +25,6 @@ if TYPE_CHECKING:
     from bisq.core.user.preferences import Preferences
 
 
-logger = get_logger(__name__)
-
-
 class MobileNotificationService:
     # Used in Relay app to response of a success state. We won't want a code dependency just for that string so we keep it
     # duplicated in relay and here. Must not be changed.
@@ -46,6 +44,7 @@ class MobileNotificationService:
         http_client: "AsyncHttpClient",
         use_localhost: bool = False,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.preferences = preferences
         self.mobile_message_encryption = mobile_message_encryption
         self.mobile_notification_validator = mobile_notification_validator
@@ -96,7 +95,7 @@ class MobileNotificationService:
                     self.send_confirmation_message()
                     self.setup_confirmation_sent = True
                 except Exception as e:
-                    logger.error(e)
+                    self.logger.error(e)
             return True
         return False
 
@@ -111,10 +110,14 @@ class MobileNotificationService:
             use_sound = self.use_sound_property.get()
 
         if result_handler is None:
-            result_handler = lambda result: logger.debug(f"sendMessage result={result}")
+            result_handler = lambda result: self.logger.debug(
+                f"sendMessage result={result}"
+            )
 
         if error_handler is None:
-            error_handler = lambda e: logger.error(f"sendMessage failed. throwable={e}")
+            error_handler = lambda e: self.logger.error(
+                f"sendMessage failed. throwable={e}"
+            )
 
         if not self.mobile_model.key:
             return False
@@ -123,7 +126,11 @@ class MobileNotificationService:
         message_type = message.mobile_message_type
         if message_type == MobileMessageType.SETUP_CONFIRMATION:
             do_send = True
-        elif message_type in (MobileMessageType.OFFER, MobileMessageType.TRADE, MobileMessageType.DISPUTE):
+        elif message_type in (
+            MobileMessageType.OFFER,
+            MobileMessageType.TRADE,
+            MobileMessageType.DISPUTE,
+        ):
             do_send = self.use_trade_notifications_property.get()
         elif message_type == MobileMessageType.PRICE:
             do_send = self.use_price_notifications_property.get()
@@ -135,10 +142,10 @@ class MobileNotificationService:
         if not do_send:
             return False
 
-        logger.info(f"Send message: '{message.message}'")
-        logger.info(f"sendMessage message={message}")
+        self.logger.info(f"Send message: '{message.message}'")
+        self.logger.info(f"sendMessage message={message}")
         json = JsonUtil.object_to_json(message)
-        logger.info(f"sendMessage json={json}")
+        self.logger.info(f"sendMessage json={json}")
 
         # Pad JSON string to multiple of 16 bytes for encryption
         json = json + " " * (16 - (len(json) % 16) if len(json) % 16 != 0 else 0)
@@ -149,9 +156,9 @@ class MobileNotificationService:
 
         # Encrypt the JSON with the IV
         cipher = self.mobile_message_encryption.encrypt(json, iv)
-        logger.info(f"key = {self.mobile_model.key}")
-        logger.info(f"iv = {iv}")
-        logger.info(f"encryptedJson = {cipher}")
+        self.logger.info(f"key = {self.mobile_model.key}")
+        self.logger.info(f"iv = {iv}")
+        self.logger.info(f"encryptedJson = {cipher}")
 
         # Send the encrypted message
         self._do_send_message(iv, cipher, use_sound, result_handler, error_handler)
@@ -167,7 +174,7 @@ class MobileNotificationService:
         self.setup_confirmation_sent = False
 
     def send_confirmation_message(self):
-        logger.info("send_confirmation_message")
+        self.logger.info("send_confirmation_message")
         message = MobileMessage("", "", MobileMessageType.SETUP_CONFIRMATION)
         self.send_message(message, True)
 
@@ -180,7 +187,7 @@ class MobileNotificationService:
         error_handler: Optional[Callable[[Exception], None]] = None,
     ):
         if self.http_client.has_pending_request:
-            logger.warning(
+            self.logger.warning(
                 f"We have a pending request open. We ignore that request. httpClient {self.http_client}"
             )
             return
@@ -216,9 +223,9 @@ class MobileNotificationService:
             f"msg={msg_as_hex}"
         )
 
-        logger.info(f"Send: token={self.mobile_model.token}")
-        logger.info(f"Send: msg={msg}")
-        logger.info(
+        self.logger.info(f"Send: token={self.mobile_model.token}")
+        self.logger.info(f"Send: msg={msg}")
+        self.logger.info(
             f"Send: isAndroid={is_android}\nuseSound={use_sound}\n"
             f"tokenAsHex={token_as_hex}\nmsgAsHex={msg_as_hex}"
         )
@@ -230,13 +237,15 @@ class MobileNotificationService:
             },
         )
 
-        def on_done(t: asyncio.Task[str]):
-            try:
-                result = t.result()
-                logger.info(f"sendMobileNotification result={result}")
-                check_argument(result == MobileNotificationService.SUCCESS, f"Result was not 'success'. result={result}")
-                UserThread.execute(lambda: result_handler(result))
-            except Exception as e:
-                UserThread.execute(lambda: error_handler(e))
+        def on_success(result: str):
+            self.logger.info(f"sendMobileNotification result={result}")
+            check_argument(
+                result == MobileNotificationService.SUCCESS,
+                f"Result was not 'success'. result={result}",
+            )
+            UserThread.execute(lambda: result_handler(result))
 
-        future.add_done_callback(on_done)
+        def on_failure(e):
+            UserThread.execute(lambda: error_handler(e))
+
+        future.add_done_callback(FutureCallback(on_success, on_failure))

@@ -1,13 +1,13 @@
 from asyncio import Future
 from collections.abc import Callable
+import contextvars
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
 import shutil
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.file.file_util import get_usable_space
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.common.util.utilities import is_qubes_os
 from bisq.core.account.sign.signed_witness import SignedWitness
@@ -22,7 +22,7 @@ from bisq.core.payment.payload.payment_method import PaymentMethod
 from bisq.core.trade.bisq_v1.trade_tx_exception import TradeTxException
 from bisq.core.util.coin.coin_formatter import CoinFormatter
 from bisq.core.util.formatting_util import FormattingUtils
-from utils.aio import as_future, run_in_thread
+from utils.aio import FutureCallback, as_future, run_in_thread
 from utils.data import (
     SimpleProperty,
     SimplePropertyChangeEvent,
@@ -31,7 +31,6 @@ from utils.data import (
 from bisq.core.btc.wallet.http.mem_pool_space_tx_broadcaster import (
     MemPoolSpaceTxBroadcaster,
 )
-from bisq.common.version import Version
 from bisq.core.account.witness.account_age_witness_service import (
     AccountAgeWitnessService,
 )
@@ -77,13 +76,9 @@ if TYPE_CHECKING:
     from bisq.core.user.user import User
 
 
-logger = get_logger(__name__)
-
-
 # NOTE: I know that IO is blocking, but since this is setup, I think it will be fine and it will reduce the complexity of making them async
 # TODO: dependencies must be implemented before this is usable. (Wallets functionality must be present)
 class BisqSetup:
-    VERSION_FILE_NAME = "version"
     RESYNC_SPV_FILE_NAME = "resyncSpv"
     STARTUP_TIMEOUT_MINUTES = 4
 
@@ -114,6 +109,7 @@ class BisqSetup:
         refund_manager: "RefundManager",
         arbitration_manager: "ArbitrationManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._domain_initialisation: "DomainInitialisation" = domain_initialisation
         self._p2p_network_setup: "P2PNetworkSetup" = p2p_network_setup
         self._wallet_app_setup: "WalletAppSetup" = wallet_app_setup
@@ -211,6 +207,7 @@ class BisqSetup:
         self.p2p_network_and_wallet_initialized: Optional["SimpleProperty[bool]"] = None
         self.bisq_setup_listeners = set["BisqSetupListener"]()
 
+        # TODO: multi-user related
         MemPoolSpaceTxBroadcaster.init(
             socks5_proxy_provider, preferences, local_bitcoin_node, config
         )
@@ -255,14 +252,6 @@ class BisqSetup:
         self.bisq_setup_listeners.add(listener)
 
     def start(self):
-        # If user tried to downgrade we require a shutdown
-        if (
-            self._config.base_currency_network == BaseCurrencyNetwork.BTC_MAINNET
-            and self.has_downgraded(self.down_grade_prevention_handler)
-        ):
-            return
-
-        self.persist_bisq_version()
         self._maybe_resync_spv_chain()
         self._maybe_show_tac(self._step2)
 
@@ -304,7 +293,7 @@ class BisqSetup:
                 # BSQ balance state after the SPV resync.
                 self._unconfirmed_bsq_change_output_list_service.on_spv_resync()
             except Exception as e:
-                logger.error(str(e), exc_info=e)
+                self.logger.error(str(e), exc_info=e)
 
     def _maybe_show_tac(self, next_step: Callable[[], None]):
         if not self._preferences.is_tac_accepted_v120() and not DevEnv.is_dev_mode():
@@ -340,7 +329,7 @@ class BisqSetup:
                 # Skip this timeout action if the p2p network or wallet setup failed
                 # since an error prompt will be shown containing the error message
                 return
-            logger.warning("startupTimeout called")
+            self.logger.warning("startupTimeout called")
             if self._wallets_manager.are_wallets_encrypted():
                 self.wallet_initialized.add_listener(wallet_initialized_listener)
             elif self.display_tor_network_settings_handler:
@@ -350,7 +339,7 @@ class BisqSetup:
             on_startup_timeout, timedelta(minutes=BisqSetup.STARTUP_TIMEOUT_MINUTES)
         )
 
-        logger.info("Init P2P network")
+        self.logger.info("Init P2P network")
         for listener in self.bisq_setup_listeners:
             listener.on_init_p2p_network()
         self.p2p_network_ready = self._p2p_network_setup.init(
@@ -367,7 +356,9 @@ class BisqSetup:
             self._init_wallet()
 
         def transform_p2p_and_wallet_ready(props: list):
-            logger.info(f"walletInitialized={props[0]}, p2pNetWorkReady={props[1]}")
+            self.logger.info(
+                f"walletInitialized={props[0]}, p2pNetWorkReady={props[1]}"
+            )
             return all(props)
 
         self.p2p_network_and_wallet_initialized = combine_simple_properties(
@@ -399,12 +390,12 @@ class BisqSetup:
 
     # TODO REST
     def _init_wallet(self):
-        logger.info("Init wallet")
+        self.logger.info("Init wallet")
         for listener in self.bisq_setup_listeners:
             listener.on_init_wallet()
 
         def wallet_password_handler():
-            logger.info("Wallet password required")
+            self.logger.info("Wallet password required")
             for listener in self.bisq_setup_listeners:
                 listener.on_request_wallet_password()
             if self.p2p_network_ready.get():
@@ -447,7 +438,7 @@ class BisqSetup:
         )
 
     def _init_domain_services(self):
-        logger.info("initDomainServices")
+        self.logger.info("initDomainServices")
 
         self._domain_initialisation.init_domain_services(
             self.rejected_tx_error_message_handler,
@@ -501,11 +492,11 @@ class BisqSetup:
                             entry.get_address_string(),
                             entry.offer_id,
                         )
-                        logger.warning(message)
+                        self.logger.warning(message)
                         if self.locked_up_funds_handler:
                             self.locked_up_funds_handler(message)
         except TradeTxException as e:
-            logger.warning(e)
+            self.logger.warning(e)
             if self.locked_up_funds_handler:
                 self.locked_up_funds_handler(str(e))
 
@@ -528,53 +519,37 @@ class BisqSetup:
                     offer_entry.offer.short_id,
                     offer_fee_payment_tx_id,
                 )
-                logger.warning(message)
+                self.logger.warning(message)
                 if self.locked_up_funds_handler:
                     self.locked_up_funds_handler(message)
 
     def _check_free_disk_space(self):
         TWO_GIGABYTES = 2147483648
 
-        def on_done(future: Future[int]):
-            try:
-                usable_space = future.result()
-                if usable_space < TWO_GIGABYTES:
-                    message = Res.get(
-                        "popup.warning.diskSpace",
-                        FormattingUtils.format_bytes(usable_space),
-                        FormattingUtils.format_bytes(TWO_GIGABYTES),
-                    )
-                    logger.warning(message)
-                    if self.disk_space_warning_handler:
-                        self.disk_space_warning_handler(message)
-            except Exception as e:
-                logger.error(e)
+        def on_success(usable_space: int):
+            if usable_space < TWO_GIGABYTES:
+                message = Res.get(
+                    "popup.warning.diskSpace",
+                    FormattingUtils.format_bytes(usable_space),
+                    FormattingUtils.format_bytes(TWO_GIGABYTES),
+                )
+                self.logger.warning(message)
+                if self.disk_space_warning_handler:
+                    self.disk_space_warning_handler(message)
 
         run_in_thread(
             get_usable_space,
-            self._config.app_data_dir,
-        ).add_done_callback(on_done)
-
-    def get_last_bisq_version(self) -> Optional[str]:
-        version_file = self._get_version_file()
-        if not version_file.exists():
-            return None
-        try:
-            with version_file.open() as f:
-                # We only expect 1 line
-                return f.readline().strip()
-        except Exception as e:
-            logger.error(e)
-        return None
+            self._user.data_dir,
+        ).add_done_callback(FutureCallback(on_success, self.logger.error))
 
     def get_resync_spv_semaphore(self) -> bool:
-        resync_spv_semaphore = self._config.app_data_dir.joinpath(
+        resync_spv_semaphore = self._user.data_dir.joinpath(
             BisqSetup.RESYNC_SPV_FILE_NAME
         )
         return resync_spv_semaphore.exists()
 
     def set_resync_spv_semaphore(self, is_resync_spv_requested: bool):
-        resync_spv_semaphore = self._config.app_data_dir.joinpath(
+        resync_spv_semaphore = self._user.data_dir.joinpath(
             BisqSetup.RESYNC_SPV_FILE_NAME
         )
         if is_resync_spv_requested:
@@ -582,39 +557,11 @@ class BisqSetup:
                 try:
                     resync_spv_semaphore.touch(exist_ok=True)
                 except Exception as e:
-                    logger.error(
+                    self.logger.error(
                         f"ResyncSpv file could not be created. {e}", exc_info=e
                     )
         else:
             resync_spv_semaphore.unlink(missing_ok=True)
-
-    def _get_version_file(self):
-        return self._config.app_data_dir.joinpath(BisqSetup.VERSION_FILE_NAME)
-
-    @staticmethod
-    def is_downgrade(last_version: str):
-        return last_version and Version.is_new_version(last_version, Version.VERSION)
-
-    def has_downgraded(
-        self, down_grade_prevention_handler: Optional[Callable[[str], None]] = None
-    ) -> bool:
-        last_version = self.get_last_bisq_version()
-        has_downgraded = BisqSetup.is_downgrade(last_version)
-        if has_downgraded:
-            logger.error(
-                f"Downgrade from version {last_version} to version {Version.VERSION} is not supported"
-            )
-            if down_grade_prevention_handler is not None:
-                down_grade_prevention_handler(last_version)
-        return has_downgraded
-
-    def persist_bisq_version(self):
-        version_file = self._get_version_file()
-        try:
-            with version_file.open("w") as file_writer:
-                file_writer.write(Version.VERSION)
-        except Exception as e:
-            logger.error(f"Writing Version failed. {e}", exc_info=e)
 
     def _check_for_correct_os_architecture(self):
         # TODO: check later why it's needed
@@ -649,13 +596,13 @@ class BisqSetup:
             and self._p2p_service.network_node.get_inbound_connection_count() == 0
         ):
             # we've been online a while and did not find any inbound connections; lets try the self-ping check
-            logger.info(
+            self.logger.info(
                 "No recent inbound connections found, starting the self-ping test"
             )
             self._private_notification_manager.send_ping(
                 onion_address,
                 lambda string_result: (
-                    logger.info(string_result),
+                    self.logger.info(string_result),
                     (
                         self._notify_ui_that_we_cant_ping_ourself()
                         if "failed" in string_result
@@ -666,7 +613,7 @@ class BisqSetup:
 
         # schedule another inbound connection check for later
         next_check_in_minutes = 30 + random.randint(0, 30)
-        logger.debug(
+        self.logger.debug(
             f"Next inbound connections check in {next_check_in_minutes} minutes"
         )
         UserThread.run_after(
@@ -696,19 +643,16 @@ class BisqSetup:
     def _maybe_show_localhost_running_info(self):
         if self._config.base_currency_network.is_mainnet():
 
-            def on_done(f: Future[bool]):
-                try:
-                    should_be_used = f.result()
-                    self._maybe_trigger_display_handler(
-                        "bitcoinLocalhostNode",
-                        self.display_localhost_handler,
-                        should_be_used,
-                    )
-                except:
-                    pass
+            def on_success(should_be_used: bool):
+                self._maybe_trigger_display_handler(
+                    "bitcoinLocalhostNode",
+                    self.display_localhost_handler,
+                    should_be_used,
+                )
 
+            ctx = contextvars.copy_context()
             as_future(self._local_bitcoin_node.should_be_used()).add_done_callback(
-                on_done
+                FutureCallback(on_success)
             )
 
     def _maybe_show_account_signing_state_info(self):
@@ -899,10 +843,6 @@ class BisqSetup:
     @property
     def wallet_service_error_msg(self):
         return self._wallet_app_setup.wallet_service_error_msg_property
-
-    @property
-    def btc_splash_sync_icon_id(self):
-        return self._wallet_app_setup.btc_splash_sync_icon_id_property
 
     @property
     def use_tor_for_btc(self):

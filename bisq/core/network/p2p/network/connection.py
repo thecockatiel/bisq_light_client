@@ -1,3 +1,5 @@
+import contextvars
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future
 import asyncio
 from electrum_min.util import wait_for2
@@ -43,7 +45,6 @@ from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabi
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
 from bisq.core.network.p2p.network.message_listener import MessageListener
 from bisq.core.network.p2p.network.proto_output_stream import ProtoOutputStream
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean, ThreadSafeDict, ThreadSafeSet, ThreadSafeWeakSet
 from utils.formatting import to_truncated_string
 from utils.preconditions import check_argument
@@ -56,7 +57,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.common.proto import Proto
 
-logger = get_logger(__name__)
 
 class Connection(HasCapabilities, Callable[[], None], MessageListener):
     """
@@ -75,6 +75,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 config: "Config",
                 peers_node_address: Optional['NodeAddress'] = None,
                 ban_filter: Optional[BanFilter] = None):
+        self.logger = get_ctx_logger(__name__)
         self.last_send_timestamp = 0
         self.last_read_timestamp = 0
         self.message_listeners: ThreadSafeSet[MessageListener] = ThreadSafeSet()
@@ -116,12 +117,13 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             self.proto_input_stream = self.socket.makefile('rb', buffering=4096)
 
             # We create a thread for handling inputStream data
-            self.executor.submit(self.run)
+            ctx = contextvars.copy_context()
+            self.executor.submit(ctx.run, self.run)
 
             if peers_node_address is not None:
                 self.set_peers_node_address(peers_node_address)
                 if self.ban_filter and self.ban_filter.is_peer_banned(peers_node_address):
-                    logger.warning("We created an outbound connection with a banned peer")
+                    self.logger.warning("We created an outbound connection with a banned peer")
                     self.report_invalid_request(RuleViolation.PEER_BANNED)
             UserThread.execute(lambda: self.connection_listener.on_connection(self))
         except Exception as e:
@@ -129,19 +131,19 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def send_message(self, network_envelope: NetworkEnvelope):
         ts = get_time_ms()
-        logger.debug(f">> Send networkEnvelope of type: {network_envelope.__class__.__name__}")
+        self.logger.debug(f">> Send networkEnvelope of type: {network_envelope.__class__.__name__}")
 
         if self.stopped.get():
-            logger.debug("called sendMessage but was already stopped")
+            self.logger.debug("called sendMessage but was already stopped")
             return
         
         if self.ban_filter and self.peers_node_address and self.ban_filter.is_peer_banned(self.peers_node_address):
-            logger.warning(f"We tried to send a message to a banned peer. message={network_envelope.__class__.__name__}")
+            self.logger.warning(f"We tried to send a message to a banned peer. message={network_envelope.__class__.__name__}")
             self.report_invalid_request(RuleViolation.PEER_BANNED)
             return
         
         if not self.test_capability(network_envelope):
-            logger.debug("Capability for networkEnvelope is required but not supported")
+            self.logger.debug("Capability for networkEnvelope is required but not supported")
             return
 
         network_envelope_size = network_envelope.to_proto_network_envelope().ByteSize()
@@ -149,7 +151,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             now = get_time_ms()
             elapsed = now - self.last_send_timestamp
             if elapsed < self.get_send_msg_throttle_trigger():
-                logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
+                self.logger.debug(f"We got 2 sendMessage requests in less than {self.get_send_msg_throttle_trigger()} ms. We set the thread to sleep for {self.get_send_msg_throttle_sleep()} ms to avoid flooding our peer. lastSendTimeStamp={self.last_send_timestamp}, now={now}, elapsed={elapsed}, networkEnvelope={network_envelope.__class__.__name__}")
                 time.sleep(self.get_send_msg_throttle_sleep()/1000)
             self.last_send_timestamp = now
             if not self.stopped.get():
@@ -164,7 +166,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         if capability_requiring_payload is not None:
             result = self.capabilities.contains_all(capability_requiring_payload.get_required_capabilities()) 
             if not result:
-                logger.debug(f"We did not send {capability_requiring_payload.__class__.__name__} because capabilities are not supported.")
+                self.logger.debug(f"We did not send {capability_requiring_payload.__class__.__name__} because capabilities are not supported.")
             return result
         elif network_envelope is not None:
             if isinstance(network_envelope, BundleOfEnvelopes):
@@ -251,7 +253,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             compare_value = self.message_time_stamps[len(self.message_time_stamps) - message_count_limit]
             #  if duration < seconds sec we received too much network_messages
             if (now - compare_value < seconds * 1000):
-                logger.error(f"violatesThrottleLimit {message_count_limit}/{seconds} second(s)")
+                self.logger.error(f"violatesThrottleLimit {message_count_limit}/{seconds} second(s)")
                 return True
         return False
     
@@ -278,7 +280,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             if isinstance(network_envelope, SendersNodeAddressMessage):
                 is_valid = self.process_senders_node_address_message(network_envelope)
                 if not is_valid:
-                    logger.warning(f"Received an invalid {network_envelope.__class__.__name__} at processing BundleOfEnvelopes")
+                    self.logger.warning(f"Received an invalid {network_envelope.__class__.__name__} at processing BundleOfEnvelopes")
                     continue
             if isinstance(network_envelope, AddPersistableNetworkPayloadMessage):
                 persistable_network_payload = network_envelope.persistable_network_payload
@@ -291,7 +293,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     envelopes_by_hash.add(network_envelope)
                     envelopes_to_process.add(network_envelope)
                 else:
-                    logger.debug(f"We got duplicated items for {item_name}. We ignore the duplicates. Hash: {bytes_as_hex_string(hash_value)}")
+                    self.logger.debug(f"We got duplicated items for {item_name}. We ignore the duplicates. Hash: {bytes_as_hex_string(hash_value)}")
             else:
                 envelopes_to_process.add(network_envelope)
 
@@ -312,18 +314,18 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.peers_node_address = peerNodeAddress
         from bisq.core.network.p2p.network.inbound_connection import InboundConnection
         if isinstance(self, InboundConnection):
-            logger.debug("\n\n############################################################\n" +
+            self.logger.debug("\n\n############################################################\n" +
                          "We got the peers node address set.\n" +
                          f"peersNodeAddress= {peerNodeAddress.get_full_address()}\n" +
                          f"connection.uid= {self.uid}\n" +
                          "############################################################\n")
     
     def shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
-        logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
+        self.logger.debug(f"shutDown: peersNodeAddressOptional={self.peers_node_address}, closeConnectionReason={close_connection_reason}")
         self.connection_state.shut_down()
         if not self.stopped.get():
             peers_node_address = str(self.peers_node_address) if self.peers_node_address else "None"
-            logger.debug(
+            self.logger.debug(
                 f"\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
                 f"ShutDown connection:"
                 f"\npeersNodeAddress={peers_node_address}"
@@ -340,16 +342,21 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
                         time.sleep(0.2)
                     except Exception as e:
-                        logger.error(e, exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
+                        self.logger.error(e, exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
                     finally:
                         self.stopped.set(True)
                         UserThread.run_after(lambda: as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler)), timedelta(milliseconds=200))
-                threading.Thread(target=handle_shut_down, name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True).start()
+                        ctx = contextvars.copy_context()
+                        threading.Thread(
+                            target=ctx.run,
+                            args=(handle_shut_down,),
+                            name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True
+                        ).start()
             else:
                 self.stopped.set(True)
                 as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler))
         else:
-            logger.debug("stopped was already at shutDown call")
+            self.logger.debug("stopped was already at shutDown call")
             UserThread.execute(lambda: as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler)))
 
     async def do_shut_down(self, close_connection_reason: CloseConnectionReason, shut_down_complete_handler: Optional[Callable[[], None]] = None):
@@ -365,12 +372,12 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 self.socket.shutdown(Socket.SHUT_RDWR)
                 self.socket.close()
             except (Socket.error, ConnectionError, BrokenPipeError) as e:
-                logger.trace(f"SocketException at shutdown might be expected. {e}")
+                self.logger.trace(f"SocketException at shutdown might be expected. {e}")
             except Exception as e:
-                logger.error(f"Exception at shutdown. {e}", exc_info=e)
+                self.logger.error(f"Exception at shutdown. {e}", exc_info=e)
             finally:
                 self.executor.shutdown(wait=True, cancel_futures=True)
-                logger.debug(f"Connection shutdown complete {self}")
+                self.logger.debug(f"Connection shutdown complete {self}")
                 if completed: return
                 completed = True
 
@@ -378,7 +385,8 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 if shut_down_complete_handler is not None:
                     UserThread.execute(shut_down_complete_handler)
 
-        thread = threading.Thread(name=f"close streams connection {self.uid}", target=close_streams, daemon=True)
+        ctx = contextvars.copy_context()
+        thread = threading.Thread(target=ctx.run, name=f"close streams connection {self.uid}", args=(close_streams,), daemon=True)
         thread.start()
 
         try:
@@ -436,21 +444,21 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
     # Runs in same thread as Connection
 
     def report_invalid_request(self, rule_violation: 'RuleViolation'):
-        logger.info(f"We got reported the ruleViolation {rule_violation.name} at connection with address {self.peers_node_address} and uid {self.uid}")
+        self.logger.info(f"We got reported the ruleViolation {rule_violation.name} at connection with address {self.peers_node_address} and uid {self.uid}")
         num_rule_violations = self.rule_violations.get(rule_violation, 0) + 1
         self.rule_violations.put(rule_violation, num_rule_violations) 
 
         if num_rule_violations >= rule_violation.max_tolerance:
-            logger.warning(f"We close connection as we received too many corrupt requests. ruleViolations={self.rule_violations} connection with address{self.peers_node_address} and uid {self.uid}")
+            self.logger.warning(f"We close connection as we received too many corrupt requests. ruleViolations={self.rule_violations} connection with address{self.peers_node_address} and uid {self.uid}")
             self.rule_violation = rule_violation
             if rule_violation == RuleViolation.PEER_BANNED:
-                logger.debug(f"We close connection due RuleViolation.PEER_BANNED. peersNodeAddress={self.peers_node_address}")
+                self.logger.debug(f"We close connection due RuleViolation.PEER_BANNED. peersNodeAddress={self.peers_node_address}")
                 self.shut_down(CloseConnectionReason.PEER_BANNED)
             elif rule_violation == RuleViolation.INVALID_CLASS:
-                logger.warning("We close connection due RuleViolation.INVALID_CLASS")
+                self.logger.warning("We close connection due RuleViolation.INVALID_CLASS")
                 self.shut_down(CloseConnectionReason.INVALID_CLASS_RECEIVED)
             else:
-                logger.warning("We close connection due RuleViolation.RULE_VIOLATION")
+                self.logger.warning("We close connection due RuleViolation.RULE_VIOLATION")
                 self.shut_down(CloseConnectionReason.RULE_VIOLATION)
             return True
         else:
@@ -464,21 +472,21 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         close_connection_reason = CloseConnectionReason.UNKNOWN_EXCEPTION
         if isinstance(exception, (Socket.timeout, TimeoutError)):
             close_connection_reason = CloseConnectionReason.SOCKET_TIMEOUT
-            logger.info(f"Shut down caused by exception {repr(exception)} on connection={self}")
+            self.logger.info(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, EOFError):
             close_connection_reason = CloseConnectionReason.TERMINATED
-            logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
+            self.logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         elif isinstance(exception, (Socket.herror, Socket.gaierror, Socket.error, ConnectionError, BrokenPipeError)):
             if self.socket._closed:
                 close_connection_reason = CloseConnectionReason.SOCKET_CLOSED
             else:
                 close_connection_reason = CloseConnectionReason.RESET
-            logger.info(f"SocketException (expected if connection lost). closeConnectionReason={close_connection_reason}; connection={self}")
+            self.logger.info(f"SocketException (expected if connection lost). closeConnectionReason={close_connection_reason}; connection={self}")
         elif isinstance(exception, (ValueError, AssertionError)):
             close_connection_reason =  CloseConnectionReason.CORRUPTED_DATA
-            logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
+            self.logger.warning(f"Shut down caused by exception {repr(exception)} on connection={self}")
         else:
-            logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}", exc_info=exception)
+            self.logger.warning(f"Unknown exception at socket: {self.socket}, peer={self.peers_node_address}, Exception={exception}", exc_info=exception)
         
         self.shut_down(close_connection_reason)        
     
@@ -493,7 +501,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             self.set_peers_node_address(sender_node_address)
 
         if self.ban_filter and self.ban_filter.is_peer_banned(sender_node_address):
-            logger.warning("Sender is banned. Shutting down connection.")
+            self.logger.warning("Sender is banned. Shutting down connection.")
             self.report_invalid_request(RuleViolation.PEER_BANNED)
             return False
 
@@ -508,7 +516,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     self.thread_name_set = True
 
                 if self.socket is not None and self.socket._closed:
-                    logger.warning(f'Socket is None or closed socket={self.socket}')
+                    self.logger.warning(f'Socket is None or closed socket={self.socket}')
                     self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                     return
                 try:
@@ -517,7 +525,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     ts = get_time_ms()
                     
                     if self.socket is not None and self.socket._closed:
-                        logger.warning(f'Socket is None or closed socket={self.socket}')
+                        self.logger.warning(f'Socket is None or closed socket={self.socket}')
                         self.shut_down(CloseConnectionReason.SOCKET_CLOSED)
                         return
                     
@@ -526,22 +534,22 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                             return
                         data = self.proto_input_stream.read()
                         if  data == bytes():
-                            logger.warning("proto is None because EOF was read. That is expected if client got stopped without proper shutdown.")
+                            self.logger.warning("proto is None because EOF was read. That is expected if client got stopped without proper shutdown.")
                         else:
-                            logger.warning("proto is None. protoInputStream.read()=" + data.hex())
+                            self.logger.warning("proto is None. protoInputStream.read()=" + data.hex())
                         self.shut_down(CloseConnectionReason.NO_PROTO_BUFFER_ENV)
                         return
                     
                     if self.ban_filter and self.peers_node_address and self.ban_filter.is_peer_banned(self.peers_node_address):
-                        logger.warning(f"We got a message from a banned peer. proto={str(proto)}")
+                        self.logger.warning(f"We got a message from a banned peer. proto={str(proto)}")
                         self.report_invalid_request(RuleViolation.PEER_BANNED)
                         return
 
                 except Socket.error as e:
-                    logger.warning(f"Socket error: {e}")
+                    self.logger.warning(f"Socket error: {e}")
                     break
                 except EOFError:
-                    logger.warning("EOF Error")
+                    self.logger.warning("EOF Error")
                     break
 
                 if not proto:
@@ -552,14 +560,14 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 now = get_time_ms()
                 elapsed = now - self.last_read_timestamp
                 if elapsed < 10:
-                    logger.debug(f"We got 2 network messages received in less than 10 ms. We set the thread to sleep "
+                    self.logger.debug(f"We got 2 network messages received in less than 10 ms. We set the thread to sleep "
                                  f"for 20 ms to avoid getting flooded by our peer. lastReadTimeStamp={self.last_read_timestamp}, now={now}, elapsed={elapsed}")
                     time.sleep(0.020)
 
                 network_envelope = self.network_proto_resolver.from_proto(proto)
                 
                 self.last_read_timestamp = now
-                logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
+                self.logger.debug(f"<< Received networkEnvelope of type: {type(network_envelope).__name__}")
                 size = proto.ByteSize()
 
                 # We want to track the size of each object even if it is invalid data
@@ -576,12 +584,12 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     exceeds = size > Connection.PERMITTED_MESSAGE_SIZE
 
                 if isinstance(network_envelope, AddPersistableNetworkPayloadMessage) and not network_envelope.persistable_network_payload.verify_hash_size():
-                    logger.warning(f"PersistableNetworkPayload.verifyHashSize failed. hashSize={str(len(network_envelope.persistable_network_payload.get_hash()))}; object={to_truncated_string(proto)}")
+                    self.logger.warning(f"PersistableNetworkPayload.verifyHashSize failed. hashSize={str(len(network_envelope.persistable_network_payload.get_hash()))}; object={to_truncated_string(proto)}")
                     if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
                         return
 
                 if exceeds:
-                    logger.warning(f"size > MAX_MSG_SIZE. size={str(size)}; object={to_truncated_string(proto)}")
+                    self.logger.warning(f"size > MAX_MSG_SIZE. size={str(size)}; object={to_truncated_string(proto)}")
                     if self.report_invalid_request(RuleViolation.MAX_MSG_SIZE_EXCEEDED):
                         return
                     
@@ -590,7 +598,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                 
                 # Check P2P network ID
                 if proto.message_version != Version.get_p2p_message_version() and self.report_invalid_request(RuleViolation.WRONG_NETWORK_ID):
-                    logger.warning(f"RuleViolation.WRONG_NETWORK_ID. version of message={proto.message_version}, app version={Version.get_p2p_message_version()}, proto.toTruncatedString={to_truncated_string(proto)}")
+                    self.logger.warning(f"RuleViolation.WRONG_NETWORK_ID. version of message={proto.message_version}, app version={Version.get_p2p_message_version()}, proto.toTruncatedString={to_truncated_string(proto)}")
                     return
 
                 caused_shut_down = self.maybe_handle_supported_capabilities_message(network_envelope)
@@ -599,10 +607,10 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
                 if isinstance(network_envelope, CloseConnectionMessage):
                     # If we get a CloseConnectionMessage we shut down
-                    logger.debug(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}\n\tconnection={self}")
+                    self.logger.debug(f"CloseConnectionMessage received. Reason={proto.close_connection_message.reason}\n\tconnection={self}")
 
                     if CloseConnectionReason.PEER_BANNED.name == proto.close_connection_message.reason:
-                        logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
+                        self.logger.warning(f"We got shut down because we are banned by the other peer. Peer: {self.peers_node_address}")
                         self.shut_down(CloseConnectionReason.CLOSE_REQUESTED_BY_PEER)
                         return
                 elif not self.stopped.get():
@@ -618,12 +626,12 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                             return
 
                     if not isinstance(network_envelope, SendersNodeAddressMessage) and not self.peers_node_address:
-                        logger.info(f"We got a {network_envelope.__class__.__name__} from a peer with yet unknown address on connection with uid={self.uid}")
+                        self.logger.info(f"We got a {network_envelope.__class__.__name__} from a peer with yet unknown address on connection with uid={self.uid}")
 
                     self.on_message(network_envelope, self)
                     UserThread.execute(lambda: self.connection_statistics.add_received_msg_metrics(get_time_ms() - ts, size))
         except (ProtobufferException, InvalidProtocolBufferException) as e:
-            logger.error(e, exc_info=e)
+            self.logger.error(e, exc_info=e)
             self.report_invalid_request(RuleViolation.INVALID_DATA_TYPE)
         except Exception as e:
             self.handle_exception(e)
@@ -640,7 +648,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             return False
 
         if not Capabilities.has_mandatory_capability(supported_capabilities):
-            logger.info(f"We close a connection because of CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED "
+            self.logger.info(f"We close a connection because of CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED "
                         f"to node {self.get_sender_node_address_as_string(network_envelope)}. Capabilities of old node: f{supported_capabilities.pretty_print()}, "
                         f"networkEnvelope class name={network_envelope.__class__.__name__}")
             self.shut_down(CloseConnectionReason.MANDATORY_CAPABILITIES_NOT_SUPPORTED)

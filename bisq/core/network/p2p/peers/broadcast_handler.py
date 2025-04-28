@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from abc import ABC, abstractmethod
 import random
 
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.bundle_of_envelopes import BundleOfEnvelopes
@@ -18,27 +18,25 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.peers.broadcaster import BroadcastRequest
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
 
-logger = get_logger(__name__)
-
 
 class BroadcastHandler:
     BASE_TIMEOUT_MS = 120 * 1000  # 120 seconds in milliseconds
 
     class ResultHandler(ABC):
         @abstractmethod
-        def on_completed(self, broadcast_handler: "BroadcastHandler") -> None:
+        def on_completed(self_, broadcast_handler: "BroadcastHandler") -> None:
             pass
 
     class Listener(ABC):
         @abstractmethod
         def on_sufficiently_broadcast(
-            self, broadcast_requests: list["BroadcastRequest"]
+            self_, broadcast_requests: list["BroadcastRequest"]
         ) -> None:
             pass
 
         @abstractmethod
         def on_not_sufficiently_broadcast(
-            self, num_completed_broadcasts: int, num_failed_broadcast: int
+            self_, num_completed_broadcasts: int, num_failed_broadcast: int
         ) -> None:
             pass
 
@@ -48,6 +46,7 @@ class BroadcastHandler:
         peer_manager: "PeerManager",
         result_handler: "ResultHandler",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._network_node = network_node
         self._peer_manager = peer_manager
         self._result_handler = result_handler
@@ -132,7 +131,7 @@ class BroadcastHandler:
                         connection, broadcast_requests_for_connection, executor
                     )
                 except Exception as e:
-                    logger.error(f"Exception at broadcast: {e}")
+                    self.logger.error(f"Exception at broadcast: {e}")
                     self._cleanup()
 
             UserThread.run_after_random_delay(
@@ -186,7 +185,7 @@ class BroadcastHandler:
 
             self._timeout_triggered.set(True)
             self._num_failed_broadcasts.increment_and_get()
-            logger.warning(
+            self.logger.warning(
                 f"Broadcast did not complete after {timeout_delay / 1000} sec.\n"
                 f"numPeersForBroadcast={self._num_peers_for_broadcast}\n"
                 f"numOfCompletedBroadcasts={self._num_completed_broadcasts}\n"
@@ -236,7 +235,7 @@ class BroadcastHandler:
             self._check_for_completion()
 
         def on_failure(e: Exception):
-            logger.warning(
+            self.logger.warning(
                 f"Broadcast to {connection.peers_node_address} failed. ",
                 exc_info=(
                     e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None

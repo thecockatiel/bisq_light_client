@@ -1,15 +1,15 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.notifications.mobile_model_os import MobileModelOS
 
-
-logger = get_logger(__name__)
+ 
 
 class MobileModel:
     PHONE_SEPARATOR = "|"
     PHONE_SEPARATOR_WRITING = "|"
     
-    def __init__(self):
+    def __init__(self,):
+        self.logger = get_ctx_logger(__name__)
         self.os: Optional[MobileModelOS] = None
         self.descriptor: Optional[str] = None
         self.key: Optional[str] = None
@@ -22,7 +22,7 @@ class MobileModel:
         self.token = None
     
     def apply_key_and_token(self, key_and_token: str):
-        logger.info(f"apply_key_and_token: key_and_token={key_and_token[:20]}...(truncated in log for privacy reasons)")
+        self.logger.info(f"apply_key_and_token: key_and_token={key_and_token[:20]}...(truncated in log for privacy reasons)")
         tokens = key_and_token.split(MobileModel.PHONE_SEPARATOR)
         magic = tokens[0]
         self.descriptor = tokens[1]

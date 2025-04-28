@@ -1,12 +1,12 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
-from bisq.common.persistence.persistence_manager import PersistenceManager
 from bisq.core.payment.amazon_gift_card_account import AmazonGiftCardAccount
 from bisq.core.payment.revolute_account import RevolutAccount
 from utils.data import ObservableChangeEvent, SimplePropertyChangeEvent
 
 
 if TYPE_CHECKING:
+    from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator
     from bisq.core.btc.balances import Balances
     from bisq.core.dao.governance.voteresult.vote_result_exception import (
         VoteResultException,
@@ -76,6 +76,7 @@ class DomainInitialisation:
 
     def __init__(
         self,
+        persistence_orchestrator: "PersistenceOrchestrator",
         clock_watcher: "ClockWatcher",
         trade_limits: "TradeLimits",
         arbitration_manager: "ArbitrationManager",
@@ -116,6 +117,7 @@ class DomainInitialisation:
         open_bsq_swap_offer_service: "OpenBsqSwapOfferService",
         mailbox_message_service: "MailboxMessageService",
     ):
+        self.persistence_orchestrator = persistence_orchestrator
         self.clock_watcher = clock_watcher
         self.trade_limits = trade_limits
         self.arbitration_manager = arbitration_manager
@@ -175,7 +177,7 @@ class DomainInitialisation:
 
         self.clock_watcher.start()
 
-        PersistenceManager.on_all_services_initialized()
+        self.persistence_orchestrator.on_all_services_initialized()
 
         self.trade_limits.on_all_services_initialized()
 

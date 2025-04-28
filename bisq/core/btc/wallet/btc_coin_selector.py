@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Union
-
-from bisq.common.setup.log_setup import get_logger
+ 
 from bisq.core.btc.wallet.bisq_default_coin_selector import BisqDefaultCoinSelector
 from bisq.core.btc.wallet.wallet_service import WalletService
 
@@ -8,9 +8,7 @@ from bisq.core.btc.wallet.wallet_service import WalletService
 if TYPE_CHECKING:
     from bitcoinj.core.address import Address
     from bitcoinj.core.transaction_output import TransactionOutput
-
-logger = get_logger(__name__)
-
+ 
 
 class BtcCoinSelector(BisqDefaultCoinSelector):
     """
@@ -26,6 +24,7 @@ class BtcCoinSelector(BisqDefaultCoinSelector):
     ):
         super().__init__(permit_foreign_pending_tx)
         assert addresses is not None, "addresses must not be None"
+        self.logger = get_ctx_logger(__name__)
         self._addresses = addresses if isinstance(addresses, set) else {addresses}
         self._ignore_dust_threshold = ignore_dust_threshold
 
@@ -34,7 +33,7 @@ class BtcCoinSelector(BisqDefaultCoinSelector):
             address = WalletService.get_address_from_output(output)
             return address in self._addresses
         else:
-            logger.warning(
+            self.logger.warning(
                 "transactionOutput.getScriptPubKey() is not P2PKH nor P2SH nor P2WH"
             )
             return False

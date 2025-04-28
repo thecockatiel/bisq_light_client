@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from bisq.common.config.config import Config
@@ -24,8 +25,9 @@ class NetworkNodeProvider:
         bridge_address_provider: "BridgeAddressProvider",
         ban_filter: Optional["BanFilter"],
         config: "Config",
+        tor_dir: Path,
     ):
-
+        self.tor_dir = tor_dir
         if config.use_localhost_for_p2p:
             self.network_node = LocalhostNetworkNode(
                 config.node_port,
@@ -51,7 +53,7 @@ class NetworkNodeProvider:
     ) -> TorMode:
         if config.tor_control_port != Config.UNSPECIFIED_PORT:
             return RunningTor(
-                config.tor_dir,
+                self.tor_dir,
                 config.tor_control_host,
                 config.tor_control_port,
                 config.tor_control_password,
@@ -70,7 +72,7 @@ class NetworkNodeProvider:
 
         return NewTor(
             config.app_data_dir,
-            config.tor_dir,
+            self.tor_dir,
             config.torrc_file,
             config.torrc_options,
             bridge_address_provider,

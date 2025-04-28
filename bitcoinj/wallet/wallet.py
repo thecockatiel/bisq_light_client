@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 import random
 from threading import Lock
 from bitcoinj.core.insufficient_money_exception import InsufficientMoneyException
@@ -23,13 +23,12 @@ from bitcoinj.wallet.exceptions.multiple_op_return_requested import (
     MultipleOpReturnRequested,
 )
 from bitcoinj.wallet.fee_calculation import FeeCalculation
-from electrum_min import bitcoin
 from utils.aio import as_future
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from asyncio import Future
 from collections.abc import Callable
 import time
-from typing import TYPE_CHECKING, Literal, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -69,8 +68,6 @@ if TYPE_CHECKING:
         WalletChangeEventListener,
     )
 
-logger = get_logger(__name__)
-
 
 # TODO implement as needed
 class Wallet(EventListener):
@@ -81,6 +78,7 @@ class Wallet(EventListener):
         electrum_network: "Network",
         network_params: "NetworkParameters",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._electrum_wallet = electrum_wallet
         self._electrum_network = electrum_network
         self._network_params = network_params
@@ -413,7 +411,7 @@ class Wallet(EventListener):
             remove = False
             try:
                 f.result()
-                logger.info(
+                self.logger.info(
                     f"Broadcasting completed for txid: {tx.get_tx_id()} wtxid: {tx.get_wtx_id()}"
                 )
                 remove = True
@@ -423,14 +421,14 @@ class Wallet(EventListener):
                 ) or "program hash mismatch" in str(e):
                     remove = True
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         f"Error when trying to broadcast tx at wallet start: {e}"
                     )
             if remove:
                 self._electrum_wallet.remove_txid_from_maybe_broadcast(tx.get_tx_id())
 
         for tx in self._get_possibly_not_broadcasted_txs():
-            logger.info(f"Broadcasting possibly not broadcasted tx: {tx}")
+            self.logger.info(f"Broadcasting possibly not broadcasted tx: {tx}")
             as_future(self.broadcast_tx(tx)).add_done_callback(
                 lambda f, tx=tx: on_done(f, tx)
             )
@@ -546,7 +544,7 @@ class Wallet(EventListener):
                 value += output.value
             value = Coin.value_of(value)
 
-            logger.info(
+            self.logger.info(
                 f"Completing send tx with {len(req.tx._electrum_transaction._outputs)} outputs totalling {value.to_friendly_string()} and a fee of {req.fee_per_kb.to_friendly_string()}/vkB"
             )
 
@@ -556,7 +554,7 @@ class Wallet(EventListener):
                 if input.value_sats() is not None:
                     total_input += input.value_sats()
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee."
                     )
             total_input = Coin.value_of(total_input)
@@ -603,7 +601,7 @@ class Wallet(EventListener):
                 )
                 candidates = None  # Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.outputs[0].value = best_coin_selection.value_gathered.value
-                logger.info(
+                self.logger.info(
                     f"  emptying {best_coin_selection.value_gathered.to_friendly_string()}"
                 )
 
@@ -628,7 +626,7 @@ class Wallet(EventListener):
 
             if best_change_output is not None:
                 req.tx.add_output(best_change_output)
-                logger.info(
+                self.logger.info(
                     f"  with {best_change_output.get_value().to_friendly_string()} change"
                 )
 
@@ -650,7 +648,7 @@ class Wallet(EventListener):
 
             calculated_fee = req.tx.get_fee()
             if calculated_fee:
-                logger.info(
+                self.logger.info(
                     "  with a fee of {}/kB, {} for {} bytes".format(
                         calculated_fee.multiply(1000).divide(size).to_friendly_string(),
                         calculated_fee.to_friendly_string(),
@@ -661,7 +659,7 @@ class Wallet(EventListener):
             req.tx.memo = req.memo
             req.fee = calculated_fee
             req.completed = True
-            logger.info(f"  completed: {req.tx}")
+            self.logger.info(f"  completed: {req.tx}")
 
     def calculate_all_spend_candidates(self) -> list["TransactionOutput"]:
         """

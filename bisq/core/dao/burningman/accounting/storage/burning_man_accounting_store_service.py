@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from bisq.common.file.file_util import delete_file_if_exists
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.persistence.store_service import StoreService
 from utils.concurrency import AtomicBoolean
@@ -22,9 +22,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class BurningManAccountingStoreService(StoreService["BurningManAccountingStore"]):
     FILE_NAME = "BurningManAccountingStore_v3"
 
@@ -35,6 +32,7 @@ class BurningManAccountingStoreService(StoreService["BurningManAccountingStore"]
         persistence_manager: "PersistenceManager[BurningManAccountingStore]",
     ):
         super().__init__(storage_dir, persistence_manager)
+        self.logger = get_ctx_logger(__name__)
         self._remove_all_blocks_callled = AtomicBoolean(False)
         resource_data_store_service.add_service(self)
 
@@ -88,7 +86,7 @@ class BurningManAccountingStoreService(StoreService["BurningManAccountingStore"]
                 self.storage_dir.joinpath(BurningManAccountingStoreService.FILE_NAME)
             )
         except Exception as e:
-            logger.error(e, exc_info=e)
+            self.logger.error(e, exc_info=e)
 
     def get_last_block(self) -> Optional["AccountingBlock"]:
         return self.store.get_last_block()

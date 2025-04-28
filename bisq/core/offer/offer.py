@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, cast, Any
+from bisq.common.setup.log_setup import get_ctx_logger
+from typing import TYPE_CHECKING, Optional, Any
 from decimal import Decimal
 
 from utils.preconditions import check_argument
@@ -8,7 +9,6 @@ import pb_pb2 as protobuf
 
 from bisq.common.protocol.network.network_payload import NetworkPayload
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.exceptions.trade_price_out_of_tolerance_exception import TradePriceOutOfToleranceException
 from bisq.core.locale.currency_util import is_crypto_currency, is_fiat_currency
@@ -36,8 +36,6 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer_payload_base import OfferPayloadBase
     from bisq.common.crypto.key_ring import KeyRing
     from bisq.common.crypto.pub_key_ring import PubKeyRing
-    
-logger = get_logger(__name__)
 
 # TODO: get_json_dict
 class Offer(NetworkPayload, PersistablePayload):
@@ -48,6 +46,8 @@ class Offer(NetworkPayload, PersistablePayload):
     PRICE_TOLERANCE = 0.01
 
     def __init__(self, offer_payload_base: 'OfferPayloadBase'):
+        # TODO: add logger to callers
+        self.logger = get_ctx_logger(__name__)
         self.offer_payload_base = offer_payload_base
         
         self.state_property = SimpleProperty(OfferState.UNKNOWN) # JsonExclude
@@ -106,7 +106,7 @@ class Offer(NetworkPayload, PersistablePayload):
 
     def _handle_availability_error(self, error_message: str, error_message_handler: 'ErrorMessageHandler') -> None:
         self.cancel_availability_request()
-        logger.error(error_message)
+        self.logger.error(error_message)
         error_message_handler(error_message)
 
     def cancel_availability_request(self) -> None:
@@ -147,10 +147,10 @@ class Offer(NetworkPayload, PersistablePayload):
                 rounded_to_long = MathUtils.round_double_to_long(scaled)
                 return Price.value_of(currency_code, rounded_to_long)
             except Exception as e:
-                logger.error(f"Exception at getPrice / parseToFiat: {e}\nThis case should never happen.")
+                self.logger.error(f"Exception at getPrice / parseToFiat: {e}\nThis case should never happen.")
                 return None
         else:
-            logger.trace("We don't have a market price. This case could only happen if you don't have a price feed.")
+            self.logger.trace("We don't have a market price. This case could only happen if you don't have a price feed.")
             return None
 
     @property
@@ -182,7 +182,7 @@ class Offer(NetworkPayload, PersistablePayload):
         # from one provider.
         
         deviation = abs(1 - float(relation))
-        logger.info(
+        self.logger.info(
             f"Price at take-offer time: id={self.short_id}, "
             f"currency={self.currency_code}, "
             f"takersPrice={takers_trade_price}, "
@@ -196,7 +196,7 @@ class Offer(NetworkPayload, PersistablePayload):
                 f"takersPrice={trade_price.get_value()}\n"
                 f"makersPrice={offer_price.get_value()}"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
             raise TradePriceOutOfToleranceException(msg)
 
     def get_volume_by_amount(self, amount: "Coin") -> Optional[Volume]:

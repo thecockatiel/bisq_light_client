@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from concurrent.futures import Future
 from datetime import datetime
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterator, Optional, Union, cast
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.clock_watcher_listener import ClockWatcherListener
@@ -18,7 +19,6 @@ from bisq.core.network.p2p.decrypted_direct_message_listener import (
 from bisq.core.network.p2p.decrypted_message_with_pub_key import DecryptedMessageWithPubKey
 from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
 from bisq.core.offer.availability.offer_availability_model import OfferAvailabilityModel
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.offer.offer import Offer
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.offer.offer_state import OfferState
@@ -82,12 +82,12 @@ if TYPE_CHECKING:
     from bisq.core.trade.protocol.provider import Provider
     from bisq.core.trade.statistics.referral_id_service import ReferralIdService
     from bisq.core.trade.statistics.trade_statistics_manager import TradeStatisticsManager
-
-logger = get_logger(__name__)
+ 
 
 # TODO: check again after dependencies implemented
 class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
-    def __init__(self, user: 'User',
+    def __init__(self,
+                 user: 'User',
                  key_ring: 'KeyRing',
                  btc_wallet_service: 'BtcWalletService',
                  bsq_wallet_service: 'BsqWalletService',
@@ -108,7 +108,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                  core_persistence_proto_resolver: 'CorePersistenceProtoResolver',
                  dump_delayed_payout_tx: 'DumpDelayedPayoutTx',
                  allow_faulty_delayed_txs: bool):
-        
+        self.logger = get_ctx_logger(__name__)
         self.user = user
         self.key_ring = key_ring
         self.btc_wallet_service = btc_wallet_service
@@ -191,13 +191,13 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
 
     # The maker received a TakeOfferRequest
     def handle_take_offer_request(self, peer: 'NodeAddress', inputs_for_deposit_tx_request: 'InputsForDepositTxRequest'):
-        logger.info(f"Received inputsForDepositTxRequest from {peer} with tradeId "
+        self.logger.info(f"Received inputsForDepositTxRequest from {peer} with tradeId "
                    f"{inputs_for_deposit_tx_request.trade_id} and uid {inputs_for_deposit_tx_request.uid}")
 
         try:
             Validator.non_empty_string_of(inputs_for_deposit_tx_request.trade_id)
         except:
-            logger.warning(f"Invalid inputsForDepositTxRequest {inputs_for_deposit_tx_request}")
+            self.logger.warning(f"Invalid inputsForDepositTxRequest {inputs_for_deposit_tx_request}")
             return
 
         open_offer = self.open_offer_manager.get_open_offer_by_id(inputs_for_deposit_tx_request.trade_id)
@@ -319,7 +319,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         # TODO:
         # for address_entry in self.btc_wallet_service.get_address_entries_for_available_balance_stream():
         #     if address_entry.offer_id:
-        #         logger.warning(f"Swapping pending OFFER_FUNDING entries at startup. offerId={address_entry.offer_id}")
+        #         self.logger.warning(f"Swapping pending OFFER_FUNDING entries at startup. offerId={address_entry.offer_id}")
         #         self.btc_wallet_service.swap_trade_entry_to_available_entry(
         #             address_entry.offer_id, 
         #             AddressEntryContext.OFFER_FUNDING
@@ -334,7 +334,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
             prev = self.trade_protocol_by_trade_uid.get(uid, None)
             self.trade_protocol_by_trade_uid[uid] = trade_protocol
             if prev is not None:
-                logger.error(f"We had already an entry with uid {trade.uid}")
+                self.logger.error(f"We had already an entry with uid {trade.uid}")
             
 
             pending = self.pending_trade_protocol_by_trade_id.get(trade.get_id(), None)
@@ -411,7 +411,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 self.bsq_wallet_service.is_unconfirmed_transactions_limit_hit()):
             error_message = "Unconfirmed transactions limit reached"
             error_message_handler(error_message)
-            logger.warning(error_message)
+            self.logger.warning(error_message)
             return
 
         offer.check_offer_availability(
@@ -545,7 +545,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         prev = self.trade_protocol_by_trade_uid.get(trade_model.uid, None)
         self.trade_protocol_by_trade_uid[trade_model.uid] = trade_protocol
         if prev is not None:
-            logger.error(f"We had already an entry with uid {trade_model.uid}")
+            self.logger.error(f"We had already an entry with uid {trade_model.uid}")
 
         if isinstance(trade_model, Trade):
             self.tradable_list.append(trade_model)
@@ -601,14 +601,14 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
             try:
                 transaction = f.result()
                 if transaction:
-                    logger.debug(f"onWithdraw onSuccess tx ID: {transaction.get_tx_id()}")
+                    self.logger.debug(f"onWithdraw onSuccess tx ID: {transaction.get_tx_id()}")
                     self.on_trade_completed(trade)
                     trade.state_property.value = TradeState.WITHDRAW_COMPLETED
                     self.get_trade_protocol(trade).on_withdraw_completed()
                     self.request_persistence()
                     result_handler()
             except Exception as e:
-                logger.error(e, exc_info=e)
+                self.logger.error(e, exc_info=e)
                 fault_handler("An exception occurred at request_withdraw (on_failure).", e)
 
         try:
@@ -623,7 +623,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 callback=on_done
             )
         except Exception as e:
-            logger.error(e, exc_info=e)
+            self.logger.error(e, exc_info=e)
             fault_handler("An exception occurred at request_withdraw.", e)
 
     # If trade was completed (closed without fault but might be closed by a dispute) we move it to the closed trades
@@ -726,7 +726,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         # Get failed trades from failed trades manager
         for trade in self.failed_trades_manager.get_trades_stream_with_funds_locked_in():
             if trade.deposit_tx is not None:
-                logger.warning(f"We found a failed trade with locked up funds. That should never happen. trade ID={trade.get_id()}")
+                self.logger.warning(f"We found a failed trade with locked up funds. That should never happen. trade ID={trade.get_id()}")
                 trades_id_set.add(trade.get_id())
 
         # Get failed trades from closed trades
@@ -737,7 +737,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 if confidence is not None and confidence.confidence_type != TransactionConfidenceType.BUILDING:
                     trade_tx_exception = TradeTxException(Res.get("error.closedTradeWithUnconfirmedDepositTx", trade.get_short_id()))
                 else:
-                    logger.warning(f"We found a closed trade with locked up funds. That should never happen. trade ID={trade.get_id()}")
+                    self.logger.warning(f"We found a closed trade with locked up funds. That should never happen. trade ID={trade.get_id()}")
             else:
                 trade_tx_exception = TradeTxException(Res.get("error.closedTradeWithNoDepositTx", trade.get_short_id()))
             trades_id_set.add(trade.get_id())
@@ -819,7 +819,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
     # Aborts unfailing if the address entries needed are not available
     def unfail_trade(self, trade: 'Trade') -> bool:
         if not self.recover_addresses(trade):
-            logger.warning("Failed to recover address during unFail trade")
+            self.logger.warning("Failed to recover address during unFail trade")
             return False
 
         self.init_persisted_trade(trade)

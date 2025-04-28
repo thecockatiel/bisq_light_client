@@ -1,10 +1,8 @@
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.node_address import NodeAddress
 from bisq.core.network.p2p.peers.peer_manager import PeerManager
 from bisq.core.network.p2p.storage.payload.capability_requiring_payload import CapabilityRequiringPayload
-
-logger = get_logger(__name__)
 
 class CapabilityUtils:
     @staticmethod
@@ -13,6 +11,8 @@ class CapabilityUtils:
                                                        peer_manager: "PeerManager") -> bool:
         if not isinstance(message, CapabilityRequiringPayload):
             return False
+
+        logger = get_ctx_logger(__name__)
 
         # We might have multiple entries of the same peer without the supportedCapabilities field set if we received
         # it from old versions, so we filter those.

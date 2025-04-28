@@ -1,26 +1,38 @@
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
-logger = get_logger(__name__)
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
+
 
 class SellerPublishesDepositTx(TradeTask):
-    
+
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
+
     def run(self):
         try:
             self.run_intercept_hook()
 
             deposit_tx = self.process_model.deposit_tx
-            
-            self.process_model.trade_wallet_service.broadcast_tx(deposit_tx, _TxCallback(self))
+
+            self.process_model.trade_wallet_service.broadcast_tx(
+                deposit_tx, _TxCallback(self)
+            )
         except Exception as e:
             self.failed(exc=e)
 
+
 class _TxCallback(TxBroadcasterCallback):
-    
+
     def __init__(self, task: "SellerPublishesDepositTx"):
+        super().__init__()
         self.task = task
 
     def on_success(self, transaction):
@@ -35,10 +47,14 @@ class _TxCallback(TxBroadcasterCallback):
             self.task.process_model.trade_manager.request_persistence()
             self.task.complete()
         else:
-            logger.warning("We got the onSuccess callback called after the timeout has been triggered a complete().")
+            self.task.logger.warning(
+                "We got the onSuccess callback called after the timeout has been triggered a complete()."
+            )
 
     def on_failure(self, exception):
         if not self.task.completed:
             self.task.failed(exc=exception)
         else:
-            logger.warning("We got the onFailure callback called after the timeout has been triggered a complete().")
+            self.task.logger.warning(
+                "We got the onFailure callback called after the timeout has been triggered a complete()."
+            )

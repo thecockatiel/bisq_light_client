@@ -1,10 +1,18 @@
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.dao.exceptions.dao_disabled_exception import DaoDisabledException
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 
-
+if TYPE_CHECKING:
+    from bisq.core.trade.model.bisq_v1.trade import Trade
+    from bisq.common.taskrunner.task_runner import TaskRunner
+    
 class CreateTakerFeeTx(TradeTask):
+    def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
+        super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:

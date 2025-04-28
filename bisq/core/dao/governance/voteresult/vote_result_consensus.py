@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 from bisq.common.crypto.encryption import Encryption
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.governance.blindvote.vote_with_proposal_tx_id_list import (
     VoteWithProposalTxIdList,
 )
@@ -19,10 +19,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.model.blockchain.tx import Tx
     from bisq.core.dao.governance.period.period_service import PeriodService
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-
-logger = get_logger(__name__)
-
 
 class VoteResultConsensus:
 
@@ -69,6 +65,7 @@ class VoteResultConsensus:
             total_stake = sum(x.stake for x in hash_with_stake_list)
             stake_of_first = hash_with_stake_list[0].stake
             if stake_of_first / total_stake < 0.8:
+                logger = get_ctx_logger(__name__)
                 logger.warning(
                     "The winning data view has less than 80% of the total stake of all data views. "
                     "We consider the voting cycle as invalid if the winning data view does not reach "
@@ -107,6 +104,7 @@ class VoteResultConsensus:
                 != TxOutputType.BLIND_VOTE_LOCK_STAKE_OUTPUT
             ):
                 message = f"blind_vote_stake_output must be of type BLIND_VOTE_LOCK_STAKE_OUTPUT but is {blind_vote_stake_output.tx_output_type.name}"
+                logger = get_ctx_logger(__name__)
                 logger.warning(f"{message}. VoteRevealTx={vote_reveal_tx}")
                 raise VoteResultException.ValidationException(
                     f"{message}. VoteRevealTxId={vote_reveal_tx.id}"

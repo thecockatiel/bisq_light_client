@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Generic, TypeVar, Optional
 from collections.abc import Callable
 
-import logging
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.version import Version
 from bisq.core.network.p2p.persistence.map_store_service import MapStoreService
@@ -30,6 +30,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         self.stores_by_version: ImmutableMap[str, "PersistableNetworkPayloadStore[PersistableNetworkPayload]"] = ImmutableMap()
         # Cache to avoid that we have to recreate the historical data at each request
         self.all_historical_payloads: ImmutableMap["StorageByteArray", "PersistableNetworkPayload"] = ImmutableMap()
+        self.logger = get_ctx_logger(__name__)
 
     # We give back a map of our live map and all historical maps newer than the requested version.
     # If requestersVersion is null we return all historical data.
@@ -42,7 +43,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         for store_version, store in self.stores_by_version.items():
             # Old nodes not sending the version will get delivered all data
             if requesters_version is None:
-                logging.info("The requester did not send a version. This is expected for not updated nodes.")
+                self.logger.info("The requester did not send a version. This is expected for not updated nodes.")
                 result.update(store.get_map())
                 continue
 
@@ -54,14 +55,14 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
                 if is_new_version
                 else "As the requester version is not older as our historical store we do not add the data to the result map."
             )
-            logging.trace(
+            self.logger.trace(
                 f"The requester had version {requesters_version}. Our historical data store has version {store_version}.\n{details}"
             )
             
             if is_new_version:
                 result.update(store.get_map())
 
-        logging.info(f"We found {len(result)} entries since requesters version {requesters_version}")
+        self.logger.info(f"We found {len(result)} entries since requesters version {requesters_version}")
         return result
 
     def get_map_of_live_data(self) -> dict["StorageByteArray", "PersistableNetworkPayload"]:
@@ -104,7 +105,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
     
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]) -> None:
         def on_persisted(persisted):
-            logging.debug(
+            self.logger.debug(
                 f"We have created the {self.get_file_name()} store for the live data and "
                 f"filled it with {len(self.get_map_of_live_data())} entries from the persisted data."
             )
@@ -154,7 +155,7 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         def on_persisted(persisted: "PersistableNetworkPayloadStore[PersistableNetworkPayload]"):
             stores_by_version[version] = persisted
             all_historical_payloads.update(persisted.get_map())
-            logging.debug(f"We have read from {file_name} {len(persisted.get_map())} historical items.")
+            self.logger.debug(f"We have read from {file_name} {len(persisted.get_map())} historical items.")
             self.prune_store(persisted, version)
             complete_handler()
 
@@ -180,13 +181,13 @@ class HistoricalDataStoreService(Generic[T], MapStoreService[T, PersistableNetwo
         post_live = len(map_of_live_data)
         
         if pre_live > post_live:
-            logging.debug(
+            self.logger.debug(
                 f"We pruned data from our live data store which are already contained in the "
                 f"historical data store with version {version}. The live map had {pre_live} "
                 f"entries before pruning and has {post_live} entries afterwards."
             )
         else:
-            logging.debug(f"No pruning from historical data store with version {version} was applied")
+            self.logger.debug(f"No pruning from historical data store with version {version} was applied")
             
         self.request_persistence()
 

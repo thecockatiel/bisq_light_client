@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.version import Version
 from bisq.core.btc.exceptions.transaction_verification_exception import (
     TransactionVerificationException,
@@ -26,8 +26,6 @@ if TYPE_CHECKING:
 
 _R = TypeVar("_R", bound="Proposal")
 
-logger = get_logger(__name__)
-
 
 class BaseProposalFactory(Generic[_R], ABC):
     """
@@ -42,6 +40,7 @@ class BaseProposalFactory(Generic[_R], ABC):
         dao_state_service: "DaoStateService",
         proposal_validator: "ProposalValidator",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._bsq_wallet_service = bsq_wallet_service
         self._btc_wallet_service = btc_wallet_service
         self._dao_state_service = dao_state_service
@@ -94,7 +93,7 @@ class BaseProposalFactory(Generic[_R], ABC):
             transaction = self._bsq_wallet_service.sign_tx_and_verify_no_dust_outputs(
                 tx_with_btc_fee
             )
-            logger.info(f"Proposal tx: {transaction}")
+            self.logger.info(f"Proposal tx: {transaction}")
             return transaction
         except (WalletException, TransactionVerificationException) as e:
             raise TxException(e)

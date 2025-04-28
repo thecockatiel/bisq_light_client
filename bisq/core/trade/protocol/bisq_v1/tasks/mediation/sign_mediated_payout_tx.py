@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.trade.protocol.bisq_v1.tasks.trade_task import TradeTask
 from bitcoinj.base.coin import Coin
@@ -9,13 +9,13 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
 
 
 class SignMediatedPayoutTx(TradeTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -23,7 +23,7 @@ class SignMediatedPayoutTx(TradeTask):
 
             trading_peer = self.process_model.trade_peer
             if self.process_model.mediated_payout_tx_signature is not None:
-                logger.warning(
+                self.logger.warning(
                     "process_model.get_tx_signature_from_mediation is already set"
                 )
 

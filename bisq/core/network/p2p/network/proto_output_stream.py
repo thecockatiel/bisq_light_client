@@ -3,21 +3,20 @@
 from threading import RLock
 import socket
 from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.peers.keepalive.messages.keep_alive_message import KeepAliveMessage
 from proto.delimited_protobuf import write_delimited
-from bisq.common.setup.log_setup import get_logger
 from utils.concurrency import AtomicBoolean
 from utils.time import get_time_ms
 
-logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.network.statistic import Statistic
-    from io import BufferedWriter
 
 class ProtoOutputStream:
     def __init__(self, output_stream: 'socket.SocketIO', statistic: 'Statistic'):
+        self.logger = get_ctx_logger(__name__)
         self.output_stream = output_stream
         self.statistic = statistic
         self.is_connection_active = AtomicBoolean(True)
@@ -32,7 +31,7 @@ class ProtoOutputStream:
                     # Connection was closed by us.
                     return
                 # we don't want log to be flooded with failed to write envelope messages with stack traces if its simply any ConnectionError
-                logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
+                self.logger.error(f"Failed to write envelope, reason: {e}", exc_info=e if not isinstance(e, (ConnectionError, BrokenPipeError)) else None)
                 raise
 
     def on_connection_shutdown(self):
@@ -45,7 +44,7 @@ class ProtoOutputStream:
         self.output_stream.flush()
         duration = get_time_ms() - ts
         if duration > 10_000:
-            logger.info(f"Sending {envelope.__class__.__name__} to peer took {duration / 1000.0} sec.")
+            self.logger.info(f"Sending {envelope.__class__.__name__} to peer took {duration / 1000.0} sec.")
         self.statistic.add_sent_bytes(proto.ByteSize())
         self.statistic.add_sent_message(envelope)
         if not isinstance(envelope, KeepAliveMessage):

@@ -1,9 +1,6 @@
 from typing import Iterable, Optional, Union
 
 from bisq.common.capability import Capability
-from bisq.common.setup.log_setup import get_logger
-
-logger = get_logger(__name__)
 
 
 class Capabilities:

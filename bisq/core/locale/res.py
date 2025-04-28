@@ -1,13 +1,13 @@
 import textwrap
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from bisq.resources import core_resource_dir
 from utils.java_compat import parse_resource_bundle
 
 if TYPE_CHECKING:
     from bisq.common.config.config import Config
 
-logger = get_logger(__name__)
+logger = get_base_logger(__name__)
 
 
 class Res:

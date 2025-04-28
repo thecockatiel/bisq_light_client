@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.dao.state.model.governance.compensation_proposal import (
     CompensationProposal,
@@ -21,14 +21,14 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
 
 
-logger = get_logger(__name__)
-
-
 class IssuanceService:
 
     def __init__(
-        self, dao_state_service: "DaoStateService", period_service: "PeriodService"
+        self,
+        dao_state_service: "DaoStateService",
+        period_service: "PeriodService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._dao_state_service = dao_state_service
         self._period_service = period_service
 
@@ -71,7 +71,7 @@ class IssuanceService:
                 sb.append(
                     "\n################################################################################\n"
                 )
-                logger.info("".join(sb))
+                self.logger.info("".join(sb))
 
     def _is_valid(
         self,

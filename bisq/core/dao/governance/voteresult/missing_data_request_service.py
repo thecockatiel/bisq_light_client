@@ -1,11 +1,10 @@
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.governance.proposal.proposal_service import ProposalService
-from utils.data import ObservableList
 
 if TYPE_CHECKING:
     from bisq.core.dao.governance.blindvote.storage.blind_vote_payload import (
@@ -23,9 +22,6 @@ if TYPE_CHECKING:
     )
 
 
-logger = get_logger(__name__)
-
-
 class MissingDataRequestService(DaoSetupService):
 
     def __init__(
@@ -35,6 +31,7 @@ class MissingDataRequestService(DaoSetupService):
         proposal_service: "ProposalService",
         p2p_service: "P2PService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._republish_governance_data_handler = republish_governance_data_handler
         self._blind_vote_list_service = blind_vote_list_service
         self._proposal_service = proposal_service
@@ -82,7 +79,9 @@ class MissingDataRequestService(DaoSetupService):
                     min(300, random.randint(0, len(blind_vote_payloads))),
                 )
                 UserThread.run_after(
-                    lambda bvp=blind_vote_payload: self._republish_blind_vote_payload(bvp),
+                    lambda bvp=blind_vote_payload: self._republish_blind_vote_payload(
+                        bvp
+                    ),
                     timedelta(seconds=delay),
                 )
 
@@ -92,11 +91,11 @@ class MissingDataRequestService(DaoSetupService):
         )
         tx_id = proposal_payload.proposal.tx_id
         if success:
-            logger.debug(
+            self.logger.debug(
                 f"We received a RepublishGovernanceDataRequest and re-published a proposalPayload to the P2P network as append only data. proposalTxId={tx_id}"
             )
         else:
-            logger.error(
+            self.logger.error(
                 f"Adding of proposalPayload to P2P network failed. proposalTxId={tx_id}"
             )
 
@@ -106,10 +105,10 @@ class MissingDataRequestService(DaoSetupService):
         )
         tx_id = blind_vote_payload.blind_vote.tx_id
         if success:
-            logger.debug(
+            self.logger.debug(
                 f"We received a RepublishGovernanceDataRequest and re-published a blindVotePayload to the P2P network as append only data. blindVoteTxId={tx_id}"
             )
         else:
-            logger.error(
+            self.logger.error(
                 f"Adding of blindVotePayload to P2P network failed. blindVoteTxId={tx_id}"
             )

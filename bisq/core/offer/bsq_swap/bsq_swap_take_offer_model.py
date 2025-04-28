@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.offer.bsq_swap.bsq_swap_offer_model import BsqSwapOfferModel
 from bitcoinj.base.coin import Coin
@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
     from bisq.core.trade.trade_manager import TradeManager
 
-logger = get_logger(__name__)
-
 
 class BsqSwapTakeOfferModel(BsqSwapOfferModel):
     def __init__(
@@ -29,6 +27,7 @@ class BsqSwapTakeOfferModel(BsqSwapOfferModel):
         trade_manager: "TradeManager",
         filter_manager: "FilterManager",
     ):
+        self.logger = get_ctx_logger(__name__)
         super().__init__(
             offer_util, btc_wallet_service, bsq_wallet_service, fee_service
         )
@@ -47,7 +46,7 @@ class BsqSwapTakeOfferModel(BsqSwapOfferModel):
     def do_activate(self):
         super().do_activate()
         self.trade_manager.check_offer_availability(
-            self.offer, False, lambda: None, lambda error: logger.error(error)
+            self.offer, False, lambda: None, self.logger.error
         )
 
     def do_deactivate(self):

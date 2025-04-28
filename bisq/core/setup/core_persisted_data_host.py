@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from global_container import GlobalContainer
     from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
@@ -10,8 +11,6 @@ class CorePersistedDataHost:
     @staticmethod
     def get_persisted_data_hosts(global_container: "GlobalContainer"):
         persisted_data_hosts: list["PersistedDataHost"] = []
-        persisted_data_hosts.append(global_container.preferences)
-        persisted_data_hosts.append(global_container.user)
         persisted_data_hosts.append(global_container.address_entry_list)
         persisted_data_hosts.append(global_container.open_offer_manager)
         persisted_data_hosts.append(global_container.trade_manager)

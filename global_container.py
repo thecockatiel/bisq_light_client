@@ -1,23 +1,35 @@
 # tried to be in the order of https://github.com/bisq-network/bisq/blob/v1.9.19/core/src/main/java/bisq/core/app/misc/ModuleForAppWithP2p.java
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
+
+from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator
 from utils.di import DependencyProvider
 
 if TYPE_CHECKING:
-    from bisq.common.config.config import Config
+    from shared_container import SharedContainer
+    from bisq.core.user.user import User
+    from bisq.core.user.preferences import Preferences
 
 
 class GlobalContainer:
     def __init__(
         self,
-        config: Optional["Config"],
+        shared_container: "SharedContainer",
+        user: "User",
+        preferences: "Preferences",
+        persistence_orchestrator: "PersistenceOrchestrator",
     ):
-        self._config = config
-        # init user by accessing it early
-        self.user
+        self._shared_container = shared_container
+        self.user = user
+        self.preferences = preferences
+        self.persistence_orchestrator = persistence_orchestrator
 
     def __getattr__(self, name):
         return None
+
+    @property
+    def core_context(self):
+        return self._shared_container.core_context
 
     ###############################################################################
     @property
@@ -36,293 +48,25 @@ class GlobalContainer:
         return self._wallet_dir
 
     @property
-    def core_context(self):
-        if self._core_context is None:
-            from bisq.core.api.core_context import CoreContext
-
-            self._core_context = CoreContext()
-        return self._core_context
+    def btc_network_dir(self):
+        if self._btc_network_dir is None:
+            self._btc_network_dir = self.user.data_dir.joinpath(
+                self.config.base_currency_network.name.lower()
+            )
+            self._btc_network_dir.mkdir(parents=True, exist_ok=True)
+        return self._btc_network_dir
 
     @property
-    def core_api(self):
-        if self._core_api is None:
-            from bisq.core.api.core_api import CoreApi
-
-            self._core_api = CoreApi(
-                self.config,
-                self.core_dispute_agents_service,
-                self.core_help_service,
-                self.core_offers_service,
-                self.core_payment_accounts_service,
-                self.core_price_service,
-                self.core_trades_service,
-                self.core_wallets_service,
-                self.trade_statistics_manager,
-                self.network_node,
-            )
-        return self._core_api
-
-    @property
-    def core_dispute_agents_service(self):
-        if self._core_dispute_agents_service is None:
-            from bisq.core.api.core_dipsute_agents_service import (
-                CoreDisputeAgentsService,
-            )
-
-            self._core_dispute_agents_service = CoreDisputeAgentsService(
-                self.config,
-                self.key_ring,
-                self.mediator_manager,
-                self.refund_agent_manager,
-                self.p2p_service,
-            )
-        return self._core_dispute_agents_service
-
-    @property
-    def core_help_service(self):
-        if self._core_help_service is None:
-            from bisq.core.api.core_help_service import CoreHelpService
-
-            self._core_help_service = CoreHelpService()
-        return self._core_help_service
-
-    @property
-    def core_offers_service(self):
-        if self._core_offers_service is None:
-            from bisq.core.api.core_offers_service import CoreOffersService
-
-            self._core_offers_service = CoreOffersService(
-                self.core_context,
-                self.key_ring,
-                self.core_wallets_service,
-                self.create_offer_service,
-                self.offer_book_service,
-                self.offer_filter_service,
-                self.open_offer_manager,
-                self.open_bsq_swap_offer_service,
-                self.offer_util,
-                self.price_feed_service,
-                self.user,
-            )
-        return self._core_offers_service
-
-    @property
-    def core_payment_accounts_service(self):
-        if self._core_payment_accounts_service is None:
-            from bisq.core.api.core_payment_accounts_service import (
-                CorePaymentAccountsService,
-            )
-
-            self._core_payment_accounts_service = CorePaymentAccountsService(
-                self.core_wallets_service,
-                self.account_age_witness_service,
-                self.user,
-                self.config,
-            )
-        return self._core_payment_accounts_service
-
-    @property
-    def core_price_service(self):
-        if self._core_price_service is None:
-            from bisq.core.api.core_price_service import CorePriceService
-
-            self._core_price_service = CorePriceService(
-                self.preferences,
-                self.price_feed_service,
-                self.trade_statistics_manager,
-            )
-        return self._core_price_service
-
-    @property
-    def core_trades_service(self):
-        if self._core_trades_service is None:
-            from bisq.core.api.core_trades_service import CoreTradesService
-
-            self._core_trades_service = CoreTradesService(
-                self.core_context,
-                self.core_wallets_service,
-                self.btc_wallet_service,
-                self.offer_util,
-                self.bsq_swap_trade_manager,
-                self.closed_tradable_manager,
-                self.closed_tradable_formatter,
-                self.failed_trades_manager,
-                self.take_offer_model,
-                self.bsq_swap_take_offer_model,
-                self.trade_manager,
-                self.trade_util,
-                self.user,
-            )
-        return self._core_trades_service
-
-    @property
-    def core_wallets_service(self):
-        if self._core_wallets_service is None:
-            from bisq.core.api.core_wallets_service import CoreWalletsService
-
-            self._core_wallets_service = CoreWalletsService(
-                self.app_startup_state,
-                self.core_context,
-                self.balances,
-                self.wallets_manager,
-                self.bsq_wallet_service,
-                self.bsq_transfer_service,
-                self.bsq_formatter,
-                self.btc_wallet_service,
-                self.btc_formatter,
-                self.fee_service,
-                self.dao_facade,
-                self.preferences,
-            )
-        return self._core_wallets_service
-
-    @property
-    def grpc_server(self):
-        if self._grpc_server is None:
-            from bisq.daemon.grpc.grpc_server import GrpcServer
-
-            self._grpc_server = GrpcServer(
-                self.core_context,
-                self.config,
-                self.grpc_dispute_agents_service,
-                self.grpc_help_service,
-                self.grpc_offers_service,
-                self.grpc_payment_accounts_service,
-                self.grpc_price_service,
-                self.grpc_shutdown_service,
-                self.grpc_version_service,
-                self.grpc_trades_service,
-                self.grpc_wallets_service,
-                self.grpc_dev_commands_service,
-            )
-        return self._grpc_server
-
-    @property
-    def grpc_exception_handler(self):
-        if self._grpc_exception_handler is None:
-            from bisq.daemon.grpc.grpc_exception_handler import GrpcExceptionHandler
-
-            self._grpc_exception_handler = GrpcExceptionHandler()
-        return self._grpc_exception_handler
-
-    @property
-    def grpc_dispute_agents_service(self):
-        if self._grpc_dispute_agents_service is None:
-            from bisq.daemon.grpc.grpc_dispute_agent_service import (
-                GrpcDisputeAgentsService,
-            )
-
-            self._grpc_dispute_agents_service = GrpcDisputeAgentsService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_dispute_agents_service
-
-    @property
-    def grpc_help_service(self):
-        if self._grpc_help_service is None:
-            from bisq.daemon.grpc.grpc_help_service import (
-                GrpcHelpService,
-            )
-
-            self._grpc_help_service = GrpcHelpService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_help_service
-
-    @property
-    def grpc_offers_service(self):
-        if self._grpc_offers_service is None:
-            from bisq.daemon.grpc.grpc_offers_service import GrpcOffersService
-
-            self._grpc_offers_service = GrpcOffersService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_offers_service
-
-    @property
-    def grpc_payment_accounts_service(self):
-        if self._grpc_payment_accounts_service is None:
-            from bisq.daemon.grpc.grpc_payment_accounts_service import (
-                GrpcPaymentAccountsService,
-            )
-
-            self._grpc_payment_accounts_service = GrpcPaymentAccountsService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_payment_accounts_service
-
-    @property
-    def grpc_price_service(self):
-        if self._grpc_price_service is None:
-            from bisq.daemon.grpc.grpc_price_service import GrpcPriceService
-
-            self._grpc_price_service = GrpcPriceService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_price_service
-
-    @property
-    def grpc_shutdown_service(self):
-        if self._grpc_shutdown_service is None:
-            from bisq.daemon.grpc.grpc_shutdown_service import GrpcShutdownService
-
-            self._grpc_shutdown_service = GrpcShutdownService(
-                self.grpc_exception_handler
-            )
-        return self._grpc_shutdown_service
-
-    @property
-    def grpc_version_service(self):
-        if self._grpc_version_service is None:
-            from bisq.daemon.grpc.grpc_version_service import GrpcVersionService
-
-            self._grpc_version_service = GrpcVersionService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_version_service
-
-    @property
-    def grpc_trades_service(self):
-        if self._grpc_trades_service is None:
-            from bisq.daemon.grpc.grpc_trades_service import GrpcTradesService
-
-            self._grpc_trades_service = GrpcTradesService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_trades_service
-
-    @property
-    def grpc_wallets_service(self):
-        if self._grpc_wallets_service is None:
-            from bisq.daemon.grpc.grpc_wallets_service import GrpcWalletsService
-
-            self._grpc_wallets_service = GrpcWalletsService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_wallets_service
-
-    @property
-    def grpc_dev_commands_service(self):
-        if self._grpc_dev_commands_service is None:
-            from bisq.daemon.grpc.grpc_dev_commands_service import (
-                GrpcDevCommandsService,
-            )
-
-            self._grpc_dev_commands_service = GrpcDevCommandsService(
-                self.core_api, self.grpc_exception_handler
-            )
-        return self._grpc_dev_commands_service
+    def tor_dir(self):
+        if self._tor_dir is None:
+            self._tor_dir = self.btc_network_dir.joinpath("tor")
+            self._tor_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        return self._tor_dir
 
     ############################################################################### (not listed in ModuleForAppWithP2p)
     @property
     def config(self):
-        if self._config is None:
-            from bisq.common.config.config import Config
-            from utils.dir import user_data_dir
-
-            self._config = Config("bisq_light_client", user_data_dir())
-
-        return self._config
+        return self._shared_container.config
 
     @property
     def bisq_setup(self):
@@ -363,6 +107,7 @@ class GlobalContainer:
             from bisq.core.app.domain_initialisation import DomainInitialisation
 
             self._domain_initialisation = DomainInitialisation(
+                self.persistence_orchestrator,
                 self.clock_watcher,
                 self.trade_limits,
                 self.arbitration_manager,
@@ -448,33 +193,15 @@ class GlobalContainer:
 
     @property
     def corrupted_storage_file_handler(self):
-        if self._corrupted_storage_file_handler is None:
-            from bisq.common.file.corrupted_storage_file_handler import (
-                CorruptedStorageFileHandler,
-            )
-
-            self._corrupted_storage_file_handler = CorruptedStorageFileHandler()
-        return self._corrupted_storage_file_handler
+        return self._shared_container.corrupted_storage_file_handler
 
     @property
     def btc_formatter(self):
-        if self._btc_formatter is None:
-            from bisq.core.util.coin.immutable_coin_formatter import (
-                ImmutableCoinFormatter,
-            )
-
-            self._btc_formatter = ImmutableCoinFormatter(
-                self.config.base_currency_network_parameters.get_monetary_format()
-            )
-        return self._btc_formatter
+        return self._shared_container.btc_formatter
 
     @property
     def bsq_formatter(self):
-        if self._bsq_formatter is None:
-            from bisq.core.util.coin.bsq_formatter import BsqFormatter
-
-            self._bsq_formatter = BsqFormatter(self.config)
-        return self._bsq_formatter
+        return self._shared_container.bsq_formatter
 
     @property
     def removed_payloads_service(self):
@@ -489,6 +216,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 )
             )
         return self._removed_payloads_service
@@ -624,6 +352,7 @@ class GlobalContainer:
                 self.mediation_dispute_list_service,
                 self.config,
                 self.price_feed_service,
+                self.user,
             )
         return self._mediation_manager
 
@@ -708,6 +437,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 )
             )
         return self._arbitration_dispute_list_service
@@ -725,6 +455,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 )
             )
         return self._mediation_dispute_list_service
@@ -742,6 +473,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 )
             )
         return self._refund_dispute_list_service
@@ -759,7 +491,7 @@ class GlobalContainer:
                 self.trade_manager,
                 self.closed_tradable_manager,
                 self.failed_trades_manager,
-                self.pub_key_ring,
+                self.key_ring.pub_key_ring,
             )
         return self._trader_chat_manager
 
@@ -781,6 +513,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.key_ring,
                 self.clock,
@@ -801,6 +534,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._ignored_mailbox_service
@@ -821,6 +555,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._bsq_swap_trade_manager
@@ -839,6 +574,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._trade_statistics_2_storage_service
@@ -857,6 +593,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._trade_statistics_3_storage_service
@@ -901,7 +638,10 @@ class GlobalContainer:
         if self._trade_util is None:
             from bisq.core.trade.bisq_v1.trade_util import TradeUtil
 
-            self._trade_util = TradeUtil(self.btc_wallet_service, self.key_ring)
+            self._trade_util = TradeUtil(
+                self.btc_wallet_service,
+                self.key_ring,
+            )
         return self._trade_util
 
     @property
@@ -925,7 +665,8 @@ class GlobalContainer:
             )
 
             self._btc_fee_receiver_service = BtcFeeReceiverService(
-                self.dao_state_service, self.burning_man_service
+                self.dao_state_service,
+                self.burning_man_service,
             )
         return self._btc_fee_receiver_service
 
@@ -952,7 +693,7 @@ class GlobalContainer:
                 self.tx_fee_estimation_service,
                 self.price_feed_service,
                 self.p2p_service,
-                self.pub_key_ring,
+                self.key_ring.pub_key_ring,
                 self.user,
                 self.btc_wallet_service,
             )
@@ -1153,7 +894,7 @@ class GlobalContainer:
                 self.offer_book_service,
                 self.offer_util,
                 self.filter_manager,
-                self.pub_key_ring,
+                self.key_ring.pub_key_ring,
             )
         return self._open_bsq_swap_offer_service
 
@@ -1181,74 +922,18 @@ class GlobalContainer:
         return self._app_startup_state
 
     ############################################################################### ModuleForAppWithP2p
-    @property
-    def key_storage(self):
-        if self._key_storage is None:
-            from bisq.common.crypto.key_storage import KeyStorage
-
-            key_storage_dir = self.user.data_dir.joinpath("keys")
-            key_storage_dir.mkdir(parents=True, exist_ok=True)
-            self._key_storage = KeyStorage(key_storage_dir)
-
-        return self._key_storage
 
     @property
     def key_ring(self):
-        if self._key_ring is None:
-            from bisq.common.crypto.key_ring import KeyRing
-
-            self._key_ring = KeyRing(self.key_storage)
-
-        return self._key_ring
-
-    @property
-    def user(self):
-        if self._user is None:
-            from bisq.core.user.user import User
-            from bisq.common.persistence.persistence_manager import PersistenceManager
-            from bisq.common.crypto.key_ring import KeyRing
-            from bisq.common.crypto.key_storage import KeyStorage
-
-            base_network_dir = self.config.app_data_dir.joinpath(
-                self.config.base_currency_network.name.lower()
-            )
-            db_dir = base_network_dir.joinpath("db")
-            db_dir.mkdir(parents=True, exist_ok=True)
-            key_storage_dir = base_network_dir.joinpath("keys")
-            key_storage_dir.mkdir(parents=True, exist_ok=True)
-            self._key_storage = KeyStorage(key_storage_dir)
-            self._key_ring = KeyRing(self._key_storage)
-            self._user = User(
-                base_network_dir,
-                PersistenceManager(
-                    db_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ),
-                self._key_ring,
-            )
-
-        return self._user
+        return self.user.key_ring
 
     @property
     def clock_watcher(self):
-        if self._clock_watcher is None:
-            from bisq.common.clock_watcher import ClockWatcher
-
-            self._clock_watcher = ClockWatcher()
-
-        return self._clock_watcher
+        return self._shared_container.clock_watcher
 
     @property
     def network_proto_resolver(self):
-        if self._network_proto_resolver is None:
-            from bisq.core.protocol.network.core_network_proto_resolver import (
-                CoreNetworkProtoResolver,
-            )
-
-            self._network_proto_resolver = CoreNetworkProtoResolver(self.clock)
-
-        return self._network_proto_resolver
+        return self._shared_container.network_proto_resolver
 
     @property
     def persistence_proto_resolver(self):
@@ -1270,23 +955,6 @@ class GlobalContainer:
         return self._persistence_proto_resolver
 
     @property
-    def preferences(self):
-        if self._preferences is None:
-            from bisq.core.user.preferences import Preferences
-            from bisq.common.persistence.persistence_manager import PersistenceManager
-
-            self._preferences = Preferences(
-                PersistenceManager(
-                    self.storage_dir,
-                    self.persistence_proto_resolver,
-                    self.corrupted_storage_file_handler,
-                ),
-                self.config,
-                self.fee_service,
-            )
-        return self._preferences
-
-    @property
     def bridge_address_provider(self):
         if self._bridge_address_provider is None:
             self._bridge_address_provider = self.preferences
@@ -1298,7 +966,7 @@ class GlobalContainer:
         if self._tor_setup is None:
             from bisq.common.app.tor_setup import TorSetup
 
-            self._tor_setup = TorSetup(self.config.tor_dir)
+            self._tor_setup = TorSetup(self.tor_dir)
 
         return self._tor_setup
 
@@ -1409,6 +1077,7 @@ class GlobalContainer:
                         self.storage_dir,
                         self.persistence_proto_resolver,
                         self.corrupted_storage_file_handler,
+                        self.persistence_orchestrator,
                     ),
                 )
             )
@@ -1442,6 +1111,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.referral_id_service,
                 self.persistence_proto_resolver,
@@ -1467,6 +1137,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.cleanup_mailbox_messages_service,
                 self.dump_delayed_payout_tx,
@@ -1505,6 +1176,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.trade_util,
                 self.cleanup_mailbox_messages_service,
@@ -1578,6 +1250,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._account_age_witness_storage_service
@@ -1614,6 +1287,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
         return self._signed_witness_storage_service
@@ -1670,6 +1344,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.dao_state_service,
             )
@@ -1705,12 +1380,7 @@ class GlobalContainer:
     ############################################################################### P2PModule
     @property
     def clock(self):
-        if self._clock is None:
-            from utils.clock import Clock
-
-            self._clock = Clock()
-
-        return self._clock
+        return self._shared_container.clock
 
     @property
     def p2p_service(self):
@@ -1747,6 +1417,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.config.max_connections,
             )
@@ -1769,6 +1440,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.removed_payloads_service,
                 self.clock,
@@ -1878,6 +1550,7 @@ class GlobalContainer:
                 self.bridge_address_provider,
                 self.ban_filter,
                 self.config,
+                self.tor_dir,
             )
 
         return self._network_node_provider
@@ -1924,6 +1597,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2251,11 +1925,12 @@ class GlobalContainer:
     @property
     def accounting_block_parser(self):
         if self._accounting_block_parser is None:
-            from bisq.core.dao.node.parser.tx_parser import TxParser
+            from bisq.core.dao.burningman.accounting.node.full.accounting_block_parser import (
+                AccountingBlockParser,
+            )
 
-            self._accounting_block_parser = TxParser(
-                self.period_service,
-                self.dao_state_service,
+            self._accounting_block_parser = AccountingBlockParser(
+                self.burning_man_accounting_service,
             )
 
         return self._accounting_block_parser
@@ -2357,7 +2032,9 @@ class GlobalContainer:
             from bisq.core.dao.state.dao_state_service import DaoStateService
 
             self._dao_state_service = DaoStateService(
-                self.dao_state, self.genesis_tx_info, self.bsq_formatter
+                self.dao_state,
+                self.genesis_tx_info,
+                self.bsq_formatter,
             )
 
         return self._dao_state_service
@@ -2398,6 +2075,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2518,6 +2196,7 @@ class GlobalContainer:
                         self.storage_dir,
                         self.persistence_proto_resolver,
                         self.corrupted_storage_file_handler,
+                        self.persistence_orchestrator,
                     )
                 )
             )
@@ -2587,8 +2266,9 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
-                self.pub_key_ring,
+                self.key_ring.pub_key_ring,
             )
 
         return self._my_proposal_list_service
@@ -2656,6 +2336,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2675,6 +2356,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2707,7 +2389,8 @@ class GlobalContainer:
             )
 
             self._compensation_validator = CompensationValidator(
-                self.dao_state_service, self.period_service
+                self.dao_state_service,
+                self.period_service,
             )
 
         return self._compensation_validator
@@ -2765,7 +2448,9 @@ class GlobalContainer:
             )
 
             self._change_param_validator = ChangeParamValidator(
-                self.dao_state_service, self.period_service, self.bsq_formatter
+                self.dao_state_service,
+                self.period_service,
+                self.bsq_formatter,
             )
 
         return self._change_param_validator
@@ -2934,6 +2619,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2953,6 +2639,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -2990,6 +2677,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -3026,6 +2714,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
                 self.bsq_wallet_service,
                 self.btc_wallet_service,
@@ -3192,6 +2881,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -3258,6 +2948,7 @@ class GlobalContainer:
                     self.storage_dir,
                     self.persistence_proto_resolver,
                     self.corrupted_storage_file_handler,
+                    self.persistence_orchestrator,
                 ),
             )
 
@@ -3327,11 +3018,3 @@ class GlobalContainer:
                 self.config.use_dev_privilege_keys,
             )
         return self._filter_manager
-
-    ###############################################################################
-    @property
-    def pub_key_ring(self):
-        if self._pub_key_ring is None:
-            self._pub_key_ring = self.key_ring.pub_key_ring
-
-        return self._pub_key_ring

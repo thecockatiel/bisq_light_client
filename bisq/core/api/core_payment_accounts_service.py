@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, cast
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.config.config import Config
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.api.model.payment_account_form import PaymentAccountForm
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
@@ -17,14 +16,10 @@ from utils.java_compat import java_cmp_str
 if TYPE_CHECKING:
     from bisq.core.payment.asset_account import AssetAccount
     from bisq.core.payment.payment_account import PaymentAccount
-    from bisq.core.account.witness.account_age_witness_service import (
-        AccountAgeWitnessService,
-    )
+    from bisq.core.user.user_context import UserContext
     from bisq.core.api.core_wallets_service import CoreWalletsService
     from bisq.core.user.user import User
 
-
-logger = get_logger(__name__)
 
 # NOTE: theres a little io in this class, but it's not much to make stuff async. we can reconsider this later.
 
@@ -34,29 +29,29 @@ class CorePaymentAccountsService:
     def __init__(
         self,
         core_wallets_service: "CoreWalletsService",
-        account_age_witness_service: "AccountAgeWitnessService",
-        user: "User",
         config: "Config",
     ):
         self.core_wallets_service = core_wallets_service
-        self.account_age_witness_service = account_age_witness_service
-        self.user = user
         self.config = config
 
-    def create_payment_account(self, json_string: str) -> "PaymentAccount":
+    def create_payment_account(
+        self,
+        user_context: "UserContext",
+        json_string: str,
+    ) -> "PaymentAccount":
         payment_account = PaymentAccountForm.to_payment_account(json_string)
         self._verify_payment_account_has_required_fields(payment_account)
-        self.user.add_payment_account_if_not_exists(payment_account)
-        self.account_age_witness_service.publish_my_account_age_witness(
+        user_context.user.add_payment_account_if_not_exists(payment_account)
+        user_context.global_container.account_age_witness_service.publish_my_account_age_witness(
             payment_account.payment_account_payload
         )
-        logger.info(
+        user_context.logger.info(
             f"Saved payment account with id {payment_account.id} and payment method {payment_account.payment_account_payload.payment_method_id}."
         )
         return payment_account
 
-    def get_payment_accounts(self):
-        return self.user.payment_accounts
+    def get_payment_accounts(self, user_context: "UserContext"):
+        return user_context.user.payment_accounts
 
     def get_fiat_payment_methods(self):
         payment_methods = PaymentMethod.get_payment_methods()
@@ -77,7 +72,12 @@ class CorePaymentAccountsService:
         return PaymentAccountForm.get_payment_account_form(payment_method_id)
 
     def create_crypto_currency_payment_account(
-        self, account_name: str, currency_code: str, address: str, trade_instant: bool
+        self,
+        user_context: "UserContext",
+        account_name: str,
+        currency_code: str,
+        address: str,
+        trade_instant: bool,
     ) -> "PaymentAccount":
         crypto_currency_code = currency_code.upper()
         self._verify_api_does_support_crypto_currency_account(crypto_currency_code)
@@ -107,8 +107,8 @@ class CorePaymentAccountsService:
         if crypto_currency:
             crypto_currency_account.set_single_trade_currency(crypto_currency)
 
-        self.user.add_payment_account(crypto_currency_account)
-        logger.info(
+        user_context.user.add_payment_account(crypto_currency_account)
+        user_context.logger.info(
             f"Saved crypto payment account with id {crypto_currency_account.id} and payment method {crypto_currency_account.payment_account_payload.payment_method_id}."
         )
         return crypto_currency_account

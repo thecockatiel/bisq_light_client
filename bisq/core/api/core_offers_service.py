@@ -2,7 +2,6 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from typing import Callable, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.api.edit_offer_validator import EditOfferValidator
 from bisq.core.api.exception.not_found_exception import NotFoundException
@@ -19,7 +18,6 @@ from bisq.core.offer.bisq_v1.mutable_offer_payload_fields import (
     MutableOfferPayloadFields,
 )
 from bisq.core.offer.offer_direction import OfferDirection
-from bisq.core.offer.offer_filter_service_result import OfferFilterServiceResult
 from bisq.core.offer.open_offer_state import OpenOfferState
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
 from bisq.core.util.price_util import PriceUtil
@@ -32,83 +30,67 @@ if TYPE_CHECKING:
     from bisq.core.offer.bisq_v1.offer_payload import OfferPayload
     from bisq.core.payment.payment_account import PaymentAccount
     from bitcoinj.core.transaction import Transaction
-    from bisq.core.user.user import User
-    from bisq.common.crypto.key_ring import KeyRing
+    from bisq.core.user.user_context import UserContext
     from bisq.core.api.core_context import CoreContext
     from bisq.core.api.core_wallets_service import CoreWalletsService
-    from bisq.core.offer.bisq_v1.create_offer_service import CreateOfferService
-    from bisq.core.offer.bsq_swap.open_bsq_swap_offer_service import (
-        OpenBsqSwapOfferService,
-    )
-    from bisq.core.offer.offer_book_service import OfferBookService
-    from bisq.core.offer.offer_filter_service import OfferFilterService
     from bisq.core.offer.open_offer import OpenOffer
-    from bisq.core.offer.open_offer_manager import OpenOfferManager
-    from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.offer.offer import Offer
-
-logger = get_logger(__name__)
+    from bisq.core.user.user_manager import UserManager
 
 
 class CoreOffersService:
-    def _to_offer_with_id(self, id: str, is_my_offer: bool) -> "Offer":
+
+    def _to_offer_with_id(
+        self, user_context: "UserContext", id: str, is_my_offer: bool
+    ) -> "Offer":
         if is_my_offer:
-            return self.get_my_offer(id).offer
+            return self.get_my_offer(user_context, id).offer
         else:
-            return self.get_offer(id)
+            return self.get_offer(user_context, id)
 
     def __init__(
         self,
         core_context: "CoreContext",
-        key_ring: "KeyRing",
         core_wallets_service: "CoreWalletsService",
-        create_offer_service: "CreateOfferService",
-        offer_book_service: "OfferBookService",
-        offer_filter_service: "OfferFilterService",
-        open_offer_manager: "OpenOfferManager",
-        open_bsq_swap_offer_service: "OpenBsqSwapOfferService",
-        offer_util: "OfferUtil",
-        price_feed_service: "PriceFeedService",
-        user: "User",
     ):
         self.core_context = core_context
-        self.key_ring = key_ring
         self.core_wallets_service = core_wallets_service
-        self.create_offer_service = create_offer_service
-        self.offer_book_service = offer_book_service
-        self.offer_filter_service = offer_filter_service
-        self.open_offer_manager = open_offer_manager
-        self.open_bsq_swap_offer_service = open_bsq_swap_offer_service
-        self.offer_util = offer_util
-        self.price_feed_service = price_feed_service
-        self.user = user
 
-    def is_fiat_offer(self, id: str, is_my_offer: bool) -> bool:
-        offer = self._to_offer_with_id(id, is_my_offer)
+    def is_fiat_offer(
+        self, user_context: "UserContext", id: str, is_my_offer: bool
+    ) -> bool:
+        offer = self._to_offer_with_id(user_context, id, is_my_offer)
         return OfferUtil.is_fiat_offer(offer)
 
-    def is_altcoin_offer(self, id: str, is_my_offer: bool) -> bool:
-        offer = self._to_offer_with_id(id, is_my_offer)
+    def is_altcoin_offer(
+        self, user_context: "UserContext", id: str, is_my_offer: bool
+    ) -> bool:
+        offer = self._to_offer_with_id(user_context, id, is_my_offer)
         return OfferUtil.is_altcoin_offer(offer)
 
-    def is_bsq_swap_offer(self, id: str, is_my_offer: bool) -> bool:
-        offer = self._to_offer_with_id(id, is_my_offer)
+    def is_bsq_swap_offer(
+        self, user_context: "UserContext", id: str, is_my_offer: bool
+    ) -> bool:
+        offer = self._to_offer_with_id(user_context, id, is_my_offer)
         return offer.is_bsq_swap_offer
 
-    def get_offer(self, id: str) -> Optional["Offer"]:
-        offer = self.find_available_offer(id)
+    def get_offer(self, user_context: "UserContext", id: str) -> Optional["Offer"]:
+        offer = self.find_available_offer(user_context, id)
         if offer is None:
             raise NotFoundException(f"offer with id '{id}' not found")
         return offer
 
-    def find_available_offer(self, id: str) -> Optional["Offer"]:
-        for o in self.offer_book_service.get_offers():
+    def find_available_offer(
+        self, user_context: "UserContext", id: str
+    ) -> Optional["Offer"]:
+        c = user_context.global_container
+        for o in c.offer_book_service.get_offers():
             if o.id == id:
-                if o.is_my_offer(self.key_ring):
+                if o.is_my_offer(c.key_ring):
                     raise IllegalStateException(
                         f"Offer id '{id}' is not available to take: ITS_MY_OWN_OFFER"
                     )
-                inquiry_result = self.offer_filter_service.can_take_offer(
+                inquiry_result = c.offer_filter_service.can_take_offer(
                     o, self.core_context.is_api_user
                 )
                 if inquiry_result.is_valid:
@@ -119,33 +101,39 @@ class CoreOffersService:
                     )
         return None
 
-    def get_my_offer(self, id: str) -> "OpenOffer":
-        open_offer = self.find_my_open_offer(id)
+    def get_my_offer(self, user_context: "UserContext", id: str) -> "OpenOffer":
+        open_offer = self.find_my_open_offer(user_context, id)
         if open_offer is None:
             raise NotFoundException(f"offer with id '{id}' not found")
         return open_offer
 
-    def find_my_open_offer(self, id: str) -> Optional["OpenOffer"]:
-        offers = self.open_offer_manager.get_observable_list()
+    def find_my_open_offer(
+        self, user_context: "UserContext", id: str
+    ) -> Optional["OpenOffer"]:
+        c = user_context.global_container
+        offers = c.open_offer_manager.get_observable_list()
         return next(
             (
                 o
                 for o in offers
-                if o.get_id() == id and o.get_offer().is_my_offer(self.key_ring)
+                if o.get_id() == id and o.get_offer().is_my_offer(c.key_ring)
             ),
             None,
         )
 
-    def get_bsq_swap_offer(self, id: str) -> "Offer":
-        offer = self.find_available_bsq_swap_offer(id)
+    def get_bsq_swap_offer(self, user_context: "UserContext", id: str) -> "Offer":
+        offer = self.find_available_bsq_swap_offer(user_context, id)
         if offer is None:
             raise NotFoundException(f"offer with id '{id}' not found")
         return offer
 
-    def find_available_bsq_swap_offer(self, id: str) -> Optional["Offer"]:
-        for o in self.offer_book_service.get_offers():
+    def find_available_bsq_swap_offer(
+        self, user_context: "UserContext", id: str
+    ) -> Optional["Offer"]:
+        c = user_context.global_container
+        for o in c.offer_book_service.get_offers():
             if o.id == id:
-                if o.is_my_offer(self.key_ring):
+                if o.is_my_offer(c.key_ring):
                     raise IllegalStateException(
                         f"Offer id '{id}' is not available to take: ITS_MY_OWN_OFFER"
                     )
@@ -153,7 +141,7 @@ class CoreOffersService:
                     raise IllegalStateException(
                         f"Offer id '{id}' is not available to take: IS_NOT_BSQ_SWAP_OFFER"
                     )
-                inquiry_result = self.offer_filter_service.can_take_offer(
+                inquiry_result = c.offer_filter_service.can_take_offer(
                     o, self.core_context.is_api_user
                 )
                 if inquiry_result.is_valid:
@@ -164,41 +152,50 @@ class CoreOffersService:
                     )
         return None
 
-    def get_my_bsq_swap_offer(self, id: str) -> "Offer":
-        offer = self.find_my_bsq_swap_offer(id)
+    def get_my_bsq_swap_offer(self, user_context: "UserContext", id: str) -> "Offer":
+        offer = self.find_my_bsq_swap_offer(user_context, id)
         if offer is None:
             raise NotFoundException(f"offer with id '{id}' not found")
         return offer
 
-    def find_my_bsq_swap_offer(self, id: str) -> Optional["Offer"]:
-        offers = self.offer_book_service.get_offers()
+    def find_my_bsq_swap_offer(
+        self, user_context: "UserContext", id: str
+    ) -> Optional["Offer"]:
+        c = user_context.global_container
+        offers = c.offer_book_service.get_offers()
         return next(
             (
                 o
                 for o in offers
-                if o.id == id and o.is_my_offer(self.key_ring) and o.is_bsq_swap_offer
+                if o.id == id and o.is_my_offer(c.key_ring) and o.is_bsq_swap_offer
             ),
             None,
         )
 
-    def get_bsq_swap_offers(self, direction: str) -> list["Offer"]:
-        offers = self.offer_book_service.get_offers()
+    def get_bsq_swap_offers(
+        self, user_context: "UserContext", direction: str
+    ) -> list["Offer"]:
+        c = user_context.global_container
+        offers = c.offer_book_service.get_offers()
         cleaned_direction = direction.strip().casefold()
         filtered = [
             o
             for o in offers
-            if not o.is_my_offer(self.key_ring)
+            if not o.is_my_offer(c.key_ring)
             and o.direction.name.casefold() == cleaned_direction
             and o.is_bsq_swap_offer
         ]
         return sorted(filtered, key=self.price_comparator(direction, False))
 
-    def get_offers(self, direction: str, currency_code: str) -> list["Offer"]:
+    def get_offers(
+        self, user_context: "UserContext", direction: str, currency_code: str
+    ) -> list["Offer"]:
+        c = user_context.global_container
         upper_case_currency_code = currency_code.upper()
         is_fiat = is_fiat_currency(upper_case_currency_code)
 
         if is_fiat:
-            offers = self.offer_book_service.get_offers()
+            offers = c.offer_book_service.get_offers()
             return sorted(
                 (
                     o
@@ -215,7 +212,7 @@ class CoreOffersService:
             # This forces an extra filtering step below:  get all BTC offers,
             # then filter on the currencyCode param (the altcoin code).
             if api_supports_crypto_currency(upper_case_currency_code):
-                offers = self.offer_book_service.get_offers()
+                offers = c.offer_book_service.get_offers()
 
                 return sorted(
                     (
@@ -233,16 +230,19 @@ class CoreOffersService:
                     f"api does not support the '{upper_case_currency_code}' crypto currency"
                 )
 
-    def get_my_offers(self, direction: str, currency_code: str) -> list["OpenOffer"]:
+    def get_my_offers(
+        self, user_context: "UserContext", direction: str, currency_code: str
+    ) -> list["OpenOffer"]:
+        c = user_context.global_container
         upper_case_currency_code = currency_code.upper()
         is_fiat = is_fiat_currency(upper_case_currency_code)
 
         if is_fiat:
-            offers = self.open_offer_manager.get_observable_list()
+            offers = c.open_offer_manager.get_observable_list()
             filtered = [
                 o
                 for o in offers
-                if o.get_offer().is_my_offer(self.key_ring)
+                if o.get_offer().is_my_offer(c.key_ring)
                 and self._offer_matches_direction_and_currency(
                     o.get_offer(), direction, upper_case_currency_code
                 )
@@ -256,11 +256,11 @@ class CoreOffersService:
             # This forces an extra filtering step below:  get all BTC offers,
             # then filter on the currencyCode param (the altcoin code).
             if api_supports_crypto_currency(upper_case_currency_code):
-                offers = self.open_offer_manager.get_observable_list()
+                offers = c.open_offer_manager.get_observable_list()
                 filtered = [
                     o
                     for o in offers
-                    if o.get_offer().is_my_offer(self.key_ring)
+                    if o.get_offer().is_my_offer(c.key_ring)
                     and self._offer_matches_direction_and_currency(
                         o.get_offer(), direction, "BTC"
                     )
@@ -275,48 +275,57 @@ class CoreOffersService:
                     f"api does not support the '{upper_case_currency_code}' crypto currency"
                 )
 
-    def get_my_bsq_swap_offers(self, direction: str) -> list["Offer"]:
-        offers = self.offer_book_service.get_offers()
+    def get_my_bsq_swap_offers(
+        self, user_context: "UserContext", direction: str
+    ) -> list["Offer"]:
+        c = user_context.global_container
+        offers = c.offer_book_service.get_offers()
         # TODO: maybe convert direction str to enum then compare directly for faster results ?
         cleaned_direction = direction.strip().casefold()
         filtered = [
             o
             for o in offers
-            if o.is_my_offer(self.key_ring)
+            if o.is_my_offer(c.key_ring)
             and o.direction.name.casefold() == cleaned_direction
             and o.is_bsq_swap_offer
         ]
         return sorted(filtered, key=self.price_comparator(direction, False))
 
-    def get_my_open_bsq_swap_offer(self, id: str) -> "OpenOffer":
-        open_offer = self.open_offer_manager.get_open_offer_by_id(id)
+    def get_my_open_bsq_swap_offer(
+        self, user_context: "UserContext", id: str
+    ) -> "OpenOffer":
+        c = user_context.global_container
+        open_offer = c.open_offer_manager.get_open_offer_by_id(id)
         if (
             open_offer is not None
-            and open_offer.get_offer().is_my_offer(self.key_ring)
+            and open_offer.get_offer().is_my_offer(c.key_ring)
             and open_offer.get_offer().is_bsq_swap_offer
         ):
             return open_offer
         raise NotFoundException(f"openoffer with id '{id}' not found")
 
-    def get_my_open_offer(self, id: str) -> "OpenOffer":
-        open_offer = self.open_offer_manager.get_open_offer_by_id(id)
-        if open_offer is not None and open_offer.get_offer().is_my_offer(self.key_ring):
+    def get_my_open_offer(self, user_context: "UserContext", id: str) -> "OpenOffer":
+        c = user_context.global_container
+        open_offer = c.open_offer_manager.get_open_offer_by_id(id)
+        if open_offer is not None and open_offer.get_offer().is_my_offer(c.key_ring):
             return open_offer
         raise NotFoundException(f"offer with id '{id}' not found")
 
-    def is_my_offer(self, offer: "Offer") -> bool:
-        return offer.is_my_offer(self.key_ring)
+    def is_my_offer(self, user_context: "UserContext", offer: "Offer") -> bool:
+        return offer.is_my_offer(user_context.global_container.key_ring)
 
     def create_and_place_bsq_swap_offer(
         self,
+        user_context: "UserContext",
         direction_as_string: str,
         amount_as_long: int,
         min_amount_as_long: int,
         price_as_string: str,
         result_handler: Callable[["Offer"], None],
     ):
-        self.core_wallets_service.verify_wallets_are_available()
-        self.core_wallets_service.verify_encrypted_wallet_is_unlocked()
+        self.core_wallets_service.verify_wallets_are_available(user_context)
+        self.core_wallets_service.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
         currency_code = "BSQ"
         offer_id = OfferUtil.get_random_offer_id()
@@ -329,19 +338,20 @@ class CoreOffersService:
             currency_code, self._price_string_to_long(price_as_string, currency_code)
         )
 
-        self.open_bsq_swap_offer_service.request_new_offer(
+        c.open_bsq_swap_offer_service.request_new_offer(
             offer_id,
             direction,
             amount,
             min_amount,
             price,
             lambda offer: self._place_bsq_swap_offer(
-                offer, lambda: result_handler(offer)
+                user_context, offer, lambda: result_handler(offer)
             ),
         )
 
     def create_and_place_offer(
         self,
+        user_context: "UserContext",
         currency_code: str,
         direction_as_string: str,
         price_as_string: str,
@@ -355,13 +365,13 @@ class CoreOffersService:
         maker_fee_currency_code: str,
         result_handler: Callable[["Offer"], None],
     ):
-        self.core_wallets_service.verify_wallets_are_available()
-        self.core_wallets_service.verify_encrypted_wallet_is_unlocked()
-        self.offer_util.maybe_set_fee_payment_currency_preference(
-            maker_fee_currency_code
-        )
+        self.core_wallets_service.verify_wallets_are_available(user_context)
+        self.core_wallets_service.verify_encrypted_wallet_is_unlocked(user_context)
+        c = user_context.global_container
 
-        payment_account = self.user.get_payment_account(payment_account_id)
+        c.offer_util.maybe_set_fee_payment_currency_preference(maker_fee_currency_code)
+
+        payment_account = c.user.get_payment_account(payment_account_id)
         if payment_account is None:
             raise IllegalArgumentException(
                 f"payment account with id {payment_account_id} not found"
@@ -395,7 +405,7 @@ class CoreOffersService:
             buyer_security_deposit_pct, 0.01
         )
 
-        offer = self.create_offer_service.create_and_get_offer(
+        offer = c.create_offer_service.create_and_get_offer(
             offer_id,
             direction,
             upper_case_currency_code,
@@ -414,6 +424,7 @@ class CoreOffersService:
         # We don't support atm funding from external wallet to keep it simple.
         use_savings_wallet = True
         self._place_offer(
+            user_context,
             offer,
             scaled_buyer_security_deposit_pct,
             trigger_price,
@@ -424,6 +435,7 @@ class CoreOffersService:
     # Edit a placed offer.
     def edit_offer(
         self,
+        user_context: "UserContext",
         offer_id: str,
         edited_price: str,
         edited_use_market_based_price: bool,
@@ -432,7 +444,8 @@ class CoreOffersService:
         edited_enable: int,
         edit_type: grpc_pb2.EditOfferRequest.EditType,
     ):
-        open_offer = self.get_my_open_offer(offer_id)
+        c = user_context.global_container
+        open_offer = self.get_my_open_offer(user_context, offer_id)
         validator = EditOfferValidator(
             open_offer,
             edited_price,
@@ -442,7 +455,7 @@ class CoreOffersService:
             edited_enable,
             edit_type,
         ).validate()
-        logger.info(str(validator))
+        user_context.logger.info(str(validator))
         current_offer_state = open_offer.state
         # Client sent (sint32) editedEnable, not a bool (with default=false).
         # If editedEnable = -1, do not change current state
@@ -458,6 +471,7 @@ class CoreOffersService:
             )
         )
         edited_payload = self._get_merged_offer_payload(
+            user_context,
             validator,
             open_offer,
             edited_price,
@@ -465,38 +479,47 @@ class CoreOffersService:
             edit_type,
         )
         edited_offer = Offer(edited_payload)
-        self.price_feed_service.currency_code = open_offer.get_offer().currency_code
-        edited_offer.price_feed_service = self.price_feed_service
+        c.price_feed_service.currency_code = open_offer.get_offer().currency_code
+        edited_offer.price_feed_service = c.price_feed_service
         edited_offer.state = OpenOfferState.AVAILABLE
-        self.open_offer_manager.edit_open_offer_start(
+        c.open_offer_manager.edit_open_offer_start(
             open_offer,
-            lambda: logger.info(f"EditOpenOfferStart: offer {open_offer.get_id()}"),
-            logger.error,
+            lambda: user_context.logger.info(
+                f"EditOpenOfferStart: offer {open_offer.get_id()}"
+            ),
+            user_context.logger.error,
         )
         trigger_price_as_long = PriceUtil.get_market_price_as_long(
             edited_trigger_price, edited_offer.currency_code
         )
-        self.open_offer_manager.edit_open_offer_publish(
+        c.open_offer_manager.edit_open_offer_publish(
             edited_offer,
             trigger_price_as_long,
             new_offer_state,
-            lambda: logger.info(f"EditOpenOfferPublish: offer {open_offer.get_id()}"),
-            logger.error,
+            lambda: user_context.logger.info(
+                f"EditOpenOfferPublish: offer {open_offer.get_id()}"
+            ),
+            user_context.logger.error,
         )
 
-    def cancel_offer(self, id: str):
-        open_offer = self.get_my_offer(id)
-        self.open_offer_manager.remove_offer(
+    def cancel_offer(self, user_context: "UserContext", id: str):
+        open_offer = self.get_my_offer(user_context, id)
+        user_context.global_container.open_offer_manager.remove_offer(
             open_offer.get_offer(),
             lambda: None,
-            logger.error,
+            user_context.logger.error,
         )
 
-    def _place_bsq_swap_offer(self, offer: "Offer", result_handler: Callable[[], None]):
-        self.open_bsq_swap_offer_service.place_bsq_swap_offer(
+    def _place_bsq_swap_offer(
+        self,
+        user_context: "UserContext",
+        offer: "Offer",
+        result_handler: Callable[[], None],
+    ):
+        user_context.global_container.open_bsq_swap_offer_service.place_bsq_swap_offer(
             offer,
             result_handler,
-            logger.error,
+            user_context.logger.error,
         )
 
         if offer.error_message is not None:
@@ -504,23 +527,25 @@ class CoreOffersService:
 
     def _place_offer(
         self,
+        user_context: "UserContext",
         offer: "Offer",
         buyer_security_deposit_pct: float,
         trigger_price: str,
         use_savings_wallet: bool,
         result_handler: Callable[["Transaction"], None],
     ):
+        c = user_context.global_container
         trigger_price_as_long = PriceUtil.get_market_price_as_long(
             trigger_price, offer.currency_code
         )
-        self.open_offer_manager.place_offer(
+        c.open_offer_manager.place_offer(
             offer,
             buyer_security_deposit_pct,
             use_savings_wallet,
             False,
             trigger_price_as_long,
             result_handler,
-            logger.error,
+            user_context.logger.error,
         )
 
         if offer.error_message is not None:
@@ -528,6 +553,7 @@ class CoreOffersService:
 
     def _get_merged_offer_payload(
         self,
+        user_context: "UserContext",
         edit_offer_validator: "EditOfferValidator",
         open_offer: "OpenOffer",
         edited_price: str,
@@ -603,8 +629,10 @@ class CoreOffersService:
             offer.accepted_bank_ids,
             offer.extra_data_map,
         )
-        logger.info(f"Merging OfferPayload with {mutable_offer_payload_fields}")
-        return self.offer_util.get_merged_offer_payload(
+        user_context.logger.info(
+            f"Merging OfferPayload with {mutable_offer_payload_fields}"
+        )
+        return user_context.global_container.offer_util.get_merged_offer_payload(
             open_offer, mutable_offer_payload_fields
         )
 

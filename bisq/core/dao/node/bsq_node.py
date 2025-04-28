@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.dao_setup_service import DaoSetupService
 from bisq.core.dao.node.parser.exceptions.block_hash_not_connecting_exception import (
     BlockHashNotConnectingException,
@@ -28,8 +28,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.p2p_service import P2PService
 
 
-logger = get_logger(__name__)
-
 
 class BsqNode(DaoSetupService, ABC):
     """
@@ -45,6 +43,7 @@ class BsqNode(DaoSetupService, ABC):
         p2p_service: "P2PService",
         export_json_files_service: "ExportJsonFilesService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._block_parser = block_parser
         self._dao_state_service = dao_state_service
         self._dao_state_snapshot_service = dao_state_snapshot_service
@@ -55,16 +54,16 @@ class BsqNode(DaoSetupService, ABC):
         self._genesis_block_height = dao_state_service.genesis_block_height
 
         class Listener(P2PServiceListener):
-            def on_tor_node_ready(self):
+            def on_tor_node_ready(self_):
                 pass
 
-            def on_hidden_service_published(self):
+            def on_hidden_service_published(self_):
                 pass
 
-            def on_setup_failed(self, throwable):
+            def on_setup_failed(self_, throwable):
                 pass
 
-            def on_request_custom_bridges(self):
+            def on_request_custom_bridges(self_):
                 pass
 
             def on_data_received(self_):
@@ -73,10 +72,10 @@ class BsqNode(DaoSetupService, ABC):
             def on_no_seed_node_available(self_):
                 self.on_p2p_network_ready()
 
-            def on_no_peers_available(self):
+            def on_no_peers_available(self_):
                 pass
 
-            def on_updated_data_received(self):
+            def on_updated_data_received(self_):
                 pass
 
         self.p2p_service_listener: "P2PServiceListener" = Listener()
@@ -122,7 +121,7 @@ class BsqNode(DaoSetupService, ABC):
         self._dao_state_snapshot_service.apply_persisted_snapshot()
 
         if self._p2p_service.is_bootstrapped:
-            logger.info("onAllServicesInitialized: isBootstrapped")
+            self.logger.info("onAllServicesInitialized: isBootstrapped")
             self.on_p2p_network_ready()
         else:
             self._p2p_service.add_p2p_service_listener(self.p2p_service_listener)
@@ -136,7 +135,7 @@ class BsqNode(DaoSetupService, ABC):
         pass
 
     def on_parse_block_chain_complete(self):
-        logger.info("onParseBlockChainComplete")
+        self.logger.info("onParseBlockChainComplete")
         self._parse_blockchain_complete = True
         self._dao_state_service.on_parse_block_chain_complete()
 
@@ -150,7 +149,7 @@ class BsqNode(DaoSetupService, ABC):
         # height we have no block but chainHeight is initially set to genesis height (bad design ;-( but a bit tricky
         # to change now as it used in many areas.)
         if self._dao_state_service.get_block_at_height(raw_block.height):
-            logger.info(
+            self.logger.info(
                 f"We have already a block with the height of the new block. Height of new block={raw_block.height}"
             )
             return None
@@ -184,11 +183,11 @@ class BsqNode(DaoSetupService, ABC):
                 # rawBlock is not at expected next height but further in the future
                 if raw_block not in self.pending_blocks:
                     self.pending_blocks.append(raw_block)
-                    logger.info(
+                    self.logger.info(
                         f"We received a block with a future block height. We store it as pending and try to apply it at the next block. rawBlock: height/hash={raw_block.height}/{raw_block.hash}"
                     )
                 else:
-                    logger.warning(
+                    self.logger.warning(
                         "We received a block with a future block height but we had it already added to our pendingBlocks."
                     )
             elif raw_block.height >= self._dao_state_service.genesis_block_height:
@@ -199,22 +198,22 @@ class BsqNode(DaoSetupService, ABC):
                 )
                 if existing_block:
                     if existing_block.hash == raw_block.hash:
-                        logger.info(
+                        self.logger.info(
                             "We received an old block we have already parsed and added. We ignore it."
                         )
                     else:
-                        logger.info(
+                        self.logger.info(
                             f"We received an old block with a different hash. We ignore it. Hash={raw_block.hash}"
                         )
                 else:
-                    logger.info(
+                    self.logger.info(
                         "In case we have reset from genesis height we would not find the existingBlockAsSameHeight"
                     )
             else:
-                logger.info("We ignore it as it was before genesis height")
+                self.logger.info("We ignore it as it was before genesis height")
         except BlockHashNotConnectingException:
             last_block = self._dao_state_service.last_block
-            logger.warning(
+            self.logger.warning(
                 f"Block not connecting:\n"
                 f"New block height/hash/previousBlockHash="
                 f"{raw_block.height}/{raw_block.hash}/{raw_block.previous_block_hash}, "

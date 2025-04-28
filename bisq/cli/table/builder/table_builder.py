@@ -12,6 +12,7 @@ from bisq.cli.table.builder.payment_account_table_builder import PaymentAccountT
 from bisq.cli.table.builder.table_type import TableType
 from bisq.cli.table.builder.trade_detail_table_builder import TradeDetailTableBuilder
 from bisq.cli.table.builder.transaction_table_builder import TransactionTableBuilder
+from bisq.cli.table.builder.user_table_builder import UserTableBuilder
 from bisq.core.exceptions.illegal_argument_exception import IllegalArgumentException
 from utils.custom_iterators import is_iterable
 
@@ -43,6 +44,8 @@ class TableBuilder(AbstractTableBuilder):
             return TradeDetailTableBuilder(self.protos).build()
         elif self.table_type == TableType.TRANSACTION_TBL:
             return TransactionTableBuilder(self.protos).build()
+        elif self.table_type == TableType.USERS_TBL:
+            return UserTableBuilder(self.protos).build()
         else:
             raise IllegalArgumentException(
                 f"invalid cli table type {getattr(self.table_type, 'name', self.table_type)}"

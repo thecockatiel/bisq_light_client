@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.common.config.base_currency_network import BaseCurrencyNetwork
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import get_system_home_directory
 from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.locale.country import Country
@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from bisq.core.locale.trade_currency import TradeCurrency
     from bisq.core.locale.fiat_currency import FiatCurrency
 
-logger = get_logger(__name__)
 
 # NOTE: Keep up to date with https://github.com/bisq-network/bisq/blob/v1.9.19/core/src/main/java/bisq/core/user/Preferences.java
 # removed LocalBitcoinNode
@@ -58,6 +57,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         fee_service: "FeeService",
     ) -> None:
         super().__init__()
+        self.logger = get_ctx_logger(__name__)
         self.persistence_manager = persistence_manager
         self.config = config
         self.fee_service = fee_service
@@ -167,7 +167,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
                 self.pref_payload.user_country.code
             )
         except ValueError as e:
-            logger.warning(
+            self.logger.warning(
                 f"Could not determine currency for country {self.pref_payload.user_country.code}: {str(e)}"
             )
 
@@ -316,7 +316,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
                 self.pref_payload.preferred_trade_currency == trade_currency):
                 self.set_preferred_trade_currency(self.trade_currencies_as_observable[0])
         else:
-            logger.error("you cannot remove the last currency")
+            self.logger.error("you cannot remove the last currency")
 
     def add_crypto_currency(self, trade_currency: "CryptoCurrency") -> None:
         if trade_currency not in self.crypto_currencies_as_observable:
@@ -331,7 +331,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
                 self.pref_payload.preferred_trade_currency == trade_currency):
                 self.set_preferred_trade_currency(self.trade_currencies_as_observable[0])
         else:
-            logger.error("you cannot remove the last currency")
+            self.logger.error("you cannot remove the last currency")
 
     def set_block_chain_explorer(self, block_chain_explorer: "BlockChainExplorer") -> None:
         if self.config.base_currency_network.is_mainnet():

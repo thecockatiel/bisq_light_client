@@ -1,8 +1,8 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.crypto.encryption import Encryption
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
 from bisq.core.dao.dao_setup_service import DaoSetupService
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.model.blockchain.tx import Tx
 
-logger = get_logger(__name__)
 
 
 class ProofOfBurnService(DaoSetupService, DaoStateListener):
@@ -39,6 +38,7 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
         my_proof_of_burn_list_service: "MyProofOfBurnListService",
         dao_state_service: "DaoStateService",
     ):
+        self.logger = get_ctx_logger(__name__)
         self._bsq_wallet_service = bsq_wallet_service
         self._btc_wallet_service = btc_wallet_service
         self._wallets_manager = wallets_manager
@@ -90,7 +90,7 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
             transaction = self._bsq_wallet_service.sign_tx_and_verify_no_dust_outputs(
                 tx_with_btc_fee
             )
-            logger.info(f"Proof of burn tx: {transaction}")
+            self.logger.info(f"Proof of burn tx: {transaction}")
             return transaction
         except Exception as e:
             raise TxException(e)
@@ -103,13 +103,13 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
         error_message_handler: "ErrorMessageHandler",
     ):
         class Callback(TxBroadcasterCallback):
-            def on_success(self, tx: "Transaction"):
-                logger.info(
+            def on_success(self_, tx: "Transaction"):
+                self.logger.info(
                     f"Proof of burn tx has been published. TxId={tx.get_tx_id()}"
                 )
                 result_handler()
 
-            def on_failure(self, exception: Exception):
+            def on_failure(self_, exception: Exception):
                 error_message_handler(str(exception))
 
         self._wallets_manager.publish_and_commit_bsq_tx(
@@ -152,7 +152,7 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
             )
             return signature_base64
         except Exception as e:
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(e), exc_info=e)
             return None
 
     def verify(self, message: str, pub_key: str, signature_base64: str) -> bool:
@@ -162,7 +162,7 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
                 message, signature_base64, bytes.fromhex(pub_key)
             )
         except Exception as e:
-            logger.error(str(e), exc_info=e)
+            self.logger.error(str(e), exc_info=e)
             return False
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

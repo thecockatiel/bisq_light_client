@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.currency_tuple import CurrencyTuple
 from bisq.core.locale.currency_util import (
     get_all_sorted_crypto_currencies,
@@ -35,9 +35,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.statistics.trade_statistics_converter import (
         TradeStatisticsConverter,
     )
-
-logger = get_logger(__name__)
-
+ 
 
 class TradeStatisticsManager:
 
@@ -51,6 +49,7 @@ class TradeStatisticsManager:
         storage_dir: Path,
         dump_statistics: bool,
     ):
+        self.logger = get_ctx_logger(__name__)
         self._p2p_service = p2p_service
         self._price_feed_service = price_feed_service
         self._trade_statistics_3_storage_service = trade_statistics_3_storage_service
@@ -185,7 +184,7 @@ class TradeStatisticsManager:
         for trade in trades:
             if isinstance(trade, Trade):
                 if isinstance(trade, BuyerTrade):
-                    logger.debug(
+                    self.logger.debug(
                         f"Trade: {trade.get_short_id()} is a buyer trade, we only republish if we have been seller."
                     )
                     continue
@@ -195,7 +194,7 @@ class TradeStatisticsManager:
                 )
 
                 if StorageByteArray(trade_statistics_3.get_hash()) in hashes:
-                    logger.debug(
+                    self.logger.debug(
                         f"Trade: {trade.get_short_id()}. We already have a tradeStatistics matching the hash of tradeStatistics3."
                     )
                     continue
@@ -208,24 +207,24 @@ class TradeStatisticsManager:
                         trade, referral_id, is_tor_network_mode
                     )
                     if StorageByteArray(trade_statistics_2.get_hash()) in hashes:
-                        logger.debug(
+                        self.logger.debug(
                             f"Trade: {trade.get_short_id()}. We already have a tradeStatistics matching the hash of tradeStatistics2."
                         )
                         continue
 
                 if not trade_statistics_3.is_valid():
-                    logger.warning(
+                    self.logger.warning(
                         f"Trade: {trade.get_short_id()}. Trade statistics is invalid. We do not publish it."
                     )
                     continue
 
                 # Publish the trade statistics
-                logger.info(
+                self.logger.info(
                     f"Trade: {trade.get_short_id()}. We republish tradeStatistics3 as we did not find it in the existing trade statistics."
                 )
                 self._p2p_service.add_persistable_network_payload(
                     trade_statistics_3, True
                 )
-        logger.info(
+        self.logger.info(
             f"maybe_republish_trade_statistics took {get_time_ms() - ts} ms. Number of tradeStatistics: {len(hashes)}. Number of own trades: {len(trades)}"
         )

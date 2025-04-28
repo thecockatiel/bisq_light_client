@@ -1,4 +1,4 @@
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.math_utils import MathUtils
 from bisq.core.locale.currency_util import is_crypto_currency
 from bisq.core.locale.res import Res
@@ -7,11 +7,11 @@ from bisq.core.monetary.volume import Volume
 from bitcoinj.base.coin import Coin
 from bisq.core.trade.statistics.trade_statistics_3 import TradeStatistics3
 
-logger = get_logger(__name__)
 
 
 class TradeStatisticsForJson:
     def __init__(self, trade_statistics: "TradeStatistics3"):
+        self.logger = get_ctx_logger(__name__)
         self.currency = trade_statistics.currency
         self.payment_method = trade_statistics.get_payment_method_id()
         self.trade_price = trade_statistics.price
@@ -42,7 +42,7 @@ class TradeStatisticsForJson:
                     else 0
                 )
         except Exception as e:
-            logger.error(e, exc_info=e)
+            self.logger.error(e, exc_info=e)
 
     def get_trade_price(self):
         return Price.value_of(self.currency, self.trade_price)

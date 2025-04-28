@@ -1,5 +1,5 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.locale.res import Res
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
 from bisq.core.support.support_manager import SupportManager
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from bisq.core.trade.closed_tradable_manager import ClosedTradableManager
     from bisq.core.trade.trade_manager import TradeManager 
 
-logger = get_logger(__name__)
 
 class TraderChatManager(SupportManager):
     def __init__(self, p2p_service: 'P2PService',
@@ -28,6 +27,7 @@ class TraderChatManager(SupportManager):
                  failed_trades_manager: 'FailedTradesManager',
                  pub_key_ring: 'PubKeyRing'):
         super().__init__(p2p_service, wallets_setup)
+        self.logger = get_ctx_logger(__name__)
         self.trade_manager = trade_manager
         self.closed_tradable_manager = closed_tradable_manager
         self.failed_trades_manager = failed_trades_manager
@@ -73,7 +73,7 @@ class TraderChatManager(SupportManager):
                 trade.add_and_persist_chat_message(message)
                 self.trade_manager.request_persistence()
             else:
-                logger.warning(f"Trade got a chatMessage that we have already stored. UId = {message.uid} TradeId = {message.trade_id}")
+                self.logger.warning(f"Trade got a chatMessage that we have already stored. UId = {message.uid} TradeId = {message.trade_id}")
 
     def get_ack_message_source_type(self) -> 'AckMessageSourceType':
         return AckMessageSourceType.TRADE_CHAT_MESSAGE
@@ -88,11 +88,11 @@ class TraderChatManager(SupportManager):
 
     def on_support_message(self, message: 'SupportMessage'):
         if self.can_process_message(message):
-            logger.info(f"Received {message.__class__.__name__} with tradeId {message.get_trade_id()} and uid {message.uid}")
+            self.logger.info(f"Received {message.__class__.__name__} with tradeId {message.get_trade_id()} and uid {message.uid}")
             if isinstance(message, ChatMessage):
                 self.on_chat_message(message)
             else:
-                logger.warning(f"Unsupported message at dispatch_message. message={message}")
+                self.logger.warning(f"Unsupported message at dispatch_message. message={message}")
 
     def add_system_msg(self, trade: 'Trade'):
         # We need to use the trade date as otherwise our system msg would not be displayed first as the list is sorted

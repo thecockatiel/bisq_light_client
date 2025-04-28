@@ -1,6 +1,6 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.burningman.accounting.blockchain.accounting_block import (
     AccountingBlock,
 )
@@ -33,11 +33,10 @@ if TYPE_CHECKING:
         BurningManAccountingService,
     )
 
-logger = get_logger(__name__)
-
 
 class AccountingBlockParser:
     def __init__(self, burning_man_accounting_service: "BurningManAccountingService"):
+        self.logger = get_ctx_logger(__name__)
         self.burning_man_accounting_service = burning_man_accounting_service
 
     def parse(self, raw_dto_block: "RawDtoBlock"):
@@ -156,7 +155,7 @@ class AccountingBlockParser:
             ScriptType.WITNESS_V0_KEYHASH,
         }
         if not result:
-            logger.error(
+            self.logger.error(
                 f"isExpectedScriptType txOutput.getScriptType()={tx_output.script_type}, txId={accounting_tx.tx_id}"
             )
         return result
@@ -181,12 +180,12 @@ class AccountingBlockParser:
         # txInWitness from the 2of2 multiSig has 4 chunks.
         # 0 byte, sig1, sig2, redeemScript
         if len(tx_in_witness) != 4:
-            logger.error(f"txInWitness chunks size not 4 .txInWitness={tx_in_witness}")
+            self.logger.error(f"txInWitness chunks size not 4 .txInWitness={tx_in_witness}")
             return False
 
         # First chunk is 0 byte (empty string)
         if tx_in_witness[0]:
-            logger.error(f"txInWitness[0] not empty .txInWitness={tx_in_witness}")
+            self.logger.error(f"txInWitness[0] not empty .txInWitness={tx_in_witness}")
             return False
 
         # The 2 signatures are 70 - 73 bytes
@@ -194,16 +193,16 @@ class AccountingBlockParser:
         max_sig_length = 146
         first_sig_length = len(tx_in_witness[1])
         if first_sig_length < min_sig_length or first_sig_length > max_sig_length:
-            logger.error(f"firstSigLength wrong .txInWitness={tx_in_witness}")
+            self.logger.error(f"firstSigLength wrong .txInWitness={tx_in_witness}")
             return False
         second_sig_length = len(tx_in_witness[2])
         if second_sig_length < min_sig_length or second_sig_length > max_sig_length:
-            logger.error(f"secondSigLength wrong .txInWitness={tx_in_witness}")
+            self.logger.error(f"secondSigLength wrong .txInWitness={tx_in_witness}")
             return False
 
         redeem_script = tx_in_witness[3]
         if len(redeem_script) != 142:
-            logger.error(f"redeemScript not valid length .txInWitness={tx_in_witness}")
+            self.logger.error(f"redeemScript not valid length .txInWitness={tx_in_witness}")
             return False
 
         # OP_2 pub1 pub2 OP_2 OP_CHECKMULTISIG
@@ -216,5 +215,5 @@ class AccountingBlockParser:
             and separator == "21"
         )
         if not result:
-            logger.error(f"redeemScript not valid .txInWitness={tx_in_witness}")
+            self.logger.error(f"redeemScript not valid .txInWitness={tx_in_witness}")
         return result

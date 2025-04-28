@@ -1,9 +1,9 @@
 from asyncio import Future
 import asyncio
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, List
 
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.support.dispute.dispute_manager import DisputeManager
 from bisq.core.network.p2p.ack_message_source_type import AckMessageSourceType
@@ -51,7 +51,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.mempool.mempool_service import MempoolService
     from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
 
-logger = get_logger(__name__)
 
 
 class RefundManager(DisputeManager["RefundDisputeList"]):
@@ -88,6 +87,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             config,
             price_feed_service,
         )
+        self.logger = get_ctx_logger(__name__)
         self.delayed_payout_tx_receiver_service = delayed_payout_tx_receiver_service
         self.mempool_service = mempool_service
 
@@ -100,7 +100,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
 
     def on_support_message(self, message: "SupportMessage"):
         if self.can_process_message(message):
-            logger.info(
+            self.logger.info(
                 f"Received {message.__class__.__name__} with tradeId {message.get_trade_id()} and uid {message.uid}"
             )
 
@@ -113,7 +113,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             elif isinstance(message, DisputeResultMessage):
                 self.on_dispute_result_message(message)
             else:
-                logger.warning(
+                self.logger.warning(
                     f"Unsupported message at dispatch_message. message={message}"
                 )
 
@@ -170,7 +170,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
         uid = message.uid
 
         if not dispute:
-            logger.warning(
+            self.logger.warning(
                 "We got a dispute result msg but we don't have a matching dispute. "
                 "That might happen when we get the disputeResultMessage before the dispute was created. "
                 f"We try again after 2 sec. to apply the disputeResultMessage. TradeId = {trade_id}"
@@ -183,7 +183,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
                 )
                 self.delay_msg_map[uid] = timer
             else:
-                logger.warning(
+                self.logger.warning(
                     "We got a dispute result msg after we already repeated to apply the message after a delay. "
                     f"That should never happen. TradeId = {trade_id}"
                 )
@@ -194,14 +194,14 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
         if chat_message not in dispute.chat_messages:
             dispute.add_and_persist_chat_message(chat_message)
         else:
-            logger.warning(
+            self.logger.warning(
                 f"We got a dispute mail msg what we have already stored. TradeId = {chat_message.trade_id}"
             )
 
         dispute.is_closed = True
 
         if dispute.dispute_result_property.value is not None:
-            logger.warning(
+            self.logger.warning(
                 "We got already a dispute result. That should only happen if a dispute needs to be closed "
                 f"again because the first close did not succeed. TradeId = {trade_id}"
             )
@@ -282,6 +282,7 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
 
         def handle_hex_futures():
             try:
+                # TODO: ensure that logger contextvar is passed along
                 txs: list["Transaction"] = []
                 # Get hex values in order
                 maker_hex = maker_fee_tx_hex_future.result()
@@ -300,7 +301,9 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             except Exception as e:
                 result_future.set_exception(e)
 
-        asyncio.gather(*futures).add_done_callback(lambda _: handle_hex_futures())
+        asyncio.gather(*futures).add_done_callback(
+            lambda _: handle_hex_futures()
+        )
 
         return result_future
 
@@ -326,24 +329,29 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
 
         check_argument(maker_fee_tx_found, "makerFeeTx not found at deposit_tx inputs")
         check_argument(taker_fee_tx_found, "takerFeeTx not found at deposit_tx inputs")
-        check_argument(len(deposit_tx.inputs) >= 2, "deposit_tx must have at least 2 inputs")
+        check_argument(
+            len(deposit_tx.inputs) >= 2, "deposit_tx must have at least 2 inputs"
+        )
         check_argument(
             len(delayed_payout_tx.inputs) >= 1,
-            "delayed_payout_tx must have at least 1 inputs"
+            "delayed_payout_tx must have at least 1 inputs",
         )
         delayed_payout_tx_outpoint = delayed_payout_tx.inputs[0].outpoint
-        funding_tx_id = str(
-            delayed_payout_tx_outpoint.hash
+        funding_tx_id = str(delayed_payout_tx_outpoint.hash)
+        check_argument(
+            funding_tx_id == deposit_tx.get_tx_id(),
+            "First input at delayed_payout_tx does not connect to deposit_tx",
         )
-        check_argument(funding_tx_id == deposit_tx.get_tx_id(), "First input at delayed_payout_tx does not connect to deposit_tx")
 
     def verify_delayed_payout_tx_receivers(
         self, delayed_payout_tx: "Transaction", dispute: "Dispute"
     ):
         deposit_tx = dispute.find_deposit_tx(self.btc_wallet_service)
         if deposit_tx is None:
-            raise ValueError("deposit_tx not found at verify_delayed_payout_tx_receivers")
-        
+            raise ValueError(
+                "deposit_tx not found at verify_delayed_payout_tx_receivers"
+            )
+
         input_amount = deposit_tx.outputs[0].get_value().value
         selection_height = dispute.burning_man_selection_height
 
@@ -364,12 +372,12 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
                 was_proposal_412_activated_at_trade_date,
             )
         )
-        logger.info(
+        self.logger.info(
             f"Verify delayedPayoutTx using selectionHeight {selection_height} and receivers {delayed_payout_tx_receivers}"
         )
         check_argument(
             len(delayed_payout_tx.outputs) == len(delayed_payout_tx_receivers),
-            "Size of outputs and delayed_payout_tx_receivers must be the same"
+            "Size of outputs and delayed_payout_tx_receivers must be the same",
         )
 
         params = self.btc_wallet_service.params
@@ -378,9 +386,9 @@ class RefundManager(DisputeManager["RefundDisputeList"]):
             check_argument(
                 str(tx_output.get_script_pub_key().get_to_address(params))
                 == receiver_tuple[1],
-                f"output address does not match delayedPayoutTxReceivers address. transactionOutput={tx_output}"
+                f"output address does not match delayedPayoutTxReceivers address. transactionOutput={tx_output}",
             )
             check_argument(
                 tx_output.get_value().value == receiver_tuple[0],
-                f"output value does not match delayedPayoutTxReceivers value. transactionOutput={tx_output}"
+                f"output value does not match delayedPayoutTxReceivers value. transactionOutput={tx_output}",
             )

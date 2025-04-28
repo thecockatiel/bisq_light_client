@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 
@@ -10,7 +11,6 @@ from bisq.core.network.p2p.initial_data_response import InitialDataResponse
 from bisq.core.network.p2p.peers.getdata.messages.get_updated_data_request import GetUpdatedDataRequest
 from bisq.core.network.p2p.peers.getdata.messages.preliminary_get_data_request import PreliminaryGetDataRequest
 from bisq.core.network.p2p.supported_capabilities_message import SupportedCapabilitiesMessage
-from bisq.common.setup.log_setup import get_logger
 
 from utils.data import raise_required
 from utils.formatting import readable_file_size
@@ -19,9 +19,6 @@ import pb_pb2 as protobuf
 if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.persistable_network_payload import PersistableNetworkPayload
     from bisq.core.network.p2p.storage.payload.protected_storage_entry import ProtectedStorageEntry
-
-
-logger = get_logger(__name__)
 
 
 @dataclass
@@ -40,6 +37,9 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
     # Added at v1.9.6
     was_truncated: bool = field(default_factory=raise_required)
 
+    def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
+
     def to_proto_network_envelope(self) -> protobuf.NetworkEnvelope:
         get_data_response = protobuf.GetDataResponse(
             data_set=[entry.to_proto_message() for entry in self.data_set],
@@ -53,12 +53,13 @@ class GetDataResponse(NetworkEnvelope, SupportedCapabilitiesMessage, ExtendedDat
         network_envelope = self.get_network_envelope_builder()
         network_envelope.get_data_response.CopyFrom(get_data_response)
 
-        logger.info(f"Sending a GetDataResponse with {readable_file_size(network_envelope.ByteSize())}")
+        self.logger.info(f"Sending a GetDataResponse with {readable_file_size(network_envelope.ByteSize())}")
         return network_envelope
 
     @staticmethod
     def from_proto(proto: 'protobuf.GetDataResponse', resolver: 'NetworkProtoResolver', message_version: int) -> 'GetDataResponse':
         was_truncated = proto.was_truncated
+        logger = get_ctx_logger(__name__)
         logger.info(f"\n\n<< Received a GetDataResponse with {readable_file_size(proto.ByteSize())} {' (still data missing)' if was_truncated else ' (all data received)'}\n")
         
         data_set = frozenset(

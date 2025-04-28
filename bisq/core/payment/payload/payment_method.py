@@ -2,7 +2,7 @@ import re
 from datetime import timedelta
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_base_logger
 from bisq.core.locale.currency_util import get_mature_market_currencies
 from bisq.core.locale.res import Res
 from bisq.core.payment.trade_limits import TradeLimits
@@ -14,7 +14,6 @@ from utils.java_compat import java_cmp_str
 if TYPE_CHECKING:
     from bisq.core.locale.trade_currency import TradeCurrency
 
-logger = get_logger(__name__)
 
 class PaymentMethod(PersistablePayload):
     # For sorting payment methods, we want names that contain only ASCII and Extended-ASCII to go *below* other languages
@@ -198,6 +197,7 @@ class PaymentMethod(PersistablePayload):
     
     def __init__(self, id: str, max_trade_period: int = 0, max_trade_limit: Coin = Coin.ZERO()) -> None:
         super().__init__()
+        self.logger = get_base_logger(__name__)
         self.id = id
         # default 0 values are Used for dummy entries in payment methods list (SHOW_ALL)
         self.max_trade_period = max_trade_period
@@ -253,7 +253,7 @@ class PaymentMethod(PersistablePayload):
         trade_limits = TradeLimits.INSTANCE
         if trade_limits is None:
             # is null in some tests...
-            logger.warning("trade_limits was null")
+            self.logger.warning("trade_limits was null")
             return Coin.value_of(initial_trade_limit)
         
         max_trade_limit_from_dao_param = trade_limits.get_max_trade_limit_from_dao_param().value
@@ -275,7 +275,7 @@ class PaymentMethod(PersistablePayload):
             risk_factor = 8
         else:
             risk_factor = 8
-            logger.warning(
+            self.logger.warning(
                 "max_trade_limit is not matching one of our default values. We use highest risk factor. "
                 f"max_trade_limit={Coin.value_of(self.max_trade_limit).to_friendly_string()}. PaymentMethod={self}"
             )

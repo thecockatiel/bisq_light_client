@@ -1,8 +1,7 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.btc.exceptions.insufficient_bsq_exception import InsufficientBsqException
-from bisq.core.btc.listeners.balance_listener import BalanceListener
 from bisq.core.btc.listeners.bsq_balance_listener import BsqBalanceListener
 from bisq.core.monetary.price import Price
 from bisq.core.monetary.volume import Volume
@@ -22,7 +21,6 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.core.offer.offer import Offer
 
-logger = get_logger(__name__)
 
 
 class BsqSwapOfferModel:
@@ -83,6 +81,7 @@ class BsqSwapOfferModel:
     def init(
         self, direction: OfferDirection, is_maker: bool, offer: Optional["Offer"]
     ) -> None:
+        self.logger = get_ctx_logger(__name__)
         self.direction = direction
         self.is_maker = is_maker
 
@@ -143,7 +142,7 @@ class BsqSwapOfferModel:
                 )
                 self.calculate_min_volume()
             except Exception as e:
-                logger.error(e)
+                self.logger.error(e)
 
     def calculate_min_volume(self) -> None:
         if self._is_non_zero_price(self.price_property) and self._is_non_zero_amount(
@@ -154,7 +153,7 @@ class BsqSwapOfferModel:
                     self.calculate_volume_for_amount(self.min_amount_property)
                 )
             except Exception as e:
-                logger.error(e)
+                self.logger.error(e)
 
     def calculate_volume_for_amount(
         self, amount_property: SimpleProperty[Optional[Coin]]
@@ -179,7 +178,7 @@ class BsqSwapOfferModel:
 
                 self.calculate_input_and_payout()
             except Exception as e:
-                logger.error(e)
+                self.logger.error(e)
 
     def calculate_input_and_payout(self) -> None:
         bsq_trade_amount_as_coin = self.bsq_amount_property.get()

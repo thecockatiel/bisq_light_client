@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.network.message_state import MessageState
 from bisq.core.trade.protocol.bisq_v1.messages.share_buyer_payment_account_message import (
@@ -18,14 +18,13 @@ if TYPE_CHECKING:
     from bisq.common.taskrunner.task_runner import TaskRunner
     from bisq.core.trade.model.bisq_v1.trade import Trade
 
-logger = get_logger(__name__)
-
 
 class BuyerSendsShareBuyerPaymentAccountMessage(SendMailboxMessageTask):
     MAX_RESEND_ATTEMPTS = 7
 
     def __init__(self, task_handler: "TaskRunner[Trade]", trade: "Trade"):
         super().__init__(task_handler, trade)
+        self.logger = get_ctx_logger(__name__)
         self.delay_in_sec = 4
         self.resend_counter = 0
         self.message: Optional["ShareBuyerPaymentAccountMessage"] = None
@@ -104,7 +103,7 @@ class BuyerSendsShareBuyerPaymentAccountMessage(SendMailboxMessageTask):
             )
             return
 
-        logger.info(
+        self.logger.info(
             f"We send the message again to the peer after a delay of {self.delay_in_sec} sec."
         )
         if self.timer is not None:

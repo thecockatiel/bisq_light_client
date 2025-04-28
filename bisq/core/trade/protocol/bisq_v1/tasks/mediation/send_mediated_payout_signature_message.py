@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 import uuid
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
 from bisq.core.support.dispute.mediation.mediation_result_state import MediationResultState
 from bisq.core.trade.protocol.bisq_v1.messages.mediated_payout_tx_signature_message import MediatedPayoutTxSignatureMessage
@@ -10,13 +10,12 @@ if TYPE_CHECKING:
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
-
 
 class SendMediatedPayoutSignatureMessage(TradeTask):
 
     def __init__(self, task_handler: "TaskRunner[Trade]", model: "Trade"):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         try:
@@ -37,7 +36,7 @@ class SendMediatedPayoutSignatureMessage(TradeTask):
                 uid=str(uuid.uuid4())
             )
             
-            logger.info(f"Send {message.__class__.__name__} to peer {peers_node_address}. "
+            self.logger.info(f"Send {message.__class__.__name__} to peer {peers_node_address}. "
                        f"tradeId={message.trade_id}, uid={message.uid}")
 
             self.trade.mediation_result_state = MediationResultState.SIG_MSG_SENT
@@ -45,21 +44,21 @@ class SendMediatedPayoutSignatureMessage(TradeTask):
 
             class Listener(SendMailboxMessageListener):
                 def on_arrived(self_):
-                    logger.info(f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
+                    self.logger.info(f"{message.__class__.__name__} arrived at peer {peers_node_address}. "
                             f"tradeId={message.trade_id}, uid={message.uid}")
                     self.trade.mediation_result_state = MediationResultState.SIG_MSG_ARRIVED
                     self.process_model.trade_manager.request_persistence()
                     self.complete()
 
                 def on_stored_in_mailbox(self_):
-                    logger.info(f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
+                    self.logger.info(f"{message.__class__.__name__} stored in mailbox for peer {peers_node_address}. "
                             f"tradeId={message.trade_id}, uid={message.uid}")
                     self.trade.mediation_result_state = MediationResultState.SIG_MSG_IN_MAILBOX
                     self.process_model.trade_manager.request_persistence()
                     self.complete()
 
                 def on_fault(self_, error_message):
-                    logger.error(f"{message.__class__.__name__} failed: Peer {peers_node_address}. "
+                    self.logger.error(f"{message.__class__.__name__} failed: Peer {peers_node_address}. "
                             f"tradeId={message.trade_id}, uid={message.uid}, errorMessage={error_message}")
                     self.trade.mediation_result_state = MediationResultState.SIG_MSG_SEND_FAILED
                     self.append_to_error_message(f"Sending message failed: message={message}\nerrorMessage={error_message}")

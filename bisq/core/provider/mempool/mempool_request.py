@@ -1,38 +1,41 @@
 from asyncio import Future
 from typing import TYPE_CHECKING, Optional
 import random
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.provider.mempool_http_client import MempoolHttpClient
-from utils.aio import as_future
+from utils.aio import FutureCallback, as_future
 
 
 if TYPE_CHECKING:
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
     from bisq.core.user.preferences import Preferences
 
-logger = get_logger(__name__)
 
 class MempoolRequest:
 
     def __init__(self, preferences: "Preferences", socks5_proxy_provider: "Socks5ProxyProvider"):
+        self.logger = get_ctx_logger(__name__)
         self.tx_broadcast_services: list[str] = preferences.get_default_tx_broadcast_services()
         self.mempool_http_client = MempoolHttpClient(socks5_proxy_provider)
 
     def get_tx_status(self, mempool_service_callback: Future[str], tx_id: str):
         self.mempool_http_client.base_url = self.get_random_service_address(self.tx_broadcast_services)
 
-        def on_done(f: Future[str]):
+        def on_success(result: str): 
+            self.logger.info(f"Received mempoolData of [{result}] from provider")
+            mempool_service_callback.set_result(result)
+         
+        def on_failure(e):
             try:
-                result = f.result()
-                logger.info(f"Received mempoolData of [{result}] from provider")
-                mempool_service_callback.set_result(result)
-            except Exception as e:
-                try:
-                    mempool_service_callback.set_exception(e)
-                except:
-                    pass
+                mempool_service_callback.set_exception(e)
+            except:
+                pass
         
-        as_future(self.mempool_http_client.get_tx_details(tx_id)).add_done_callback(on_done)
+        as_future(
+            self.mempool_http_client.get_tx_details(tx_id)
+        ).add_done_callback(
+            FutureCallback(on_success, on_failure)
+        )
     
     def request_tx_as_hex(self, tx_id: str) -> Future[str]:
         self.mempool_http_client.base_url = self.get_random_service_address(self.tx_broadcast_services)

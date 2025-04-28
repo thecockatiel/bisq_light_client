@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.protocol.fluent_protocol_condition_result import FluentProtocolConditionResult
 from bisq.core.util.validator import Validator
 from utils.preconditions import check_argument
@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
 
 
-logger = get_logger(__name__)
 
 class FluentProtocolCondition:
     
     def __init__(self, trade_model: "TradeModel"):
         self.trade_model = trade_model
+        self.logger = get_ctx_logger(__name__)
         
         self.expected_phases = set["TradePhase"]()
         self.expected_states = set["TradeState"]()
@@ -71,7 +71,7 @@ class FluentProtocolCondition:
         check_argument(self.result is None, "result must be None")
         self.pre_conditions.add(precondition)
         if condition_failed_handler is not None: 
-            logger.warning("with_precondition was called more than once. previous conditionFailedHandler will be discarded.")
+            self.logger.warning("with_precondition was called more than once. previous conditionFailedHandler will be discarded.")
             self.pre_conditions_failed_handler = condition_failed_handler
         return self
 
@@ -117,7 +117,7 @@ class FluentProtocolCondition:
 
         if is_phase_valid:
             info = f"We received a {trigger} at phase {self.trade_model.get_trade_phase()} and state {self.trade_model.get_trade_state()}, tradeId={self.trade_model.get_id()}"
-            logger.info(info)
+            self.logger.info(info)
             return FluentProtocolConditionResult.VALID.with_info(info)
         else:
             info = (f"We received a {trigger} but we are are not in the expected phase.\n"
@@ -138,7 +138,7 @@ class FluentProtocolCondition:
 
         if is_state_valid:
             info = f"We received a {trigger} at state {self.trade_model.get_trade_state()}, tradeId={self.trade_model.get_id()}"
-            logger.info(info)
+            self.logger.info(info)
             return FluentProtocolConditionResult.VALID.with_info(info)
         else:
             info = (f"We received a {trigger} but we are are not in the expected state. "

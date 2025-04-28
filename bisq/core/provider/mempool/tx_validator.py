@@ -1,6 +1,6 @@
 import json
 from typing import TYPE_CHECKING, Any, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.state.model.blockchain.tx import Tx
 from bitcoinj.base.coin import Coin
@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.filter.filter_manager import FilterManager
 
-logger = get_logger(__name__)
 
 class TxValidator:
     FEE_TOLERANCE = 0.5  # we expect fees to be at least 50% of target
@@ -26,6 +25,7 @@ class TxValidator:
         is_fee_currency_btc: Optional[bool] = None,
         fee_payment_block_height: int = None,
     ):
+        self.logger = get_ctx_logger(__name__)
         self.dao_state_service = dao_state_service
         self.tx_id = tx_id
         self.amount = amount
@@ -46,9 +46,9 @@ class TxValidator:
             title = status.name
         self.status = status
         if self.status.passes:
-            logger.info(f"{title} : {self.status.name}")
+            self.logger.info(f"{title} : {self.status.name}")
         else:
-            logger.warning(f"{title} : {self.status.name}")
+            self.logger.warning(f"{title} : {self.status.name}")
         return self
 
     def __str__(self):
@@ -72,7 +72,7 @@ class TxValidator:
                         self._get_block_height_for_fee_calculation(json_txt)
                     )
         except json.JSONDecodeError as e:
-            logger.info(f"The maker fee tx JSON validation failed with reason: {str(e)}")
+            self.logger.info(f"The maker fee tx JSON validation failed with reason: {str(e)}")
             status = FeeValidationStatus.NACK_JSON_ERROR
         
         return self.end_result(status, "Maker tx validation (BTC)")
@@ -89,7 +89,7 @@ class TxValidator:
                 status_str = f"BSQ tx {self.tx_id} not found, age={tx_age}: FAIL."
                 return self.end_result(FeeValidationStatus.NACK_BSQ_FEE_NOT_FOUND, status_str)
             else:
-                logger.info(f"DAO does not yet have the tx {self.tx_id} (age={tx_age}), bypassing check of burnt BSQ amount.")
+                self.logger.info(f"DAO does not yet have the tx {self.tx_id} (age={tx_age}), bypassing check of burnt BSQ amount.")
                 return self.end_result(FeeValidationStatus.ACK_BSQ_TX_IS_NEW, status_str)
         else:
             return self.end_result(
@@ -111,7 +111,7 @@ class TxValidator:
                         self._get_block_height_for_fee_calculation(json_txt)
                     )
         except json.JSONDecodeError as e:
-            logger.info(f"The taker fee tx JSON validation failed with reason: {str(e)}")
+            self.logger.info(f"The taker fee tx JSON validation failed with reason: {str(e)}")
             status = FeeValidationStatus.NACK_JSON_ERROR
         
         return self.end_result(status, "Taker tx validation (BTC)")
@@ -131,20 +131,20 @@ class TxValidator:
             _, json_vout = self._get_vin_and_vout(json_txt)
             json_vout0 = json_vout[0]
             fee_address = json_vout0.get("scriptpubkey_address")
-            logger.debug(f"fee address: {fee_address}")
+            self.logger.debug(f"fee address: {fee_address}")
             
             if fee_address in btc_fee_receivers:
                 return FeeValidationStatus.ACK_FEE_OK
             elif self._get_block_height_for_fee_calculation(json_txt) < TxValidator.BLOCK_TOLERANCE:
-                logger.info(f"Leniency rule, unrecognised fee receiver but its a really old offer so let it pass, {fee_address}")
+                self.logger.info(f"Leniency rule, unrecognised fee receiver but its a really old offer so let it pass, {fee_address}")
                 return FeeValidationStatus.ACK_FEE_OK
             else:
                 error = f"fee address: {fee_address} was not a known BTC fee receiver"
-                logger.info(error)
-                logger.info(f"Known BTC fee receivers: {btc_fee_receivers}")
+                self.logger.info(error)
+                self.logger.info(f"Known BTC fee receivers: {btc_fee_receivers}")
                 return FeeValidationStatus.NACK_UNKNOWN_FEE_RECEIVER
         except Exception as e:
-            logger.warning(str(e))
+            self.logger.warning(str(e))
             return FeeValidationStatus.NACK_JSON_ERROR
 
     def _check_fee_amount_btc(self, json_txt: str, trade_amount: Coin, is_maker: bool, block_height: int) -> FeeValidationStatus:
@@ -162,7 +162,7 @@ class TxValidator:
             raise json.JSONDecodeError("vin/vout missing data", json_txt, 0)
         
         fee_value = int(fee_value)
-        logger.debug(f"BTC fee: {fee_value}")
+        self.logger.debug(f"BTC fee: {fee_value}")
 
         min_fee_param = Param.MIN_MAKER_FEE_BTC if is_maker else Param.MIN_TAKER_FEE_BTC
         expected_fee = self._calculate_fee(
@@ -176,16 +176,16 @@ class TxValidator:
         description = f"Expected BTC fee: {expected_fee} sats, actual fee paid: {fee_value_as_coin} sats"
 
         if expected_fee_as_long == fee_value:
-            logger.debug(f"The fee matched. {description}")
+            self.logger.debug(f"The fee matched. {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         if expected_fee_as_long < fee_value:
-            logger.info(f"The fee was more than what we expected: {description}")
+            self.logger.info(f"The fee was more than what we expected: {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         leniency_calc = fee_value / expected_fee_as_long
         if leniency_calc > TxValidator.FEE_TOLERANCE:
-            logger.info(f"Leniency rule: the fee was low, but above {TxValidator.FEE_TOLERANCE} of what was expected {leniency_calc} {description}")
+            self.logger.info(f"Leniency rule: the fee was low, but above {TxValidator.FEE_TOLERANCE} of what was expected {leniency_calc} {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         result = self._maybe_check_against_fee_from_filter(
@@ -206,11 +206,11 @@ class TxValidator:
 
         default_fee_param = Param.DEFAULT_MAKER_FEE_BTC if is_maker else Param.DEFAULT_TAKER_FEE_BTC
         if self._fee_exists_using_different_dao_param(trade_amount, fee_value_as_coin, default_fee_param, min_fee_param):
-            logger.info(f"Leniency rule: the fee matches a different DAO parameter {description}")
+            self.logger.info(f"Leniency rule: the fee matches a different DAO parameter {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         fee_underpaid_message = f"UNDERPAID. {description}"
-        logger.info(fee_underpaid_message)
+        self.logger.info(fee_underpaid_message)
         return (FeeValidationStatus.NACK_MAKER_FEE_TOO_LOW if is_maker 
                 else FeeValidationStatus.NACK_TAKER_FEE_TOO_LOW)
 
@@ -224,20 +224,20 @@ class TxValidator:
         expected_fee_as_long = expected_fee.value
 
         fee_value = bsq_tx.burnt_bsq
-        logger.debug(f"BURNT BSQ maker fee: {fee_value/100.0} BSQ ({fee_value} sats)")
+        self.logger.debug(f"BURNT BSQ maker fee: {fee_value/100.0} BSQ ({fee_value} sats)")
         description = f"Expected fee: {expected_fee_as_long/100.0:.2f} BSQ, actual fee paid: {fee_value/100.0:.2f} BSQ, Trade amount: {trade_amount.to_plain_string()}"
 
         if expected_fee_as_long == fee_value:
-            logger.debug(f"The fee matched. {description}")
+            self.logger.debug(f"The fee matched. {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         if expected_fee_as_long < fee_value:
-            logger.info(f"The fee was more than what we expected. {description} Tx:{bsq_tx.id}")
+            self.logger.info(f"The fee was more than what we expected. {description} Tx:{bsq_tx.id}")
             return FeeValidationStatus.ACK_FEE_OK
 
         leniency_calc = fee_value / expected_fee_as_long
         if leniency_calc > TxValidator.FEE_TOLERANCE:
-            logger.info(f"Leniency rule: the fee was low, but above {TxValidator.FEE_TOLERANCE} of what was expected {leniency_calc} {description}")
+            self.logger.info(f"Leniency rule: the fee was low, but above {TxValidator.FEE_TOLERANCE} of what was expected {leniency_calc} {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
         fee_value_as_coin = Coin.value_of(fee_value)
@@ -260,10 +260,10 @@ class TxValidator:
 
         default_fee_param = Param.DEFAULT_MAKER_FEE_BSQ if is_maker else Param.DEFAULT_TAKER_FEE_BSQ
         if self._fee_exists_using_different_dao_param(trade_amount, Coin.value_of(fee_value), default_fee_param, min_fee_param):
-            logger.info(f"Leniency rule: the fee matches a different DAO parameter {description}")
+            self.logger.info(f"Leniency rule: the fee matches a different DAO parameter {description}")
             return FeeValidationStatus.ACK_FEE_OK
 
-        logger.info(description)
+        self.logger.info(description)
         return FeeValidationStatus.NACK_MAKER_FEE_TOO_LOW if is_maker else FeeValidationStatus.NACK_TAKER_FEE_TOO_LOW
 
     @staticmethod
@@ -402,7 +402,7 @@ class TxValidator:
             
         is_valid = self._test_with_fee_from_filter(trade_amount, fee_value_as_coin, fee_from_filter, min_fee_param)
         if not is_valid:
-            logger.warning(f"Fee does not match fee from filter. Fee from filter={fee_from_filter}. {description}")
+            self.logger.warning(f"Fee does not match fee from filter. Fee from filter={fee_from_filter}. {description}")
         return is_valid
 
     def _get_fee_from_filter(self, is_maker: bool, is_btc_fee: bool) -> Optional[Coin]:

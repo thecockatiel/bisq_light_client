@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING, List, Optional
-from bisq.common.setup.log_setup import get_logger
+from typing import TYPE_CHECKING
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
 from bisq.core.btc.wallet.tx_broadcaster_callback import TxBroadcasterCallback
@@ -17,13 +17,13 @@ if TYPE_CHECKING:
     from bisq.core.offer.placeoffer.bisq_v1.place_offer_model import PlaceOfferModel
     from bisq.common.taskrunner.task_runner import TaskRunner
 
-logger = get_logger(__name__)
 
 class CreateMakerFeeTx(Task["PlaceOfferModel"]):
     def __init__(
         self, task_handler: "TaskRunner[PlaceOfferModel]", model: "PlaceOfferModel"
     ):
         super().__init__(task_handler, model)
+        self.logger = get_ctx_logger(__name__)
 
     def run(self):
         offer = self.model.offer
@@ -98,7 +98,7 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
                         return self._on_success(transaction, True)
                     
                     def on_failure(self_, exception):
-                        logger.error(exception, exc_info=exception)
+                        self.logger.error(exception, exc_info=exception)
                         offer.error_message = ("An error occurred.\n"
                                                "Error message:\n"
                                                f"{exception}")
@@ -123,11 +123,11 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
 
     def _on_success(self, transaction: "Transaction", bsq = False):
         if transaction is None:
-            logger.warning("Got success callback with transaction being None")
+            self.logger.warning("Got success callback with transaction being None")
             return
         
         if self.completed:
-            logger.warning("Got success callback after timeout triggered complete()")
+            self.logger.warning("Got success callback after timeout triggered complete()")
             return
         
         offer = self.model.offer
@@ -137,12 +137,12 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
         offer.set_offer_fee_payment_tx_id(transaction.get_tx_id())
         self.model.transaction = transaction
         if bsq:
-            logger.debug(f"onSuccess, offerId={offer_id}, OFFER_FUNDING")
+            self.logger.debug(f"onSuccess, offerId={offer_id}, OFFER_FUNDING")
         wallet_service.swap_trade_entry_to_available_entry(
             offer_id, AddressEntryContext.OFFER_FUNDING
         )
         if bsq:
-            logger.debug(f"Successfully sent tx with id {transaction.get_tx_id()}")
+            self.logger.debug(f"Successfully sent tx with id {transaction.get_tx_id()}")
 
         offer.state = OfferState.OFFER_FEE_PAID
         self.complete()
@@ -151,4 +151,4 @@ class CreateMakerFeeTx(Task["PlaceOfferModel"]):
         if not self.completed:
             self.failed(exc=exception)
         else:
-            logger.warning("Got failure callback after timeout triggered complete()")
+            self.logger.warning("Got failure callback after timeout triggered complete()")

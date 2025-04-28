@@ -1,3 +1,4 @@
+from bisq.common.setup.log_setup import get_ctx_logger
 from utils.aio import as_future
 
 import os
@@ -7,14 +8,9 @@ from typing import TYPE_CHECKING, Optional, cast
 from twisted.internet import reactor
 from txtorcon import FilesystemOnionService, IOnionService, Tor, TorOnionAddress
 
-from bisq.common.setup.log_setup import get_logger
-
 if TYPE_CHECKING:
     from bisq.core.network.p2p.network.tor_network_node import TorNetworkNode
-    
-    
 
-logger = get_logger(__name__)
 
 class OnionIListeningPort:
     @property
@@ -27,6 +23,7 @@ class OnionIListeningPort:
 class HiddenServiceSocket:
 
     def __init__(self, local_port: int, hidden_service_dir: Optional[Path], hidden_service_port: int, tor_instance: "Tor"):
+        self.logger = get_ctx_logger(__name__)
         self._local_port = local_port
         self._hidden_service_dir = hidden_service_dir
         self._hidden_service_port = hidden_service_port
@@ -52,7 +49,7 @@ class HiddenServiceSocket:
                     found_hidden_service = cast(FilesystemOnionService, hidden_service)
                     # example of found_hidden_service.ports: ['9999 127.0.0.1:62442']
                     self._local_port = int(found_hidden_service.ports[0].split(':')[1])
-                    logger.info(f"Hidden service was already published ({found_hidden_service.ports[0]}), adjusting local port to listen on that port.")
+                    self.logger.info(f"Hidden service was already published ({found_hidden_service.ports[0]}), adjusting local port to listen on that port.")
                     break
         
         self._server_socket = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -64,7 +61,7 @@ class HiddenServiceSocket:
             self._onion_service = found_hidden_service
             self._onion_hostname = self._onion_service.hostname
         elif self._tor_instance:
-            progress_updates=lambda percent, tag, summary: logger.trace(f"Tor Hidden Service: {percent}%: {tag} - {summary}")
+            progress_updates=lambda percent, tag, summary: self.logger.trace(f"Tor Hidden Service: {percent}%: {tag} - {summary}")
             # NOTE: this is probably a brittle way to create a hidden service, but it's the simplest way to do it for now.
             self._onion_service = cast(FilesystemOnionService, await as_future(FilesystemOnionService.create(
                 reactor,
@@ -76,7 +73,7 @@ class HiddenServiceSocket:
             )))
             self._onion_hostname = self._onion_service.hostname
         else:
-            logger.info(f"Hidden service is probably provided by user, skipping hidden service control.")
+            self.logger.info(f"Hidden service is probably provided by user, skipping hidden service control.")
             
         
     @property

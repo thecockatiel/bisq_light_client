@@ -1,6 +1,6 @@
 from typing import cast
 from bisq.common.app.dev_env import DevEnv
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.txproof.asset_tx_proof_parser import AssetTxProofParser
 from bisq.core.trade.txproof.xmr.xmr_expected_response_dto import XmrExpectedResponseDto
 from bisq.core.trade.txproof.xmr.xmr_tx_proof_model import XmrTxProofModel
@@ -12,10 +12,12 @@ from bisq.core.trade.txproof.xmr.xmr_tx_proof_request_result import (
 )
 import json
 
-logger = get_logger(__name__)
-
 
 class XmrRawTxParser(AssetTxProofParser[XmrTxProofRequestResult, XmrTxProofModel]):
+
+    def __init__(self):
+        super().__init__()
+        self.logger = get_ctx_logger(__name__)
 
     def parse(self, json_txt: str, model=None):
         try:
@@ -62,7 +64,7 @@ class XmrRawTxParser(AssetTxProofParser[XmrTxProofRequestResult, XmrTxProofModel
 
             unlock_time = int(unlock_time)
             if unlock_time != 0 and not DevEnv.is_dev_mode():
-                logger.warning(f"Invalid unlock_time {unlock_time}")
+                self.logger.warning(f"Invalid unlock_time {unlock_time}")
                 return XmrTxProofRequestResult.FAILED.with_detail(
                     XmrTxProofRequestDetail.INVALID_UNLOCK_TIME.with_error(
                         "Invalid unlock_time"

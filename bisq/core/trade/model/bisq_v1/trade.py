@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from concurrent.futures import Future
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.btc.listeners.tx_confidence_listener import TxConfidenceListener
 from bisq.core.monetary.price import Price
@@ -41,9 +40,6 @@ if TYPE_CHECKING:
     from bitcoinj.core.transaction_confidence import TransactionConfidence
 
 
-logger = get_logger(__name__)
-
-
 # NOTE: enums have been moved to their own files prefixed with Trade
 # BTC wallet service is removed
 
@@ -77,7 +73,7 @@ class Trade(TradeModel, ABC):
         uid: str = None,
     ):
         super().__init__(uid, offer)
-
+        self.logger = get_ctx_logger(__name__)
         # Persistable 
         # Immutable
         self._is_currency_for_taker_fee_btc = is_currency_for_taker_fee_btc
@@ -153,10 +149,10 @@ class Trade(TradeModel, ABC):
         def on_new_state(e: "SimplePropertyChangeEvent[TradeState]"):
             if self.is_initialized:
                 # We don't want to log at startup the setState calls from all persisted trades
-                logger.info(f"Set new state at {self.__class__.__name__} (id={self.get_short_id()}): {e.new_value}")
+                self.logger.info(f"Set new state at {self.__class__.__name__} (id={self.get_short_id()}): {e.new_value}")
                 
             if e.new_value.phase.value < e.old_value.phase.value:
-                logger.warning(f"We got a state change to a previous phase.\n Old state is: {e.old_value.name}. New state is: {e.new_value.name}")
+                self.logger.warning(f"We got a state change to a previous phase.\n Old state is: {e.old_value.name}. New state is: {e.new_value.name}")
             self.state_phase_property.set(e.new_value.phase)
             
         self.state_property.add_listener(on_new_state)
@@ -386,12 +382,12 @@ class Trade(TradeModel, ABC):
         
         if self._delayed_payout_tx is None:
             if btc_wallet_service is None:
-                logger.warning("btcWalletService is null. You might call that method before the tradeManager has"
+                self.logger.warning("btcWalletService is null. You might call that method before the tradeManager has"
                                "initialized all trades")
                 return None
 
             if self.delayed_payout_tx_bytes is None:
-                logger.warning("delayedPayoutTxBytes are null")
+                self.logger.warning("delayedPayoutTxBytes are null")
                 return None
             
             self._delayed_payout_tx = btc_wallet_service.get_tx_from_serialized_tx(self.delayed_payout_tx_bytes)
@@ -402,7 +398,7 @@ class Trade(TradeModel, ABC):
         if chat_message not in self._chat_messages:
             self._chat_messages.append(chat_message)
         else:
-            logger.error("Trade ChatMessage already exists")
+            self.logger.error("Trade ChatMessage already exists")
             
     def remove_all_chat_messages(self):
         if len(self._chat_messages) > 0:
@@ -432,7 +428,7 @@ class Trade(TradeModel, ABC):
         if self.remove_all_chat_messages():
             change += "chat messages;"
         if len(change) > 0:
-            logger.info(f"cleared sensitive data from {change} of trade {self.get_short_id()}")
+            self.logger.info(f"cleared sensitive data from {change} of trade {self.get_short_id()}")
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // TradeModel implementation
@@ -511,7 +507,7 @@ class Trade(TradeModel, ABC):
            self.state_property.set(new_state)
            return True
        else:
-           logger.warning("State change is not getting applied because it would cause an invalid transition. "
+           self.logger.warning("State change is not getting applied because it would cause an invalid transition. "
                          f"Trade state={self.state_property.value}, intended state={new_state.name}")
     
     def set_amount(self, amount: "Coin"):
@@ -558,11 +554,11 @@ class Trade(TradeModel, ABC):
                 else:
                     start_time = max(block_time, trade_time)
 
-                logger.debug(f"We set the start for the trade period to {datetime.fromtimestamp(start_time/1000)}. "
+                self.logger.debug(f"We set the start for the trade period to {datetime.fromtimestamp(start_time/1000)}. "
                            f"Trade started at: {datetime.fromtimestamp(trade_time/1000)}. "
                            f"Block got mined at: {datetime.fromtimestamp(block_time/1000)}")
             else:
-                logger.debug(f"depositTx not confirmed yet. We don't start counting remaining trade period yet. "
+                self.logger.debug(f"depositTx not confirmed yet. We don't start counting remaining trade period yet. "
                            f"txId={deposit_tx.get_tx_id()}")
                 start_time = now
         else:
@@ -698,7 +694,7 @@ class Trade(TradeModel, ABC):
             if self.deposit_tx.confidence:
                 listener.on_transaction_confidence_changed(self.deposit_tx.confidence)
         else:
-            logger.error("depositTx is None. That must not happen.")
+            self.logger.error("depositTx is None. That must not happen.")
 
     def set_confirmed_state(self):
         # we only apply the state if we are not already further in the process

@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 from bisq.common.protocol.network.get_data_response_priority import (
     GetDataResponsePriority,
 )
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.util.utilities import bytes_as_hex_string
 from bisq.core.network.p2p.storage.payload.data_tolerant_payload import (
     DateTolerantPayload,
@@ -15,8 +15,6 @@ from bisq.core.network.p2p.storage.payload.process_once_persistable_network_payl
 )
 from bisq.core.network.p2p.storage.storage_byte_array import StorageByteArray
 import pb_pb2 as protobuf
-
-logger = get_logger(__name__)
 
 
 class AccountAgeWitness(
@@ -45,6 +43,7 @@ class AccountAgeWitness(
     def from_proto(proto: protobuf.AccountAgeWitness) -> "AccountAgeWitness":
         hash_ = proto.hash
         if len(hash_) != 20:
+            logger = get_ctx_logger(__name__)
             logger.warning("We got a hash which is not 20 bytes")
             hash_ = bytes()
         return AccountAgeWitness(hash_, proto.date)

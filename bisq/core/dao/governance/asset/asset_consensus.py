@@ -1,7 +1,6 @@
 from io import BytesIO
 from typing import TYPE_CHECKING
 from bisq.common.crypto.hash import get_sha256_ripemd160_hash
-from bisq.common.setup.log_setup import get_logger
 from bisq.common.version import Version
 from bisq.core.dao.governance.param.param import Param
 from bisq.core.dao.state.model.blockchain.op_return_type import OpReturnType
@@ -10,8 +9,6 @@ from bitcoinj.base.coin import Coin
 if TYPE_CHECKING:
     from bisq.core.dao.governance.asset.stateful_asset import StatefulAsset
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-logger = get_logger(__name__)
 
 
 class AssetConsensus:

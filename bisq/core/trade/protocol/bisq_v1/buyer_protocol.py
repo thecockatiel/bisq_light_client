@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 from bisq.common.handlers.error_message_handler import ErrorMessageHandler
 from bisq.common.handlers.result_handler import ResultHandler
-from bisq.common.setup.log_setup import get_logger
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.trade.model.trade_phase import TradePhase
 from bisq.core.trade.model.trade_state import TradeState
 from bisq.core.trade.protocol.bisq_v1.buyer_event import BuyerEvent
@@ -52,13 +52,12 @@ if TYPE_CHECKING:
     from bisq.core.trade.protocol.trade_message import TradeMessage
     from bisq.core.trade.model.bisq_v1.buyer_trade import BuyerTrade
 
-logger = get_logger(__name__)
-
 
 class BuyerProtocol(DisputeProtocol, ABC):
 
     def __init__(self, trade: "BuyerTrade"):
         super().__init__(trade)
+        self.logger = get_ctx_logger(__name__)
 
     def on_initialized(self):
         super().on_initialized()
@@ -123,7 +122,7 @@ class BuyerProtocol(DisputeProtocol, ABC):
                 self.trade.deposit_tx is None
                 or self.trade.process_model.trade_peer.payment_account_payload is None,
                 lambda: (
-                    logger.warning(
+                    self.logger.warning(
                         "We received a DepositTxAndDelayedPayoutTxMessage but we have already processed the deposit and "
                         "delayed payout tx so we ignore the message. This can happen if the ACK message to the peer did not "
                         "arrive and the peer repeats sending us the message. We send another ACK msg."
@@ -221,7 +220,7 @@ class BuyerProtocol(DisputeProtocol, ABC):
     def on_trade_message(self, message: "TradeMessage", peer: "NodeAddress") -> None:
         super().on_trade_message(message, peer)
 
-        logger.info(
+        self.logger.info(
             f"Received {message.__class__.__name__} from {peer} with tradeId {message.trade_id} and uid {message.uid}"
         )
 

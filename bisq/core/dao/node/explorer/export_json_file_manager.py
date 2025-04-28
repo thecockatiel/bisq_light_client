@@ -1,15 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
-from bisq.common.file.file_util import delete_directory
 from bisq.common.file.json_file_manager import JsonFileManager
-from bisq.common.setup.log_setup import get_logger
 from bisq.core.dao.dao_setup_service import DaoSetupService
 
 if TYPE_CHECKING:
     from bisq.core.dao.state.dao_state_service import DaoStateService
-
-logger = get_logger(__name__)
 
 
 # TODO: implement later if necessary

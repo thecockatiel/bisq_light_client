@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import timedelta
+from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterable, Optional
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.exceptions.bsq_change_below_dust_exception import (
@@ -50,9 +51,6 @@ if TYPE_CHECKING:
     from bisq.core.btc.listeners.bsq_balance_listener import BsqBalanceListener
 
 
-logger = get_logger(__name__)
-
-
 # TODO
 class BsqWalletService(WalletService, DaoStateListener):
 
@@ -69,7 +67,7 @@ class BsqWalletService(WalletService, DaoStateListener):
         bsq_formatter: "BsqFormatter",
     ):
         super().__init__(wallets_setup, preferences, fee_service)
-
+        self.logger = get_ctx_logger(__name__)
         self._dao_kill_switch = dao_kill_switch
         self._bsq_coin_selector = bsq_coin_selector
         self._non_bsq_coin_selector = non_bsq_coin_selector
@@ -104,7 +102,7 @@ class BsqWalletService(WalletService, DaoStateListener):
         return self._bsq_formatter
 
     def _on_setup_completed(self):
-        self.wallet = self._wallets_setup.btc_wallet
+        self.wallet = self._wallets_setup.bsq_wallet
         if self.wallet:
             self.add_listeners_to_wallet()
 
@@ -125,7 +123,7 @@ class BsqWalletService(WalletService, DaoStateListener):
 
     def _on_tx_removed(self, tx: "Transaction"):
         # possible reorg
-        logger.warning("onReorganize ")
+        self.logger.warning("onReorganize ")
         self._update_bsq_wallet_transactions()
         self._unconfirmed_bsq_change_output_list_service.on_reorganize()
 
@@ -246,7 +244,7 @@ class BsqWalletService(WalletService, DaoStateListener):
                 self.unlocking_bonds_balance,
             )
 
-        logger.info(f"updateBsqBalance took {get_time_ms() - ts} ms")
+        self.logger.info(f"updateBsqBalance took {get_time_ms() - ts} ms")
 
     def add_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self._bsq_balance_listeners.add(listener)
@@ -393,7 +391,7 @@ class BsqWalletService(WalletService, DaoStateListener):
                 )
             elif not change.is_zero():
                 msg = f"BSQ change output is below dust limit. outputValue={change.value / 100} BSQ"
-                logger.warning(msg)
+                self.logger.warning(msg)
                 raise BsqChangeBelowDustException(msg, change)
 
             send_request = SendRequest.for_tx(tx)
@@ -411,8 +409,8 @@ class BsqWalletService(WalletService, DaoStateListener):
             coin_selector.utxo_candidates = None  # We reuse the selectors. Reset the transactionOutputCandidates field
             return tx
         except InsufficientMoneyException as e:
-            logger.error(f"_get_prepared_send_tx: tx={tx}")
-            logger.error(str(e))
+            self.logger.error(f"_get_prepared_send_tx: tx={tx}")
+            self.logger.error(str(e))
             raise InsufficientBsqException(e.missing)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -491,7 +489,7 @@ class BsqWalletService(WalletService, DaoStateListener):
                 )
                 change = self._bsq_coin_selector.get_change(fee, coin_selection)
 
-                logger.warning(
+                self.logger.warning(
                     f"We increased required input as change output was zero or dust: New change value={change}",
                 )
                 info = (
@@ -522,7 +520,7 @@ class BsqWalletService(WalletService, DaoStateListener):
             return tx
 
         except InsufficientMoneyException as e:
-            logger.error(f"coinSelection.gathered={coin_selection.gathered}")
+            self.logger.error(f"coinSelection.gathered={coin_selection.gathered}")
             raise InsufficientBsqException(e.missing)
 
     def _add_inputs_and_change_output_for_tx(
@@ -556,7 +554,7 @@ class BsqWalletService(WalletService, DaoStateListener):
                     )
                 )
         except InsufficientMoneyException as e:
-            logger.error(str(tx))
+            self.logger.error(str(tx))
             raise InsufficientBsqException(e.missing)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.core.network.p2p.peers.getdata.messages.get_data_request import GetDataRequest
 from bisq.core.network.p2p.senders_node_address_message import SendersNodeAddressMessage
-from bisq.common.setup.log_setup import get_logger
 import pb_pb2 as protobuf
 from utils.data import raise_required
 
@@ -12,12 +12,14 @@ if TYPE_CHECKING:
     from bisq.common.protocol.network.network_envelope import NetworkEnvelope
     from bisq.core.network.p2p.node_address import NodeAddress
 
-logger = get_logger(__name__)
 
 
 @dataclass
 class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
     sender_node_address: "NodeAddress" = field(default_factory=raise_required)
+
+    def __post_init__(self):
+        self.logger = get_ctx_logger(__name__)
 
     def to_proto_network_envelope(self) -> "NetworkEnvelope":
         get_updated_data_request = protobuf.GetUpdatedDataRequest(
@@ -28,7 +30,7 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
         )
         envelope = self.get_network_envelope_builder()
         envelope.get_updated_data_request.CopyFrom(get_updated_data_request)
-        logger.info(
+        self.logger.info(
             f"Sending a GetUpdatedDataRequest with {envelope.ByteSize() / 1000} kB and "
             f"{len(self.excluded_keys)} excluded key entries. Requester's version={self.version}"
         )
@@ -42,6 +44,7 @@ class GetUpdatedDataRequest(GetDataRequest, SendersNodeAddressMessage):
             proto.excluded_keys
         )
         requesters_version = ProtoUtil.string_or_none_from_proto(proto.version)
+        logger = get_ctx_logger(__name__)
         logger.info(
             f"Received a GetUpdatedDataRequest with {proto.ByteSize() / 1000} kB and "
             f"{len(excluded_keys)} excluded key entries. Requester's version={requesters_version}"
