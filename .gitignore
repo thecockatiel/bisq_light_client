@@ -193,3 +193,5 @@ spb_pb2.py
 spb_pb2.pyi
 
 /*.json
+result.html
+result.json
