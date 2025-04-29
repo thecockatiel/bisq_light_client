@@ -321,6 +321,8 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             if num_connections == 0:
                 self.logger.info("Shutdown immediately because no connections are open.")
+                self.connection_executor.shutdown(wait=False, cancel_futures=True)
+                self.send_message_executor.shutdown(wait=False, cancel_futures=True)
                 if shut_down_complete_handler:
                     shut_down_complete_handler()
                 return
