@@ -117,7 +117,9 @@ class UserManager(PersistedDataHost):
         alias = self._user_manager_payload.user_alias_entries[user_id]
         user_data_dir = self._config.app_data_dir.joinpath("users", user_id)
         user_data_dir.mkdir(parents=True, exist_ok=True)
-        storage_dir = user_data_dir.joinpath("db")
+        storage_dir = user_data_dir.joinpath(
+            self._config.base_currency_network.name.lower()
+        ).joinpath("db")
         storage_dir.mkdir(parents=True, exist_ok=True)
         key_storage_dir = user_data_dir.joinpath("keys")
         key_storage_dir.mkdir(parents=True, exist_ok=True)

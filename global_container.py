@@ -32,20 +32,6 @@ class GlobalContainer:
         return self._shared_container.core_context
 
     ###############################################################################
-    @property
-    def storage_dir(self):
-        # reason for this is to rely on user data directory for multi-user feature
-        if self._storage_dir is None:
-            self._storage_dir = self.user.data_dir.joinpath("db")
-            self._storage_dir.mkdir(parents=True, exist_ok=True)
-        return self._storage_dir
-
-    @property
-    def wallet_dir(self):
-        if self._wallet_dir is None:
-            self._wallet_dir = self.user.data_dir.joinpath("electrum_wallet")
-            self._wallet_dir.mkdir(parents=True, exist_ok=True)
-        return self._wallet_dir
 
     @property
     def btc_network_dir(self):
@@ -55,6 +41,21 @@ class GlobalContainer:
             )
             self._btc_network_dir.mkdir(parents=True, exist_ok=True)
         return self._btc_network_dir
+
+    @property
+    def storage_dir(self):
+        # reason for this is to rely on user data directory for multi-user feature
+        if self._storage_dir is None:
+            self._storage_dir = self.btc_network_dir.joinpath("db")
+            self._storage_dir.mkdir(parents=True, exist_ok=True)
+        return self._storage_dir
+
+    @property
+    def wallet_dir(self):
+        if self._wallet_dir is None:
+            self._wallet_dir = self.user.data_dir.joinpath("electrum_wallet")
+            self._wallet_dir.mkdir(parents=True, exist_ok=True)
+        return self._wallet_dir
 
     @property
     def tor_dir(self):
