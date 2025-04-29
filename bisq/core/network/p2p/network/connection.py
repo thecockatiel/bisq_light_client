@@ -394,6 +394,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         except asyncio.TimeoutError:
             if not completed and shut_down_complete_handler is not None:
                 completed = True
+                self.executor.shutdown(wait=False, cancel_futures=True)
 
                 UserThread.execute(shut_down_complete_handler)
 
