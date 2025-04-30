@@ -37,16 +37,16 @@ class P2PNetworkSetup:
         self.preferences = preferences
         self.filter_manager = filter_manager
 
-        self.p2p_network_info = SimpleProperty("")
-        self.p2p_network_icon_id = SimpleProperty("")
-        self.p2p_network_status_icon_id = SimpleProperty("")
-        self.splash_p2p_network_animation_visible = SimpleProperty(True)
-        self.p2p_network_label_id = SimpleProperty("footer-pane")
-        self.p2p_network_warn_msg = SimpleProperty("")
-        self.data_received = SimpleProperty(False)
-        self.p2p_network_failed = SimpleProperty(False)
+        self.p2p_network_info_property = SimpleProperty("")
+        self.p2p_network_icon_id_property = SimpleProperty("")
+        self.p2p_network_status_icon_id_property = SimpleProperty("")
+        self.splash_p2p_network_animation_visible_property = SimpleProperty(True)
+        self.p2p_network_label_id_property = SimpleProperty("footer-pane")
+        self.p2p_network_warn_msg_property = SimpleProperty("")
+        self.data_received_property = SimpleProperty(False)
+        self.p2p_network_failed_property = SimpleProperty(False)
 
-        self.p2p_network_info_binding: Optional[SimpleProperty[str]]
+        self.p2p_network_info_binding_property: Optional[SimpleProperty[str]]
 
     def init(
         self,
@@ -81,16 +81,16 @@ class P2PNetworkSetup:
                     result = state + " / " + p2pinfo
             return result
 
-        self.p2p_network_info_binding = combine_simple_properties(
+        self.p2p_network_info_binding_property = combine_simple_properties(
             bootstrap_state,
             bootstrap_warning,
             self.p2p_service.num_connected_peers_property,
             hidden_service_published,
-            self.data_received,
+            self.data_received_property,
             transform=handle_network_binding,
         )
-        self.p2p_network_info_binding.add_listener(
-            lambda e: self.p2p_network_info.set(e.new_value)
+        self.p2p_network_info_binding_property.add_listener(
+            lambda e: self.p2p_network_info_property.set(e.new_value)
         )
 
         bootstrap_state.set(Res.get("mainView.bootstrapState.connectionToTorNetwork"))
@@ -123,7 +123,7 @@ class P2PNetworkSetup:
             def on_tor_node_ready(self_) -> None:
                 self.logger.debug("on_tor_node_ready")
                 bootstrap_state.set(Res.get("mainView.bootstrapState.torNodeCreated"))
-                self.p2p_network_icon_id.set("image-connection-tor")
+                self.p2p_network_icon_id_property.set("image-connection-tor")
 
                 if self.preferences.get_use_tor_for_bitcoin_j():
                     init_wallet_service_handler()
@@ -144,8 +144,8 @@ class P2PNetworkSetup:
                 bootstrap_state.set(
                     Res.get("mainView.bootstrapState.initialDataReceived")
                 )
-                self.data_received.set(True)
-                self.splash_p2p_network_animation_visible.set(False)
+                self.data_received_property.set(True)
+                self.splash_p2p_network_animation_visible_property.set(False)
                 p2p_network_initialized.set(True)
 
             def on_no_seed_node_available(self_):
@@ -157,40 +157,40 @@ class P2PNetworkSetup:
                 else:
                     bootstrap_warning.set(None)
 
-                self.splash_p2p_network_animation_visible.set(False)
+                self.splash_p2p_network_animation_visible_property.set(False)
                 p2p_network_initialized.set(True)
 
             def on_no_peers_available(self_):
                 self.logger.warning("on_no_peers_available")
                 if self.p2p_service.num_connected_peers == 0:
-                    self.p2p_network_warn_msg.set(
+                    self.p2p_network_warn_msg_property.set(
                         Res.get("mainView.p2pNetworkWarnMsg.noNodesAvailable")
                     )
                     bootstrap_warning.set(
                         Res.get("mainView.bootstrapWarning.noNodesAvailable")
                     )
-                    self.p2p_network_label_id.set("splash-error-state-msg")
+                    self.p2p_network_label_id_property.set("splash-error-state-msg")
                 else:
                     bootstrap_warning.set(None)
-                    self.p2p_network_label_id.set("footer-pane")
-                self.splash_p2p_network_animation_visible.set(False)
+                    self.p2p_network_label_id_property.set("footer-pane")
+                self.splash_p2p_network_animation_visible_property.set(False)
                 p2p_network_initialized.set(True)
 
             def on_updated_data_received(self_):
                 self.logger.debug("on_updated_data_received")
-                self.splash_p2p_network_animation_visible.set(False)
+                self.splash_p2p_network_animation_visible_property.set(False)
 
             def on_setup_failed(self_, e: Optional[Exception] = None) -> None:
                 self.logger.error("on_setup_failed")
-                self.p2p_network_warn_msg.set(
+                self.p2p_network_warn_msg_property.set(
                     Res.get("mainView.p2pNetworkWarnMsg.connectionToP2PFailed", str(e))
                 )
-                self.splash_p2p_network_animation_visible.set(False)
+                self.splash_p2p_network_animation_visible_property.set(False)
                 bootstrap_warning.set(
                     Res.get("mainView.bootstrapWarning.bootstrappingToP2PFailed")
                 )
-                self.p2p_network_label_id.set("splash-error-state-msg")
-                self.p2p_network_failed.set(True)
+                self.p2p_network_label_id_property.set("splash-error-state-msg")
+                self.p2p_network_failed_property.set(True)
 
             def on_request_custom_bridges(self_) -> None:
                 if display_tor_network_settings_handler is not None:
@@ -213,8 +213,8 @@ class P2PNetworkSetup:
 
     def update_network_status_indicator(self):
         if self.p2p_service.network_node.get_inbound_connection_count() > 0:
-            self.p2p_network_status_icon_id.set("image-green_circle")
+            self.p2p_network_status_icon_id_property.set("image-green_circle")
         elif self.p2p_service.network_node.get_outbound_connection_count() > 0:
-            self.p2p_network_status_icon_id.set("image-yellow_circle")
+            self.p2p_network_status_icon_id_property.set("image-yellow_circle")
         else:
-            self.p2p_network_status_icon_id.set("image-alert-round")
+            self.p2p_network_status_icon_id_property.set("image-alert-round")

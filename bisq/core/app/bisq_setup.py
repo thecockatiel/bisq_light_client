@@ -323,7 +323,7 @@ class BisqSetup:
 
         def on_startup_timeout():
             if (
-                self._p2p_network_setup.p2p_network_failed.get()
+                self._p2p_network_setup.p2p_network_failed_property.get()
                 or self._wallets_setup.wallets_setup_failed_property.get()
             ):
                 # Skip this timeout action if the p2p network or wallet setup failed
@@ -399,7 +399,9 @@ class BisqSetup:
             for listener in self.bisq_setup_listeners:
                 listener.on_request_wallet_password()
             if self.p2p_network_ready.get():
-                self._p2p_network_setup.splash_p2p_network_animation_visible.set(True)
+                self._p2p_network_setup.splash_p2p_network_animation_visible_property.set(
+                    True
+                )
 
             if self.request_wallet_password_handler is not None:
 
@@ -833,47 +835,46 @@ class BisqSetup:
 
     # Wallet
     @property
-    def btc_info_property(self):
+    def btc_info_property_property(self):
         return self._wallet_app_setup.btc_info_property
 
     @property
-    def btc_sync_progress_property(self):
+    def btc_sync_progress_property_property(self):
         return self._wallet_app_setup.btc_sync_progress_property
 
     @property
-    def wallet_service_error_msg(self):
+    def wallet_service_error_msg_property(self):
         return self._wallet_app_setup.wallet_service_error_msg_property
 
     @property
-    def use_tor_for_btc(self):
+    def use_tor_for_btc_property(self):
         return self._wallet_app_setup.use_tor_for_btc_property
 
     # P2P
-    # TODO: rename properties to have property at the end of their names
     @property
-    def p2p_network_info(self):
-        return self._p2p_network_setup.p2p_network_info
+    def p2p_network_info_property(self):
+        return self._p2p_network_setup.p2p_network_info_property
 
     @property
-    def splash_p2p_network_animation_visible(self):
-        return self._p2p_network_setup.splash_p2p_network_animation_visible
+    def splash_p2p_network_animation_visible_property(self):
+        return self._p2p_network_setup.splash_p2p_network_animation_visible_property
 
     @property
-    def p2p_network_warn_msg(self):
-        return self._p2p_network_setup.p2p_network_warn_msg
+    def p2p_network_warn_msg_property(self):
+        return self._p2p_network_setup.p2p_network_warn_msg_property
 
     @property
-    def p2p_network_icon_id(self):
-        return self._p2p_network_setup.p2p_network_icon_id
+    def p2p_network_icon_id_property(self):
+        return self._p2p_network_setup.p2p_network_icon_id_property
 
     @property
-    def p2p_network_status_icon_id(self):
-        return self._p2p_network_setup.p2p_network_status_icon_id
+    def p2p_network_status_icon_id_property(self):
+        return self._p2p_network_setup.p2p_network_status_icon_id_property
 
     @property
-    def data_received(self):
-        return self._p2p_network_setup.data_received
+    def data_received_property(self):
+        return self._p2p_network_setup.data_received_property
 
     @property
-    def p2p_network_label_id(self):
-        return self._p2p_network_setup.p2p_network_label_id
+    def p2p_network_label_id_property(self):
+        return self._p2p_network_setup.p2p_network_label_id_property
