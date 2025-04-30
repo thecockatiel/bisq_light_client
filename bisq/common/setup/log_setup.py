@@ -104,6 +104,7 @@ stdout_handler.setFormatter(formatter)
 stdout_handler.setLevel(DEFAULT_LOG_LEVEL)
 
 base_logger = logging.getLogger()
+base_logger.name = "global"
 base_logger.addHandler(stdout_handler)
 base_logger.setLevel(DEFAULT_LOG_LEVEL)
 base_logger_file_handler = None
