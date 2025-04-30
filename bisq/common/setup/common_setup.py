@@ -11,7 +11,7 @@ from bisq.common.app.dev_env import DevEnv
 from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 from signal import signal, SIGINT, SIGTERM
 
-from bisq.common.setup.log_setup import get_ctx_logger
+from bisq.common.setup.log_setup import get_base_logger, get_ctx_logger
 from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
 from bisq.common.user_thread import UserThread
 from bisq.common.util.profiler import Profiler
@@ -79,7 +79,6 @@ class CommonSetup:
         uncaught_exception_handler: UncaughtExceptionHandler,
     ):
         original_excepthook = sys.excepthook
-        logger = get_ctx_logger(__name__)
 
         def exception_handler(
             exc_type: type[BaseException],
@@ -87,6 +86,10 @@ class CommonSetup:
             exc_traceback: TracebackType,
             thread: threading.Thread = None,
         ):
+            try:
+                logger = get_ctx_logger(__name__)
+            except:
+                logger = get_base_logger(__name__)
             if exc_type.__name__ == "SystemExit":
                 original_excepthook(exc_type, exc_value, exc_traceback)
                 return
