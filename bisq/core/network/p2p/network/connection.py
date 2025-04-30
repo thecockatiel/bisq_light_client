@@ -346,12 +346,13 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
                     finally:
                         self.stopped.set(True)
                         UserThread.run_after(lambda: as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler)), timedelta(milliseconds=200))
-                        ctx = contextvars.copy_context()
-                        threading.Thread(
-                            target=ctx.run,
-                            args=(handle_shut_down,),
-                            name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True
-                        ).start()
+
+                ctx = contextvars.copy_context()
+                threading.Thread(
+                    target=ctx.run,
+                    args=(handle_shut_down,),
+                    name=f"Connection:SendCloseConnectionMessage-{self.uid}", daemon=True
+                ).start()
             else:
                 self.stopped.set(True)
                 as_future(self.do_shut_down(close_connection_reason, shut_down_complete_handler))
@@ -367,6 +368,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         def close_streams():
             nonlocal completed
             self.capabilities_listeners.clear()
+            self.message_listeners.clear()
             try:
                 self.proto_output_stream.on_connection_shutdown()
                 self.socket.shutdown(Socket.SHUT_RDWR)
