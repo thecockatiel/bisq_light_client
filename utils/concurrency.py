@@ -176,6 +176,10 @@ class ThreadSafeDict(Generic[K, V]):
         with self._lock:
             return self._dict.copy()
         
+    def clear(self):
+        with self._lock:
+            self._dict.clear()
+        
     def __contains__(self, key: K) -> bool:
         with self._lock:
             return key in self._dict

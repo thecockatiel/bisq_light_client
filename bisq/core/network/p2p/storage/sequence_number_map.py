@@ -36,6 +36,9 @@ class SequenceNumberMap(PersistableEnvelope):
             value = StorageMapValue.from_proto(e.map_value)
             map[key] = value
         return SequenceNumberMap(map)
+    
+    def clear(self):
+        self.map.clear()
 
     def __len__(self):
         return len(self.map)
