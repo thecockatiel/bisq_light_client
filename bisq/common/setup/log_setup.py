@@ -115,7 +115,7 @@ def get_base_logger(name: str):
     return base_logger.getChild(name)
 
 
-def get_base_logger(name: str) -> logging.Logger:
+def get_shared_logger(name: str) -> logging.Logger:
     return shared_logger.getChild(name)
 
 
