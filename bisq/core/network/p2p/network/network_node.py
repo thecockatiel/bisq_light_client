@@ -351,6 +351,10 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                     timer.stop()
                     self.connection_executor.shutdown(wait=False, cancel_futures=True)
                     self.send_message_executor.shutdown(wait=False, cancel_futures=True)
+                    self.node_address_property.remove_all_listeners()
+                    self.setup_listeners.clear()
+                    self.message_listeners.clear()
+                    self.connection_listeners.clear()
                     if shut_down_complete_handler:
                         shut_down_complete_handler()
 

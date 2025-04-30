@@ -91,6 +91,12 @@ class XmrTxProofService(AssetTxProofService):
         for service in self.services_by_trade_id.values():
             service.terminate()
         self.services_by_trade_id.clear()
+        if self.p2p_network_and_wallet_ready:
+            self.p2p_network_and_wallet_ready.remove_all_listeners()
+            self.p2p_network_and_wallet_ready = None
+        self.bootstrap_listener = None
+        self.btc_block_listener = None
+        self.btc_peers_listener = None
         
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

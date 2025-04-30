@@ -84,6 +84,9 @@ class WalletService(ABC):
         if self.wallet:
             self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
             self.wallet.remove_tx_changed_listener(self._on_tx_changed)
+        self._tx_confidence_listeners.clear()
+        self._address_confidence_listeners.clear()
+        self._address_to_matching_tx_set_cache.set(None)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener

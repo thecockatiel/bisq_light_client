@@ -69,6 +69,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
         self.logger.info("Broadcaster doShutDown started")
         for handler in self._broadcast_handlers:
             handler.cancel()
+        self._broadcast_handlers.clear()
         if self._timer:
             self._timer.stop()
         if self._shut_down_result_handler:

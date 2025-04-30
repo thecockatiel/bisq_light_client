@@ -217,8 +217,13 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             transform=all,
         )
 
+        def on_read_complete():
+            self.read_from_resources_complete_property.remove_all_listeners()
+            self.read_from_resources_complete_property = None
+            complete_handler()
+
         self.read_from_resources_complete_property.add_listener(
-            lambda e: complete_handler() if e.new_value else None
+            lambda e: on_read_complete() if e.new_value else None
         )
 
         self.append_only_data_store_service.read_from_resources(

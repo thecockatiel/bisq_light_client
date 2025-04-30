@@ -22,10 +22,8 @@ from bitcoinj.core.insufficient_money_exception import InsufficientMoneyExceptio
 from bitcoinj.core.network_parameters import NetworkParameters
 from bitcoinj.core.transaction_confidence_type import TransactionConfidenceType
 from bitcoinj.core.transaction_input import TransactionInput
-from bitcoinj.core.transaction_out_point import TransactionOutPoint
 from bitcoinj.script.script_type import ScriptType
 from bitcoinj.wallet.send_request import SendRequest
-from electrum_min.elogging import get_logger
 from utils.concurrency import ThreadSafeSet
 from utils.preconditions import check_argument, check_not_none
 from utils.time import get_time_ms
@@ -683,3 +681,12 @@ class BsqWalletService(WalletService, DaoStateListener):
     # The default 546 sat dust limit is handled in the BitcoinJ side anyway.
     def is_dust_attack_utxo(self, output):
         return False
+
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+    # // shutdown
+    # ///////////////////////////////////////////////////////////////////////////////////////////
+
+    def shut_down(self):
+        super().shut_down()
+        self._bsq_balance_listeners.clear()
+        self._wallet_transactions_change_listeners.clear()
