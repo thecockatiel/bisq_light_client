@@ -111,23 +111,24 @@ class UserContext:
         try:
             with self._lock:
                 if self.global_container:
-                    self.global_container.open_bsq_swap_offer_service.shut_down()
-                    self.global_container.price_feed_service.shut_down()
-                    self.global_container.arbitrator_manager.shut_down()
-                    self.global_container.trade_statistics_manager.shut_down()
-                    self.global_container.xmr_tx_proof_service.shut_down()
-                    self.global_container.dao_setup.shut_down()
-                    self.logger.info("OpenOfferManager shutdown started")
+                    with logger_context(self.logger):
+                        self.global_container.open_bsq_swap_offer_service.shut_down()
+                        self.global_container.price_feed_service.shut_down()
+                        self.global_container.arbitrator_manager.shut_down()
+                        self.global_container.trade_statistics_manager.shut_down()
+                        self.global_container.xmr_tx_proof_service.shut_down()
+                        self.global_container.dao_setup.shut_down()
+                        self.logger.info("OpenOfferManager shutdown started")
 
-                    def shut_down_finished(ecode: int):
-                        self.global_container = None
-                        self.logger = None
-                        remove_user_handler_from_shared(self.user_id)
-                        d.callback(ecode)
+                        def shut_down_finished(ecode: int):
+                            self.global_container = None
+                            self.logger = None
+                            remove_user_handler_from_shared(self.user_id)
+                            d.callback(ecode)
 
-                    self.global_container.open_offer_manager.shut_down(
-                        lambda: self._on_open_offer_manager_shutdown(shut_down_finished)
-                    )
+                        self.global_container.open_offer_manager.shut_down(
+                            lambda: self._on_open_offer_manager_shutdown(shut_down_finished)
+                        )
                 else:
                     d.callback(0)
         except BaseException as e:
