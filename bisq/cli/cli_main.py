@@ -98,8 +98,7 @@ class CliMain:
         parser = CliMain._get_parser()
 
         arguments = ArgumentList(args)
-        cli_args = arguments.get_cli_arguments()
-        method_args = arguments.get_method_arguments()
+        cli_args, method_args = arguments.get_arguments()
 
         opts_ns, non_option_args = parser.parse_known_args(cli_args)
         cli_opts = {
@@ -563,7 +562,9 @@ class CliMain:
             elif method == CliMethods.setuseralias:
                 opts = SetUserAliasOptionParser(method_args).parse()
                 client.set_user_alias(opts.user_id, opts.alias)
-                print(f"setting alias of user id `{opts.user_id}` to `{opts.alias}` done successfully.")
+                print(
+                    f"setting alias of user id `{opts.user_id}` to `{opts.alias}` done successfully."
+                )
             elif method == CliMethods.getuserslist:
                 users_list = client.get_users_list()
                 TableBuilder(TableType.USERS_TBL, users_list).build().print()
