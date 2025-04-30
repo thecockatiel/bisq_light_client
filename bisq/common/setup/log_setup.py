@@ -105,6 +105,7 @@ stdout_handler.setLevel(DEFAULT_LOG_LEVEL)
 
 base_logger = logging.getLogger()
 base_logger.addHandler(stdout_handler)
+base_logger.setLevel(DEFAULT_LOG_LEVEL)
 base_logger_file_handler = None
 shared_logger = base_logger.getChild("shared")
 shared_logger.propagate = False
