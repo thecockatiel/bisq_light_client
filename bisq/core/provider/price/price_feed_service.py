@@ -43,6 +43,7 @@ class PriceFeedService:
         preferences: "Preferences",
     ):
         self.logger = get_ctx_logger(__name__)
+        self._stopped = False
         self._http_client = price_http_client
         self._p2p_service = p2p_service
         self._price_feed_node_address_provider = price_feed_node_address_provider
@@ -85,6 +86,9 @@ class PriceFeedService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def shut_down(self) -> None:
+        if self._stopped:
+            return
+        self._stopped = True
         if self._request_timer:
             self._request_timer.stop()
             self._request_timer = None
@@ -93,6 +97,10 @@ class PriceFeedService:
             self._retry_with_new_provider_timer = None
         if self._price_request:
             self._price_request.shut_down()
+            self._price_request = None
+        self._cache.clear()
+        self._price_consumer = None
+        self._fault_handler = None
 
     def set_currency_code_on_init(self) -> None:
         if self.currency_code is None:
@@ -210,6 +218,8 @@ class PriceFeedService:
 
     def _retry_with_new_provider(self) -> None:
         # We increase retry delay each time until we reach PERIOD_SEC to not exceed requests.
+        if self._stopped:
+            return
 
         if self._retry_with_new_provider_timer:
             # If we have a retry timer already running we keep the old one and return.

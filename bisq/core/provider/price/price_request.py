@@ -36,5 +36,7 @@ class PriceRequest:
         self.shut_down_requested = True
         if self.provider is not None:
             self.provider.shut_down()
+            self.provider = None
         if self.request_future:
             self.request_future.cancel()
+            self.request_future = None

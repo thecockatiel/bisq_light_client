@@ -336,39 +336,39 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
     def request_data(
         self, node_address: "NodeAddress", remaining_node_addresses: list["NodeAddress"]
     ):
-        if not self.stopped:
-            if node_address not in self.handler_map:
-                class Listener(RequestDataHandler.Listener):
-                        
-                    def on_complete(self_, was_truncated: bool):
-                        self._on_request_data_complete(
-                            node_address, was_truncated, remaining_node_addresses
-                        ),
-                    
-                    def on_fault(self_, error_message: str, conn: "Connection"):
-                        self._on_request_data_fault(
-                            node_address, error_message, conn, remaining_node_addresses
-                        )
+        if self.stopped:
+            return
 
-                request_data_handler = RequestDataHandler(
-                    self.network_node, self.data_storage, self.peer_manager, Listener()
-                )
-                self.handler_map[node_address] = request_data_handler
-                self.num_repeated_requests += 1
-                request_data_handler.request_data(
-                    node_address, self.is_preliminary_data_request
-                )
-            else:
-                self.logger.warning(
-                    f"We have started already a requestDataHandshake to peer. nodeAddress={node_address}\n"
-                    f"We start a cleanup timer if the handler has not closed by itself in between 2 minutes."
-                )
-                UserThread.run_after(
-                    lambda: self._cleanup_request_data_handler(node_address),
-                    timedelta(seconds=self.CLEANUP_TIMER),
-                )
+        if node_address not in self.handler_map:
+            class Listener(RequestDataHandler.Listener):
+                    
+                def on_complete(self_, was_truncated: bool):
+                    self._on_request_data_complete(
+                        node_address, was_truncated, remaining_node_addresses
+                    ),
+                
+                def on_fault(self_, error_message: str, conn: "Connection"):
+                    self._on_request_data_fault(
+                        node_address, error_message, conn, remaining_node_addresses
+                    )
+
+            request_data_handler = RequestDataHandler(
+                self.network_node, self.data_storage, self.peer_manager, Listener()
+            )
+            self.handler_map[node_address] = request_data_handler
+            self.num_repeated_requests += 1
+            request_data_handler.request_data(
+                node_address, self.is_preliminary_data_request
+            )
         else:
-            self.logger.warning("We have stopped already. We ignore that request_data call.")
+            self.logger.warning(
+                f"We have started already a requestDataHandshake to peer. nodeAddress={node_address}\n"
+                f"We start a cleanup timer if the handler has not closed by itself in between 2 minutes."
+            )
+            UserThread.run_after(
+                lambda: self._cleanup_request_data_handler(node_address),
+                timedelta(seconds=self.CLEANUP_TIMER),
+            )
 
     def _on_request_data_complete(
         self,
