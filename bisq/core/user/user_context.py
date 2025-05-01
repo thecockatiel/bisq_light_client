@@ -122,8 +122,16 @@ class UserContext:
 
                         def shut_down_finished(ecode: int):
                             self.global_container = None
-                            self.logger = None
                             remove_user_handler_from_shared(self.user_id)
+                            # release logger instances
+                            logger_dict = self.logger.manager.loggerDict
+                            to_remove = []
+                            for name in logger_dict:
+                                if name.startswith(f"user_{self.user_id}"):
+                                    to_remove.append(name)
+                            for name in to_remove:
+                                del logger_dict[name]
+                            del to_remove
                             d.callback(ecode)
 
                         self.global_container.open_offer_manager.shut_down(

@@ -294,6 +294,7 @@ class UserManager(PersistedDataHost):
             new_user_id = None
             ctx = self.get_user_context(user_id)
             await ctx.shut_down()
+            ctx.logger = None
             del self._user_contexts[ctx.user_id]
             del self._user_manager_payload.user_alias_entries[ctx.user_id]
             if remove_user_data:
