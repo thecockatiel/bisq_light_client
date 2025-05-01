@@ -351,7 +351,6 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                     timer.stop()
                     self.connection_executor.shutdown(wait=False, cancel_futures=True)
                     self.send_message_executor.shutdown(wait=False, cancel_futures=True)
-                    self.node_address_property.remove_all_listeners()
                     self.setup_listeners.clear()
                     self.message_listeners.clear()
                     self.connection_listeners.clear()
@@ -387,12 +386,14 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
     def add_connection_listener(self, connection_listener):
         self.connection_listeners.add(connection_listener)
+        return lambda: self.remove_connection_listener(connection_listener)
 
     def remove_connection_listener(self, connection_listener):
         self.connection_listeners.discard(connection_listener)
 
     def add_message_listener(self, message_listener):
         self.message_listeners.add(message_listener)
+        return lambda: self.remove_message_listener(message_listener)
 
     def remove_message_listener(self, message_listener):
         self.message_listeners.discard(message_listener)

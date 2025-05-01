@@ -48,6 +48,8 @@ class P2PNetworkSetup:
 
         self.p2p_network_info_binding_property: Optional[SimpleProperty[str]]
 
+        self._subscriptions: list[Callable[[], None]] = []
+
     def init(
         self,
         init_wallet_service_handler: Callable,
@@ -89,8 +91,10 @@ class P2PNetworkSetup:
             self.data_received_property,
             transform=handle_network_binding,
         )
-        self.p2p_network_info_binding_property.add_listener(
-            lambda e: self.p2p_network_info_property.set(e.new_value)
+        self._subscriptions.append(
+            self.p2p_network_info_binding_property.add_listener(
+                lambda e: self.p2p_network_info_property.set(e.new_value)
+            )
         )
 
         bootstrap_state.set(Res.get("mainView.bootstrapState.connectionToTorNetwork"))
@@ -115,7 +119,9 @@ class P2PNetworkSetup:
                         f"RULE_VIOLATION onDisconnect closeConnectionReason={close_connection_reason}, connection={connection}"
                     )
 
-        self.p2p_service.network_node.add_connection_listener(CListener())
+        self._subscriptions.append(
+            self.p2p_service.network_node.add_connection_listener(CListener())
+        )
 
         p2p_network_initialized = SimpleProperty(False)
 
@@ -199,6 +205,13 @@ class P2PNetworkSetup:
         as_future(self.p2p_service.start(P2pSvcListener()))
 
         return p2p_network_initialized
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.p2p_network_info_binding_property = None
+        self.p2p_service.p2p_data_storage.filter_predicate = None
 
     def add_p2p_message_filter(self):
         def predicate(payload):

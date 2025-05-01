@@ -105,7 +105,10 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
 
     @abstractmethod
     def shut_down(self):
-        pass
+        self._dao_state_service.remove_dao_state_listener(self)
+        if self._bootstrap_listener:
+            self._p2p_service.remove_p2p_service_listener(self._bootstrap_listener)
+            self._bootstrap_listener = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Protected
@@ -127,6 +130,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
     def on_p2p_network_ready(self):
         self._p2p_network_ready = True
         self._p2p_service.remove_p2p_service_listener(self._bootstrap_listener)
+        self._bootstrap_listener = None
 
     @abstractmethod
     def start_request_blocks(self):

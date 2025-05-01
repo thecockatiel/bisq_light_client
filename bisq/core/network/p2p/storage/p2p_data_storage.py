@@ -1309,6 +1309,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         self, listener: "AppendOnlyDataStoreListener"
     ):
         self.append_only_data_store_listeners.add(listener)
+        return lambda: self.remove_append_only_data_store_listener(listener)
 
     def remove_append_only_data_store_listener(
         self, listener: "AppendOnlyDataStoreListener"

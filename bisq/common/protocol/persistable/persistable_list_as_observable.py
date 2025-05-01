@@ -18,7 +18,7 @@ class PersistableListAsObservable(PersistableList[T], ABC):
     def get_observable_list(self) -> ObservableList[T]:
         return self.list
 
-    def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]) -> ObservableList[T]:
+    def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         return self.get_observable_list().add_listener(listener)
 
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):

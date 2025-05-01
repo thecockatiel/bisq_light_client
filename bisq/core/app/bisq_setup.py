@@ -207,6 +207,8 @@ class BisqSetup:
         self.p2p_network_and_wallet_initialized: Optional["SimpleProperty[bool]"] = None
         self.bisq_setup_listeners = set["BisqSetupListener"]()
 
+        self._subscriptions: list[Callable[[], None]] = []
+
         # TODO: multi-user related
         MemPoolSpaceTxBroadcaster.init(
             socks5_proxy_provider, preferences, local_bitcoin_node, config
@@ -278,6 +280,14 @@ class BisqSetup:
         self._maybe_upgrade_bsq_explorer_url()
         self._check_inbound_connections()
 
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.p2p_network_and_wallet_initialized = None
+        self._p2p_network_setup.shut_down()
+        self._domain_initialisation.shut_down()
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Sub tasks
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +341,9 @@ class BisqSetup:
                 return
             self.logger.warning("startupTimeout called")
             if self._wallets_manager.are_wallets_encrypted():
-                self.wallet_initialized.add_listener(wallet_initialized_listener)
+                self._subscriptions.append(
+                    self.wallet_initialized.add_listener(wallet_initialized_listener)
+                )
             elif self.display_tor_network_settings_handler:
                 self.display_tor_network_settings_handler(True)
 
@@ -369,22 +381,24 @@ class BisqSetup:
 
         # We only use electrum and with tor, so we will always wait for tor to init wallet
 
-        self.p2p_network_and_wallet_initialized.add_listener(
-            lambda e: (
-                (
-                    startup_timeout.stop(),
-                    self.wallet_initialized.remove_listener(
-                        wallet_initialized_listener
-                    ),
+        self._subscriptions.append(
+            self.p2p_network_and_wallet_initialized.add_listener(
+                lambda e: (
                     (
-                        self.display_tor_network_settings_handler(False)
-                        if self.display_tor_network_settings_handler
-                        else None
-                    ),
-                    next_step(),
+                        startup_timeout.stop(),
+                        self.wallet_initialized.remove_listener(
+                            wallet_initialized_listener
+                        ),
+                        (
+                            self.display_tor_network_settings_handler(False)
+                            if self.display_tor_network_settings_handler
+                            else None
+                        ),
+                        next_step(),
+                    )
+                    if e.new_value
+                    else None
                 )
-                if e.new_value
-                else None
             )
         )
 
@@ -460,8 +474,10 @@ class BisqSetup:
             self._check_for_locked_up_funds()
             self._check_for_invalid_maker_fee_txs()
 
-        self._alert_manager.alert_message_property.add_listener(
-            lambda e: self.display_alert_if_present(e.new_value, False)
+        self._subscriptions.append(
+            self._alert_manager.alert_message_property.add_listener(
+                lambda e: self.display_alert_if_present(e.new_value, False)
+            )
         )
         self.display_alert_if_present(
             self._alert_manager.alert_message_property.get(), False
@@ -628,17 +644,19 @@ class BisqSetup:
 
     def _maybe_show_security_recommendation(self):
         key = "remindPasswordAndBackup"
-        self._user.payment_accounts_observable.add_listener(
-            lambda change: (
-                self.display_security_recommendation_handler(key)
-                if (
-                    not self._wallets_manager.are_wallets_encrypted()
-                    and not self._user.is_payment_account_import
-                    and self._preferences.show_again(key)
-                    and change.added_elements
-                    and self.display_security_recommendation_handler
+        self._subscriptions.append(
+            self._user.payment_accounts_observable.add_listener(
+                lambda change: (
+                    self.display_security_recommendation_handler(key)
+                    if (
+                        not self._wallets_manager.are_wallets_encrypted()
+                        and not self._user.is_payment_account_import
+                        and self._preferences.show_again(key)
+                        and change.added_elements
+                        and self.display_security_recommendation_handler
+                    )
+                    else None
                 )
-                else None
             )
         )
 
@@ -717,8 +735,10 @@ class BisqSetup:
                     ),
                 )
 
-        self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            Listener()
+        self._subscriptions.append(
+            self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
+                Listener()
+            )
         )
 
     def _check_signing_state(
@@ -802,11 +822,13 @@ class BisqSetup:
 
         self._maybe_run_tor_node_address_upgrade_handler()
 
-        self._trade_manager.num_pending_trades.add_listener(
-            lambda e: (
-                self._maybe_run_tor_node_address_upgrade_handler()
-                if e.new_value == 0
-                else None
+        self._subscriptions.append(
+            self._trade_manager.num_pending_trades.add_listener(
+                lambda e: (
+                    self._maybe_run_tor_node_address_upgrade_handler()
+                    if e.new_value == 0
+                    else None
+                )
             )
         )
 

@@ -284,3 +284,6 @@ class DomainInitialisation:
                 and account.country_not_set
             ]
             amazon_gift_card_accounts_update_handler(amazon_gift_card_accounts)
+
+    def shut_down(self):
+        self.signed_witness_service.shut_down()

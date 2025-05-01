@@ -133,8 +133,12 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
         self.stop_retry_timer()
         self.network_node.remove_message_listener(self)
         self.network_node.remove_connection_listener(self)
+        self.network_node.node_address_property.remove_listener(self._on_node_address_changed)
         self.peer_manager.remove_listener(self)
         self.close_all_handlers()
+        self.listener = None
+        self.get_data_request_handlers.clear()
+        self.response_listeners.clear()
 
     # /////////////////////////////////////////////////////////////////////////////////////////
     # API
@@ -208,11 +212,6 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
 
     def get_node_address_of_preliminary_data_request(self) -> Optional[NodeAddress]:
         return self.node_address_of_preliminary_data_request
-
-    def add_response_listener(
-        self, response_listener: "RequestDataManager.ResponseListener"
-    ):
-        self.response_listeners.add(response_listener)
 
     # /////////////////////////////////////////////////////////////////////////////////////////
     # ConnectionListener implementation

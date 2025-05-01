@@ -1,4 +1,5 @@
 import base64
+from collections.abc import Callable
 from datetime import timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.crypto.encryption import ECPrivkey, ECPubkey, Encryption
@@ -47,6 +48,7 @@ class SignedWitnessService:
         self.signed_witness_storage_service = signed_witness_storage_service
         self.user = user
         self.filter_manager = filter_manager
+        self.append_only_data_store_service = append_only_data_store_service
 
 
         self.signed_witness_map: dict['StorageByteArray', 'SignedWitness'] = {}
@@ -67,15 +69,19 @@ class SignedWitnessService:
         self.verify_signature_with_ec_key_result_cache: dict['StorageByteArray', bool] = {}
 
         # We need to add that early (before on_all_services_initialized) as it will be used at startup.
-        append_only_data_store_service.add_service(signed_witness_storage_service)
+        self.append_only_data_store_service.add_service(signed_witness_storage_service)
+
+        self._subscriptions: list[Callable[[], None]] = []
 
     def on_all_services_initialized(self):
         class AppendListener(AppendOnlyDataStoreListener):
             def on_added(self_, payload):
                 if isinstance(payload, SignedWitness):
                     self.add_to_map(payload)
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            AppendListener()
+        self._subscriptions.append(
+            self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
+                AppendListener()
+            )
         )
         
         # At startup the P2PDataStorage initializes earlier, otherwise we get the listener called.
@@ -90,13 +96,24 @@ class SignedWitnessService:
                 def on_data_received(self_):
                     self.on_bootstrap_complete()
             
-            self.p2p_service.add_p2p_service_listener(Listener())
+            self._subscriptions.append(self.p2p_service.add_p2p_service_listener(Listener()))
         # JAVA TODO: Enable cleaning of signed witness list when necessary
         # self.clean_signed_witnesses();
         
     def on_bootstrap_complete(self):
         if self.user.registered_arbitrator is not None:
             UserThread.run_after(self.do_republish_all_signed_witnesses, timedelta(seconds=60))
+
+    def shut_down(self):
+        self.append_only_data_store_service.remove_service(self.signed_witness_storage_service)
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.signed_witness_map.clear()
+        self.signed_witness_set_by_account_age_witness_hash.clear()
+        self.signed_witness_set_by_owner_pub_key.clear()
+        self.verify_signature_with_dsa_key_result_cache.clear()
+        self.verify_signature_with_ec_key_result_cache.clear()
             
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API

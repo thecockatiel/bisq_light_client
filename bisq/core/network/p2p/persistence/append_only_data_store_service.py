@@ -20,6 +20,9 @@ class AppendOnlyDataStoreService():
     def add_service(self, service: "MapStoreService[PersistableNetworkPayloadStore[PersistableNetworkPayload], PersistableNetworkPayload]") -> None:
         self.services.append(service)
         
+    def remove_service(self, service: "MapStoreService[PersistableNetworkPayloadStore[PersistableNetworkPayload], PersistableNetworkPayload]") -> None:
+        self.services.remove(service)
+        
     def read_from_resources(self, postfix: str, complete_handler: Callable[[], None]):
         if not self.services:
             complete_handler()

@@ -154,6 +154,7 @@ class UserContext:
 
     def _on_p2p_service_shutdown(self, result_handler: Callable[[], None]):
         self.logger.info("P2PService shutdown completed")
+        self.global_container.bisq_setup.shut_down()
         self.logger.info("PersistenceManager flushAllDataToDiskAtShutdown started")
         self.global_container.persistence_orchestrator.flush_all_data_to_disk_at_shutdown(
             lambda: self._on_flush_complete(result_handler)
