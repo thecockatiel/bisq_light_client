@@ -116,6 +116,8 @@ class PersistenceManager(Generic[T]):
         if self.write_to_disk_executor:
             self.write_to_disk_executor.shutdown()
 
+        self.persistable = None # unref
+
     ###########################################################################
 
     def read_persisted(
