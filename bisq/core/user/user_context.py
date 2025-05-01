@@ -77,12 +77,12 @@ class UserContext:
                 add_user_handler_to_shared(self.user_id)
                 if should_take_std_out:
                     switch_std_handler_to(self.user_id)
-                self.logger.info(
-                    f"User log file at: {get_user_log_file_path(self.user.data_dir)}"
-                )
                 with logger_context(self.logger):
-                    self.logger.info(get_sys_info())
                     show_ascii_logo()
+                    self.logger.info(
+                        f"User log file at: {get_user_log_file_path(self.user.data_dir)}"
+                    )
+                    self.logger.info(get_sys_info())
                     Version.print_version()
                     CoreNetworkCapabilities.print_capabilities()
                     self.global_container = GlobalContainer(
