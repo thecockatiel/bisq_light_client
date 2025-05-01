@@ -110,6 +110,8 @@ class P2PService(
         self._keep_alive_manager = keep_alive_manager
         self._socks5_proxy_provider = socks5_proxy_provider
 
+        self._subscriptions: list[Callable[[], None]] = []
+
         self._network_node.add_connection_listener(self)
         self._network_node.add_message_listener(self)
         self._request_data_manager.set_listener(self)
@@ -130,7 +132,9 @@ class P2PService(
 
     async def start(self, listener: Optional["P2PServiceListener"] = None):
         if listener is not None:
-            self.add_p2p_service_listener(listener)
+            self._subscriptions.append(
+                self.add_p2p_service_listener(listener)
+            )
         await self._network_node.start(self)
 
     def on_all_services_initialized(self):
@@ -156,6 +160,7 @@ class P2PService(
 
         if self._request_data_manager is not None:
             self._request_data_manager.shut_down()
+            self._request_data_manager.set_listener(None)
 
         if self._peer_exchange_manager is not None:
             self._peer_exchange_manager.shut_down()
@@ -165,14 +170,22 @@ class P2PService(
 
         if self._network_ready_property is not None:
             self._network_ready_property.remove_all_listeners()
+            self._network_ready_property = None
+
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
         if self._network_node is not None:
+            self._network_node.remove_connection_listener(self)
+            self._network_node.remove_message_listener(self)
             self._network_node.shut_down(
                 lambda: [handler() for handler in self._shut_down_result_handlers]
             )
         else:
             for handler in self._shut_down_result_handlers:
                 handler()
+            self._shut_down_result_handlers.clear()
 
     #
     #  Startup sequence:
@@ -222,6 +235,7 @@ class P2PService(
     def on_network_ready(self):
         if self._network_ready_unsubscribe:
             self._network_ready_unsubscribe()
+            self._network_ready_unsubscribe = None
 
         seed_node = (
             self._request_data_manager.get_node_address_of_preliminary_data_request()
@@ -528,8 +542,9 @@ class P2PService(
     ) -> None:
         self._decrypted_direct_message_listeners.discard(listener)
 
-    def add_p2p_service_listener(self, listener: "P2PServiceListener") -> None:
+    def add_p2p_service_listener(self, listener: "P2PServiceListener"):
         self._p2p_service_listeners.add(listener)
+        return lambda: self.remove_p2p_service_listener(listener)
 
     def remove_p2p_service_listener(self, listener: "P2PServiceListener") -> None:
         self._p2p_service_listeners.discard(listener)
@@ -538,6 +553,7 @@ class P2PService(
         self, hash_map_changed_listener: "HashMapChangedListener"
     ) -> None:
         self._p2p_data_storage.add_hash_map_changed_listener(hash_map_changed_listener)
+        return lambda: self.remove_hash_map_changed_listener(hash_map_changed_listener)
 
     def remove_hash_map_changed_listener(
         self, hash_map_changed_listener: "HashMapChangedListener"
