@@ -1,4 +1,5 @@
 from bisq.common.setup.log_setup import get_ctx_logger
+from bisq.common.timer import Timer
 from utils.aio import as_future, get_asyncio_loop, wait_future_blocking
 from collections.abc import Callable
 from asyncio import Future
@@ -34,6 +35,7 @@ class LocalhostNetworkNode(NetworkNode):
         super().__init__(service_port, network_proto_resolver, ban_filter, config)
         self.logger = get_ctx_logger(__name__)
         self.__create_socket_futures = ThreadSafeSet[Future]()
+        self._server_timers = set[Timer]()
         
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         if setup_listener:
@@ -47,7 +49,7 @@ class LocalhostNetworkNode(NetworkNode):
                 listener.on_tor_node_ready()
             
             # simulate tor HS publishing delay
-            UserThread.run_after(second, timedelta(milliseconds=LocalhostNetworkNode.simulate_tor_delay_tor_node))
+            self._server_timers.add(UserThread.run_after(second, timedelta(milliseconds=LocalhostNetworkNode.simulate_tor_delay_tor_node)))
              
         def second():
             try:
@@ -62,7 +64,7 @@ class LocalhostNetworkNode(NetworkNode):
                 listener.on_hidden_service_published()
         
         # simulate tor connection delay
-        UserThread.run_after(first, timedelta(milliseconds=LocalhostNetworkNode.simulate_tor_delay_hidden_service))
+        self._server_timers.add(UserThread.run_after(first, timedelta(milliseconds=LocalhostNetworkNode.simulate_tor_delay_hidden_service)))
         
     # Called from NetworkNode thread
     def create_socket(self, peer_node_address: "NodeAddress") -> socket.socket:
@@ -83,6 +85,9 @@ class LocalhostNetworkNode(NetworkNode):
         return sock
     
     def shut_down(self, shut_down_complete_handler: Optional[Callable[[], None]] = None):
+        for timer in self._server_timers:
+            timer.stop()
+        self._server_timers.clear()
         if self.__create_socket_futures:
             for f in self.__create_socket_futures:
                 f.cancel()
