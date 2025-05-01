@@ -142,6 +142,7 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         self.logger = get_ctx_logger(__name__)
         self.initial_request_applied = False
 
+        self._network_node = network_node
         self.broadcaster = broadcaster
         self.append_only_data_store_service = append_only_data_store_service
         self.protected_data_store_service = protected_data_store_service
@@ -176,8 +177,8 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             None  # Set from FilterManager
         )
 
-        network_node.add_message_listener(self)
-        network_node.add_connection_listener(self)
+        self._network_node.add_message_listener(self)
+        self._network_node.add_connection_listener(self)
 
         self.persistence_manager.initialize(
             self.sequence_number_map, PersistenceManagerSource.PRIVATE_LOW_PRIO
@@ -684,6 +685,8 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
     def shut_down(self):
         if self.remove_expired_entries_timer:
             self.remove_expired_entries_timer.stop()
+        self._network_node.remove_connection_listener(self)
+        self._network_node.remove_message_listener(self)
 
     def remove_expired_entries(self):
         # The moment when an object becomes expired will not be synchronous in the network and we could

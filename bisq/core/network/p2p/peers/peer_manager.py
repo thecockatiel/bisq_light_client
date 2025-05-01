@@ -163,6 +163,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
         self._shut_down_requested = True
         self._network_node.remove_connection_listener(self)
         self._clock_watcher.remove_listener(self._clock_watcher_listener)
+        self._clock_watcher_listener = None
         self._stop_check_max_connections_timer()
         if self._print_statistics_timer:
             self._print_statistics_timer.stop()

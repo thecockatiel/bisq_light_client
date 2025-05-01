@@ -74,6 +74,7 @@ class Broadcaster(BroadcastHandler.ResultHandler):
             self._timer.stop()
         if self._shut_down_result_handler:
             self._shut_down_result_handler()
+            self._shut_down_result_handler = None
 
     ###########################################################################################
     # API
