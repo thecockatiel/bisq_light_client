@@ -280,6 +280,8 @@ class UserManager(PersistedDataHost):
 
     async def switch_user(self, to_user_id: str, shared_container: "SharedContainer"):
         with self._lock:
+            if to_user_id is None:
+                to_user_id = next(iter(self._user_contexts.keys()))
             ctx = self.get_user_context(to_user_id)
             self._user_manager_payload.active_user_id = to_user_id
             self.force_persist_now()

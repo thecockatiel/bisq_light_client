@@ -73,11 +73,12 @@ class BisqDaemonMain(
 
             CoreSetup.setup(self._config)
 
-            # this, and UserManager, needs to be imported after config has initialized, 
+            # this, and UserManager, needs to be imported after config has initialized,
             # because otherwise `Params` will be initialized with wrong network
             from bisq.core.protocol.network.core_network_proto_resolver import (
-                CoreNetworkProtoResolver, 
+                CoreNetworkProtoResolver,
             )
+
             clock = Clock()
             with logger_context(base_logger):
                 corrupted_storage_file_handler = CorruptedStorageFileHandler()
@@ -152,8 +153,22 @@ class BisqDaemonMain(
                 self.setup_avoid_standby_mode()
                 # TODO: create a function that does the following:
                 #   init the active user id in user_manager and call headlessapp.start_user_instance for it
+                try:
+                    self._user_manager.get_user_context(
+                        self._user_manager.active_user_id
+                    )
+                    active_user_id_unavailable = False
+                except:
+                    base_logger.warning(
+                        f"incosistent state detected, replacing active user (`{self._user_manager.active_user_id}`) with an available one"
+                    )
+                    active_user_id_unavailable = True
                 await self._user_manager.switch_user(
-                    self._user_manager.active_user_id,
+                    (
+                        None
+                        if active_user_id_unavailable
+                        else self._user_manager.active_user_id
+                    ),
                     self._shared_container,
                 )
 
@@ -171,6 +186,7 @@ class BisqDaemonMain(
     ):
         # See comment for CoreNetworkProtoResolver import above
         from bisq.core.user.user_manager import UserManager
+
         self._user_manager = UserManager(
             self._config,
             corrupted_storage_file_handler,
@@ -256,7 +272,10 @@ class BisqDaemonMain(
             ctx = contextvars.copy_context()
             Thread(
                 target=ctx.run,
-                args=(flush_and_exit, BisqDaemonMain.EXIT_SUCCESS,),
+                args=(
+                    flush_and_exit,
+                    BisqDaemonMain.EXIT_SUCCESS,
+                ),
                 name="flush_and_exit",
             ).start()
 
