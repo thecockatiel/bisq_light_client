@@ -93,8 +93,18 @@ def abbreviate_dotted_words(words: str):
     return abbreviate_pattern.sub(lambda m: m.group(1)[0], words)
 
 
+allowed_user_id_loggers = set[str]()
+
+
 class BisqLogger(logging.Logger):
     def getChild(self, name: str):
+        if self.name.startswith("user_"):
+            uid = self.name[5:13]  # userid is 8 char long
+            if uid not in allowed_user_id_loggers:
+                raise IllegalStateException(
+                    f"user_id `{uid}` is not allowed to make child loggers at this point"
+                )
+
         return super().getChild(abbreviate_dotted_words(name))
 
 
@@ -175,6 +185,8 @@ def get_user_logger(user_id: str, user_data_dir: Path, log_level="INFO"):
     if user_id in user_loggers:
         return user_loggers[user_id]
 
+    allowed_user_id_loggers.add(user_id)
+
     log_level = getattr(logging, log_level.upper(), DEFAULT_LOG_LEVEL)
 
     user_loggers[user_id] = user_logger = logging.getLogger(f"user_{user_id}")
@@ -215,10 +227,12 @@ def add_user_handler_to_shared(user_id: str):
     shared_logger.removeHandler(user_file_handlers[user_id])
 
 
-def remove_user_handler_from_shared(user_id: str):
+def remove_user_handler_from_shared(user_id: str, del_handler=False):
     handler = user_file_handlers.get(user_id, None)
     if handler:
         shared_logger.removeHandler(handler)
+        if del_handler:
+            del user_file_handlers[user_id]
 
 
 _current_user_logger: logging.Logger = None
@@ -237,3 +251,31 @@ def setup_log_for_test(test_name: str, data_dir: Path):
     user_logger = get_user_logger(test_name, data_dir, "TRACE")
     switch_std_handler_to(test_name)
     return user_logger
+
+
+def destory_user_logger(user_id: str):
+    global _current_user_logger
+    allowed_user_id_loggers.discard(
+        user_id
+    )  # disallows creating new loggers for this user, just in case
+    remove_user_handler_from_shared(user_id, True)
+    if user_id in _current_user_logger.name:
+        _current_user_logger.removeHandler(stdout_handler)
+        _current_user_logger = None
+    if user_id in user_loggers:
+        logger = user_loggers[user_id]
+        del user_loggers[user_id]
+        # remove handlers
+        for handler in logger.handlers.copy():
+            logger.removeHandler(handler)
+            handler.close()
+        # release logger instances
+        logger_dict = logger.manager.loggerDict
+        to_remove = []
+        for name in logger_dict:
+            if name.startswith(f"user_{user_id}"):
+                to_remove.append(name)
+        for name in to_remove:
+            del logger_dict[name]
+        del to_remove
+        del logger

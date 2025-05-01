@@ -208,6 +208,7 @@ class BisqSetup:
         self.bisq_setup_listeners = set["BisqSetupListener"]()
 
         self._subscriptions: list[Callable[[], None]] = []
+        self._stopped = False
 
         # TODO: multi-user related
         MemPoolSpaceTxBroadcaster.init(
@@ -254,18 +255,26 @@ class BisqSetup:
         self.bisq_setup_listeners.add(listener)
 
     def start(self):
+        if self._stopped:
+            return
         self._maybe_resync_spv_chain()
         self._maybe_show_tac(self._step2)
 
     def _step2(self):
+        if self._stopped:
+            return
         self._read_maps_from_resources(self._step3)
         self._check_for_correct_os_architecture()
         self._check_if_running_on_qubes_os()
 
     def _step3(self):
+        if self._stopped:
+            return
         self._start_p2p_network_and_wallet(self._step4)
 
     def _step4(self):
+        if self._stopped:
+            return
         self._init_domain_services()
 
         for listener in self.bisq_setup_listeners:
@@ -281,6 +290,9 @@ class BisqSetup:
         self._check_inbound_connections()
 
     def shut_down(self):
+        if self._stopped:
+            return
+        self._stopped = True
         for unsub in self._subscriptions:
             unsub()
         self._subscriptions.clear()

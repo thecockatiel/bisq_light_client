@@ -16,6 +16,7 @@ from bisq.common.persistence.persistence_manager import PersistenceManager
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
 from bisq.common.protocol.persistable.persistable_data_host import PersistedDataHost
 from bisq.common.setup.log_setup import (
+    destory_user_logger,
     get_ctx_logger,
     get_user_logger,
     logger_context,
@@ -296,6 +297,7 @@ class UserManager(PersistedDataHost):
             new_user_id = None
             ctx = self.get_user_context(user_id)
             await ctx.shut_down()
+            destory_user_logger(ctx.user_id)
             ctx.logger = None
             del self._user_contexts[ctx.user_id]
             del self._user_manager_payload.user_alias_entries[ctx.user_id]
