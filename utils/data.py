@@ -123,6 +123,7 @@ class ObservableSet(set[T]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
@@ -177,6 +178,7 @@ class ObservableMap(dict[K, V]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.discard(listener)
@@ -227,6 +229,7 @@ class ObservableList(list[T]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
@@ -349,6 +352,7 @@ class FilteredList(Generic[T]):
         
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
