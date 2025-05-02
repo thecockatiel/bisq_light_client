@@ -45,8 +45,8 @@ class ProposalListPresentation(
         self.bsq_wallet_service = bsq_wallet_service
         self.validator_provider = validator_provider
 
-        dao_state_service.add_dao_state_listener(self)
-        my_proposal_list_service.add_listener(self)
+        self.dao_state_service.add_dao_state_listener(self)
+        self.my_proposal_list_service.add_listener(self)
 
         self.all_proposals = ObservableList["Proposal"]()
         self.active_or_my_unconfirmed_proposals = FilteredList["Proposal"](
@@ -77,6 +77,20 @@ class ProposalListPresentation(
                 ),
             )
         )
+
+    def shut_down(self):
+        UserThread.execute(
+            lambda: (
+                self.proposal_service.temp_proposals.remove_listener(
+                    self.proposal_list_change_listener
+                ),
+                self.proposal_service.proposal_payloads.remove_listener(
+                    self.proposal_list_change_listener
+                )
+            )
+        )
+        self.dao_state_service.remove_dao_state_listener(self)
+        self.my_proposal_list_service.remove_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener

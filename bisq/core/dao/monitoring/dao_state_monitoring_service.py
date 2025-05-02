@@ -25,9 +25,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.state.storage.dao_state_storage_service import (
         DaoStateStorageService,
     )
-    from bisq.core.dao.monitoring.network.state_network_service import (
-        StateNetworkService,
-    )
     from bisq.core.dao.monitoring.network.messages.get_dao_state_hashes_request import (
         GetDaoStateHashesRequest,
     )
@@ -118,6 +115,11 @@ class DaoStateMonitoringService(
 
     def start(self):
         pass
+
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+        self._dao_state_network_service.remove_listener(self)
+        self._dao_state_network_service.shut_down()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
@@ -235,11 +237,6 @@ class DaoStateMonitoringService(
             dao_state_block = DaoStateBlock(dao_state_hash)
             self.dao_state_block_chain.append(dao_state_block)
             self._dao_state_block_by_height[dao_state_hash.height] = dao_state_block
-
-    def add_response_listener(
-        self, response_listener: "StateNetworkService.ResponseListener"
-    ):
-        self._dao_state_network_service.add_response_listener(response_listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listeners

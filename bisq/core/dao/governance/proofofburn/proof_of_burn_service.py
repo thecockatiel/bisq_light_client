@@ -63,6 +63,9 @@ class ProofOfBurnService(DaoSetupService, DaoStateListener):
         self.proof_of_burn_tx_list.extend(self._get_all_proof_of_burn_txs())
         self.update_flag.set(self.update_flag.get() + 1)
 
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
     # ///////////////////////////////////////////////////////////////////////////////////////////

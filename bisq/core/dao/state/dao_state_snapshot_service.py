@@ -91,6 +91,7 @@ class DaoStateSnapshotService(DaoSetupService, DaoStateListener):
         pass
 
     def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
         self._dao_state_storage_service.shut_down()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

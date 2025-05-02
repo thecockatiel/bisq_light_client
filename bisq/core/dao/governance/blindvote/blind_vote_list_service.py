@@ -49,11 +49,12 @@ class BlindVoteListService(
         self.p2p_service = p2p_service
         self.period_service = period_service
         self.blind_vote_storage_service = blind_vote_storage_service
+        self.append_only_data_store_service = append_only_data_store_service
         self.blind_vote_validator = blind_vote_validator
 
         self.blind_vote_payloads = ObservableList["BlindVotePayload"]()
 
-        append_only_data_store_service.add_service(blind_vote_storage_service)
+        self.append_only_data_store_service.add_service(blind_vote_storage_service)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -64,6 +65,13 @@ class BlindVoteListService(
 
     def start(self):
         self._fill_list_from_append_only_data_store()
+
+    def shut_down(self):
+        self.append_only_data_store_service.remove_service(
+            self.blind_vote_storage_service
+        )
+        self.dao_state_service.remove_dao_state_listener(self)
+        self.p2p_service.p2p_data_storage.remove_append_only_data_store_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
@@ -79,9 +87,7 @@ class BlindVoteListService(
         self._fill_list_from_append_only_data_store()
 
         # We set the listener after parsing is complete to be sure we have a consistent state for the phase check.
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            self
-        )
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // AppendOnlyDataStoreListener

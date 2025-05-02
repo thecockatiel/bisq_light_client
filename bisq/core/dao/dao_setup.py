@@ -160,3 +160,6 @@ class DaoSetup:
     def shut_down(self):
         self._bsq_node.shut_down()
         self._accounting_node.shut_down()
+        for service in self._dao_setup_services:
+            if getattr(service, "shut_down", None):
+                service.shut_down()

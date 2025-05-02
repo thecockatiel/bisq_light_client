@@ -86,6 +86,10 @@ class VoteRevealService(DaoStateListener, DaoSetupService):
     def start(self):
         pass
 
+    def shut_down(self):
+        self.vote_reveal_exceptions.remove_listener(self._on_exceptions_changed)
+        self._dao_state_service.remove_dao_state_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
     # ///////////////////////////////////////////////////////////////////////////////////////////

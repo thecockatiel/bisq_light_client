@@ -71,6 +71,12 @@ class MyProposalListService(PersistedDataHost, DaoStateListener):
         self.p2p_service.num_connected_peers_property.add_listener(
             self.num_connected_peers_listener
         )
+    
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+        self.p2p_service.num_connected_peers_property.remove_listener(
+            self.num_connected_peers_listener
+        )
 
     def num_connected_peers_listener(self, e: SimplePropertyChangeEvent[int]):
         self._re_publish_my_proposals_once_well_connected()

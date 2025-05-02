@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.core.btc.wallet.wallet_transactions_change_listener import (
@@ -40,6 +41,7 @@ class MyBondedReputationRepository(DaoSetupService, WalletTransactionsChangeList
         self._bsq_wallet_service = bsq_wallet_service
         self._my_reputation_list_service = my_reputation_list_service
         self.my_bonded_reputations = ObservableList["MyBondedReputation"]()
+        self._subscriptions: list[Callable[[], None]] = []
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -50,11 +52,19 @@ class MyBondedReputationRepository(DaoSetupService, WalletTransactionsChangeList
             def on_parse_block_complete_after_batch_processing(self_, block):
                 self.update()
 
-        self._dao_state_service.add_dao_state_listener(Listener())
+        self._subscriptions.append(
+            self._dao_state_service.add_dao_state_listener(Listener())
+        )
         self._bsq_wallet_service.add_wallet_transactions_change_listener(self)
 
     def start(self):
         pass
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self._bsq_wallet_service.remove_wallet_transactions_change_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // WalletTransactionsChangeListener

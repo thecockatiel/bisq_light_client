@@ -45,7 +45,12 @@ class BondedReputationRepository(BondRepository["BondedReputation", "Reputation"
         # listeners and update our data with stale data from bondedRolesRepository. After that the bondedRolesRepository
         # gets triggered the listeners and we would miss the current state if we would not listen here as well on the
         # bond list.
-        self._bonded_roles_repository.bonds.add_listener(lambda _: self.update())
+        self._subscriptions.append(
+            self._bonded_roles_repository.bonds.add_listener(lambda _: self.update())
+        )
+
+    def shut_down(self):
+        super().shut_down() # to be explicit
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Protected

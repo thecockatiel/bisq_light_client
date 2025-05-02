@@ -18,9 +18,6 @@ from utils.java_compat import java_cmp_str
 from utils.time import get_time_ms
 
 if TYPE_CHECKING:
-    from bisq.core.dao.monitoring.network.state_network_service import (
-        StateNetworkService,
-    )
     from bisq.core.dao.monitoring.network.messages.get_blind_vote_state_hashes_request import (
         GetBlindVoteStateHashesRequest,
     )
@@ -103,6 +100,10 @@ class BlindVoteStateMonitoringService(
 
     def start(self):
         pass
+
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
+        self._blind_vote_state_network_service.remove_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
@@ -211,11 +212,6 @@ class BlindVoteStateMonitoringService(
         self._blind_vote_state_network_service.request_hashes(
             self._genesis_tx_info.genesis_block_height, peers_address
         )
-
-    def add_response_listener(
-        self, response_listener: "StateNetworkService.ResponseListener"
-    ):
-        self._blind_vote_state_network_service.add_response_listener(response_listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listeners

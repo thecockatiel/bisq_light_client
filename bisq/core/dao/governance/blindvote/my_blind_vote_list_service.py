@@ -114,6 +114,12 @@ class MyBlindVoteListService(PersistedDataHost, DaoStateListener, DaoSetupServic
     def start(self):
         pass
 
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+        self.p2p_service.num_connected_peers_property.remove_listener(
+            self._num_connected_peers_listener
+        )
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PersistedDataHost
     # ///////////////////////////////////////////////////////////////////////////////////////////

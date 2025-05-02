@@ -65,6 +65,9 @@ class DaoStateService(DaoSetupService):
         self._assert_dao_state_change()
         self.dao_state.chain_height = self.genesis_tx_info.genesis_block_height
 
+    def shut_down(self):
+        self._cached_tx_id_set_by_address.clear()
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Snapshot
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1072,10 +1075,11 @@ class DaoStateService(DaoSetupService):
     # // Listeners
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
-    def add_dao_state_listener(self, listener: "DaoStateListener") -> None:
+    def add_dao_state_listener(self, listener: "DaoStateListener"):
         self.dao_state_listeners.add(listener)
+        return lambda: self.remove_dao_state_listener(listener)
 
-    def remove_dao_state_listener(self, listener: "DaoStateListener") -> None:
+    def remove_dao_state_listener(self, listener: "DaoStateListener"):
         self.dao_state_listeners.discard(listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////

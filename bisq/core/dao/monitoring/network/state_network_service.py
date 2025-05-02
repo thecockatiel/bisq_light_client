@@ -221,10 +221,10 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
     def reset(self) -> None:
         self._request_state_hash_handler_map.clear()
 
-    def add_response_listener(
-        self, response_listener: "StateNetworkService.ResponseListener"
-    ) -> None:
-        self._response_listeners.add(response_listener)
+    def shut_down(self):
+        if self._message_listener_added:
+            self._network_node.remove_message_listener(self)
+            self._message_listener_added = False
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listeners
@@ -234,6 +234,11 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
         self, listener: "StateNetworkService.Listener[_Msg, _Req, _StH]"
     ) -> None:
         self._listeners.add(listener)
+
+    def remove_listener(
+        self, listener: "StateNetworkService.Listener[_Msg, _Req, _StH]"
+    ) -> None:
+        self._listeners.discard(listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

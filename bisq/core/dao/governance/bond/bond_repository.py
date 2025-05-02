@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Generic, Iterator, Optional, TypeVar
 from bisq.core.btc.wallet.wallet_transactions_change_listener import (
@@ -49,6 +50,7 @@ class BondRepository(
         self._bond_by_uid_map: dict[str, _B] = {}
         self._bonded_asset_by_hash_map: Optional[dict[bytes, _T]] = None
         self.bonds: ObservableList[_B] = ObservableList()
+        self._subscriptions: list[Callable[[], None]] = []
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -59,11 +61,17 @@ class BondRepository(
             def on_parse_block_complete_after_batch_processing(self_, block):
                 self.update()
 
-        self._dao_state_service.add_dao_state_listener(Listener())
+        self._subscriptions.append(self._dao_state_service.add_dao_state_listener(Listener()))
         self._bsq_wallet_service.add_wallet_transactions_change_listener(self)
 
     def start(self):
         self.update()
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self._bsq_wallet_service.remove_wallet_transactions_change_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // WalletTransactionsChangeListener

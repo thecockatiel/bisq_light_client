@@ -50,7 +50,6 @@ if TYPE_CHECKING:
     from bisq.core.dao.governance.period.period_service import PeriodService
 
 
-
 class ProposalService(
     HashMapChangedListener,
     AppendOnlyDataStoreListener,
@@ -80,6 +79,8 @@ class ProposalService(
         self.temp_proposal_storage_service = temp_proposal_storage_service
         self.dao_state_service = dao_state_service
         self.validator_provider = validator_provider
+        self.append_only_data_store_service = append_only_data_store_service
+        self.protected_data_store_service = protected_data_store_service
 
         # fields
 
@@ -93,8 +94,8 @@ class ProposalService(
         self.proposal_payloads = ObservableList["ProposalPayload"]()
 
         # We add our stores to the global stores
-        append_only_data_store_service.add_service(proposal_storage_service)
-        protected_data_store_service.add_service(temp_proposal_storage_service)
+        self.append_only_data_store_service.add_service(proposal_storage_service)
+        self.protected_data_store_service.add_service(temp_proposal_storage_service)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -105,13 +106,18 @@ class ProposalService(
         # Listen for tempProposals
         self.p2p_service.add_hash_set_changed_listener(self)
         # Listen for proposalPayloads
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            self
-        )
+        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(self)
 
     def start(self):
         self._fill_list_from_protected_store()
         self._fill_list_from_append_only_data_store()
+
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+        self.p2p_service.remove_hash_map_changed_listener(self)
+        self.p2p_service.p2p_data_storage.remove_append_only_data_store_listener(self)
+        self.append_only_data_store_service.remove_service(self.proposal_storage_service)
+        self.protected_data_store_service.remove_service(self.temp_proposal_storage_service)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // HashMapChangedListener

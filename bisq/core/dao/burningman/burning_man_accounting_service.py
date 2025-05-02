@@ -59,6 +59,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         trade_statistics_manager: "TradeStatisticsManager",
         preferences: "Preferences",
     ):
+        self.dao_state_service = dao_state_service
         self._burning_man_accounting_store_service = (
             burning_man_accounting_store_service
         )
@@ -77,6 +78,7 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         self.received_btc_balance_entry_list_excluding_legacy_bm: list[
             "ReceivedBtcBalanceEntry"
         ] = []
+        self._subscriptions: list[Callable[[], None]] = []
 
         dao_state_service.add_dao_state_listener(self)
         last_block = dao_state_service.last_block
@@ -88,8 +90,10 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def add_listeners(self):
-        self._trade_statistics_manager.observable_trade_statistics_set.add_listener(
-            lambda _: setattr(self, "_average_prices_valid", False)
+        self._subscriptions.append(
+            self._trade_statistics_manager.observable_trade_statistics_set.add_listener(
+                lambda _: setattr(self, "_average_prices_valid", False)
+            )
         )
 
     def start(self):
@@ -113,6 +117,12 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
             args=(run_async,),
             name="BurningManAccountingService.start.run_async",
         ).start()
+
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener

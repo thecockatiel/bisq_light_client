@@ -157,6 +157,7 @@ class DaoFacade(DaoSetupService):
         self._config = config
 
         self.phase_property = SimpleProperty(DaoPhase.Phase.UNDEFINED)
+        self._subscriptions: list[Callable[[], None]] = []
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoSetupService
@@ -172,7 +173,9 @@ class DaoFacade(DaoSetupService):
                     if phase is not None:
                         self.phase_property.set(phase)
 
-        self._dao_state_service.add_dao_state_listener(Listener())
+        self._subscriptions.append(
+            self._dao_state_service.add_dao_state_listener(Listener())
+        )
 
     def start(self):
         pass
@@ -182,6 +185,13 @@ class DaoFacade(DaoSetupService):
 
     def remove_bsq_state_listener(self, listener: DaoStateListener):
         self._dao_state_service.remove_dao_state_listener(listener)
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self._my_proposal_list_service.shut_down()
+        self._ballot_list_presentation.shut_down()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # //
@@ -651,7 +661,7 @@ class DaoFacade(DaoSetupService):
 
     def is_my_role(self, role: "Role") -> bool:
         return self._bonded_roles_repository.is_my_role(role)
-    
+
     def get_issuance_for_cycle(self, cycle: "Cycle") -> int:
         return sum(
             ep.proposal.get_requested_bsq().value

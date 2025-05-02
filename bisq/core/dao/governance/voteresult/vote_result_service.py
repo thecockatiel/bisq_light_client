@@ -117,6 +117,9 @@ class VoteResultService(DaoStateListener, DaoSetupService):
     def start(self):
         pass
 
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +232,9 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                     f"There have not been any votes in that cycle. chainHeight={chain_height}"
                 )
 
-            self.logger.info(f"Evaluating vote result took {get_time_ms() - start_ts} ms")
+            self.logger.info(
+                f"Evaluating vote result took {get_time_ms() - start_ts} ms"
+            )
 
     def _get_decrypted_ballots_with_merits_set(
         self, chain_height: int
@@ -692,7 +697,9 @@ class VoteResultService(DaoStateListener, DaoSetupService):
                 )
                 evaluated_proposal = EvaluatedProposal(False, proposal_vote_result)
                 evaluated_proposals.add(evaluated_proposal)
-                self.logger.info(f"Proposal ignored by all voters: {evaluated_proposal}")
+                self.logger.info(
+                    f"Proposal ignored by all voters: {evaluated_proposal}"
+                )
 
         # Check if our issuance sum is not exceeding the limit
         sum_issuance = sum(

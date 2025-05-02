@@ -28,13 +28,18 @@ class BallotListPresentation(BallotListChangeListener, DaoStateListener):
     ):
         self._ballot_list_service = ballot_list_service
         self._period_service = period_service
+        self._dao_state_service = dao_state_service
         self._proposal_validator_provider = proposal_validator_provider
 
         self.all_ballots = ObservableList["Ballot"]()
         self.ballots_of_cycle = FilteredList["Ballot"](self.all_ballots)
 
-        dao_state_service.add_dao_state_listener(self)
-        ballot_list_service.add_listener(self)
+        self._dao_state_service.add_dao_state_listener(self)
+        self._ballot_list_service.add_listener(self)
+
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
+        self._ballot_list_service.remove_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener

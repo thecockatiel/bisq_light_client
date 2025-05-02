@@ -21,6 +21,10 @@ class ProtectedDataStoreService:
     def add_service(self, service: "MapStoreService[PersistableEnvelope,ProtectedStorageEntry]") -> None:
         self.services.append(service)
 
+    def remove_service(self, service: "MapStoreService[PersistableEnvelope,ProtectedStorageEntry]") -> None:
+        if service in self.services:
+            self.services.remove(service)
+
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]) -> None:
         if not self.services:
             complete_handler()

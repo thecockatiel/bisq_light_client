@@ -45,12 +45,13 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         self.logger = get_ctx_logger(__name__)
         self._bsq_blocks_storage_service = bsq_blocks_storage_service
         self._storage_dir = storage_dir
+        self._resource_data_store_service = resource_data_store_service
 
         self._blocks: list["Block"] = []
         self._executor_service = ThreadPoolExecutor(max_workers=1)
         self._future: Optional[Future] = None
 
-        resource_data_store_service.add_service(self)
+        self._resource_data_store_service.add_service(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -110,6 +111,7 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
 
     def shut_down(self):
         self._executor_service.shutdown()
+        self._resource_data_store_service.remove_service(self)
 
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
         def handle_error(e):

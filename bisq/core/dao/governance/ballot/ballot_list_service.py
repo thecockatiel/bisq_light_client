@@ -59,8 +59,7 @@ class BallotListService(PersistedDataHost, DaoSetupService):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def add_listeners(self):
-        payloads = self.proposal_service.proposal_payloads
-        payloads.add_listener(self._on_changed)
+        self.proposal_service.proposal_payloads.add_listener(self._on_changed)
 
     def _on_changed(self, e: ObservableChangeEvent["ProposalPayload"]) -> None:
         if e.added_elements:
@@ -90,6 +89,9 @@ class BallotListService(PersistedDataHost, DaoSetupService):
     def start(self) -> None:
         pass
 
+    def shut_down(self):
+        self.proposal_service.proposal_payloads.remove_listener(self._on_changed)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PersistedDataHost
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -113,6 +115,9 @@ class BallotListService(PersistedDataHost, DaoSetupService):
 
     def add_listener(self, listener: "BallotListChangeListener") -> None:
         self.listeners.add(listener)
+
+    def remove_listener(self, listener: "BallotListChangeListener") -> None:
+        self.listeners.discard(listener)
 
     def get_validated_ballot_list(self) -> list["Ballot"]:
         return [

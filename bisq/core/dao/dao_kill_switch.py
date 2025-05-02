@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from bisq.common.version import Version
 from bisq.core.dao.dao_setup_service import DaoSetupService
@@ -12,10 +13,13 @@ class DaoKillSwitch(DaoSetupService):
     def __init__(self, filter_manager: "FilterManager"):
         self._filter_manager = filter_manager
         self.dao_disabled = False
+        self._subscriptions: list[Callable[[], None]] = []
 
     def add_listeners(self):
-        self._filter_manager.filter_property.add_listener(
-            lambda e: self._apply_filter(e.new_value)
+        self._subscriptions.append(
+            self._filter_manager.filter_property.add_listener(
+                lambda e: self._apply_filter(e.new_value)
+            )
         )
 
     def start(self):
@@ -41,3 +45,8 @@ class DaoKillSwitch(DaoSetupService):
                 "The DAO features have been disabled by the Bisq developers. "
                 "Please check out the Bisq Forum for further information."
             )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
