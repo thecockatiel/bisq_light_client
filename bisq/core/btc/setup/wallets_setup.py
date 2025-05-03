@@ -46,6 +46,8 @@ class WalletsSetup:
         self._num_peers_property = SimpleProperty(0)
         self._setup_completed_handlers: set[Callable[[], None]] = set()
 
+        self._subscriptions: list[Callable[[], None]] = []
+
         self.wallets_setup_failed_property = SimpleProperty(False)
         self.wallet_config: Optional["WalletConfig"] = None
         self.shut_down_complete_property = SimpleProperty(False)

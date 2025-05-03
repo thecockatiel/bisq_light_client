@@ -43,6 +43,7 @@ class WalletAppSetup:
         self.fee_service = fee_service
         self.config = config
         self.preferences = preferences
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.btc_info_binding: Optional[SimpleProperty[str]] = None
         self.btc_sync_progress_property = SimpleProperty(-1.0)
@@ -130,8 +131,10 @@ class WalletAppSetup:
             transform=handle_btc_info,
         )
 
-        self.btc_info_binding.add_listener(
-            lambda e: self.btc_info_property.set(e.new_value)
+        self._subscriptions.append(
+            self.btc_info_binding.add_listener(
+                lambda e: self.btc_info_property.set(e.new_value)
+            )
         )
 
         def on_initialized():
@@ -142,6 +145,12 @@ class WalletAppSetup:
             wallet_service_exception.set(e)
 
         self.wallets_setup.initialize(None, on_initialized, on_errored)
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.btc_info_binding = None
 
     def set_rejected_tx_error_message_handler(
         self,
@@ -249,7 +258,9 @@ class WalletAppSetup:
 
                     UserThread.run_after(process_delayed, timedelta(seconds=3))
 
-        self.rejected_tx_exception_property.add_listener(handler)
+        self._subscriptions.append(
+            self.rejected_tx_exception_property.add_listener(handler)
+        )
 
     def _get_btc_network_as_string(self) -> str:
         if self.config.ignore_local_btc_node:

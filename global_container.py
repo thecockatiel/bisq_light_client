@@ -26,6 +26,12 @@ class GlobalContainer:
 
     def __getattr__(self, name):
         return None
+    
+    def shut_down(self):
+        # cleanup some refs to allow cleanup
+        if self._persistence_proto_resolver:
+            self._persistence_proto_resolver._btc_wallet_service_provider = None
+            self._persistence_proto_resolver = None
 
     @property
     def core_context(self):

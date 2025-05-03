@@ -5,9 +5,9 @@ from datetime import timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 import random
 from typing import TYPE_CHECKING, Optional
-import shutil
 from bisq.common.app.dev_env import DevEnv
 from bisq.common.file.file_util import get_usable_space
+from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.common.util.utilities import is_qubes_os
 from bisq.core.account.sign.signed_witness import SignedWitness
@@ -208,6 +208,7 @@ class BisqSetup:
         self.bisq_setup_listeners = set["BisqSetupListener"]()
 
         self._subscriptions: list[Callable[[], None]] = []
+        self._timers: list[Timer] = []
         self._stopped = False
 
         # TODO: multi-user related
@@ -254,6 +255,9 @@ class BisqSetup:
     def add_bisq_setup_listener(self, listener: "BisqSetupListener"):
         self.bisq_setup_listeners.add(listener)
 
+    def remove_bisq_setup_listener(self, listener: "BisqSetupListener"):
+        self.bisq_setup_listeners.discard(listener)
+
     def start(self):
         if self._stopped:
             return
@@ -293,9 +297,13 @@ class BisqSetup:
         if self._stopped:
             return
         self._stopped = True
+        for timer in self._timers:
+            timer.stop()
+        self._timers.clear()
         for unsub in self._subscriptions:
             unsub()
         self._subscriptions.clear()
+        self._wallet_app_setup.shut_down()
         self.p2p_network_and_wallet_initialized = None
         self._p2p_network_setup.shut_down()
         self._domain_initialisation.shut_down()
@@ -362,6 +370,7 @@ class BisqSetup:
         startup_timeout = UserThread.run_after(
             on_startup_timeout, timedelta(minutes=BisqSetup.STARTUP_TIMEOUT_MINUTES)
         )
+        self._timers.append(startup_timeout)
 
         self.logger.info("Init P2P network")
         for listener in self.bisq_setup_listeners:
@@ -646,8 +655,11 @@ class BisqSetup:
         self.logger.debug(
             f"Next inbound connections check in {next_check_in_minutes} minutes"
         )
-        UserThread.run_after(
-            self._check_inbound_connections, timedelta(minutes=next_check_in_minutes)
+        self._timers.append(
+            UserThread.run_after(
+                self._check_inbound_connections,
+                timedelta(minutes=next_check_in_minutes),
+            )
         )
 
     def _notify_ui_that_we_cant_ping_ourself(self):

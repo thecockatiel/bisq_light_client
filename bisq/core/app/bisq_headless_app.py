@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
 
 
-
 class BisqHeadlessApp(BisqSetupListener):
 
     def __init__(
@@ -49,6 +48,14 @@ class BisqHeadlessApp(BisqSetupListener):
 
     def on_setup_complete(self):
         self._logger.info("onSetupComplete")
+
+    def shut_down(self):
+        self._user_context.global_container.bisq_setup.remove_bisq_setup_listener(self)
+        self._corrupted_storage_file_handler = None
+        self._trade_manager = None
+        self._uncaught_exception_handler = None
+        self._graceful_shut_down_handler = None
+        self._user_context = None
 
     def _setup_handlers(self):
         # TODO: later we may want to replace these

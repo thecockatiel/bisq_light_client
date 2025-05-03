@@ -1,5 +1,7 @@
+import concurrent
+import concurrent.futures
 import contextvars
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from utils.aio import (
     is_async_callable,
     get_asyncio_loop,
@@ -34,9 +36,11 @@ class TwistedTimer(Timer):
     def __init__(self):
         self._callable: Callable[[], None] = None
         self._is_periodically = False
+        self._interval: Optional[timedelta] = None
         self._uid = str(uuid.uuid4())
         self._stopped = False
         self._deferred = None
+        self._ctx = None
 
     def _on_error(self, failure: "Failure"):
         if not self._stopped:
@@ -48,6 +52,25 @@ class TwistedTimer(Timer):
             elif count <= 1:
                 log.err(failure)
 
+            if not self._is_periodically and isinstance(
+                failure.value,
+                (asyncio.CancelledError, concurrent.futures.CancelledError),
+            ):
+                self.stop()
+
+    def _cleanup(self, *args, **kwargs):
+        self._deferred = None
+        self._callable = None
+        self._ctx = None
+
+    def _run_callable(self):
+        if is_async_callable(self._callable):
+            asyncio.run_coroutine_threadsafe(
+                self._ctx.run(self._callable), get_asyncio_loop()
+            )
+        else:
+            self._ctx.run(self._callable)
+
     def _run_later(
         self,
         delay: timedelta,
@@ -56,16 +79,12 @@ class TwistedTimer(Timer):
     ):
         self._is_periodically = False
         self._stopped = False
+        self._ctx = ctx
+        self._callable = callable
         self._start_ts = get_time_ms()
-        if is_async_callable(callable):
-            self._callable = lambda: asyncio.run_coroutine_threadsafe(
-                ctx.run(callable), get_asyncio_loop()
-            )
-        else:
-            self._callable = lambda: ctx.run(callable)
-
-        self._deferred = deferLater(reactor, delay.total_seconds(), self._callable)
+        self._deferred = deferLater(reactor, delay.total_seconds(), self._run_callable)
         self._deferred.addErrback(self._on_error)
+        self._deferred.addBoth(self._cleanup)
         return self
 
     def run_later(self, delay: timedelta, callable: Callable[[], None]):
@@ -80,19 +99,21 @@ class TwistedTimer(Timer):
         ctx: contextvars.Context,
     ):
         self._is_periodically = True
-        self._stopped = False
+        self._interval = interval
         self._callable = callable
+        self._ctx = ctx
         self._start_ts = get_time_ms()
-        if is_async_callable(callable):
-            self._callable = lambda: asyncio.run_coroutine_threadsafe(
-                ctx.run(callable), get_asyncio_loop()
-            )
-        else:
-            self._callable = lambda: ctx.run(callable)
-        self._deferred = deferLater(reactor, interval.total_seconds(), self._callable)
-        self._deferred.addErrback(self._on_error)
-        self._deferred.addBoth(lambda _: self._run_periodically(interval, callable, ctx))
+        self._periodic_run()
         return self
+    
+    def _periodic_run(self, *args, **kwargs):
+        if self._stopped:
+            return
+        self._deferred = deferLater(
+            reactor, self._interval.total_seconds(), self._run_callable
+        )
+        self._deferred.addErrback(self._on_error)
+        self._deferred.addBoth(self._periodic_run)
 
     def run_periodically(self, interval: timedelta, callable: Callable[[], None]):
         ctx = contextvars.copy_context()
@@ -103,6 +124,8 @@ class TwistedTimer(Timer):
         self._stopped = True
         if self._deferred:
             self._deferred.cancel()
+            # release resources
+            self._cleanup()
 
     def stop(self):
         reactor.callFromThread(self._stop)

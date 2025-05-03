@@ -36,6 +36,7 @@ class UserContext:
     persistence_orchestrator: PersistenceOrchestrator
     logger: logging.Logger
     global_container: Optional[GlobalContainer] = field(default=None)
+    _bisq_app: Optional[BisqHeadlessApp] = field(default=None, init=False)
     _lock: Lock = field(default_factory=lambda: Lock(), init=False)
     """only not None when UserManager.init_user has been called for user_id"""
 
@@ -97,11 +98,12 @@ class UserContext:
                         # TODO gui app
                         raise NotImplementedError("Gui mode not implemented yet")
                     else:
-                        BisqHeadlessApp(
+                        self._bisq_app = BisqHeadlessApp(
                             shared_container.uncought_exception_handler,
                             shared_container.graceful_shutdown_handler,
                             self,
-                        ).start_user_instance()
+                        )
+                        self._bisq_app.start_user_instance()
             except BaseException as e:
                 self.logger.error("Error while starting user context", exc_info=e)
                 raise e
@@ -121,6 +123,9 @@ class UserContext:
                         self.logger.info("OpenOfferManager shutdown started")
 
                         def shut_down_finished(ecode: int):
+                            self.global_container.shut_down()
+                            self._bisq_app.shut_down()
+                            self._bisq_app = None
                             self.global_container = None
                             remove_user_handler_from_shared(self.user_id)
                             d.callback(ecode)
