@@ -20,22 +20,58 @@ class GlobalContainer:
         persistence_orchestrator: "PersistenceOrchestrator",
     ):
         self._shared_container = shared_container
-        self.user = user
-        self.preferences = preferences
-        self.persistence_orchestrator = persistence_orchestrator
+        self._user = user
+        self._preferences = preferences
+        self._persistence_orchestrator = persistence_orchestrator
+        # this is to allow shut_down to free these from instances as well
+        self._logger = None
+        self._key_ring = None
 
     def __getattr__(self, name):
         return None
-    
+
     def shut_down(self):
         # cleanup some refs to allow cleanup
         if self._persistence_proto_resolver:
             self._persistence_proto_resolver._btc_wallet_service_provider = None
             self._persistence_proto_resolver = None
 
+        del self._shared_container
+
+        for key in self.__dict__:
+            # we unref the classes we have passed to our instances
+            # so that gc can collect them
+            if hasattr(self.__dict__[key], "__dict__"):
+                for depkey in self.__dict__[key].__dict__:
+                    normalized = "_" + depkey.lstrip("_")
+
+                    if normalized in self.__dict__:
+                        setattr(self.__dict__[key], depkey, None)
+            elif hasattr(self.__dict__[key], "__slots__"):
+                for depkey in self.__dict__[key].__slots__:
+                    normalized = "_" + depkey.lstrip("_")
+
+                    if normalized in self.__dict__:
+                        setattr(self.__dict__[key], depkey, None)
+
+        for key in self.__dict__.copy():
+            delattr(self, key)
+
     @property
     def core_context(self):
         return self._shared_container.core_context
+
+    @property
+    def user(self):
+        return self._user
+
+    @property
+    def preferences(self):
+        return self._preferences
+
+    @property
+    def persistence_orchestrator(self):
+        return self._persistence_orchestrator
 
     ###############################################################################
 

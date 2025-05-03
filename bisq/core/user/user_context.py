@@ -123,11 +123,11 @@ class UserContext:
                         self.logger.info("OpenOfferManager shutdown started")
 
                         def shut_down_finished(ecode: int):
-                            self.global_container.shut_down()
                             self.global_container.offer_filter_service.shut_down()
                             self.global_container.bsq_swap_take_offer_model.do_deactivate()
                             self._bisq_app.shut_down()
                             self._bisq_app = None
+                            self.global_container.shut_down()
                             self.global_container = None
                             remove_user_handler_from_shared(self.user_id)
                             d.callback(ecode)
