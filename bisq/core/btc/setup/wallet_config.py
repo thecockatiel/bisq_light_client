@@ -106,7 +106,7 @@ class WalletConfig(EventListener):
                     options["regtest"] = True
                 self._electrum_config = SimpleConfig(
                     options=options,
-                    read_user_dir_function=lambda: str(self._wallet_dir),
+                    read_user_dir_function=lambda wallet_dir=str(self._wallet_dir): wallet_dir,
                 )
                 if self._config.tor_control_host:
                     self._electrum_config.NETWORK_PROXY = (
