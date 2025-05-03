@@ -124,10 +124,10 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         # In case we restore from seed words and have balance we need to add the relevant addresses to our list.
         # IssuedReceiveAddresses does not contain all addresses where we expect balance so we need to listen to
         # incoming txs at blockchain sync to add the rest.
-        if self._wallet.get_available_balance() > 0:
-            for address in self._wallet.get_issued_receive_addresses():
+        if wallet.get_available_balance() > 0:
+            for address in wallet.get_issued_receive_addresses():
                 if self.is_address_not_in_entries(address):
-                    key = self._wallet.find_key_from_address(address)
+                    key = wallet.find_key_from_address(address)
                     if key:
                         # Address will be derived from key in getAddress method
                         self.logger.info(
@@ -154,6 +154,10 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
         wallet.add_new_tx_listener(self.maybe_add_new_address_entry)
 
         self.request_persistence()
+
+    def shut_down(self):
+        if self._wallet:
+            self._wallet.remove_new_tx_listener(self.maybe_add_new_address_entry)
 
     def add_address_entry(self, address_entry: "AddressEntry") -> None:
         entry_with_same_offer_id_and_context_exists = any(

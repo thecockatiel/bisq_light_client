@@ -110,6 +110,14 @@ class BsqWalletService(WalletService, DaoStateListener):
         self.wallet.add_new_tx_listener(self._on_new_tx_added)
         self.wallet.add_tx_removed_listener(self._on_tx_removed)
 
+    def shut_down(self):
+        super().shut_down()
+        if self.wallet:
+            self.wallet.remove_tx_verified_listener(self._on_tx_verified)
+            self.wallet.remove_new_tx_listener(self._on_new_tx_added)
+            self.wallet.remove_tx_removed_listener(self._on_tx_removed)
+            self.wallet = None
+
     def _on_tx_verified(self, tx: "Transaction"):
         self._update_bsq_wallet_transactions()
         self._unconfirmed_bsq_change_output_list_service.on_transaction_confidence_changed(

@@ -51,14 +51,21 @@ class Balances:
         return self.locked_balance_property.get()
 
     def on_all_services_initialized(self):
-        self._open_offer_manager.get_observable_list().add_listener(lambda *_: self.update_balance())
-        self._trade_manager.get_observable_list().add_listener(lambda *_: self.update_balance())
-        self._refund_manager.get_disputes_as_observable_list().add_listener(lambda *_: self.update_balance())
-        self._btc_wallet_service.add_balance_listener(lambda *_: self.update_balance())
-        self._btc_wallet_service.add_new_block_height_listener(lambda *_: self.update_balance())
+        self._open_offer_manager.get_observable_list().add_listener(self.update_balance)
+        self._trade_manager.get_observable_list().add_listener(self.update_balance)
+        self._refund_manager.get_disputes_as_observable_list().add_listener(self.update_balance)
+        self._btc_wallet_service.add_balance_listener(self.update_balance)
+        self._btc_wallet_service.add_new_block_height_listener(self.update_balance)
         self.update_balance()
 
-    def update_balance(self):
+    def shut_down(self):
+        self._open_offer_manager.get_observable_list().remove_listener(self.update_balance)
+        self._trade_manager.get_observable_list().remove_listener(self.update_balance)
+        self._refund_manager.get_disputes_as_observable_list().remove_listener(self.update_balance)
+        self._btc_wallet_service.remove_balance_listener(self.update_balance)
+        self._btc_wallet_service.remove_new_block_height_listener(self.update_balance)
+
+    def update_balance(self, *args):
         # Need to delay a bit to get the balances correct
         UserThread.execute(lambda: [
             self.update_available_balance(),

@@ -56,8 +56,13 @@ class BtcWalletService(WalletService, DaoStateListener):
         wallets_setup.add_setup_completed_handler(self._on_setup_completed)
 
     def _on_setup_completed(self):
+        self._wallets_setup.remove_setup_completed_handler(self._on_setup_completed)
         self.wallet = self._wallets_setup.btc_wallet
         self.add_listeners_to_wallet()
+
+    def shut_down(self):
+        super().shut_down()
+        self._wallets_setup.remove_setup_completed_handler(self._on_setup_completed)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Burn BSQ txs (some proposal txs, asset listing fee tx, proof of burn tx)

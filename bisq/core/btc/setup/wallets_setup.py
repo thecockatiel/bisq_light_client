@@ -114,6 +114,7 @@ class WalletsSetup:
         self.logger.info("wallets_setup.shut_down started")
 
         def on_shutdown_complete():
+            self._address_entry_list.shut_down()
             self.logger.info("wallet_config shut down completed")
             self.shut_down_complete_property.set(True)
 

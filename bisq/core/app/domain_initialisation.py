@@ -287,3 +287,4 @@ class DomainInitialisation:
 
     def shut_down(self):
         self.signed_witness_service.shut_down()
+        self.balances.shut_down()
