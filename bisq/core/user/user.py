@@ -1,3 +1,4 @@
+from utils.aio import as_future
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -17,6 +18,7 @@ from utils.data import (
     SimpleProperty,
     SimplePropertyChangeEvent,
 )
+from twisted.internet.defer import Deferred
 
 if TYPE_CHECKING:
     from bisq.core.user.cookie import Cookie
@@ -50,6 +52,7 @@ class User(PersistedDataHost):
         self.data_dir = data_dir
         self.persistence_manager = persistence_manager
         self.key_ring = key_ring
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.payment_accounts_observable = ObservableSet["PaymentAccount"]()
         self.current_payment_account_property = SimpleProperty["PaymentAccount"]()
@@ -108,7 +111,9 @@ class User(PersistedDataHost):
             self.user_payload.payment_accounts = set(self.payment_accounts_observable)
             self.request_persistence()
 
-        self.payment_accounts_observable.add_listener(on_payment_accounts_change)
+        self._subscriptions.append(
+            self.payment_accounts_observable.add_listener(on_payment_accounts_change)
+        )
 
         def on_current_payment_account_change(
             value: "SimplePropertyChangeEvent[PaymentAccount]",
@@ -116,8 +121,10 @@ class User(PersistedDataHost):
             self.user_payload.current_payment_account = value.new_value
             self.request_persistence()
 
-        self.current_payment_account_property.add_listener(
-            on_current_payment_account_change
+        self._subscriptions.append(
+            self.current_payment_account_property.add_listener(
+                on_current_payment_account_change
+            )
         )
 
         # We create a default placeholder account for BSQ swaps. The account has not content, it is just used
@@ -125,6 +132,26 @@ class User(PersistedDataHost):
         self.add_bsq_swap_account()
 
         self.request_persistence()
+
+    async def shut_down_for_removal(self, removing_user_data: False):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        if not removing_user_data:
+            d = Deferred()
+
+            def _on_persisted():
+                d.callback(True)
+
+            try:
+                self.persistence_manager.persist_now(_on_persisted, True)
+                self.persistence_manager.shutdown()
+            except BaseException as e:
+                d.errback(e)
+            
+            await as_future(d)
+        else:
+            self.persistence_manager.shutdown()
 
     def add_bsq_swap_account(self):
         assert (

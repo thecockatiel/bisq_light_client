@@ -84,9 +84,10 @@ class WalletService(ABC):
         if self.wallet:
             self.wallet.remove_change_event_listener(self._cache_invalidation_listener)
             self.wallet.remove_tx_changed_listener(self._on_tx_changed)
+            self.wallet = None
         self._tx_confidence_listeners.clear()
         self._address_confidence_listeners.clear()
-        self._address_to_matching_tx_set_cache.set(None)
+        self._address_to_matching_tx_set_cache.set(defaultdict(set))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Listener
@@ -110,6 +111,7 @@ class WalletService(ABC):
         self, listener: "AddressConfidenceListener"
     ) -> None:
         self._address_confidence_listeners.add(listener)
+        return lambda: self.remove_address_confidence_listener(listener)
 
     def remove_address_confidence_listener(
         self, listener: "AddressConfidenceListener"
@@ -118,6 +120,7 @@ class WalletService(ABC):
 
     def add_tx_confidence_listener(self, listener: "TxConfidenceListener") -> None:
         self._tx_confidence_listeners.add(listener)
+        return lambda: self.remove_tx_confidence_listener(listener)
 
     def remove_tx_confidence_listener(self, listener: "TxConfidenceListener") -> None:
         self._tx_confidence_listeners.discard(listener)
@@ -126,7 +129,8 @@ class WalletService(ABC):
         return self.wallet.available_balance_property.add_listener(listener)
 
     def remove_balance_listener(self, listener: Callable[[Coin], None]):
-        self.wallet.available_balance_property.remove_listener(listener)
+        if self.wallet:
+            self.wallet.available_balance_property.remove_listener(listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Checks
@@ -396,6 +400,7 @@ class WalletService(ABC):
 
     def add_change_event_listener(self, listener: "WalletChangeEventListener"):
         self.wallet.add_change_event_listener(listener)
+        return lambda: self.remove_change_event_listener(listener)
 
     def remove_change_event_listener(self, listener: "WalletChangeEventListener"):
         self.wallet.remove_change_event_listener(listener)

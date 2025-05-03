@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.core.account.witness.account_age_witness_service import (
@@ -15,7 +16,6 @@ from bitcoinj.base.coin import Coin
 
 if TYPE_CHECKING:
     from bisq.core.offer.offer import Offer
- 
 
 
 class OfferFilterService:
@@ -36,13 +36,21 @@ class OfferFilterService:
         # TODO: maybe replace with lru cache ?
         self.insufficient_counterparty_trade_limit_cache: dict[str, bool] = {}
         self.my_insufficient_trade_limit_cache: dict[str, bool] = {}
+        self._subscriptions: list[Callable[[], None]] = []
 
         if user:
             # If our accounts have changed we reset our myInsufficientTradeLimitCache as it depends on account data
             def on_accounts_changed(e):
                 self.my_insufficient_trade_limit_cache.clear()
 
-            user.payment_accounts_observable.add_listener(on_accounts_changed)
+            self._subscriptions.append(
+                user.payment_accounts_observable.add_listener(on_accounts_changed)
+            )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def can_take_offer(
         self, offer: "Offer", is_taker_api_user: bool

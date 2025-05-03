@@ -113,6 +113,10 @@ class LiteNodeNetworkService(MessageListener, ConnectionListener, PeerManager.Li
 
     def add_listener(self, listener: "LiteNodeNetworkService.Listener"):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
+
+    def remove_listener(self, listener: "LiteNodeNetworkService.Listener"):
+        self._listeners.remove(listener)
 
     def request_blocks(self, start_block_height: int):
         """

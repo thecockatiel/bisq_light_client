@@ -1,4 +1,5 @@
 import base64
+from collections.abc import Callable
 from datetime import timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional, TypeVar, Generic, List
@@ -50,7 +51,7 @@ class DisputeAgentManager(Generic[T], ABC):
         self.persisted_accepted_dispute_agents: list[T] = []
         self.republish_timer: Optional["Timer"] = None
         self.retry_republish_timer: Optional["Timer"] = None
-
+        self._subscriptions: list[Callable[[], None]] = []
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Abstract methods
@@ -104,7 +105,7 @@ class DisputeAgentManager(Generic[T], ABC):
                     if self.is_expected_instance(entry):
                         self.update_map()
                         self.remove_accepted_dispute_agent_from_user(entry)
-        self.dispute_agent_service.add_hash_set_changed_listener(DisputeAgentHashMapListener())
+        self._subscriptions.append(self.dispute_agent_service.add_hash_set_changed_listener(DisputeAgentHashMapListener()))
 
         self.persisted_accepted_dispute_agents = list(self.get_accepted_dispute_agents_from_user())
         self.clear_accepted_dispute_agents_at_user()
@@ -118,15 +119,20 @@ class DisputeAgentManager(Generic[T], ABC):
                 class Listener(BootstrapListener):
                     def on_data_received(self_):
                         self.start_republish_dispute_agent()
-                p2p_service.add_p2p_service_listener(Listener())
+                self._subscriptions.append(p2p_service.add_p2p_service_listener(Listener()))
 
-        self.filter_manager.filter_property.add_listener(
-            lambda e: self.update_map()
+        self._subscriptions.append(
+            self.filter_manager.filter_property.add_listener(
+                lambda e: self.update_map()
+            )
         )
 
         self.update_map()
 
     def shut_down(self) -> None:
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
         self.stop_republish_timer()
         self.stop_retry_republish_timer()
 

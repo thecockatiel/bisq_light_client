@@ -104,14 +104,13 @@ class BsqNode(DaoSetupService, ABC):
     def start(self):
         pass
 
-    # ///////////////////////////////////////////////////////////////////////////////////////////
-    # // API
-    # ///////////////////////////////////////////////////////////////////////////////////////////
-
     def shut_down(self):
         self._shutdown_in_progress.set(True)
         self._export_json_files_service.shut_down()
         self._dao_state_snapshot_service.shut_down()
+        self.p2p_service_listener = None
+        self.error_message_handler = None
+        self.warn_message_handler = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Protected

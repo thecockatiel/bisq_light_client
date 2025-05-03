@@ -63,6 +63,7 @@ class BtcWalletService(WalletService, DaoStateListener):
     def shut_down(self):
         super().shut_down()
         self._wallets_setup.remove_setup_completed_handler(self._on_setup_completed)
+        self.wallet = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Burn BSQ txs (some proposal txs, asset listing fee tx, proof of burn tx)

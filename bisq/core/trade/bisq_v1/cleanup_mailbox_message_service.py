@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING, List
 from bisq.common.setup.log_setup import get_ctx_logger
 
@@ -33,6 +34,12 @@ class CleanupMailboxMessagesService:
         self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.mailbox_message_service = mailbox_message_service
+        self._subscriptions: list[Callable[[], None]] = []
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def handle_trades(self, trades: List["Trade"]) -> None:
         # We wrap in a try catch as in failed trades we cannot be sure if expected data is set, so we could get error
@@ -44,7 +51,7 @@ class CleanupMailboxMessagesService:
                 class Listener(BootstrapListener):
                     def on_data_received(self_):
                         self._cleanup_mailbox_messages(trades)
-                self.p2p_service.add_p2p_service_listener(Listener())
+                self._subscriptions.append(self.p2p_service.add_p2p_service_listener(Listener()))
         except Exception as e:
             self.logger.error(f"Cleanup mailbox messages failed. {repr(e)}")
 

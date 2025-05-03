@@ -768,6 +768,7 @@ class PeerManager(ConnectionListener, PersistedDataHost):
 
     def add_listener(self, listener: "Listener"):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
 
     def remove_listener(self, listener: "Listener"):
         self._listeners.discard(listener)

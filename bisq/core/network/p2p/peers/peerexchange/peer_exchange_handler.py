@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import Future
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -43,6 +44,7 @@ class PeerExchangeHandler(MessageListener):
         self.connection: Optional["Connection"] = None
         self.stopped = False
         self.delay_timer: "Timer" = None
+        self._future: Optional[Future] = None
 
     def cancel(self):
         self.cleanup() 
@@ -81,8 +83,12 @@ class PeerExchangeHandler(MessageListener):
                 lambda: self._handle_timeout(node_address),
                 timedelta(seconds=self.TIMEOUT_SEC)
             )
-                
-        future = self.network_node.send_message(node_address, get_peers_request)
+
+        if self._future:
+            self._future.cancel()
+            self._future = None
+
+        self._future = self.network_node.send_message(node_address, get_peers_request)
 
         def on_success(connection: "Connection"):
             if not connection:
@@ -102,7 +108,7 @@ class PeerExchangeHandler(MessageListener):
                         f"That is expected if the peer is offline. Exception={str(e)}")
             self._handle_fault(error_message, CloseConnectionReason.SEND_MSG_FAILURE, node_address)
 
-        future.add_done_callback(FutureCallback(on_success, on_failure))
+        self._future.add_done_callback(FutureCallback(on_success, on_failure))
 
     def _handle_timeout(self, node_address: "NodeAddress"):
         if not self.stopped:
@@ -147,6 +153,11 @@ class PeerExchangeHandler(MessageListener):
 
     def cleanup(self):
         self.stopped = True
+
+        if self._future:
+            self._future.cancel()
+            self._future = None
+
         if self.connection is not None:
             self.connection.remove_message_listener(self)
 

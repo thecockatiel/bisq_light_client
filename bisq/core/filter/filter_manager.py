@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
 # NOTE: removed preferences as not needed
 
+
 # TODO: cryptography usages needs double check.
 class FilterManager:
     # Class constants
@@ -81,6 +82,7 @@ class FilterManager:
         self._config_file_editor = ConfigFileEditor(config.config_file)
         self._price_feed_node_address_provider = price_feed_node_address_provider
         self._ignore_dev_msg: bool = ignore_dev_msg
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.filter_property: SimpleProperty[Optional["Filter"]] = SimpleProperty(None)
         self.listeners: set["FilterManager.Listener"] = set()
@@ -144,7 +146,9 @@ class FilterManager:
                     if isinstance(payload, Filter):
                         self.on_filter_removed_from_network(payload)
 
-        self._p2p_service.add_hash_set_changed_listener(HashSetListener())
+        self._subscriptions.append(
+            self._p2p_service.add_hash_set_changed_listener(HashSetListener())
+        )
 
         # Add P2P service listener
         class ServiceListener(P2PServiceListener):
@@ -177,7 +181,16 @@ class FilterManager:
             def on_request_custom_bridges(self_):
                 pass
 
-        self._p2p_service.add_p2p_service_listener(ServiceListener())
+        self._subscriptions.append(
+            self._p2p_service.add_p2p_service_listener(ServiceListener())
+        )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self._user = None
+        self._key_ring = None
 
     def set_filter_warning_handler(self, filter_warning_handler: Callable[[str], None]):
         self.filter_warning_handler = filter_warning_handler
@@ -211,7 +224,7 @@ class FilterManager:
                 if filter.disable_dao:
                     self.filter_warning_handler(Res.get("popup.warning.disable.dao"))
 
-        self.add_listener(on_filter)
+        self._subscriptions.append(self.add_listener(on_filter))
 
     def is_privileged_dev_pub_key_banned(self, pub_key_as_hex: str) -> bool:
         filter = self.get_filter()
@@ -317,6 +330,10 @@ class FilterManager:
 
     def add_listener(self, listener: Listener):
         self.listeners.add(listener)
+        return lambda: self.remove_listener(listener)
+
+    def remove_listener(self, listener: Listener):
+        self.listeners.discard(listener)
 
     def get_filter(self) -> Optional[Filter]:
         return self.filter_property.get()
@@ -457,7 +474,9 @@ class FilterManager:
                 ):
                     return True
             except Exception as e:
-                self.logger.error(f"Error in is_delayed_payout_payment_account: {str(e)}")
+                self.logger.error(
+                    f"Error in is_delayed_payout_payment_account: {str(e)}"
+                )
                 return False
 
         return False

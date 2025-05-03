@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import Future
 from datetime import timedelta
 from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 from bisq.common.protocol.network.network_envelope import NetworkEnvelope
@@ -54,6 +55,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
         self._node_address = node_address
         self._listener = listener
         self._timeout_timer: Optional[Timer] = None
+        self._future: Optional[Future] = None
         self.nonce = next_random_int()
         self._stopped = False
 
@@ -92,10 +94,10 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 f"We send to peer {self._node_address} a {get_state_hashes_request}."
             )
             self._network_node.add_message_listener(self)
-            future = self._network_node.send_message(
+            self._future = self._network_node.send_message(
                 self._node_address, get_state_hashes_request
             )
-            future.add_done_callback(
+            self._future.add_done_callback(
                 self._handle_send_message_result(get_state_hashes_request)
             )
         else:
@@ -118,7 +120,8 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
             )
 
     def _handle_send_message_result(self, get_state_hashes_request: _Req):
-        def on_success(r): 
+        def on_success(r):
+            self._future = None
             if not self._stopped:
                 self.logger.info(
                     f"Sending of {get_state_hashes_request.__class__.__name__} message to peer {self._node_address.get_full_address()} succeeded."
@@ -130,6 +133,7 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 )
         
         def on_failure(e):
+            self._future = None
             if not self._stopped:
                 error_message = (
                     f"Sending getStateHashesRequest to {self._node_address} failed. "
@@ -189,6 +193,11 @@ class RequestStateHashesHandler(Generic[_Req, _Res], MessageListener, ABC):
                 self.logger.debug(
                     f"{self.__class__.__name__}: We got a message from another node. We ignore that."
                 )
+
+    def cancel(self):
+        if self._future:
+            self._future.cancel()
+            self._future = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

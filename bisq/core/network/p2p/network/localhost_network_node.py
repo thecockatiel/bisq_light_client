@@ -36,10 +36,11 @@ class LocalhostNetworkNode(NetworkNode):
         self.logger = get_ctx_logger(__name__)
         self.__create_socket_futures = ThreadSafeSet[Future]()
         self._server_timers = set[Timer]()
+        self._subscriptions: list[Callable[[], None]] = []
         
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         if setup_listener:
-            self.add_setup_listener(setup_listener)
+            self._subscriptions.append(self.add_setup_listener(setup_listener))
         
         
         def first():
@@ -91,5 +92,9 @@ class LocalhostNetworkNode(NetworkNode):
         if self.__create_socket_futures:
             for f in self.__create_socket_futures:
                 f.cancel()
-            self.__create_socket_futures.clear()
+        self.__create_socket_futures.clear()
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        
         return super().shut_down(shut_down_complete_handler)

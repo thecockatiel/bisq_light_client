@@ -125,6 +125,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
         self.mediator_manager = mediator_manager
         self.provider = provider
         self.clock_watcher = clock_watcher
+        self._subscriptions: list[Callable[[], None]] = []
 
         # We use uid for that map not the trade ID
         self.trade_protocol_by_trade_uid: dict[str, 'TradeProtocol'] = {}
@@ -150,10 +151,14 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
 
         self.persistence_manager.initialize(self.tradable_list, PersistenceManagerSource.PRIVATE, "PendingTrades")
 
-        self.p2p_service.add_decrypted_direct_message_listener(self)
+        self._subscriptions.append(self.p2p_service.add_decrypted_direct_message_listener(self))
 
         self.failed_trades_manager.unfail_trade_callback = self.unfail_trade
 
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PersistedDataHost
@@ -311,9 +316,9 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
                 def on_data_received(self_):
                     self.init_persisted_trades()
             
-            self.p2p_service.add_p2p_service_listener(Listener())
+            self._subscriptions.append(self.p2p_service.add_p2p_service_listener(Listener()))
 
-        self.get_observable_list().add_listener(lambda x: self.on_trades_changed())
+        self._subscriptions.append(self.get_observable_list().add_listener(lambda x: self.on_trades_changed()))
         self.on_trades_changed()
 
         # TODO:
@@ -671,7 +676,7 @@ class TradeManager(PersistedDataHost, DecryptedDirectMessageListener):
             def on_minute_tick(self_):
                 self.update_trade_period_state()
             
-        self.clock_watcher.add_listener(Listener())
+        self._subscriptions.append(self.clock_watcher.add_listener(Listener()))
         
     def update_trade_period_state(self):
         for trade in self.get_observable_list():

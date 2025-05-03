@@ -124,6 +124,8 @@ class UserContext:
 
                         def shut_down_finished(ecode: int):
                             self.global_container.shut_down()
+                            self.global_container.offer_filter_service.shut_down()
+                            self.global_container.bsq_swap_take_offer_model.do_deactivate()
                             self._bisq_app.shut_down()
                             self._bisq_app = None
                             self.global_container = None
@@ -131,7 +133,9 @@ class UserContext:
                             d.callback(ecode)
 
                         self.global_container.open_offer_manager.shut_down(
-                            lambda: self._on_open_offer_manager_shutdown(shut_down_finished)
+                            lambda: self._on_open_offer_manager_shutdown(
+                                shut_down_finished
+                            )
                         )
                 else:
                     d.callback(0)
@@ -151,6 +155,7 @@ class UserContext:
         wallets_setup.shut_down()
 
     def _on_wallets_setup_shutdown(self, result_handler: Callable[[], None]):
+        self.global_container.wallets_setup.shut_down_complete_property.remove_all_listeners()
         self.logger.info("WalletsSetup shutdown completed")
         self.global_container.p2p_service.shut_down(
             lambda: self._on_p2p_service_shutdown(result_handler)

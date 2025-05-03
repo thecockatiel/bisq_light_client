@@ -38,6 +38,7 @@ class TriggerPriceService:
         self.open_offers_by_currency = dict[str, set["OpenOffer"]]()
         self.offer_disabled_handler: Optional[Callable[[str], None]] = None
         self.update_counter = SimpleProperty(0)
+        self._subscriptions: list[Callable[[], None]] = []
 
     def on_all_services_initialized(
         self,
@@ -52,7 +53,14 @@ class TriggerPriceService:
                 def on_data_received(self_):
                     self._on_bootstrap_complete()
 
-            self.p2p_service.add_p2p_service_listener(Listener())
+            self._subscriptions.append(
+                self.p2p_service.add_p2p_service_listener(Listener())
+            )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def _on_bootstrap_complete(self) -> None:
         def on_open_offer_change(e: ObservableChangeEvent["OpenOffer"]):
@@ -61,12 +69,18 @@ class TriggerPriceService:
             if e.removed_elements:
                 self._on_removed_open_offers(e.removed_elements)
 
-        self.open_offer_manager.get_observable_list().add_listener(on_open_offer_change)
+        self._subscriptions.append(
+            self.open_offer_manager.get_observable_list().add_listener(
+                on_open_offer_change
+            )
+        )
 
         self._on_added_open_offers(self.open_offer_manager.get_observable_list())
 
-        self.price_feed_service.update_counter_property.add_listener(
-            lambda e: self._on_price_feed_changed(False)
+        self._subscriptions.append(
+            self.price_feed_service.update_counter_property.add_listener(
+                lambda e: self._on_price_feed_changed(False)
+            )
         )
         self._on_price_feed_changed(True)
 

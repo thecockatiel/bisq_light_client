@@ -297,16 +297,21 @@ class UserManager(PersistedDataHost):
             new_user_id = None
             ctx = self.get_user_context(user_id)
             await ctx.shut_down()
+            await ctx.preferences.shut_down_for_removal(remove_user_data)
+            await ctx.user.shut_down_for_removal(remove_user_data)
+            user_data_dir = ctx.user.data_dir
+            del ctx.preferences
+            del ctx.user
             destory_user_logger(ctx.user_id)
             ctx.logger = None
             del self._user_contexts[ctx.user_id]
             del self._user_manager_payload.user_alias_entries[ctx.user_id]
             if remove_user_data:
                 try:
-                    delete_directory(ctx.user.data_dir)
+                    delete_directory(user_data_dir)
                 except:
                     self.logger.warning(
-                        f"Failed to unlink user `{ctx.user_id}` directory: {ctx.user.data_dir}"
+                        f"Failed to unlink user `{ctx.user_id}` directory: {user_data_dir}"
                     )
             if len(self._user_contexts) > 0:
                 if ctx.user_id == self.active_user_id:

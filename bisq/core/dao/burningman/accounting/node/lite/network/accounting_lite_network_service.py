@@ -110,6 +110,10 @@ class AccountingLiteNodeNetworkService(
 
     def add_listener(self, listener: "AccountingLiteNodeNetworkService.Listener"):
         self._listeners.add(listener)
+        return lambda: self.remove_listener(listener)
+
+    def remove_listener(self, listener: "AccountingLiteNodeNetworkService.Listener"):
+        self._listeners.discard(listener)
 
     def request_blocks(self, start_block_height: int):
         """

@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.user_thread import UserThread
 from bisq.core.locale.res import Res
-from bisq.core.network.p2p.send_mailbox_message_listener import SendMailboxMessageListener
+from bisq.core.network.p2p.send_mailbox_message_listener import (
+    SendMailboxMessageListener,
+)
 from utils.concurrency import ThreadSafeSet
 from bisq.core.support.messages.support_message import SupportMessage
 from bisq.core.network.p2p.ack_message import AckMessage
@@ -21,7 +24,7 @@ if TYPE_CHECKING:
         DecryptedMessageWithPubKey,
     )
     from bisq.core.network.p2p.node_address import NodeAddress
- 
+
 
 class SupportManager(ABC):
 
@@ -30,6 +33,7 @@ class SupportManager(ABC):
         self.logger = get_ctx_logger(__name__)
         self.p2p_service = p2p_service
         self.wallets_setup = wallets_setup
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.mailbox_message_service = self.p2p_service.mailbox_message_service
 
@@ -49,8 +53,10 @@ class SupportManager(ABC):
             self.decryped_direct_message_with_pub_keys.add(message)
             self.try_apply_messages()
 
-        self.p2p_service.add_decrypted_direct_message_listener(
-            on_decrypted_direct_message
+        self._subscriptions.append(
+            self.p2p_service.add_decrypted_direct_message_listener(
+                on_decrypted_direct_message
+            )
         )
 
         def on_decrypted_mailbox_message(
@@ -59,9 +65,16 @@ class SupportManager(ABC):
             self.decryped_mailbox_message_with_pub_keys.add(message)
             self.try_apply_messages()
 
-        self.mailbox_message_service.add_decrypted_mailbox_listener(
-            on_decrypted_mailbox_message
+        self._subscriptions.append(
+            self.mailbox_message_service.add_decrypted_mailbox_listener(
+                on_decrypted_mailbox_message
+            )
         )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Abstract methods
@@ -115,11 +128,11 @@ class SupportManager(ABC):
 
     def on_all_services_initialized(self):
         self.all_services_initialized = True
-        
+
     def try_apply_messages(self):
         if self.is_ready:
             self.apply_messages()
-            
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Message handler
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -128,14 +141,20 @@ class SupportManager(ABC):
         trade_id = chat_message.trade_id
         uid = chat_message.uid
         channel_open = self.channel_open(chat_message)
-        
+
         if not channel_open:
-            self.logger.debug(f"We got a chatMessage but we don't have a matching chat. TradeId = {trade_id}")
+            self.logger.debug(
+                f"We got a chatMessage but we don't have a matching chat. TradeId = {trade_id}"
+            )
             if uid not in self.delay_msg_map:
-                timer = UserThread.run_after(lambda: self.on_chat_message(chat_message), timedelta(seconds=1))
+                timer = UserThread.run_after(
+                    lambda: self.on_chat_message(chat_message), timedelta(seconds=1)
+                )
                 self.delay_msg_map[uid] = timer
             else:
-                self.logger.warning(f"We got a chatMessage after we already repeated to apply the message after a delay. That should never happen. TradeId = {trade_id}")
+                self.logger.warning(
+                    f"We got a chatMessage after we already repeated to apply the message after a delay. That should never happen. TradeId = {trade_id}"
+                )
             return
 
         self.cleanup_retry_map(uid)
@@ -167,13 +186,13 @@ class SupportManager(ABC):
                         msg.acknowledged_property.value = True
                     else:
                         msg.ack_error_property.value = ack_message.error_message
-            
+
             self.request_persistence()
 
     @abstractmethod
     def get_ack_message_source_type(self) -> "AckMessageSourceType":
         pass
-    
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Send message
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -181,15 +200,20 @@ class SupportManager(ABC):
     def send_chat_message(self, message: "ChatMessage") -> "ChatMessage":
         peers_node_address = self.get_peer_node_address(message)
         receiver_pub_key_ring = self.get_peer_pub_key_ring(message)
-        
+
         if peers_node_address is None or receiver_pub_key_ring is None:
-            UserThread.run_after(lambda: message.send_message_error_property.set(Res.get("support.receiverNotKnown")), timedelta(seconds=1))
+            UserThread.run_after(
+                lambda: message.send_message_error_property.set(
+                    Res.get("support.receiverNotKnown")
+                ),
+                timedelta(seconds=1),
+            )
         else:
             self.logger.info(
                 f"Send {message.__class__.__name__} to peer {peers_node_address}. "
                 f"tradeId={message.trade_id}, uid={message.uid}"
             )
-            
+
             class MailboxListener(SendMailboxMessageListener):
                 def on_arrived(self_):
                     self.logger.info(
@@ -216,10 +240,7 @@ class SupportManager(ABC):
                     self.request_persistence()
 
             self.mailbox_message_service.send_encrypted_mailbox_message(
-                peers_node_address,
-                receiver_pub_key_ring,
-                message,
-                MailboxListener()
+                peers_node_address, receiver_pub_key_ring, message, MailboxListener()
             )
 
         return message
@@ -229,7 +250,7 @@ class SupportManager(ABC):
         support_message: "SupportMessage",
         peers_pub_key_ring: "PubKeyRing",
         result: bool,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> None:
         trade_id = support_message.get_trade_id()
         uid = support_message.uid
@@ -239,11 +260,11 @@ class SupportManager(ABC):
             source_msg_class_name=support_message.__class__.__name__,
             source_uid=uid,
             source_id=trade_id,
-            success=result, 
+            success=result,
             error_message=error_message,
         )
         peers_node_address = support_message.sender_node_address
-        
+
         self.logger.info(
             f"Send AckMessage for {ack_message.source_msg_class_name} to peer {peers_node_address}. "
             f"tradeId={trade_id}, uid={uid}"
@@ -269,10 +290,7 @@ class SupportManager(ABC):
                 )
 
         self.mailbox_message_service.send_encrypted_mailbox_message(
-            peers_node_address,
-            peers_pub_key_ring,
-            ack_message,
-            AckMailboxListener()
+            peers_node_address, peers_pub_key_ring, ack_message, AckMailboxListener()
         )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
@@ -290,17 +308,21 @@ class SupportManager(ABC):
 
     @property
     def is_ready(self) -> bool:
-        return (self.all_services_initialized and
-                self.p2p_service.is_bootstrapped and
-                self.wallets_setup.is_download_complete and
-                self.wallets_setup.has_sufficient_peers_for_broadcast)
+        return (
+            self.all_services_initialized
+            and self.p2p_service.is_bootstrapped
+            and self.wallets_setup.is_download_complete
+            and self.wallets_setup.has_sufficient_peers_for_broadcast
+        )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def apply_messages(self) -> None:
-        for decrypted_message_with_pub_key in self.decryped_direct_message_with_pub_keys:
+        for (
+            decrypted_message_with_pub_key
+        ) in self.decryped_direct_message_with_pub_keys:
             network_envelope = decrypted_message_with_pub_key.network_envelope
             if isinstance(network_envelope, SupportMessage):
                 self.on_support_message(network_envelope)
@@ -308,9 +330,13 @@ class SupportManager(ABC):
                 self.on_ack_message(network_envelope)
         self.decryped_direct_message_with_pub_keys.clear()
 
-        for decrypted_message_with_pub_key in self.decryped_mailbox_message_with_pub_keys:
+        for (
+            decrypted_message_with_pub_key
+        ) in self.decryped_mailbox_message_with_pub_keys:
             network_envelope = decrypted_message_with_pub_key.network_envelope
-            self.logger.trace(f"## decryptedMessageWithPubKey message={network_envelope.__class__.__name__}")
+            self.logger.trace(
+                f"## decryptedMessageWithPubKey message={network_envelope.__class__.__name__}"
+            )
             if isinstance(network_envelope, SupportMessage):
                 self.on_support_message(network_envelope)
                 self.mailbox_message_service.remove_mailbox_msg(network_envelope)
@@ -318,4 +344,3 @@ class SupportManager(ABC):
                 self.on_ack_message(network_envelope)
                 self.mailbox_message_service.remove_mailbox_msg(network_envelope)
         self.decryped_mailbox_message_with_pub_keys.clear()
-

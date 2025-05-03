@@ -307,6 +307,10 @@ class BisqSetup:
         self.p2p_network_and_wallet_initialized = None
         self._p2p_network_setup.shut_down()
         self._domain_initialisation.shut_down()
+        self._account_age_witness_service.shut_down()
+        self._alert_manager.shut_down()
+        self._app_startup_state.shut_down()
+        self._private_notification_manager.shut_down()
         # unref handlers
         self.display_tac_handler = None
         self.chain_file_locked_exception_handler = None

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bitcoinj.core.block import Block as BitcoinJBlock
 
+
 class LiteNode(BsqNode):
     """
     Main class for lite nodes which receive the BSQ transactions from a full node (e.g. seed nodes).
@@ -65,6 +66,7 @@ class LiteNode(BsqNode):
         self._wallets_setup = wallets_setup
 
         self._check_for_block_received_timer: Optional["Timer"] = None
+        self._subscriptions: list[Callable[[], None]] = []
 
         def block_download_listener(e: SimplePropertyChangeEvent[int]):
             if e.new_value > 0:
@@ -86,8 +88,10 @@ class LiteNode(BsqNode):
         if self._wallets_setup.is_download_complete:
             self._setup_wallet_best_block_listener()
         else:
-            self._wallets_setup.chain_height_property.add_listener(
-                self._block_download_listener
+            self._subscriptions.append(
+                self._wallets_setup.chain_height_property.add_listener(
+                    self._block_download_listener
+                )
             )
 
     def _setup_wallet_best_block_listener(self):
@@ -125,11 +129,16 @@ class LiteNode(BsqNode):
                 timedelta(seconds=LiteNode.CHECK_FOR_BLOCK_RECEIVED_DELAY_SEC),
             )
 
-        self._bsq_wallet_service.add_new_block_height_listener(on_new_block_height)
+        self._subscriptions.append(
+            self._bsq_wallet_service.add_new_block_height_listener(on_new_block_height)
+        )
 
     def shut_down(self):
         super().shut_down()
         self._lite_node_network_service.shut_down()
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Protected
@@ -159,7 +168,9 @@ class LiteNode(BsqNode):
             def on_fault(self_, error_message, connection):
                 pass
 
-        self._lite_node_network_service.add_listener(Listener())
+        self._subscriptions.append(
+            self._lite_node_network_service.add_listener(Listener())
+        )
         self._maybe_start_requesting_blocks()
 
     def _maybe_start_requesting_blocks(self):

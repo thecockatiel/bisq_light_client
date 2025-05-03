@@ -168,13 +168,19 @@ class P2PService(
         if self._keep_alive_manager is not None:
             self._keep_alive_manager.shut_down()
 
-        if self._network_ready_property is not None:
-            self._network_ready_property.remove_all_listeners()
-            self._network_ready_property = None
+        if self._network_ready_unsubscribe:
+            self._network_ready_unsubscribe()
+            self._network_ready_unsubscribe = None
 
         for unsub in self._subscriptions:
             unsub()
         self._subscriptions.clear()
+
+        if self._network_ready_property is not None:
+            self._network_ready_property.remove_all_listeners()
+            self._network_ready_property = None
+        
+        self._decrypted_direct_message_listeners.clear()
 
         if self._network_node is not None:
             self._network_node.remove_connection_listener(self)
@@ -534,8 +540,9 @@ class P2PService(
 
     def add_decrypted_direct_message_listener(
         self, listener: "DecryptedDirectMessageListener"
-    ) -> None:
+    ):
         self._decrypted_direct_message_listeners.add(listener)
+        return lambda: self.remove_decrypted_direct_message_listener(listener)
 
     def remove_decrypted_direct_message_listener(
         self, listener: "DecryptedDirectMessageListener"
@@ -551,9 +558,8 @@ class P2PService(
 
     def add_hash_set_changed_listener(
         self, hash_map_changed_listener: "HashMapChangedListener"
-    ) -> None:
-        self._p2p_data_storage.add_hash_map_changed_listener(hash_map_changed_listener)
-        return lambda: self.remove_hash_map_changed_listener(hash_map_changed_listener)
+    ):
+        return self._p2p_data_storage.add_hash_map_changed_listener(hash_map_changed_listener)
 
     def remove_hash_map_changed_listener(
         self, hash_map_changed_listener: "HashMapChangedListener"

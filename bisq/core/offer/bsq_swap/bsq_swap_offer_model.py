@@ -123,10 +123,10 @@ class BsqSwapOfferModel:
         self.bsq_wallet_service.add_bsq_balance_listener(self._bsq_balance_listener)
 
     def remove_listeners(self) -> None:
-        assert self._btc_balance_listener is not None
-        assert self._bsq_balance_listener is not None
-        self.btc_wallet_service.remove_balance_listener(self._btc_balance_listener)
-        self.bsq_wallet_service.remove_bsq_balance_listener(self._bsq_balance_listener)
+        if self._btc_balance_listener:
+            self.btc_wallet_service.remove_balance_listener(self._btc_balance_listener)
+        if self._bsq_balance_listener:
+            self.bsq_wallet_service.remove_bsq_balance_listener(self._bsq_balance_listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Calculations

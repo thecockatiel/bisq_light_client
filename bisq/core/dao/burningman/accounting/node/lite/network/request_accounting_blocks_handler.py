@@ -181,7 +181,7 @@ class RequestAccountingBlocksHandler(MessageListener):
             )
             self._listener.on_complete(get_blocks_response)
 
-    def terminate(self):
+    def terminate(self): # TODO: rename shut_down
         self._stopped = True
         self._network_node.remove_message_listener(self)
         self._stop_timeout_timer()

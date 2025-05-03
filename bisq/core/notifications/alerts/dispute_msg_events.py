@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 import uuid
@@ -33,6 +34,7 @@ class DisputeMsgEvents:
         self.mediation_manager = mediation_manager
         self.p2p_service = p2p_service
         self.mobile_notification_service = mobile_notification_service
+        self._subscriptions: list[Callable[[], None]] = []
 
     def on_all_services_initialized(self):
         def on_dispute_changed(e: ObservableChangeEvent["Dispute"]):
@@ -40,20 +42,35 @@ class DisputeMsgEvents:
                 for dispute in e.added_elements:
                     self._set_dispute_listener(dispute)
 
-        self.refund_manager.get_disputes_as_observable_list().add_listener(
-            on_dispute_changed
+        self._subscriptions.append(
+            self.refund_manager.get_disputes_as_observable_list().add_listener(
+                on_dispute_changed
+            )
         )
         for dispute in self.mediation_manager.get_disputes_as_observable_list():
             self._set_dispute_listener(dispute)
 
-        self.mediation_manager.get_disputes_as_observable_list().add_listener(
-            on_dispute_changed
+        self._subscriptions.append(
+            self.mediation_manager.get_disputes_as_observable_list().add_listener(
+                on_dispute_changed
+            )
         )
         for dispute in self.mediation_manager.get_disputes_as_observable_list():
             self._set_dispute_listener(dispute)
 
         # We do not need a handling for unread messages as mailbox messages arrive later and will trigger the
         # event listeners. But the existing messages are not causing a notification.
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+
+        for dispute in self.refund_manager.get_disputes_as_observable_list():
+            dispute.shut_down()
+
+        for dispute in self.mediation_manager.get_disputes_as_observable_list():
+            dispute.shut_down()
 
     @staticmethod
     def get_test_msg():
@@ -78,7 +95,9 @@ class DisputeMsgEvents:
                 for chat_message in e.added_elements:
                     self._on_chat_message(chat_message)
 
-        dispute.chat_messages.add_listener(on_chat_messages_changed)
+        self._subscriptions.append(
+            dispute.chat_messages.add_listener(on_chat_messages_changed)
+        )
 
     def _on_chat_message(self, chat_message: "ChatMessage"):
         if chat_message.sender_node_address == self.p2p_service.address:

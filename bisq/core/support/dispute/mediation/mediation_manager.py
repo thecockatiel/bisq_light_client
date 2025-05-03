@@ -97,6 +97,10 @@ class MediationManager(DisputeManager["MediationDisputeList"], MessageListener, 
         
         self.p2p_service.network_node.add_message_listener(self) # listening for FileTransferPart message
 
+    def shut_down(self):
+        super().shut_down()
+        self.p2p_service.network_node.remove_message_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Implement template methods
     # ///////////////////////////////////////////////////////////////////////////////////////////

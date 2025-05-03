@@ -1,4 +1,4 @@
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from concurrent.futures import ThreadPoolExecutor
 import contextvars
 from bisq.common.setup.log_setup import get_ctx_logger
@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.storage.payload.persistable_network_payload import (
         PersistableNetworkPayload,
     )
- 
 
 
 class TradeStatisticsConverter:
@@ -45,7 +44,12 @@ class TradeStatisticsConverter:
         storage_dir: Path,
     ):
         self.logger = get_ctx_logger(__name__)
-        append_only_data_store_service.add_service(trade_statistics_2_storage_service)
+        self._subscriptions: list[Callable[[], None]] = []
+        self._trade_statistics_2_storage_service = trade_statistics_2_storage_service
+        self._append_only_data_store_service = append_only_data_store_service
+        self._append_only_data_store_service.add_service(
+            trade_statistics_2_storage_service
+        )
 
         self._executor: Optional["ThreadPoolExecutor"] = None
 
@@ -87,13 +91,14 @@ class TradeStatisticsConverter:
                         trade_statistics_2_store.unlink(missing_ok=True)
                     except Exception as e:
                         self.logger.error(e, exc_info=e)
+
                 ctx = contextvars.copy_context()
                 self._executor.submit(ctx.run, migrate_v2_data)
 
             def on_data_received(self_):
                 pass
 
-        p2p_service.add_p2p_service_listener(Listener())
+        self._subscriptions.append(p2p_service.add_p2p_service_listener(Listener()))
 
         # We listen to old TradeStatistics2 objects, convert and store them and rebroadcast
         class DataListener(AppendOnlyDataStoreListener):
@@ -108,11 +113,19 @@ class TradeStatisticsConverter:
                         trade_statistics_3, None, True
                     )
 
-        p2p_data_storage.add_append_only_data_store_listener(DataListener())
+        self._subscriptions.append(
+            p2p_data_storage.add_append_only_data_store_listener(DataListener())
+        )
 
     def shut_down(self):
         if self._executor:
             self._executor.shutdown()
+        self._append_only_data_store_service.remove_service(
+            self._trade_statistics_2_storage_service
+        )
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     @staticmethod
     def convert_to_trade_statistics_3_list(

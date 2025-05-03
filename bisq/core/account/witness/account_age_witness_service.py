@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from enum import Enum, IntEnum
 import logging
@@ -113,6 +114,7 @@ class AccountAgeWitnessService:
         self.user = user
         self.signed_witness_service = signed_witness_service
         self.account_age_witness_storage_service = account_age_witness_storage_service
+        self.append_only_data_store_service = append_only_data_store_service
         self.clock = clock
         self.preferences = preferences
         self.filter_manager = filter_manager
@@ -130,8 +132,10 @@ class AccountAgeWitnessService:
             key_ring,
         )
 
+        self._subscriptions: list[Callable[[], None]] = []
+
         # We need to add that early (before on_all_services_initialized) as it will be used at startup.
-        append_only_data_store_service.add_service(account_age_witness_storage_service)
+        self.append_only_data_store_service.add_service(account_age_witness_storage_service)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Lifecycle
@@ -142,7 +146,7 @@ class AccountAgeWitnessService:
             def on_added(self_, payload):
                 if isinstance(payload, AccountAgeWitness):
                     self.add_to_map(payload)
-        self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(Listener())
+        self._subscriptions.append(self.p2p_service.p2p_data_storage.add_append_only_data_store_listener(Listener()))
 
         # At startup the P2PDataStorage initializes earlier, otherwise we get the listener called
         for entry in self.account_age_witness_storage_service.get_map_of_all_data().values():
@@ -155,7 +159,13 @@ class AccountAgeWitnessService:
             class Listener(BootstrapListener):
                 def on_data_received(self_):
                     self._on_bootstrapped()
-            self.p2p_service.add_p2p_service_listener(Listener())
+            self._subscriptions.append(self.p2p_service.add_p2p_service_listener(Listener()))
+    
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.append_only_data_store_service.remove_service(self.account_age_witness_storage_service)
 
     def _on_bootstrapped(self):
         self._republish_all_fiat_accounts()

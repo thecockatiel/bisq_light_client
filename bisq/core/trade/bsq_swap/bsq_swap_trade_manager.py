@@ -31,6 +31,7 @@ class BsqSwapTradeManager(PersistedDataHost):
         self.price_feed_service = price_feed_service
         self.bsq_wallet_service = bsq_wallet_service
         self.persistence_manager = persistence_manager
+        self._subscriptions: list[Callable[[], None]] = []
         self.bsq_swap_trades = TradableList['BsqSwapTrade']()
         self.confirmed_bsq_swap_node_address_cache: Optional[Multiset['NodeAddress']] = None
         # Used for listening for notifications in the UI 
@@ -39,9 +40,12 @@ class BsqSwapTradeManager(PersistedDataHost):
         class Listener(WalletTransactionsChangeListener):
             def on_wallet_transactions_change(self_):
                 self.confirmed_bsq_swap_node_address_cache = None
-        bsq_wallet_service.add_wallet_transactions_change_listener(Listener())
-        self.bsq_swap_trades.add_listener(
-            lambda c: setattr(self, 'confirmed_bsq_swap_node_address_cache', None))
+        self._subscriptions.append(bsq_wallet_service.add_wallet_transactions_change_listener(Listener()))
+        self._subscriptions.append(
+            self.bsq_swap_trades.add_listener(
+                lambda c: setattr(self, 'confirmed_bsq_swap_node_address_cache', None)
+            )
+        )
 
         self.persistence_manager.initialize(self.bsq_swap_trades, PersistenceManagerSource.PRIVATE, "BsqSwapTrades")
 
@@ -57,6 +61,11 @@ class BsqSwapTradeManager(PersistedDataHost):
 
     def on_all_services_initialized(self):
         pass
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def on_trade_completed(self, bsq_swap_trade: 'BsqSwapTrade') -> None:
         if self.find_bsq_swap_trade_by_id(bsq_swap_trade.get_id()):

@@ -70,6 +70,9 @@ class DelayedPayoutTxReceiverService(DaoStateListener):
         if last_block:
             self.apply_block(last_block)
 
+    def shut_down(self):
+        self.dao_state_service.remove_dao_state_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
     # ///////////////////////////////////////////////////////////////////////////////////////////

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from concurrent.futures import Future
 from datetime import timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 from bisq.common.user_thread import UserThread
@@ -41,6 +42,7 @@ class KeepAliveHandler(MessageListener):
         self.stopped: bool = False
         self.delay_timer: Optional["Timer"] = None
         self.send_ts: int = 0
+        self._future: Optional[Future] = None
 
     def cancel(self) -> None:
         self.cleanup()
@@ -58,7 +60,11 @@ class KeepAliveHandler(MessageListener):
             ping = Ping(nonce=self.nonce, last_round_trip_time=connection.statistic.round_trip_time_property.value)
             self.send_ts = get_time_ms()
             
-            future = self.network_node.send_message(connection, ping)                    
+            if self._future:
+                self._future.cancel()
+                self._future = None
+
+            self._future = self.network_node.send_message(connection, ping)                    
 
             def on_success(conn: "Connection"):
                 if conn is None:
@@ -80,7 +86,7 @@ class KeepAliveHandler(MessageListener):
                 else:
                     self.logger.trace("We have stopped already. We ignore that networkNode.sendMessage.onFailure call.")
 
-            future.add_done_callback(FutureCallback(on_success, on_failure))
+            self._future.add_done_callback(FutureCallback(on_success, on_failure))
         else:
             self.logger.trace("We have stopped already. We ignore that sendPing call.")
             
@@ -105,8 +111,14 @@ class KeepAliveHandler(MessageListener):
 
     def cleanup(self) -> None:
         self.stopped = True
+
+        if self._future:
+            self._future.cancel()
+            self._future = None
+
         if self.connection:
             self.connection.remove_message_listener(self)
+            self.connection = None
 
         if self.delay_timer:
             self.delay_timer.stop()

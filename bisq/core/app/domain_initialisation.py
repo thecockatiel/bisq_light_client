@@ -157,6 +157,7 @@ class DomainInitialisation:
         self.mempool_service = mempool_service
         self.open_bsq_swap_offer_service = open_bsq_swap_offer_service
         self.mailbox_message_service = mailbox_message_service
+        self._subscriptions: list[Callable[[], None]] = []
 
     def init_domain_services(
         self,
@@ -214,8 +215,10 @@ class DomainInitialisation:
             if display_private_notification_handler:
                 display_private_notification_handler(e.new_value)
 
-        self.private_notification_manager.private_notification_message_property.add_listener(
-            handle_private_notif
+        self._subscriptions.append(
+            self.private_notification_manager.private_notification_message_property.add_listener(
+                handle_private_notif
+            )
         )
 
         self.p2p_service.on_all_services_initialized()
@@ -253,8 +256,10 @@ class DomainInitialisation:
                 for exc in e.added_elements:
                     vote_result_exception_handler(exc)
 
-        self.vote_result_service.vote_result_exceptions.add_listener(
-            handle_vote_result_exception
+        self._subscriptions.append(
+            self.vote_result_service.vote_result_exceptions.add_listener(
+                handle_vote_result_exception
+            )
         )
 
         self.mobile_notification_service.on_all_services_initialized()
@@ -286,5 +291,21 @@ class DomainInitialisation:
             amazon_gift_card_accounts_update_handler(amazon_gift_card_accounts)
 
     def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.arbitration_manager.shut_down()
+        self.mediation_manager.shut_down()
         self.signed_witness_service.shut_down()
         self.balances.shut_down()
+        self.mailbox_message_service.shut_down()
+        self.dispute_msg_events.shut_down()
+        self.my_offer_taken_events.shut_down()
+        self.trade_events.shut_down()
+        self.market_alerts.shut_down()
+        self.price_alert.shut_down()
+        self.trigger_price_service.shut_down()
+        self.closed_tradable_manager.shut_down()
+        self.failed_trades_manager.shut_down()
+        self.trade_manager.shut_down()
+        self.bsq_swap_trade_manager.shut_down()

@@ -118,7 +118,6 @@ if TYPE_CHECKING:
     from bisq.common.persistence.persistence_manager import PersistenceManager
 
 
-
 T = TypeVar("T", bound=NetworkPayload)
 
 
@@ -685,8 +684,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
     def shut_down(self):
         if self.remove_expired_entries_timer:
             self.remove_expired_entries_timer.stop()
-        self._network_node.remove_connection_listener(self)
+            self.remove_expired_entries_timer = None
         self._network_node.remove_message_listener(self)
+        self._network_node.remove_connection_listener(self)
 
     def remove_expired_entries(self):
         # The moment when an object becomes expired will not be synchronous in the network and we could
@@ -929,7 +929,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
         if stored_entry is not None and not self.has_sequence_nr_increased(
             protected_storage_entry.sequence_number, hash_of_payload
         ):
-            self.logger.trace(f"## hasSequenceNrIncreased is false. hash={hash_of_payload}")
+            self.logger.trace(
+                f"## hasSequenceNrIncreased is false. hash={hash_of_payload}"
+            )
             return False
 
         if self.has_already_removed_add_once_payload(
@@ -1050,7 +1052,9 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             sender,
             listener,
         )
-        self.logger.trace(f"## broadcasted ProtectedStorageEntry. hash={hash_of_payload}")
+        self.logger.trace(
+            f"## broadcasted ProtectedStorageEntry. hash={hash_of_payload}"
+        )
 
     def has_already_removed_add_once_payload(
         self,
@@ -1298,15 +1302,12 @@ class P2PDataStorage(MessageListener, ConnectionListener, PersistedDataHost):
             receivers_pub_key=receivers_public_key,
         )
 
-    def add_hash_map_changed_listener(
-        self, hash_map_changed_listener: "HashMapChangedListener"
-    ):
-        self.hash_map_changed_listeners.add(hash_map_changed_listener)
+    def add_hash_map_changed_listener(self, listener: "HashMapChangedListener"):
+        self.hash_map_changed_listeners.add(listener)
+        return lambda: self.remove_hash_map_changed_listener(listener)
 
-    def remove_hash_map_changed_listener(
-        self, hash_map_changed_listener: "HashMapChangedListener"
-    ):
-        self.hash_map_changed_listeners.discard(hash_map_changed_listener)
+    def remove_hash_map_changed_listener(self, listener: "HashMapChangedListener"):
+        self.hash_map_changed_listeners.discard(listener)
 
     def add_append_only_data_store_listener(
         self, listener: "AppendOnlyDataStoreListener"

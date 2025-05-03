@@ -15,13 +15,17 @@ class BtcFeeReceiverService(DaoStateListener):
         dao_state_service: "DaoStateService",
         burning_man_service: "BurningManService",
     ):
+        self._dao_state_service = dao_state_service
         self._burning_man_service = burning_man_service
         self._current_chain_height = 0
 
-        dao_state_service.add_dao_state_listener(self)
+        self._dao_state_service.add_dao_state_listener(self)
         last_block = dao_state_service.last_block
         if last_block:
             self._apply_block(last_block)
+
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener

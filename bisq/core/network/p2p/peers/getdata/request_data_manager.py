@@ -479,7 +479,7 @@ class RequestDataManager(MessageListener, ConnectionListener, PeerManager.Listen
     def _cleanup_request_data_handler(self, node_address: "NodeAddress"):
         if node_address in self.handler_map:
             handler = self.handler_map[node_address]
-            handler.stop()
+            handler.cancel()
             del self.handler_map[node_address]
 
     # /////////////////////////////////////////////////////////////////////////////////////////

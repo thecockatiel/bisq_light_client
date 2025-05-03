@@ -142,6 +142,10 @@ class OpenBsqSwapOfferService:
         self.p2p_service.remove_p2p_service_listener(self.bootstrap_listener)
         self.dao_facade.remove_bsq_state_listener(self.dao_state_listener)
         self.filter_manager.filter_property.remove_listener(self.filter_change_listener)
+        self.offer_list_change_listener = None
+        if self.open_bsq_swap_offers_by_id:
+            for open_offer in self.open_bsq_swap_offers_by_id.values():
+                open_offer.remove_listeners()
 
     def request_new_offer(
         self,
@@ -193,9 +197,7 @@ class OpenBsqSwapOfferService:
             offer_id,
             maker_address.get_full_address(),
             difficulty,
-        ).add_done_callback(
-            FutureCallback(on_success, on_failure)
-        )
+        ).add_done_callback(FutureCallback(on_success, on_failure))
 
     def place_bsq_swap_offer(
         self,

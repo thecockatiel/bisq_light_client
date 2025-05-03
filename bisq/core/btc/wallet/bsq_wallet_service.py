@@ -254,12 +254,14 @@ class BsqWalletService(WalletService, DaoStateListener):
 
     def add_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self._bsq_balance_listeners.add(listener)
+        return lambda: self.remove_bsq_balance_listener(listener)
 
     def remove_bsq_balance_listener(self, listener: "BsqBalanceListener"):
         self._bsq_balance_listeners.discard(listener)
 
     def add_wallet_transactions_change_listener(self, listener: Callable[[], None]):
         self._wallet_transactions_change_listeners.add(listener)
+        return lambda: self.remove_wallet_transactions_change_listener(listener)
 
     def remove_wallet_transactions_change_listener(self, listener: Callable[[], None]):
         self._wallet_transactions_change_listeners.discard(listener)

@@ -1,3 +1,4 @@
+from utils.aio import as_future
 from collections.abc import Callable
 import random
 import re
@@ -34,6 +35,7 @@ from bisq.core.user.block_chain_explorer import BlockChainExplorer
 from bisq.core.user.preferences_payload import PreferencesPayload 
 from utils.data import ObservableChangeEvent, ObservableList, ObservableMap, SimpleProperty, SimplePropertyChangeEvent
 from utils.java_compat import java_cmp_str
+from twisted.internet.defer import Deferred
 
 if TYPE_CHECKING:
     from bisq.core.payment.payment_account import PaymentAccount
@@ -69,6 +71,7 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self.rpc_user_from_options = config.rpc_user
         self.rpc_pw_from_options = config.rpc_password
         self.block_notify_port_from_options = config.rpc_block_notification_port
+        self._subscriptions: list[Callable[[], None]] = []
         
         ###### fields
         # payload is initialized so the default values are available for Property initialization.
@@ -92,34 +95,55 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             self.pref_payload.use_animations = e.new_value
             GlobalSettings.use_animations = e.new_value
             self.request_persistence()
-        self.use_animations_property.add_listener(on_use_animation_change)
+        self._subscriptions.append(self.use_animations_property.add_listener(on_use_animation_change))
         
         def on_css_theme_change(e: SimplePropertyChangeEvent[int]):
             self.pref_payload.css_theme = e.new_value
             self.request_persistence()
-        self.css_theme_property.add_listener(on_css_theme_change)
+        self._subscriptions.append(self.css_theme_property.add_listener(on_css_theme_change))
         
         def on_use_standby_change(e: SimplePropertyChangeEvent[int]):
             self.pref_payload.use_standby_mode = e.new_value
             self.request_persistence()
-        self.use_standby_mode_property.add_listener(on_use_standby_change)
+        self._subscriptions.append(self.use_standby_mode_property.add_listener(on_use_standby_change))
         
         def on_fiat_currencies_change(e):
             self.pref_payload.fiat_currencies.clear()
             self.pref_payload.fiat_currencies.extend(self.fiat_currencies_as_observable)
             self.pref_payload.fiat_currencies.sort(key=lambda x: java_cmp_str(x.name))
             self.request_persistence()
-        self.fiat_currencies_as_observable.add_listener(on_fiat_currencies_change)
+        self._subscriptions.append(self.fiat_currencies_as_observable.add_listener(on_fiat_currencies_change))
         
         def on_crypto_currencies_change(e):
             self.pref_payload.crypto_currencies.clear()
             self.pref_payload.crypto_currencies.extend(self.crypto_currencies_as_observable)
             self.pref_payload.crypto_currencies.sort(key=lambda x: java_cmp_str(x.name))
             self.request_persistence()
-        self.crypto_currencies_as_observable.add_listener(on_crypto_currencies_change)
+        self._subscriptions.append(self.crypto_currencies_as_observable.add_listener(on_crypto_currencies_change))
         
-        self.fiat_currencies_as_observable.add_listener(self.update_trade_currencies)
-        self.crypto_currencies_as_observable.add_listener(self.update_trade_currencies)
+        self._subscriptions.append(self.fiat_currencies_as_observable.add_listener(self.update_trade_currencies))
+        self._subscriptions.append(self.crypto_currencies_as_observable.add_listener(self.update_trade_currencies))
+
+    async def shut_down_for_removal(self, removing_user_data: False):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        if not removing_user_data:
+            d = Deferred()
+
+            def _on_persisted():
+                d.callback(True)
+
+            try:
+                self.persistence_manager.persist_now(_on_persisted, True)
+                self.persistence_manager.shutdown()
+            except BaseException as e:
+                d.errback(e)
+
+            await as_future(d)
+        else:
+            self.persistence_manager.shutdown()
+
         
     def read_persisted(self, complete_handler: Callable[[], None]) -> None:
         def result_handler(persisted: "PreferencesPayload"):

@@ -158,6 +158,7 @@ class AddressEntryList(PersistableEnvelope, PersistedDataHost):
     def shut_down(self):
         if self._wallet:
             self._wallet.remove_new_tx_listener(self.maybe_add_new_address_entry)
+            self._wallet = None
 
     def add_address_entry(self, address_entry: "AddressEntry") -> None:
         entry_with_same_offer_id_and_context_exists = any(

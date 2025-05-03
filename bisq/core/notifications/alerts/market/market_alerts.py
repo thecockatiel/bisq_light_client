@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 import uuid
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.user.user import User
 
+
 class MarketAlerts:
 
     def __init__(
@@ -44,6 +46,7 @@ class MarketAlerts:
         self.user = user
         self.price_feed_service = price_feed_service
         self.key_ring = key_ring
+        self._subscriptions: list[Callable[[], None]] = []
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -57,8 +60,15 @@ class MarketAlerts:
             def on_removed(self_, offer: "Offer"):
                 pass
 
-        self.offer_book_service.add_offer_book_changed_listener(Listener())
+        self._subscriptions.append(
+            self.offer_book_service.add_offer_book_changed_listener(Listener())
+        )
         self._apply_filter_on_all_offers()
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def add_market_alert_filter(self, filter: "MarketAlertFilter"):
         self.user.add_market_alert_filter(filter)
@@ -214,7 +224,9 @@ class MarketAlerts:
                             market_alert_filter.add_alert_id(alert_id)
                             self.user.request_persistence()
                     except Exception as e:
-                        self.logger.error(f"Error sending notification: {e}", exc_info=e)
+                        self.logger.error(
+                            f"Error sending notification: {e}", exc_info=e
+                        )
 
     @staticmethod
     def get_test_msg():

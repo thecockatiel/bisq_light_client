@@ -52,11 +52,14 @@ class RequestDataHandler(MessageListener):
         self._timeout_timer: Optional[Timer] = None
         self._nonce = next_random_int()
         self._stopped = False
+        self._future: Optional[Future] = None
         self._peers_node_address: Optional["NodeAddress"] = None
         self._get_data_request_type: Optional[str] = None
 
     def cancel(self):
-        self._cleanup()
+        if self._future:
+            self._future.cancel()
+            self._future = None
 
     def request_data(
         self, node_address: "NodeAddress", is_preliminary_data_request: bool
@@ -91,7 +94,7 @@ class RequestDataHandler(MessageListener):
             f"\n\n>> We send a {self._get_data_request_type} to peer {node_address}\n"
         )
         self._network_node.add_message_listener(self)
-        future = self._network_node.send_message(node_address, get_data_request)
+        self._future = self._network_node.send_message(node_address, get_data_request)
 
         def on_success(r):
             if not self._stopped:
@@ -123,7 +126,7 @@ class RequestDataHandler(MessageListener):
                     + "Might be caused by a previous timeout."
                 )
 
-        future.add_done_callback(
+        self._future.add_done_callback(
             FutureCallback(
                 on_success,
                 on_failure,
@@ -191,9 +194,6 @@ class RequestDataHandler(MessageListener):
                 self.logger.debug(
                     "We got the message from another connection and ignore it on that handler. That is expected if we have several requests open."
                 )
-
-    def stop(self):
-        self._cleanup()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Private

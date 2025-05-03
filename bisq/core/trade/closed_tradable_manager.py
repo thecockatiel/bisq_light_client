@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Iterator, Optional
@@ -59,13 +60,21 @@ class ClosedTradableManager(PersistedDataHost):
         self.cleanup_mailbox_messages_service = cleanup_mailbox_messages_service
         self.dump_delayed_payout_tx = dump_delayed_payout_tx
         self.persistence_manager = persistence_manager
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.closed_tradables = TradableList['Tradable']()
         self.closed_trade_node_address_cache: Optional[Multiset[NodeAddress]] = None
 
-        self.closed_tradables.add_listener(lambda c: setattr(self, 'closed_trade_node_address_cache', None))
+        self._subscriptions.append(self.closed_tradables.add_listener(lambda c: setattr(self, 'closed_trade_node_address_cache', None)))
 
         self.persistence_manager.initialize(self.closed_tradables, PersistenceManagerSource.PRIVATE, "ClosedTrades")
+
+    def shut_down(self):
+        if self.closed_trade_node_address_cache:
+            self.closed_trade_node_address_cache.clear()
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def read_persisted(self, complete_handler: callable):
         def on_persisted(persisted: 'TradableList[Tradable]'):

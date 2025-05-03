@@ -89,7 +89,7 @@ if TYPE_CHECKING:
     )
     from bisq.core.user.preferences import Preferences
     from bisq.core.user.user import User
- 
+
 
 class OpenOfferManager(
     PeerManager.Listener,
@@ -161,6 +161,7 @@ class OpenOfferManager(
         self.retry_republish_offers_timer: Optional["Timer"] = None
         self.chain_not_synced_handler: Optional[Callable[[str], None]] = None
         self.invalid_offers = ObservableList[tuple["OpenOffer", str]]()
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.persistence_manager.initialize(
             self.open_offers, PersistenceManagerSource.PRIVATE, "OpenOffers"
@@ -203,8 +204,10 @@ class OpenOfferManager(
         )
 
     def on_all_services_initialized(self):
-        self.p2p_service.add_decrypted_direct_message_listener(self)
-        self.dao_state_service.add_dao_state_listener(self)
+        self._subscriptions.append(
+            self.p2p_service.add_decrypted_direct_message_listener(self)
+        )
+        self._subscriptions.append(self.dao_state_service.add_dao_state_listener(self))
 
         if self.p2p_service.is_bootstrapped:
             self.on_bootstrap_complete()
@@ -214,7 +217,9 @@ class OpenOfferManager(
                 def on_data_received(self_):
                     self.on_bootstrap_complete()
 
-            self.p2p_service.add_p2p_service_listener(Listener())
+            self._subscriptions.append(
+                self.p2p_service.add_p2p_service_listener(Listener())
+            )
 
         self.clean_up_address_entries()
 
@@ -241,18 +246,23 @@ class OpenOfferManager(
 
     def shut_down(self, complete_handler: Optional[Callable[[], None]] = None):
         self.stopped = True
-        self.dao_state_service.remove_dao_state_listener(self)
-        self.p2p_service.peer_manager.remove_listener(self)
-        self.p2p_service.remove_decrypted_direct_message_listener(self)
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
         self.stop_periodic_refresh_offers_timer()
         self.stop_periodic_republish_offers_timer()
         self.stop_retry_republish_offers_timer()
 
+        self.delayed_payout_tx_receiver_service.shut_down()
+        self.btc_fee_receiver_service.shut_down()
+
         # we remove own offers from offerbook when we go offline
         # Normally we use a delay for broadcasting to the peers, but at shut down we want to get it fast out
         size = len(self.open_offers)
-        self.logger.info(f"Remove open offers at shutDown. Number of open offers: {size}")
+        self.logger.info(
+            f"Remove open offers at shutDown. Number of open offers: {size}"
+        )
         if self.offer_book_service.is_bootstrapped and size > 0:
 
             def execute():
@@ -260,6 +270,7 @@ class OpenOfferManager(
                     self.offer_book_service.remove_offer_at_shut_down(
                         open_offer.get_offer().offer_payload_base
                     )
+                self.offer_book_service.shut_down()
 
             UserThread.execute(execute)
 
@@ -353,7 +364,7 @@ class OpenOfferManager(
                 ),
             )
 
-        self.p2p_service.peer_manager.add_listener(self)
+        self._subscriptions.append(self.p2p_service.peer_manager.add_listener(self))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // PeerManager.Listener implementation
@@ -394,7 +405,9 @@ class OpenOfferManager(
         error_message_handler: ErrorMessageHandler,
     ):
         assert offer.maker_fee is not None, "maker_fee must not be none"
-        check_argument(not offer.is_bsq_swap_offer, "Offer must not be a BSQ swap offer")
+        check_argument(
+            not offer.is_bsq_swap_offer, "Offer must not be a BSQ swap offer"
+        )
 
         num_clones = len(
             self.get_open_offers_by_maker_fee_tx_id(offer.offer_fee_payment_tx_id)
@@ -912,18 +925,23 @@ class OpenOfferManager(
                 self.logger.warning(error_message)
                 availability_result = AvailabilityResult.UNCONF_TX_LIMIT_HIT
 
-
             try:
-                takers_burning_man_selection_height = request.burning_man_selection_height
-                check_argument(takers_burning_man_selection_height > 0, "takersBurningManSelectionHeight must not be 0")
-                
+                takers_burning_man_selection_height = (
+                    request.burning_man_selection_height
+                )
+                check_argument(
+                    takers_burning_man_selection_height > 0,
+                    "takersBurningManSelectionHeight must not be 0",
+                )
+
                 makers_burning_man_selection_height = (
                     self.delayed_payout_tx_receiver_service.get_burning_man_selection_height()
                 )
                 check_argument(
-                    takers_burning_man_selection_height == makers_burning_man_selection_height,
+                    takers_burning_man_selection_height
+                    == makers_burning_man_selection_height,
                     "takersBurningManSelectionHeight does not match makersBurningManSelectionHeight. "
-                    f"takersBurningManSelectionHeight={takers_burning_man_selection_height}; makersBurningManSelectionHeight={makers_burning_man_selection_height}"
+                    f"takersBurningManSelectionHeight={takers_burning_man_selection_height}; makersBurningManSelectionHeight={makers_burning_man_selection_height}",
                 )
             except Exception as e:
                 error_message = (
@@ -1195,7 +1213,9 @@ class OpenOfferManager(
 
         def on_error(error_message: str):
             if not self.stopped:
-                self.logger.error(f"Adding offer to P2P network failed. {error_message}")
+                self.logger.error(
+                    f"Adding offer to P2P network failed. {error_message}"
+                )
                 self.stop_retry_republish_offers_timer()
                 self.retry_republish_offers_timer = UserThread.run_after(
                     self.republish_offers,
@@ -1218,6 +1238,7 @@ class OpenOfferManager(
         self.stopped = False
         # refresh sufficiently before offer would expire
         if self.periodic_refresh_offers_timer is None:
+
             def refresh_action():
                 if self.stopped:
                     self.logger.debug(
@@ -1249,7 +1270,8 @@ class OpenOfferManager(
                     )
 
             self.periodic_refresh_offers_timer = UserThread.run_periodically(
-                refresh_action, timedelta(milliseconds=OpenOfferManager.REFRESH_INTERVAL_MS)
+                refresh_action,
+                timedelta(milliseconds=OpenOfferManager.REFRESH_INTERVAL_MS),
             )
         else:
             self.logger.trace("periodic_refresh_offers_timer already started")

@@ -95,7 +95,15 @@ class AccountingLiteNode(AccountingNode, AccountingLiteNodeNetworkService.Listen
 
     def shut_down(self):
         super().shut_down()
+        self._accounting_lite_node_network_service.remove_listener(self)
+        self._bsq_wallet_service.remove_new_block_height_listener(
+            self._block_height_listener
+        )
+        self._wallets_setup.chain_height_property.remove_listener(
+            self._block_height_listener
+        )
         self._accounting_lite_node_network_service.shut_down()
+        self._block_height_listener = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // AccountingLiteNodeNetworkService.Listener

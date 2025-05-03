@@ -181,7 +181,7 @@ class DaoFacade(DaoSetupService):
         pass
 
     def add_bsq_state_listener(self, listener: DaoStateListener):
-        self._dao_state_service.add_dao_state_listener(listener)
+        return self._dao_state_service.add_dao_state_listener(listener)
 
     def remove_bsq_state_listener(self, listener: DaoStateListener):
         self._dao_state_service.remove_dao_state_listener(listener)

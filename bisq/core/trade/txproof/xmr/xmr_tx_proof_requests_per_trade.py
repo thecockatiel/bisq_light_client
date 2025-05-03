@@ -43,6 +43,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
         self.mediation_manager = mediation_manager
         self.filter_manager = filter_manager
         self.refund_manager = refund_manager
+        self._subscriptions: list[Callable[[], None]] = []
         
         self.num_required_success_results = 0
         self.requests = set["XmrTxProofRequest"]()
@@ -185,7 +186,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                 self.call_result_handler_and_maybe_terminate(result_handler, AssetTxProofResult.FEATURE_DISABLED)
         
         self.auto_confirm_settings_listener = settings_callback
-        self.auto_confirm_settings.add_listener(self.auto_confirm_settings_listener)
+        self._subscriptions.append(self.auto_confirm_settings.add_listener(self.auto_confirm_settings_listener))
 
     def setup_trade_state_listener(self, result_handler: "Callable[[AssetTxProofResult], None]") -> None:
         def state_callback(change: SimplePropertyChangeEvent[TradeState]) -> None:
@@ -195,7 +196,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                 )
         
         self.trade_state_listener = state_callback
-        self.trade.state_property.add_listener(self.trade_state_listener)
+        self._subscriptions.append(self.trade.state_property.add_listener(self.trade_state_listener))
 
     def setup_arbitration_listener(
         self, result_handler: "Callable[[AssetTxProofResult], None]", refund_disputes: "ObservableList[Dispute]"
@@ -205,7 +206,7 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                 self.call_result_handler_and_maybe_terminate(result_handler, AssetTxProofResult.DISPUTE_OPENED)
         
         self.refund_listener = refund_callback
-        refund_disputes.add_listener(self.refund_listener)
+        self._subscriptions.append(refund_disputes.add_listener(self.refund_listener))
 
     def setup_mediation_listener(
         self, result_handler: "Callable[[AssetTxProofResult], None]", mediation_disputes: "ObservableList[Dispute]"
@@ -215,12 +216,16 @@ class XmrTxProofRequestsPerTrade(AssetTxProofRequestsPerTrade):
                 self.call_result_handler_and_maybe_terminate(result_handler, AssetTxProofResult.DISPUTE_OPENED)
         
         self.mediation_listener = mediation_callback
-        mediation_disputes.add_listener(self.mediation_listener)
+        self._subscriptions.append(mediation_disputes.add_listener(self.mediation_listener))
 
     def terminate(self) -> None:
         for request in self.requests:
             request.terminate()
         self.requests.clear()
+
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
         if self.trade_state_listener is not None:
             self.trade.state_property.remove_listener(self.trade_state_listener)

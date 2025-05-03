@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
 from bisq.core.locale.res import Res
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
         MobileNotificationService,
     )
     from bisq.core.trade.trade_manager import TradeManager
- 
+
 
 class TradeEvents:
     def __init__(
@@ -27,6 +28,7 @@ class TradeEvents:
         self.trade_manager = trade_manager
         self.mobile_notification_service = mobile_notification_service
         self.pub_key_ring = key_ring.pub_key_ring
+        self._subscriptions: list[Callable[[], None]] = []
 
     def on_all_services_initialized(self):
         def on_trade_changed(e: ObservableChangeEvent["Trade"]):
@@ -34,9 +36,16 @@ class TradeEvents:
                 for trade in e.added_elements:
                     self._set_trade_phase_listener(trade)
 
-        self.trade_manager.get_observable_list().add_listener(on_trade_changed)
+        self._subscriptions.append(
+            self.trade_manager.get_observable_list().add_listener(on_trade_changed)
+        )
         for trade in self.trade_manager.get_observable_list():
             self._set_trade_phase_listener(trade)
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def _set_trade_phase_listener(self, trade: "Trade"):
         self.logger.info(f"We got a new trade. id={trade.get_id()}")
@@ -102,7 +111,9 @@ class TradeEvents:
                     except Exception as e:
                         self.logger.error(str(e), exc_info=e)
 
-            trade.state_phase_property.add_listener(on_phase_changed)
+            self._subscriptions.append(
+                trade.state_phase_property.add_listener(on_phase_changed)
+            )
 
     @staticmethod
     def get_test_messages():

@@ -78,6 +78,7 @@ class MailboxMessageService:
         self.key_ring = key_ring
         self.clock = clock
         self.republish_mailbox_entries = republish_mailbox_entries
+        self._stopped = False
 
         self.decrypted_mailbox_listeners: ThreadSafeSet["DecryptedMailboxListener"] = (
             ThreadSafeSet()
@@ -206,6 +207,11 @@ class MailboxMessageService:
             self.on_added(self.p2p_data_storage.map.values())
             self.maybe_republish_mailbox_messages()
 
+    def shut_down(self):
+        self._stopped = True
+        self.decrypted_mailbox_listeners.clear()
+        self.p2p_data_storage.remove_hash_map_changed_listener(self)
+
     def send_encrypted_mailbox_message(
         self,
         peer: "NodeAddress",
@@ -213,6 +219,9 @@ class MailboxMessageService:
         mailbox_message: "MailboxMessage",
         send_mailbox_message_listener: "SendMailboxMessageListener"
     ):
+        if self._stopped:
+            return
+        
         if peers_pub_key_ring is None:
             self.logger.debug("send_encrypted_mailbox_message: peers_pub_key_ring is None. Ignoring the call.")
             return
@@ -316,7 +325,10 @@ class MailboxMessageService:
 
     def add_decrypted_mailbox_listener(self, listener: "DecryptedMailboxListener"):
         self.decrypted_mailbox_listeners.add(listener)
+        return lambda: self.remove_decrypted_mailbox_listener(listener)
 
+    def remove_decrypted_mailbox_listener(self, listener: "DecryptedMailboxListener"):
+        self.decrypted_mailbox_listeners.discard(listener)
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // HashMapChangedListener implementation for ProtectedStorageEntry items
@@ -355,7 +367,7 @@ class MailboxMessageService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def add_hash_map_changed_listener(self):
-        self.p2p_data_storage.add_hash_map_changed_listener(self)
+        return self.p2p_data_storage.add_hash_map_changed_listener(self)
 
     def process_single_mailbox_entry(self, protected_mailbox_storage_entries: Collection["ProtectedMailboxStorageEntry"]):
         check_argument(len(protected_mailbox_storage_entries) == 1, "entries must have exactly one entry")
@@ -485,6 +497,9 @@ class MailboxMessageService:
         receivers_public_key: "DSA.DsaKey",
         send_mailbox_message_listener: "SendMailboxMessageListener",
     ):
+        if self._stopped:
+            return
+
         if not self.is_bootstrapped:
             raise NetworkNotReadyException()
 

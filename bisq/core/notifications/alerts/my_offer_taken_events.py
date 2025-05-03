@@ -29,14 +29,21 @@ class MyOfferTakenEvents:
         self.open_offer_manager = open_offer_manager
 
     def on_all_services_initialized(self):
-        def on_offer_changed(e: ObservableChangeEvent["OpenOffer"]):
-            if e.removed_elements:
-                for offer in e.removed_elements:
-                    self._on_open_offer_removed(offer)
-
-        self.open_offer_manager.get_observable_list().add_listener(on_offer_changed)
+        self.open_offer_manager.get_observable_list().add_listener(
+            self._on_offer_changed
+        )
         for offer in self.open_offer_manager.get_observable_list():
             self._on_open_offer_removed(offer)
+
+    def _on_offer_changed(self, e: ObservableChangeEvent["OpenOffer"]):
+        if e.removed_elements:
+            for offer in e.removed_elements:
+                self._on_open_offer_removed(offer)
+
+    def shut_down(self):
+        self.open_offer_manager.get_observable_list().remove_listener(
+            self._on_offer_changed
+        )
 
     def _on_open_offer_removed(self, open_offer: "OpenOffer"):
         state = open_offer.state

@@ -89,6 +89,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.rule_violation: RuleViolation = None
         self.capabilities = Capabilities()
         self.message_time_stamps: list[int] = []
+        self._subscriptions: list[Callable[[], None]] = []
 
         self.socket = socket
         self.connection_listener = connection_listener
@@ -98,8 +99,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="Executor service for connection with uid " + self.uid)
 
         self.statistic = Statistic()
-        
-        self.add_message_listener(message_listener)
+        self._subscriptions.append(self.add_message_listener(message_listener))
 
         self.network_proto_resolver = network_proto_resolver
         self.connection_state = ConnectionState(self)
@@ -204,6 +204,7 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
 
     def add_message_listener(self, listener):
         self.message_listeners.add(listener)
+        return lambda: self.remove_message_listener(listener)
 
     def remove_message_listener(self, listener):
         self.message_listeners.discard(listener)
@@ -369,6 +370,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             nonlocal completed
             self.capabilities_listeners.clear()
             self.message_listeners.clear()
+            for unsub in self._subscriptions:
+                unsub()
+            self._subscriptions.clear()
             try:
                 self.proto_output_stream.on_connection_shutdown()
                 self.socket.shutdown(Socket.SHUT_RDWR)

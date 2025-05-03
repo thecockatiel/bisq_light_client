@@ -1,5 +1,5 @@
 import base64
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from bisq.common.app.dev_env import DevEnv
@@ -39,6 +39,7 @@ class AlertManager:
         # Pub key for developer global alert message
         self.alert_signing_key: Optional["ECPrivkey"] = None
         self.pub_key_as_hex: Optional[str] = None
+        self._subscriptions: list[Callable[[], None]] = []
 
         if not ignore_dev_msg:
 
@@ -68,7 +69,9 @@ class AlertManager:
                             if self._verify_signature(protected_storage_payload):
                                 self.alert_message_property.set(None)
 
-            self.p2p_service.add_hash_set_changed_listener(ChangeListener())
+            self._subscriptions.append(
+                self.p2p_service.add_hash_set_changed_listener(ChangeListener())
+            )
 
         if use_dev_privilege_keys:
             self.pub_key_as_hex = DevEnv.DEV_PRIVILEGE_PUB_KEY
@@ -76,6 +79,11 @@ class AlertManager:
             self.pub_key_as_hex = (
                 "036d8a1dfcb406886037d2381da006358722823e1940acc2598c844bbc0fd1026f"
             )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API

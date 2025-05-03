@@ -52,7 +52,10 @@ class FileTransferReceiver(FileTransferSession):
         self.init_session_timer()
         self.logger.info(f"Received a start file transfer request, tradeId={self.full_trade_id}, traderId={self.trader_id}, size={self.expected_file_length}")
         self.logger.info(f"New file will be written to {self.zip_file_path}")
-        UserThread.execute(lambda: self.ack_received_part(uid, self.network_node, self.peer_node_address))     
+        UserThread.execute(lambda: self.ack_received_part(uid, self.network_node, self.peer_node_address))
+    
+    def shut_down(self):
+        self.network_node.remove_message_listener(self)
     
     def process_received_block(self, ftp: FileTransferPart, network_node: NetworkNode, peer_node_address: NodeAddress):
         try:

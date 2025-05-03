@@ -60,12 +60,13 @@ class TorNetworkNode(NetworkNode):
         self.tor_mode = tor_mode
         self.__shutdown_in_progress = False
         self.__create_socket_futures = ThreadSafeSet[Future]()
+        self._subscriptions: list[Callable[[], None]] = []
 
     async def start(self, setup_listener: Optional["SetupListener"] = None):
         await run_in_thread(self.tor_mode.do_rolling_backup)
         
         if setup_listener:
-            self.add_setup_listener(setup_listener)
+            self._subscriptions.append(self.add_setup_listener(setup_listener))
 
         if isinstance(self.tor_mode, LimitedRunningTor):
             local_port = self.tor_mode.hiddenservice_target_port
@@ -119,6 +120,10 @@ class TorNetworkNode(NetworkNode):
             return
         
         self.__shutdown_in_progress = True
+
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
         def timeout_handler():
             self.logger.error(f"A timeout occurred at shutDown at {get_time_ms()}")

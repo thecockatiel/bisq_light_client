@@ -36,10 +36,12 @@ class DisputeAgentService(ABC, Generic[T]):
     def get_dispute_agents_from_filter(self) -> List[str]:
         pass
 
-    def add_hash_set_changed_listener(
-        self, hash_map_changed_listener: "HashMapChangedListener"
-    ):
-        self.p2p_service.add_hash_set_changed_listener(hash_map_changed_listener)
+    def add_hash_set_changed_listener(self, listener: "HashMapChangedListener"):
+        self.p2p_service.add_hash_set_changed_listener(listener)
+        return lambda: self.remove_hash_set_changed_listener(listener)
+
+    def remove_hash_set_changed_listener(self, listener: "HashMapChangedListener"):
+        self.p2p_service.remove_hash_map_changed_listener(listener)
 
     def add_dispute_agent(
         self,

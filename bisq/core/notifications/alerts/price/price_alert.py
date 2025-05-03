@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from bisq.core.provider.price.price_feed_service import PriceFeedService
     from bisq.core.user.user import User
 
+
 class PriceAlert:
 
     def __init__(
@@ -36,11 +37,12 @@ class PriceAlert:
         self.mobile_notification_service = mobile_notification_service
 
     def on_all_services_initialized(self):
-        self.price_feed_service.update_counter_property.add_listener(
-            lambda _: self._update()
-        )
+        self.price_feed_service.update_counter_property.add_listener(self._update)
 
-    def _update(self):
+    def shut_down(self):
+        self.price_feed_service.update_counter_property.remove_listener(self._update)
+
+    def _update(self, *args, **kwargs):
         if self.user.price_alert_filter:
             filter = self.user.price_alert_filter
             currency_code = filter.currency_code

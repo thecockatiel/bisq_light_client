@@ -55,11 +55,18 @@ class PrivateNotificationManager(MessageListener):
         self.ping_response_handler: Callable[[str], None] = None
         self.private_notification_signing_key: Optional["ECPrivkey"] = None
         self.private_notification_message: Optional["PrivateNotificationMessage"] = None
+        self._subscriptions: list[Callable[[], None]] = []
 
         if not ignore_dev_msg:
-            self.p2p_service.add_decrypted_direct_message_listener(self.handle_message)
-            self.mailbox_message_service.add_decrypted_mailbox_listener(
-                self.handle_message
+            self._subscriptions.append(
+                self.p2p_service.add_decrypted_direct_message_listener(
+                    self.handle_message
+                )
+            )
+            self._subscriptions.append(
+                self.mailbox_message_service.add_decrypted_mailbox_listener(
+                    self.handle_message
+                )
             )
 
         # Pub key for developer global privateNotification message
@@ -68,6 +75,12 @@ class PrivateNotificationManager(MessageListener):
             if use_dev_privilege_keys
             else "02ba7c5de295adfe57b60029f3637a2c6b1d0e969a8aaefb9e0ddc3a7963f26925"
         )
+
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+        self.ping_response_handler = None
 
     def handle_message(
         self,
@@ -151,7 +164,7 @@ class PrivateNotificationManager(MessageListener):
             message_as_hex,
             is_compressed=True,
         )
-        
+
         private_notification.set_sig_and_pub_key(
             signature, self.key_ring.signature_key_pair.public_key
         )

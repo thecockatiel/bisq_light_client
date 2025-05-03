@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Collection, Optional
@@ -47,6 +48,8 @@ class OfferBookService:
         self.filter_manager = filter_manager
         self.offer_book_changed_listeners: set[OfferBookChangedListener] = set()
         self.json_file_manager = JsonFileManager(storage_dir)
+        self._stopped = False
+        self._subscriptions: list[Callable[[], None]] = []
 
         class HashMapListener(HashMapChangedListener):
             def on_added(self_, entries: Collection["ProtectedStorageEntry"]):
@@ -67,7 +70,9 @@ class OfferBookService:
                         for listener in self.offer_book_changed_listeners:
                             listener.on_removed(offer)
 
-        p2p_service.add_hash_set_changed_listener(HashMapListener())
+        self._subscriptions.append(
+            p2p_service.add_hash_set_changed_listener(HashMapListener())
+        )
 
         if dump_statistics:
 
@@ -80,10 +85,14 @@ class OfferBookService:
                         def on_removed(self__, offer):
                             self._do_dump_statistics()
 
-                    self.add_offer_book_changed_listener(StatsOfferListener())
+                    self._subscriptions.append(
+                        self.add_offer_book_changed_listener(StatsOfferListener())
+                    )
                     UserThread.run_after(self._do_dump_statistics, timedelta(seconds=1))
-
-            p2p_service.add_p2p_service_listener(StatisticsListener())
+            
+            self._subscriptions.append(
+                p2p_service.add_p2p_service_listener(StatisticsListener())
+            )
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
@@ -160,14 +169,26 @@ class OfferBookService:
     def remove_offer_at_shut_down(self, offer_payload_base: "OfferPayloadBase") -> None:
         self.remove_offer(offer_payload_base, None, None)
 
+    def shut_down(self):
+        self._stopped = True
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
+
     @property
     def is_bootstrapped(self) -> bool:
         return self.p2p_service.is_bootstrapped
 
     def add_offer_book_changed_listener(
-        self, offer_book_changed_listener: OfferBookChangedListener
+        self, listener: OfferBookChangedListener
     ) -> None:
-        self.offer_book_changed_listeners.add(offer_book_changed_listener)
+        self.offer_book_changed_listeners.add(listener)
+        return lambda: self.remove_offer_book_changed_listener(listener)
+
+    def remove_offer_book_changed_listener(
+        self, listener: OfferBookChangedListener
+    ) -> None:
+        self.offer_book_changed_listeners.discard(listener)
 
     def get_offer_for_json_list(self) -> list["OfferForJson"]:
         offer_json_list = []
@@ -206,12 +227,13 @@ class OfferBookService:
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def _do_dump_statistics(self) -> None:
+        if self._stopped:
+            return
         offers = [
             offer
             for offer in self.get_offers()
             if not offer.is_use_market_based_price
-            or self.price_feed_service.get_market_price(offer.currency_code)
-            is not None
+            or self.price_feed_service.get_market_price(offer.currency_code) is not None
         ]
 
         offer_json_list = []

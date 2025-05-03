@@ -53,6 +53,10 @@ class FailedTradesManager(PersistedDataHost):
         self.persistence_manager.initialize(
             self.failed_trades, PersistenceManagerSource.PRIVATE, "FailedTrades"
         )
+    
+    def shut_down(self):
+        self.unfail_trade_callback = None
+        self.cleanup_mailbox_messages_service.shut_down()
 
     def read_persisted(self, complete_handler: Callable[[], None]):
         def on_persisted(persisted: "TradableList[Trade]"):

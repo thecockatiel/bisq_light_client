@@ -20,6 +20,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
         self._dispute_list: T = self.get_concrete_dispute_list()
         self.num_open_disputes_property = SimpleProperty(0)
         self._disputed_trade_ids: Set[str] = set()
+        self._subscriptions: list[Callable[[], None]] = []
         
         self._persistence_manager.initialize(self._dispute_list, PersistenceManagerSource.PRIVATE, self.get_file_name())
 
@@ -73,8 +74,13 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
     # ///////////////////////////////////////////////////////////////////////////////////////////
 
     def on_all_services_initialized(self) -> None:
-        self._dispute_list.add_listener(self._on_disputes_change_listener)
+        self._subscriptions.append(self._dispute_list.add_listener(self._on_disputes_change_listener))
         self._on_disputes_change_listener(ObservableChangeEvent(self._dispute_list.list))
+    
+    def shut_down(self):
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def get_nr_of_disputes(self, is_buyer: bool, contract: "Contract") -> str:
         def filter_dispute(dispute: "Dispute") -> bool:
@@ -112,7 +118,7 @@ class DisputeListService(Generic[T], PersistedDataHost, ABC):
                 
                 UserThread.execute(update_alerts)
 
-            dispute.badge_count_property.add_listener(on_badge_count_change)
+            self._subscriptions.append(dispute.badge_count_property.add_listener(on_badge_count_change))
             self._disputed_trade_ids.add(dispute.trade_id)
 
     def request_persistence(self) -> None:

@@ -369,8 +369,12 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
     ## SetupListener
     ###########################################################################################
 
-    def add_setup_listener(self, setup_listener: "SetupListener"):
-        self.setup_listeners.add(setup_listener)
+    def add_setup_listener(self, listener: "SetupListener"):
+        self.setup_listeners.add(listener)
+        return lambda: self.remove_setup_listener(listener)
+
+    def remove_setup_listener(self, listener: "SetupListener"):
+        self.setup_listeners.discard(listener)
 
     ###########################################################################################
     ## MessageListener implementation

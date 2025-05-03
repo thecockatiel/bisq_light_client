@@ -10,6 +10,7 @@ from bisq.common.file.file_util import (
 from bisq.common.handlers.result_handler import ResultHandler
 from bisq.common.user_thread import UserThread
 from bisq.core.btc.model.address_entry_context import AddressEntryContext
+from utils.concurrency import ThreadSafeSet
 from utils.data import SimpleProperty, SimplePropertyChangeEvent
 from bisq.core.btc.setup.wallet_config import WalletConfig
 
@@ -44,7 +45,7 @@ class WalletsSetup:
 
         self._chain_height_property = SimpleProperty(0)
         self._num_peers_property = SimpleProperty(0)
-        self._setup_completed_handlers: set[Callable[[], None]] = set()
+        self._setup_completed_handlers = ThreadSafeSet[Callable[[], None]]()
 
         self._subscriptions: list[Callable[[], None]] = []
 

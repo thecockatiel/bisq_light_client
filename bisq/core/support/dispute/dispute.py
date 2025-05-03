@@ -124,6 +124,10 @@ class Dispute(NetworkPayload, PersistablePayload):
         self.id = self.trade_id + "_" + self.trader_id
         self.refresh_alert_level(True)
 
+    def shut_down(self):
+        if self.file_transfer_session:
+            self.file_transfer_session.reset_session()
+
     def create_or_get_file_transfer_receiver(
         self,
         network_node: "NetworkNode",

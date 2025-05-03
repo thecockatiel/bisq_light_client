@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.network.connection import Connection
 
 
-
 _Msg = TypeVar("Msg", bound="NewStateHashMessage")
 _Req = TypeVar("Req", bound="GetStateHashesRequest")
 _Res = TypeVar("Res", bound="GetStateHashesResponse")
@@ -185,7 +184,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
                     listener.on_success(get_state_hashes_response.get_serialized_size())
 
             UserThread.execute(main_t)
-            
+
         def on_failure(e):
             def main_t():
                 for listener in self._response_listeners:
@@ -193,12 +192,7 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
 
             UserThread.execute(main_t)
 
-        
-        future.add_done_callback(
-            FutureCallback(
-                on_success, on_failure
-            )
-        )
+        future.add_done_callback(FutureCallback(on_success, on_failure))
 
     def request_hashes_from_all_connected_seed_nodes(self, from_height: int) -> None:
         for connection in self._network_node.get_confirmed_connections():
@@ -222,6 +216,10 @@ class StateNetworkService(Generic[_Msg, _Req, _Res, _Han, _StH], MessageListener
         self._request_state_hash_handler_map.clear()
 
     def shut_down(self):
+        for handler in self._request_state_hash_handler_map.values():
+            handler.cancel()
+        self._request_state_hash_handler_map.clear()
+
         if self._message_listener_added:
             self._network_node.remove_message_listener(self)
             self._message_listener_added = False

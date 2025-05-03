@@ -205,13 +205,13 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                 self.try_apply_messages()
                 self.check_disputes_for_updates()
 
-        self.p2p_service.add_p2p_service_listener(Listener())
+        self._subscriptions.append(self.p2p_service.add_p2p_service_listener(Listener()))
 
         # def on_num_peers_change(e):
         #     if self.wallets_setup.has_sufficient_peers_for_broadcast:
         #         self.try_apply_messages()
 
-        # self.wallets_setup.num_peers_property.add_listener(on_num_peers_change) # TODO: check if this is needed
+        # self._subscriptions.append(self.wallets_setup.num_peers_property.add_listener(on_num_peers_change)) # TODO: check if this is needed
 
         self.try_apply_messages()
         self.cleanup_disputes()
@@ -237,6 +237,10 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
         DisputeValidation.test_if_any_dispute_tried_replay(disputes, on_dispute_replay_exception)
         
         self.maybe_clear_sensitive_data()
+
+    def shut_down(self):
+        super().shut_down()
+        self.dispute_list_service.shut_down()
 
     def check_disputes_for_updates(self) -> None:
         disputes = self.get_dispute_list().list
@@ -269,11 +273,11 @@ class DisputeManager(Generic[_T], SupportManager, ABC):
                     self.disputed_trade_update(e.new_value.name, dispute, True)
 
             # user accepted/rejected mediation proposal (before lockup period has expired)
-            trade.mediation_result_state_property.add_listener(on_mediation_result_change)
+            self._subscriptions.append(trade.mediation_result_state_property.add_listener(on_mediation_result_change))
             # user rejected mediation after lockup period: opening arbitration
-            trade.dispute_state_property.add_listener(on_dispute_state_change)
+            self._subscriptions.append(trade.dispute_state_property.add_listener(on_dispute_state_change))
             # trade paid out through mediation
-            trade.state_phase_property.add_listener(on_phase_change)
+            self._subscriptions.append(trade.state_phase_property.add_listener(on_phase_change))
 
     def is_trader(self, dispute: "Dispute") -> bool:
         return self.pub_key_ring == dispute.trader_pub_key_ring

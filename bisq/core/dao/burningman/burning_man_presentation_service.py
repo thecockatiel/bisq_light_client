@@ -99,6 +99,9 @@ class BurningManPresentationService(DaoStateListener):
         if last_block:
             self._apply_block(last_block)
 
+    def shut_down(self):
+        self._dao_state_service.remove_dao_state_listener(self)
+
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // DaoStateListener
     # ///////////////////////////////////////////////////////////////////////////////////////////

@@ -62,6 +62,7 @@ class XmrTxProofService(AssetTxProofService):
         self.p2p_service = p2p_service
         self.wallets_setup = wallets_setup
         self.socks5_proxy_provider = socks5_proxy_provider
+        self._subscriptions: list[Callable[[], None]] = []
         
         self.services_by_trade_id = dict[str, "XmrTxProofRequestsPerTrade"]()
         self.auto_confirm_settings: Optional["AutoConfirmSettings"]
@@ -91,6 +92,9 @@ class XmrTxProofService(AssetTxProofService):
         for service in self.services_by_trade_id.values():
             service.terminate()
         self.services_by_trade_id.clear()
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
         if self.p2p_network_and_wallet_ready:
             self.p2p_network_and_wallet_ready.remove_all_listeners()
             self.p2p_network_and_wallet_ready = None
@@ -125,14 +129,14 @@ class XmrTxProofService(AssetTxProofService):
                     )
                 self.trade_manager.request_persistence()
                 self.shut_down()
-        self.filter_manager.filter_property.add_listener(on_filter_property_change)
+        self._subscriptions.append(self.filter_manager.filter_property.add_listener(on_filter_property_change))
         
         # We listen on new trades
         tradable_list = self.trade_manager.tradable_list
         def on_trade_list_change(e: ObservableChangeEvent["Trade"]):
             if e.added_elements:
                 self.process_trades(e.added_elements)
-        tradable_list.add_listener(on_trade_list_change)
+        self._subscriptions.append(tradable_list.add_listener(on_trade_list_change))
         
         # Process existing trades
         self.process_trades(tradable_list)
@@ -160,7 +164,7 @@ class XmrTxProofService(AssetTxProofService):
                     self.start_requests_if_valid(trade)
                     
             self.trade_state_listener_map[trade.get_id()] = trade_state_listener
-            trade.state_property.add_listener(trade_state_listener)
+            self._subscriptions.append(trade.state_property.add_listener(trade_state_listener))
             
     def start_requests_if_valid(self, trade: "SellerTrade"):
         tx_hash = trade.counter_currency_tx_id
@@ -241,7 +245,7 @@ class XmrTxProofService(AssetTxProofService):
                     self.wallets_setup.chain_height_property.remove_listener(self.btc_block_listener)
                     result.set(True)
             self.btc_block_listener = listener
-            self.wallets_setup.chain_height_property.add_listener(self.btc_block_listener)
+            self._subscriptions.append(self.wallets_setup.chain_height_property.add_listener(self.btc_block_listener))
         return result
     
     def has_sufficient_btc_peers(self) -> SimpleProperty[bool]:
@@ -254,7 +258,7 @@ class XmrTxProofService(AssetTxProofService):
                     self.wallets_setup.num_peers_property.remove_listener(self.btc_peers_listener)
                     result.set(True)
             self.btc_peers_listener = listener
-            self.wallets_setup.num_peers_property.add_listener(self.btc_peers_listener)
+            self._subscriptions.append(self.wallets_setup.num_peers_property.add_listener(self.btc_peers_listener))
         return result
     
     def is_p2p_bootstrapped(self) -> SimpleProperty[bool]:
@@ -267,7 +271,7 @@ class XmrTxProofService(AssetTxProofService):
                     self.p2p_service.remove_p2p_service_listener(self.bootstrap_listener)
                     result.set(True)
             self.bootstrap_listener = Listener()
-            self.p2p_service.add_p2p_service_listener(self.bootstrap_listener)
+            self._subscriptions.append(self.p2p_service.add_p2p_service_listener(self.bootstrap_listener))
         return result
     
     # ///////////////////////////////////////////////////////////////////////////////////////////

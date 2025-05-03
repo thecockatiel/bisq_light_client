@@ -119,7 +119,7 @@ class AccountingNode(DaoSetupService, DaoStateListener, ABC):
         pass
 
     def on_initialized(self):
-        if self._p2p_service.is_bootstrapped():
+        if self._p2p_service.is_bootstrapped:
             self.logger.info(
                 "p2PService.isBootstrapped is already true, we call on_p2p_network_ready directly."
             )

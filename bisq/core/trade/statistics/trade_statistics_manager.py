@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING, Optional
 from pathlib import Path
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.statistics.trade_statistics_converter import (
         TradeStatisticsConverter,
     )
- 
+
 
 class TradeStatisticsManager:
 
@@ -56,6 +57,7 @@ class TradeStatisticsManager:
         self._trade_statistics_converter = trade_statistics_converter
         self._storage_dir = storage_dir
         self._dump_statistics = dump_statistics
+        self._subscriptions: list[Callable[[], None]] = []
 
         self._json_file_manager: Optional["JsonFileManager"] = None
         self.observable_trade_statistics_set = ObservableSet["TradeStatistics3"]()
@@ -67,6 +69,9 @@ class TradeStatisticsManager:
             self._trade_statistics_converter.shut_down()
         if self._json_file_manager:
             self._json_file_manager.shut_down()
+        for unsub in self._subscriptions:
+            unsub()
+        self._subscriptions.clear()
 
     def on_all_services_initialized(self):
         class Listener(AppendOnlyDataStoreListener):
@@ -80,8 +85,10 @@ class TradeStatisticsManager:
                     )
                     self.maybe_dump_statistics()
 
-        self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
-            Listener()
+        self._subscriptions.append(
+            self._p2p_service.p2p_data_storage.add_append_only_data_store_listener(
+                Listener()
+            )
         )
 
         for (

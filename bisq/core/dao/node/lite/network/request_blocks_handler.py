@@ -1,3 +1,4 @@
+from concurrent.futures import Future
 from utils.aio import FutureCallback
 from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
@@ -16,7 +17,6 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.network.p2p.peers.peer_manager import PeerManager
     from bisq.core.network.p2p.network.connection import Connection
-
 
 
 class RequestBlocksHandler(MessageListener):
@@ -56,6 +56,7 @@ class RequestBlocksHandler(MessageListener):
         self.start_block_height = start_block_height
         self._listener = listener
         self._timeout_timer: Optional["Timer"] = None
+        self._future: Optional[Future] = None
         self._nonce = next_random_int()
         self._stopped = False
 
@@ -65,7 +66,9 @@ class RequestBlocksHandler(MessageListener):
 
     def request_blocks(self):
         if self._stopped:
-            self.logger.warning("We have stopped already. We ignore that requestData call.")
+            self.logger.warning(
+                "We have stopped already. We ignore that requestData call."
+            )
             return
 
         get_blocks_request = GetBlocksRequest(
@@ -108,14 +111,18 @@ class RequestBlocksHandler(MessageListener):
 
         self._network_node.add_message_listener(self)
 
-        future = self._network_node.send_message(self.node_address, get_blocks_request)
+        self._future = self._network_node.send_message(
+            self.node_address, get_blocks_request
+        )
 
         def on_success(result):
+            self._future = None
             self.logger.debug(
                 f"Sending of GetBlocksRequest message to peer {self.node_address.get_full_address()} succeeded."
             )
 
         def on_failure(e: Exception):
+            self._future = None
             if not self._stopped:
                 error_message = (
                     f"Sending getBlocksRequest to {self.node_address} failed. That is expected if the peer is offline.\n\t"
@@ -132,7 +139,7 @@ class RequestBlocksHandler(MessageListener):
                     "We have stopped already. We ignore that networkNode.sendMessage.onFailure call."
                 )
 
-        future.add_done_callback(FutureCallback(on_success, on_failure))
+        self._future.add_done_callback(FutureCallback(on_success, on_failure))
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // MessageListener implementation
@@ -180,6 +187,9 @@ class RequestBlocksHandler(MessageListener):
 
     def terminate(self):
         self._stopped = True
+        if self._future:
+            self._future.cancel()
+            self._future = None
         self._network_node.remove_message_listener(self)
         self._stop_timeout_timer()
 
