@@ -13,11 +13,12 @@ class MasterTimer:
     FRAME_INTERVAL_MS = 100  # frame rate of 60 fps is about 16 ms but we don't need such a short interval, 100 ms should be good enough
 
     listeners: ThreadSafeSet[Callable[[], None]] = ThreadSafeSet()
+    _stop_flag = threading.Event()
 
     @staticmethod
     def start_timer():
         def run_timer():
-            while True:
+            while not MasterTimer._stop_flag.is_set():
                 logger.debug("Executing listeners")
                 for callable in MasterTimer.listeners:
                     try:
@@ -38,6 +39,12 @@ class MasterTimer:
     def remove_listener(runnable: Callable[[], None]):
         MasterTimer.listeners.discard(runnable)
         logger.debug(f"Listener removed: {runnable}")
+
+    @staticmethod
+    def shut_down():
+        MasterTimer._stop_flag.set()
+        MasterTimer.listeners.clear()
+
 
 # Initialize and start the timer
 MasterTimer.start_timer()
