@@ -307,6 +307,39 @@ class BisqSetup:
         self.p2p_network_and_wallet_initialized = None
         self._p2p_network_setup.shut_down()
         self._domain_initialisation.shut_down()
+        # unref handlers
+        self.display_tac_handler = None
+        self.chain_file_locked_exception_handler = None
+        self.spv_file_corrupted_handler = None
+        self.locked_up_funds_handler = None
+        self.dao_error_message_handler = None
+        self.dao_warn_message_handler = None
+        self.filter_warning_handler = None
+        self.display_security_recommendation_handler = None
+        self.display_localhost_handler = None
+        self.wrong_os_architecture_handler = None
+        self.display_signed_by_arbitrator_handler = None
+        self.display_signed_by_peer_handler = None
+        self.display_peer_limit_lifted_handler = None
+        self.display_peer_signer_handler = None
+        self.rejected_tx_error_message_handler = None
+        self.disk_space_warning_handler = None
+        self.offer_disabled_handler = None
+        self.chain_not_synced_handler = None
+        self.display_tor_network_settings_handler = None
+        self.show_first_popup_if_resync_spv_requested_handler = None
+        self.request_wallet_password_handler = None
+        self.display_alert_handler = None
+        self.display_update_handler = None
+        self.vote_result_exception_handler = None
+        self.display_private_notification_handler = None
+        self.show_popup_if_invalid_btc_config_handler = None
+        self.revolut_accounts_update_handler = None
+        self.amazon_gift_card_accounts_update_handler = None
+        self.qubes_os_info_handler = None
+        self.resync_dao_state_from_resources_handler = None
+        self.tor_address_upgrade_handler = None
+        self.down_grade_prevention_handler = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // Sub tasks
