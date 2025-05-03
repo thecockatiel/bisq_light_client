@@ -6,15 +6,14 @@ from bisq.common.protocol.persistable.persistable_list import PersistableList
 from bisq.common.protocol.persistable.persistable_payload import PersistablePayload
 from utils.data import ObservableChangeEvent, ObservableList
 
-T = TypeVar(
-    "T", bound=PersistablePayload
-)
+T = TypeVar("T", bound=PersistablePayload)
+
 
 class PersistableListAsObservable(PersistableList[T], ABC):
-    
+
     def _create_list(self):
         return ObservableList[T]()
-    
+
     def get_observable_list(self) -> ObservableList[T]:
         return self.list
 
@@ -23,3 +22,6 @@ class PersistableListAsObservable(PersistableList[T], ABC):
 
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         return self.get_observable_list().remove_listener(listener)
+
+    def remove_all_listeners(self):
+        return self.get_observable_list().remove_all_listeners()
