@@ -119,8 +119,9 @@ class BurningManAccountingService(DaoSetupService, DaoStateListener):
         ).start()
 
     def shut_down(self):
-        self.dao_state_service.remove_dao_state_listener(self)
         self._burning_man_presentation_service.shut_down()
+        self._burning_man_accounting_store_service.shut_down()
+        self.dao_state_service.remove_dao_state_listener(self)
         for unsub in self._subscriptions:
             unsub()
         self._subscriptions.clear()

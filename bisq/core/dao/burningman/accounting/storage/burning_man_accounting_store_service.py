@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 from bisq.common.file.file_util import delete_file_if_exists
 from bisq.common.persistence.persistence_manager_source import PersistenceManagerSource
+from bisq.common.timer import Timer
 from bisq.common.user_thread import UserThread
 from bisq.core.network.p2p.persistence.store_service import StoreService
 from utils.concurrency import AtomicBoolean
@@ -32,9 +33,11 @@ class BurningManAccountingStoreService(StoreService["BurningManAccountingStore"]
         persistence_manager: "PersistenceManager[BurningManAccountingStore]",
     ):
         super().__init__(storage_dir, persistence_manager)
+        self.resource_data_store_service = resource_data_store_service
         self.logger = get_ctx_logger(__name__)
         self._remove_all_blocks_callled = AtomicBoolean(False)
-        resource_data_store_service.add_service(self)
+        self._timer: Optional[Timer] = None
+        self.resource_data_store_service.add_service(self)
 
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
         super().read_from_resources(post_fix, complete_handler)
@@ -51,7 +54,13 @@ class BurningManAccountingStoreService(StoreService["BurningManAccountingStore"]
             except Exception as e:
                 raise RuntimeError(e)
 
-        UserThread.run_after(delete_old_files, timedelta(seconds=5))
+        self._timer = UserThread.run_after(delete_old_files, timedelta(seconds=5))
+
+    def shut_down(self):
+        self.resource_data_store_service.remove_service(self)
+        if self._timer:
+            self._timer.stop()
+            self._timer = None
 
     # ///////////////////////////////////////////////////////////////////////////////////////////
     # // API
