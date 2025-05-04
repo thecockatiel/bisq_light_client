@@ -382,7 +382,9 @@ class Connection(HasCapabilities, Callable[[], None], MessageListener):
             except Exception as e:
                 self.logger.error(f"Exception at shutdown. {e}", exc_info=e)
             finally:
-                self.executor.shutdown(wait=True, cancel_futures=True)
+                if self.executor:
+                    self.executor.shutdown(wait=True, cancel_futures=True)
+                    self.executor = None
                 self.logger.debug(f"Connection shutdown complete {self}")
                 if completed: return
                 completed = True

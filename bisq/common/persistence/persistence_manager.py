@@ -115,6 +115,7 @@ class PersistenceManager(Generic[T]):
 
         if self.write_to_disk_executor:
             self.write_to_disk_executor.shutdown()
+            self.write_to_disk_executor = None
 
         self.persistable = None # unref
 

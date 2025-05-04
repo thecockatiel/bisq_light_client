@@ -321,8 +321,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
 
             if num_connections == 0:
                 self.logger.info("Shutdown immediately because no connections are open.")
-                self.connection_executor.shutdown(wait=False, cancel_futures=True)
-                self.send_message_executor.shutdown(wait=False, cancel_futures=True)
+                if self.connection_executor:
+                    self.connection_executor.shutdown(wait=False, cancel_futures=True)
+                    self.send_message_executor.shutdown(wait=False, cancel_futures=True)
+                    self.connection_executor = None
+                    self.send_message_executor = None
                 if shut_down_complete_handler:
                     shut_down_complete_handler()
                 return
@@ -349,8 +352,11 @@ class NetworkNode(MessageListener, Socks5ProxyInternalFactory, ABC):
                 if shutdown_completed.get() == num_connections:
                     self.logger.info("Shutdown completed with all connections closed")
                     timer.stop()
-                    self.connection_executor.shutdown(wait=False, cancel_futures=True)
-                    self.send_message_executor.shutdown(wait=False, cancel_futures=True)
+                    if self.connection_executor:
+                        self.connection_executor.shutdown(wait=False, cancel_futures=True)
+                        self.send_message_executor.shutdown(wait=False, cancel_futures=True)
+                        self.connection_executor = None
+                        self.send_message_executor = None
                     self.setup_listeners.clear()
                     self.message_listeners.clear()
                     self.connection_listeners.clear()

@@ -44,7 +44,9 @@ class ExportJsonFilesService(DaoSetupService):
             self._tx_file_manager.shut_down()
             self._tx_output_file_manager.shut_down()
             self._bsq_state_file_manager.shut_down()
-        self._executor.shutdown()
+        if self._executor:
+            self._executor.shutdown()
+            self._executor = None
 
     def maybe_export_to_json(self):
         pass

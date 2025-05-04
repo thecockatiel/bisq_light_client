@@ -59,8 +59,9 @@ class Broadcaster(BroadcastHandler.ResultHandler):
             # We set delay of broadcasts and timeout to very low values,
             # so we can expect that we get on_completed called very fast and trigger the do_shut_down from there.
             self.maybe_broadcast_bundle()
-
-        self._executor.shutdown()
+        if self._executor:
+            self._executor.shutdown()
+            self._executor = None
 
     def flush(self) -> None:
         self.maybe_broadcast_bundle()

@@ -120,6 +120,7 @@ class TradeStatisticsConverter:
     def shut_down(self):
         if self._executor:
             self._executor.shutdown()
+            self._executor = None
         self._append_only_data_store_service.remove_service(
             self._trade_statistics_2_storage_service
         )

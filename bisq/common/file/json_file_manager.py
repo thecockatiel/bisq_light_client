@@ -39,6 +39,7 @@ class JsonFileManager:
     def shut_down(self):
         if self.executor:
             self.executor.shutdown()
+            self.executor = None
 
     def write_to_disc_threaded(self, json_data: str, file_name: str):
         ctx = contextvars.copy_context()

@@ -110,7 +110,9 @@ class DaoStateStorageService(StoreService["DaoStateStore"]):
         UserThread.execute(complete_handler)
 
     def shut_down(self):
-        self._executor_service.shutdown()
+        if self._executor_service:
+            self._executor_service.shutdown()
+            self._executor_service = None
         self._resource_data_store_service.remove_service(self)
 
     def read_from_resources(self, post_fix: str, complete_handler: Callable[[], None]):
