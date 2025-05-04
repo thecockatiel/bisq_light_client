@@ -164,14 +164,21 @@ def run_in_thread(
     ctx = contextvars.copy_context()
     return as_future(threads.deferToThread(ctx.run, func, *args, **kwargs))
 
+
 def wait_future_blocking(
-    future: asyncio.Future[_T], 
+    future: asyncio.Future[_T],
 ) -> _T:
     """Wait for an async function to complete."""
     event = threading.Event()
     future.add_done_callback(lambda _: event.set())
     event.wait()
-    return future.result()
+    try:
+        result = future.result()
+    finally:
+        del event
+        del future
+    return result
+
 
 class FutureCallback(
     Generic[_T], Callable[[Union[asyncio.Future[_T], ConcurrentFuture[_T]]], None]
@@ -210,3 +217,8 @@ class FutureCallback(
             self.on_cancel(e)
         except BaseException as e:
             self.on_failure(e)
+        finally:
+            del self._ctx
+            del self._on_success
+            del self._on_failure
+            del self._on_cancel
