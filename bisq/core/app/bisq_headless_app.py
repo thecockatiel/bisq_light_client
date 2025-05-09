@@ -19,17 +19,7 @@ class BisqHeadlessApp(BisqSetupListener):
         self._uncaught_exception_handler = uncaught_exception_handler
         self._graceful_shut_down_handler = graceful_shut_down_handler
         self._user_context = user_context
-        self.__logger = None
-
-    @property
-    def _logger(self):
-        if self.__logger is None:
-            self.__logger = self._user_context.logger.getChild(__name__)
-        return self.__logger
-
-    @property
-    def _global_container(self):
-        return self._user_context.global_container
+        self._logger = user_context.logger.getChild(__name__)
 
     def start_user_instance(self):
         try:
@@ -58,9 +48,6 @@ class BisqHeadlessApp(BisqSetupListener):
         self._user_context = None
 
     def _setup_handlers(self):
-        # TODO: later we may want to replace these
-        # what I have in mind is to always launch headless and launch UI on top of it,
-        # so it probably doesn't make sense to automatically accept anything.
         bisq_setup = self._user_context.global_container.bisq_setup
         bisq_setup.display_tac_handler = lambda accepted_handler: (
             self._logger.info(
