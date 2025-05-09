@@ -23,10 +23,12 @@ cd bisq_light_client && git submodule update --init --recursive --depth=1
 python3 -m pip install -r requirements.txt
 # or on debian:
 sudo apt-get install python3-txtorcon python3-twisted python3-tqdm python3-grpcio python3-cryptography python3-pycryptodome python3-requests python3-socks python3-psutil libsecp256k1-dev python3-sortedcontainers python3-aiohttp python3-async-timeout python3-aiorpcx python3-certifi python3-dnspython python3-six python3-openssl python3-grpc-tools tor python3-attr python3-jsonpatch
-# depending on your distro and package availability:
-sudo apt-get install python3-pyqt6
-# or
-sudo apt-get install python3-pyqt5
+```
+
+gui dependencies:
+
+```bash
+sudo apt-get install python3-qrcode python3-pyqt5 qtbase5-dev qttools5-dev-tools pyqt5-dev-tools python3-matplotlib-qt5
 ```
 
 It is a priority to make the project runnable without installing deps through pip. please let me know if something does not work.
