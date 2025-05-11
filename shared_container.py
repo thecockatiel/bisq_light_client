@@ -47,7 +47,7 @@ class SharedContainer:
             from bisq.common.config.config import Config
             from utils.dir import user_data_dir
 
-            self._config = Config("bisq_light_client", user_data_dir())
+            self._config = Config("bisq_light", user_data_dir())
 
         return self._config
 

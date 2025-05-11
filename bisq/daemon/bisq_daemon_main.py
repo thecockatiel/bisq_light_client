@@ -48,7 +48,7 @@ class BisqDaemonMain(
     def __init__(self):
         self.full_name = "Bisq Light Daemon"
         self.script_name = "bisqd"
-        self.app_name = "bisq_light_client"
+        self.app_name = "bisq_light"
         self.version = Version.VERSION
 
         self.__is_shutdown_in_progress = AtomicBoolean(False)

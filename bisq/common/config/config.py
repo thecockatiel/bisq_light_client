@@ -85,7 +85,7 @@ class Config:
         # Default "data dir properties", i.e. properties that can determine the location of
         # Bisq's application data directory (appDataDir)
         if is_running_in_vscode() and (not default_app_name or not default_user_data_dir):
-            default_app_name = "bisq_light_client"
+            default_app_name = "bisq_light"
             default_user_data_dir =  user_data_dir()
         self.default_app_name = default_app_name or _random_app_name()
         self.default_user_data_dir = default_user_data_dir or _temp_user_data_dir()

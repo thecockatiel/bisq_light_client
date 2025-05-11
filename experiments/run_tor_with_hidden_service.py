@@ -16,7 +16,7 @@ from bisq.core.network.p2p.network.new_tor import NewTor
 from bisq.common.setup.log_setup import setup_log_for_test
 from utils.dir import user_data_dir
 
-config = Config("bisq_light_client", user_data_dir())
+config = Config("bisq_light", user_data_dir())
 
 data_dir = Path(__file__).parent.joinpath(".testdata")
 data_dir.mkdir(exist_ok=True, parents=True)
