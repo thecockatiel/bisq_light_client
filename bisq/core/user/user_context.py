@@ -10,6 +10,7 @@ from utils.aio import as_future
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Optional
+from bisq.core.app.bisq_app import BisqApp
 from bisq.core.app.bisq_headless_app import BisqHeadlessApp
 from bisq.common.setup.log_setup import (
     get_user_log_file_path,
@@ -36,7 +37,7 @@ class UserContext:
     persistence_orchestrator: PersistenceOrchestrator
     logger: logging.Logger
     global_container: Optional[GlobalContainer] = field(default=None)
-    _bisq_app: Optional[BisqHeadlessApp] = field(default=None, init=False)
+    _bisq_app: Optional[BisqApp] = field(default=None, init=False)
     _lock: Lock = field(default_factory=lambda: Lock(), init=False)
     """only not None when UserManager.init_user has been called for user_id"""
 
