@@ -47,7 +47,7 @@ class SimpleProperty(Generic[T]):
             self._listeners.add(listener)
             if self.on_add_listener:
                 self.on_add_listener(len(self._listeners))
-        return lambda: self.remove_listener(listener)
+        return lambda *_: self.remove_listener(listener)
 
     def remove_listener(self, listener: Callable[[SimplePropertyChangeEvent[T]], None]) -> None:
         if listener in self._listeners:
@@ -123,7 +123,7 @@ class ObservableSet(set[T]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
-        return lambda: self.remove_listener(listener)
+        return lambda *_: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
@@ -178,7 +178,7 @@ class ObservableMap(dict[K, V]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.add(listener)
-        return lambda: self.remove_listener(listener)
+        return lambda *_: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[tuple[K,V]]], None]):
         self._listeners.discard(listener)
@@ -229,7 +229,7 @@ class ObservableList(list[T]):
     
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
-        return lambda: self.remove_listener(listener)
+        return lambda *_: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
@@ -352,7 +352,7 @@ class FilteredList(Generic[T]):
         
     def add_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.add(listener)
-        return lambda: self.remove_listener(listener)
+        return lambda *_: self.remove_listener(listener)
         
     def remove_listener(self, listener: Callable[[ObservableChangeEvent[T]], None]):
         self._listeners.discard(listener)
