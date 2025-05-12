@@ -3,7 +3,6 @@ from bisq.common.protocol.persistable.persistable_envelope import PersistableEnv
 from bisq.common.protocol.proto_util import ProtoUtil
 from bisq.core.notifications.alerts.market.market_alert_filter import MarketAlertFilter
 from bisq.core.notifications.alerts.price.price_alert_filter import PriceAlertFilter
-from bisq.core.user.cookie import Cookie
 import pb_pb2 as protobuf
 from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.alert.alert import Alert
@@ -32,8 +31,8 @@ class UserPayload(PersistableEnvelope):
                  market_alert_filters: Optional[List["MarketAlertFilter"]] = None,
                  registered_refund_agent: Optional["RefundAgent"] = None,
                  accepted_refund_agents: Optional[List["RefundAgent"]] = None,
-                 cookie: Optional["Cookie"] = None,
-                 sub_accounts_by_id: Optional[Dict[str, Set["PaymentAccount"]]] = None):
+                 sub_accounts_by_id: Optional[Dict[str, Set["PaymentAccount"]]] = None,
+                ):
         
         self.account_id: Optional[str] = account_id
         self.payment_accounts = payment_accounts or set()
@@ -52,11 +51,6 @@ class UserPayload(PersistableEnvelope):
         # Added v1.2.0
         self.registered_refund_agent = registered_refund_agent
         self.accepted_refund_agents = accepted_refund_agents or []
-        
-        # Added at v1.5.3
-        # Generic map for persisting various UI states. We keep values un-typed as string to
-        # provide sufficient flexibility.
-        self.cookie= cookie or Cookie()
         
         # Was added at v1.9.2
         # Key is in case of XMR subAccounts the subAccountId (mainAddress + accountIndex). This creates unique sets of
@@ -117,9 +111,6 @@ class UserPayload(PersistableEnvelope):
             payload.accepted_refund_agents.extend(
                 ProtoUtil.collection_to_proto_with_extra(self.accepted_refund_agents,
                                            lambda msg: cast(protobuf.StoragePayload, msg).refund_agent))
-            
-        if self.cookie:
-            payload.cookie.extend(ProtoUtil.to_string_map_entry_list(self.cookie.to_proto_message()))
 
         # Convert subAccountsById map to list of SubAccountMapEntry
         for key, value in self.sub_accounts_by_id.items():
@@ -179,7 +170,6 @@ class UserPayload(PersistableEnvelope):
                 RefundAgent.from_proto(agent)
                 for agent in proto.accepted_refund_agents
             ] if proto.accepted_refund_agents else [],
-            cookie=Cookie.from_proto(ProtoUtil.to_string_map(proto.cookie)),
-            sub_accounts_by_id=sub_accounts
+            sub_accounts_by_id=sub_accounts,
         )
 

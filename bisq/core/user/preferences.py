@@ -532,10 +532,6 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
             self.pref_payload.buyer_security_deposit_as_percent = clamped_deposit
         self.request_persistence()
 
-    def set_selected_payment_account_for_create_offer(self, payment_account: Optional["PaymentAccount"]) -> None:
-        self.pref_payload.selected_payment_account_for_create_offer = payment_account
-        self.request_persistence()
-
     def set_pay_fee_in_btc(self, pay_fee_in_btc: bool) -> None:
         self.pref_payload.pay_fee_in_btc = pay_fee_in_btc
         self.request_persistence()

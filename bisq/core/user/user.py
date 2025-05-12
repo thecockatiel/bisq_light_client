@@ -21,7 +21,6 @@ from utils.data import (
 from twisted.internet.defer import Deferred
 
 if TYPE_CHECKING:
-    from bisq.core.user.cookie import Cookie
     from bisq.core.payment.payment_account import PaymentAccount
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.notifications.alerts.market.market_alert_filter import (
@@ -529,10 +528,6 @@ class User(PersistedDataHost):
 
     def payment_account_exists(self, payment_account: "PaymentAccount") -> bool:
         return payment_account in self.payment_accounts_observable
-
-    @property
-    def cookie(self) -> "Cookie":
-        return self.user_payload.cookie
 
     @property
     def sub_accounts_by_id(self) -> dict[str, set["PaymentAccount"]]:

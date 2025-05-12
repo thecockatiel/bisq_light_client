@@ -1974,7 +1974,7 @@ message PreferencesPayload {
     // Superseded by buyerSecurityDepositAsPercent.
     int64 buyer_security_deposit_as_long = 30 [deprecated = true];
     bool use_animations = 31;
-    PaymentAccount selected_payment_account_for_create_offer = 32;
+    PaymentAccount selected_payment_account_for_create_offer = 32 [deprecated = true]; // deprecated because of multi-user functionality
     bool pay_fee_in_btc = 33;
     repeated string bridge_addresses = 34;
     int32 bridge_option_ordinal = 35;
@@ -1991,7 +1991,7 @@ message PreferencesPayload {
     bool is_dao_full_node = 46;
     string rpc_user = 47;
     string rpc_pw = 48;
-    string take_offer_selected_payment_account_id = 49;
+    string take_offer_selected_payment_account_id = 49; // best effort in multi-user mode
     double buyer_security_deposit_as_percent = 50;
     int32 ignore_dust_threshold = 51;
     double buyer_security_deposit_as_percent_for_crypto = 52;
@@ -2014,6 +2014,11 @@ message PreferencesPayload {
     bool process_burning_man_accounting_data = 69;
     bool is_full_b_m_accounting_node = 70;
     bool use_bisq_wallet_funding = 71;
+    // added for multi-user mode:
+    repeated StringMapEntry cookie = 72; // moved from user payload
+    string preferred_create_offer_payment_method_id = 73;
+    string preferred_take_offer_payment_method_id = 74;
+    string create_offer_selected_payment_account_id = 75; // best effort
 }
 
 message AutoConfirmSettings {
@@ -2040,7 +2045,7 @@ message UserPayload {
     repeated MarketAlertFilter market_alert_filters = 13;
     repeated RefundAgent accepted_refund_agents = 14;
     RefundAgent registered_refund_agent = 15;
-    repeated StringMapEntry cookie = 16;
+    repeated StringMapEntry cookie = 16 [deprecated = true]; // deprecated because of multi-user functionality, moved to preferences
     repeated SubAccountMapEntry sub_account_map_entries = 17;
 }
 

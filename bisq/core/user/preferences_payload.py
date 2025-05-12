@@ -8,11 +8,11 @@ from bisq.core.btc.wallet.restrictions import Restrictions
 from bisq.core.user.preferences_const import CLEAR_DATA_AFTER_DAYS_INITIAL, INITIAL_TRADE_LIMIT
 from bisq.core.user.block_chain_explorer import BlockChainExplorer
 from bisq.core.user.auto_confirm_settings import AutoConfirmSettings
-from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.locale.crypto_currency import CryptoCurrency
 from bisq.core.locale.fiat_currency import FiatCurrency
 from bisq.core.locale.trade_currency import TradeCurrency
 from bisq.common.protocol.proto_util import ProtoUtil
+from bisq.core.user.cookie import Cookie
 
 class PreferencesPayload(PersistableEnvelope):
     
@@ -51,15 +51,14 @@ class PreferencesPayload(PersistableEnvelope):
                  buyer_security_deposit_as_long: int = 0,
                  use_animations: bool = False,
                  css_theme: int = 0,
-                 selected_payment_account_for_create_offer: "PaymentAccount" = None,
                  pay_fee_in_btc: bool = True,
                  bridge_addresses: list[str] = None,
                  bridge_option_ordinal: int = 0,
                  tor_transport_ordinal: int = 0,
                  custom_bridges: Optional[str] = None,
                  bitcoin_nodes_option_ordinal: int = 0,
-                 referral_id: str = None,
-                 phone_key_and_token: Optional[str] = None,
+                 referral_id: str = None, # potential privacy leak
+                 phone_key_and_token: Optional[str] = None, # potential privacy leak
                  use_sound_for_mobile_notifications: bool = True,
                  use_trade_notifications: bool = True,
                  use_market_notifications: bool = True,
@@ -68,7 +67,6 @@ class PreferencesPayload(PersistableEnvelope):
                  is_dao_full_node: bool = False,
                  rpc_user: str = None,
                  rpc_pw: str = None,
-                 take_offer_selected_payment_account_id: str = None,
                  buyer_security_deposit_as_percent: float = None,
                  ignore_dust_threshold: int = 600,
                  clear_data_after_days: int = CLEAR_DATA_AFTER_DAYS_INITIAL,
@@ -87,7 +85,13 @@ class PreferencesPayload(PersistableEnvelope):
                  user_has_raised_trade_limit: bool = False,
                  process_burning_man_accounting_data: bool = False,
                  is_full_bm_accounting_node: bool = False,
-                 use_bisq_wallet_funding: bool = False):
+                 use_bisq_wallet_funding: bool = False,
+                 cookie: Optional["Cookie"] = None,
+                 take_offer_selected_payment_account_id: Optional[str] = None, # best effort
+                 create_offer_selected_payment_account_id: Optional[str] = None, # best effort
+                 preferred_create_offer_payment_method_id: Optional[str] = None,
+                 preferred_take_offer_payment_method_id: Optional[str] = None,
+                ):
         self.user_language = user_language
         self.user_country = user_country
         self.fiat_currencies = fiat_currencies or []
@@ -127,7 +131,6 @@ class PreferencesPayload(PersistableEnvelope):
         
         self.use_animations = use_animations
         self.css_theme = css_theme
-        self.selected_payment_account_for_create_offer = selected_payment_account_for_create_offer
         self.pay_fee_in_btc = pay_fee_in_btc
         self.bridge_addresses = bridge_addresses or []
         self.bridge_option_ordinal = bridge_option_ordinal
@@ -144,7 +147,6 @@ class PreferencesPayload(PersistableEnvelope):
         self.is_dao_full_node = is_dao_full_node
         self.rpc_user = rpc_user
         self.rpc_pw = rpc_pw
-        self.take_offer_selected_payment_account_id = take_offer_selected_payment_account_id
         self.buyer_security_deposit_as_percent = buyer_security_deposit_as_percent or Restrictions.get_default_buyer_security_deposit_as_percent()
         self.ignore_dust_threshold = ignore_dust_threshold
         self.clear_data_after_days = clear_data_after_days
@@ -175,6 +177,18 @@ class PreferencesPayload(PersistableEnvelope):
         self.is_full_bm_accounting_node = is_full_bm_accounting_node
         
         self.use_bisq_wallet_funding = use_bisq_wallet_funding
+
+                
+        # Added at v1.5.3 (Moved from UserPayload in bisq light here)
+        # Generic map for persisting various UI states. We keep values un-typed as string to
+        # provide sufficient flexibility.
+        self.cookie = cookie or Cookie()
+
+        # new preferences for multi-user mode
+        self.take_offer_selected_payment_account_id = take_offer_selected_payment_account_id
+        self.create_offer_selected_payment_account_id = create_offer_selected_payment_account_id
+        self.preferred_create_offer_payment_method_id = preferred_create_offer_payment_method_id
+        self.preferred_take_offer_payment_method_id = preferred_take_offer_payment_method_id
 
     def to_proto_message(self):
         builder = protobuf.PreferencesPayload(
@@ -231,7 +245,11 @@ class PreferencesPayload(PersistableEnvelope):
             user_has_raised_trade_limit=self.user_has_raised_trade_limit,
             process_burning_man_accounting_data=self.process_burning_man_accounting_data,
             is_full_b_m_accounting_node=self.is_full_bm_accounting_node, # weird protobuf names
-            use_bisq_wallet_funding=self.use_bisq_wallet_funding
+            use_bisq_wallet_funding=self.use_bisq_wallet_funding,
+            take_offer_selected_payment_account_id=self.take_offer_selected_payment_account_id,
+            create_offer_selected_payment_account_id=self.create_offer_selected_payment_account_id,
+            preferred_take_offer_payment_method_id=self.preferred_take_offer_payment_method_id,
+            preferred_create_offer_payment_method_id=self.preferred_create_offer_payment_method_id,
         )
 
         if self.backup_directory:
@@ -250,8 +268,6 @@ class PreferencesPayload(PersistableEnvelope):
             builder.buy_screen_crypto_currency_code = self.buy_screen_crypto_currency_code
         if self.sell_screen_crypto_currency_code:
             builder.sell_screen_crypto_currency_code = self.sell_screen_crypto_currency_code
-        if self.selected_payment_account_for_create_offer:
-            builder.selected_payment_account_for_create_offer.CopyFrom(self.selected_payment_account_for_create_offer.to_proto_message())
         if self.bridge_addresses:
             builder.bridge_addresses.extend(self.bridge_addresses)
         if self.custom_bridges:
@@ -268,16 +284,13 @@ class PreferencesPayload(PersistableEnvelope):
             builder.take_offer_selected_payment_account_id = self.take_offer_selected_payment_account_id
         if self.bsq_block_chain_explorer:
             builder.bsq_block_chain_explorer.CopyFrom(self.bsq_block_chain_explorer.to_proto_message())
+        if self.cookie:
+            builder.cookie.extend(ProtoUtil.to_string_map_entry_list(self.cookie.to_proto_message()))
 
         return protobuf.PersistableEnvelope(preferences_payload=builder)
     
     @staticmethod
     def from_proto(proto: protobuf.PreferencesPayload, core_proto_resolver: "CoreProtoResolver"):
-        payment_account = None
-        if (proto.HasField('selected_payment_account_for_create_offer') and
-            proto.selected_payment_account_for_create_offer.HasField('payment_method')):  
-            payment_account = PaymentAccount.from_proto(proto.selected_payment_account_for_create_offer, core_proto_resolver)
-        
         return PreferencesPayload(
             user_language=proto.user_language,
             user_country=Country.from_proto(proto.user_country) if proto.user_country else None,
@@ -313,7 +326,6 @@ class PreferencesPayload(PersistableEnvelope):
             buyer_security_deposit_as_long=proto.buyer_security_deposit_as_long,
             use_animations=proto.use_animations,
             css_theme=proto.css_theme,
-            selected_payment_account_for_create_offer=payment_account,
             pay_fee_in_btc=proto.pay_fee_in_btc,
             bridge_addresses=list(proto.bridge_addresses) if proto.bridge_addresses else None,
             bridge_option_ordinal=proto.bridge_option_ordinal,
@@ -330,7 +342,6 @@ class PreferencesPayload(PersistableEnvelope):
             is_dao_full_node=proto.is_dao_full_node,
             rpc_user=proto.rpc_user if proto.rpc_user else None,
             rpc_pw=proto.rpc_pw if proto.rpc_pw else None,
-            take_offer_selected_payment_account_id=proto.take_offer_selected_payment_account_id if proto.take_offer_selected_payment_account_id else None,
             buyer_security_deposit_as_percent=proto.buyer_security_deposit_as_percent,
             ignore_dust_threshold=proto.ignore_dust_threshold,
             clear_data_after_days=proto.clear_data_after_days,
@@ -349,5 +360,10 @@ class PreferencesPayload(PersistableEnvelope):
             user_has_raised_trade_limit=proto.user_has_raised_trade_limit,
             process_burning_man_accounting_data=proto.process_burning_man_accounting_data,
             is_full_bm_accounting_node=proto.is_full_b_m_accounting_node,  # weird protobuf names
-            use_bisq_wallet_funding=proto.use_bisq_wallet_funding
+            use_bisq_wallet_funding=proto.use_bisq_wallet_funding,
+            cookie=Cookie.from_proto(ProtoUtil.to_string_map(proto.cookie)),
+            take_offer_selected_payment_account_id=proto.take_offer_selected_payment_account_id if proto.take_offer_selected_payment_account_id else None,
+            create_offer_selected_payment_account_id=proto.create_offer_selected_payment_account_id if proto.create_offer_selected_payment_account_id else None,
+            preferred_take_offer_payment_method_id=proto.preferred_take_offer_payment_method_id if proto.preferred_take_offer_payment_method_id else None,
+            preferred_create_offer_payment_method_id=proto.preferred_create_offer_payment_method_id if proto.preferred_create_offer_payment_method_id else None,
         )
