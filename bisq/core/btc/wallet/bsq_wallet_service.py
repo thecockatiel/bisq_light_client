@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bisq.core.btc.setup.wallets_setup import WalletsSetup
     from bisq.core.provider.fee.fee_service import FeeService
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.btc.listeners.bsq_balance_listener import BsqBalanceListener
 
 

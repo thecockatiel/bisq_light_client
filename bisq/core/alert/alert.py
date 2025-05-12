@@ -13,7 +13,7 @@ import pb_pb2 as protobuf
 from bisq.common.protocol.proto_util import ProtoUtil
 
 if TYPE_CHECKING:
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 
 class Alert(ProtectedStoragePayload, ExpirablePayload):

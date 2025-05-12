@@ -20,7 +20,7 @@ from bisq.common.setup.log_setup import (
     add_user_handler_to_shared,
 )
 from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
-from bisq.core.user.preferences import Preferences
+from bisq.shared.preferences.preferences import Preferences
 from bisq.core.user.user import User
 from global_container import GlobalContainer
 from utils.concurrency import AtomicInt

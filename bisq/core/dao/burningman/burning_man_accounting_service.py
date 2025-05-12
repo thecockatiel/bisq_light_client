@@ -36,7 +36,7 @@ if TYPE_CHECKING:
         BurningManPresentationService,
     )
     from bisq.core.dao.state.dao_state_service import DaoStateService
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.core.dao.burningman.accounting.blockchain.accounting_block import (
         AccountingBlock,

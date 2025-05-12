@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.burningman.burning_man_accounting_service import (
         BurningManAccountingService,
     )
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.dao.burningman.accounting.node.full.accounting_block_parser import (
         AccountingBlockParser,
     )

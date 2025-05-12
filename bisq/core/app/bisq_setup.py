@@ -72,7 +72,7 @@ if TYPE_CHECKING:
     from bisq.core.support.dispute.mediation.mediation_manager import MediationManager
     from bisq.core.support.refund.refund_manager import RefundManager
     from bisq.core.trade.trade_manager import TradeManager
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.user.user import User
 
 

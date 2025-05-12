@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.bsq_swap.bsq_swap_trade_manager import BsqSwapTradeManager
     from bisq.core.trade.model.tradable import Tradable
     from bisq.core.trade.statistics.trade_statistics_manager import TradeStatisticsManager
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.offer.offer import Offer
 
 

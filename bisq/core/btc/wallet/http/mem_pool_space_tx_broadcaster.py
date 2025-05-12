@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from bisq.common.config.config import Config
     from bisq.core.btc.nodes.local_bitcoin_node import LocalBitcoinNode
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 
 class MemPoolSpaceTxBroadcaster:

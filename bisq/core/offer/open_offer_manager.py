@@ -87,7 +87,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.statistics.trade_statistics_manager import (
         TradeStatisticsManager,
     )
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.core.user.user import User
 
 

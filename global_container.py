@@ -8,7 +8,7 @@ from utils.di import DependencyProvider
 if TYPE_CHECKING:
     from shared_container import SharedContainer
     from bisq.core.user.user import User
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 
 class GlobalContainer:

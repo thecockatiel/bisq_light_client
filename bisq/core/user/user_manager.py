@@ -22,7 +22,7 @@ from bisq.common.setup.log_setup import (
     logger_context,
 )
 from bisq.common.user_thread import UserThread
-from bisq.core.user.preferences import Preferences
+from bisq.shared.preferences.preferences import Preferences
 from bisq.core.user.user import User
 from bisq.core.user.user_context import UserContext
 from bisq.core.user.user_manager_payload import UserManagerPayload

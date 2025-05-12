@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from bisq.core.filter.filter_manager import FilterManager
     from bisq.core.network.p2p.p2p_service import P2PService
     from bisq.core.network.p2p.network.connection import Connection
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 
 # TODO: WalletsSetup needs to be checked and implemented accordingly later if needed

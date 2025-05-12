@@ -8,7 +8,7 @@ from utils.aio import FutureCallback, as_future
 
 if TYPE_CHECKING:
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 
 class MempoolRequest:

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional
 from bisq.core.trade.statistics.referral_id import ReferralId
 
 if TYPE_CHECKING:
-    from bisq.core.user.preferences import Preferences
+    from bisq.shared.preferences.preferences import Preferences
 
 class ReferralIdService:
     def __init__(self, preferences: "Preferences") -> None:

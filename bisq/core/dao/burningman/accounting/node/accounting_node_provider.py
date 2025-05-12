@@ -1,6 +1,6 @@
 from bisq.common.setup.log_setup import get_ctx_logger
 from typing import TYPE_CHECKING
-from bisq.core.user.preferences import Preferences
+from bisq.shared.preferences.preferences import Preferences
 
 if TYPE_CHECKING:
     from bisq.core.dao.burningman.accounting.node.lite.accounting_lite_node import (
