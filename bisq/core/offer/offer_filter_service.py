@@ -9,7 +9,7 @@ from bisq.core.filter.filter_manager import FilterManager
 from bisq.core.offer.offer_filter_service_result import OfferFilterServiceResult
 from bisq.core.payment.payment_account import PaymentAccount
 from bisq.core.payment.payment_account_util import PaymentAccountUtil
-from bisq.shared.preferences.preferences import Preferences
+from bisq.core.user.preferences import Preferences
 from bisq.core.user.user import User
 from bisq.common.version import Version
 from bitcoinj.base.coin import Coin

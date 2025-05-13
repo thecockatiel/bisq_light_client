@@ -25,7 +25,7 @@ if TYPE_CHECKING:
         BurningManAccountingService,
     )
     from bisq.core.dao.state.dao_state_service import DaoStateService
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.network.p2p.p2p_service import P2PService
 
 

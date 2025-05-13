@@ -7,7 +7,7 @@ from bisq.core.locale.res import Res
 from bisq.core.monetary.price import Price
 from bisq.core.offer.offer_direction import OfferDirection
 from bisq.core.payment.payload.payment_method import PaymentMethod
-from bisq.shared.preferences.preferences_const import USE_SYMMETRIC_SECURITY_DEPOSIT
+from bisq.core.user.preferences_const import USE_SYMMETRIC_SECURITY_DEPOSIT
 from bisq.core.util.coin.coin_util import CoinUtil
 from bitcoinj.base.coin import Coin
 from bisq.core.offer.bisq_v1.offer_payload import OfferPayload

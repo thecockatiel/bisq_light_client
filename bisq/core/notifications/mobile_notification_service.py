@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from bisq.core.notifications.mobile_notification_validator import (
         MobileNotificationValidator,
     )
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 
 
 class MobileNotificationService:

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
     from bisq.common.handlers.fault_handler import FaultHandler
     from bisq.core.provider.price.pricenode_dto import PricenodeDto
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 
 
 class PriceFeedService:

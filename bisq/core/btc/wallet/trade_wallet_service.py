@@ -21,7 +21,7 @@ from bisq.core.btc.wallet.tx_broadcaster import TxBroadcaster
 from bisq.core.btc.wallet.wallet_service import WalletService
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 from bisq.core.locale.res import Res
-from bisq.shared.preferences.preferences import Preferences
+from bisq.core.user.preferences import Preferences
 from bitcoinj.base.coin import Coin
 from bitcoinj.core.segwit_address import SegwitAddress
 from bitcoinj.core.transaction_input import TransactionInput

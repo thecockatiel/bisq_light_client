@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.bisq_v1.failed_trades_manager import FailedTradesManager
     from bisq.core.trade.closed_tradable_manager import ClosedTradableManager
     from bisq.core.trade.trade_manager import TradeManager
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.filter.filter import Filter
     from bisq.core.trade.model.bisq_v1.trade import Trade
     from bisq.core.trade.model.tradable import Tradable

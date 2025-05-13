@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from bisq.core.network.p2p.node_address import NodeAddress
     from bisq.core.dao.state.model.blockchain.block import Block
     from bisq.core.network.p2p.seed.seed_node_repository import SeedNodeRepository
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
     from bisq.core.network.p2p.network.connection import Connection

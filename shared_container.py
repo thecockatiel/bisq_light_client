@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
     from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
     from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator

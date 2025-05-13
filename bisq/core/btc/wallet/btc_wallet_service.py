@@ -32,7 +32,7 @@ from bitcoinj.core.address import Address
 
 if TYPE_CHECKING:
     from bisq.core.provider.fee.fee_service import FeeService
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.btc.model.address_entry_list import AddressEntryList
     from bisq.core.btc.raw_transaction_input import RawTransactionInput
     from bitcoinj.crypto.deterministic_key import DeterministicKey

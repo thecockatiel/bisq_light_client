@@ -6,7 +6,7 @@ from bisq.core.dao.node.lite.lite_node import LiteNode
 
 
 if TYPE_CHECKING:
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.dao.node.bsq_node import BsqNode
 
 class BsqNodeProvider:

@@ -19,8 +19,8 @@ from bisq.core.payment.payment_account_util import PaymentAccountUtil
 from bisq.core.provider.fee.fee_service import FeeService
 from bisq.core.setup.core_network_capabilities import CoreNetworkCapabilities
 from bisq.core.user.auto_confirm_settings import AutoConfirmSettings
-from bisq.shared.preferences.dont_show_again_lookup import DontShowAgainLookup
-from bisq.shared.preferences.preferences_const import (
+from bisq.core.user.dont_show_again_lookup import DontShowAgainLookup
+from bisq.core.user.preferences_const import (
     BSQ_MAIN_NET_EXPLORERS,
     BTC_DAO_TEST_NET_EXPLORERS,
     BTC_MAIN_NET_EXPLORERS,
@@ -32,7 +32,7 @@ from bisq.shared.preferences.preferences_const import (
     XMR_TX_PROOF_SERVICES_CLEAR_NET,
 )
 from bisq.core.user.block_chain_explorer import BlockChainExplorer
-from bisq.shared.preferences.preferences_payload import PreferencesPayload 
+from bisq.core.user.preferences_payload import PreferencesPayload 
 from utils.data import ObservableChangeEvent, ObservableList, ObservableMap, SimpleProperty, SimplePropertyChangeEvent
 from utils.java_compat import java_cmp_str
 from twisted.internet.defer import Deferred

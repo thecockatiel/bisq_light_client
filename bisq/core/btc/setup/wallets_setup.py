@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from bitcoinj.core.address import Address
     from bisq.core.btc.model.address_entry import AddressEntry
     from bisq.core.network.socks5_proxy_provider import Socks5ProxyProvider
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.btc.model.address_entry_list import AddressEntryList
     from bisq.common.config.config import Config
  

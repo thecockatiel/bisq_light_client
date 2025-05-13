@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 
 class DontShowAgainLookup:
     preferences = None

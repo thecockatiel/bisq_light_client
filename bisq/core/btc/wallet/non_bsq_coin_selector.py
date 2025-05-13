@@ -5,7 +5,7 @@ from bisq.core.dao.state.model.blockchain.tx_output_key import TxOutputKey
 
 
 if TYPE_CHECKING:
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bitcoinj.core.transaction_output import TransactionOutput
 

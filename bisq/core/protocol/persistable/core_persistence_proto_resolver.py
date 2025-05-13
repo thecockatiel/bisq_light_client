@@ -47,7 +47,7 @@ from bisq.core.support.refund.refund_dispute_list import RefundDisputeList
 from bisq.core.trade.model.tradable_list import TradableList
 from bisq.core.trade.statistics.trade_statistics_2_store import TradeStatistics2Store
 from bisq.core.trade.statistics.trade_statistics_3_store import TradeStatistics3Store
-from bisq.shared.preferences.preferences_payload import PreferencesPayload
+from bisq.core.user.preferences_payload import PreferencesPayload
 from bisq.core.user.user_manager_payload import UserManagerPayload
 from bisq.core.user.user_payload import UserPayload
 import pb_pb2 as protobuf

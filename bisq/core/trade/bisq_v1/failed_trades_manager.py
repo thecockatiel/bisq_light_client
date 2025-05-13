@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from bisq.core.trade.bisq_v1.dump_delayed_payout_tx import DumpDelayedPayoutTx
     from bisq.core.trade.bisq_v1.trade_util import TradeUtil
     from bisq.core.trade.model.bisq_v1.trade import Trade
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
     from bisq.core.offer.offer import Offer
     from bisq.core.btc.model.address_entry import AddressEntry
 

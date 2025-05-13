@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from bisq.core.dao.monitoring.model.dao_state_hash import DaoStateHash
     from bisq.core.dao.state.dao_state_service import DaoStateService
     from bisq.core.dao.state.genesis_tx_info import GenesisTxInfo
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 import os
 
 

@@ -1,6 +1,6 @@
 from typing import Optional
 from bisq.common.protocol.proto_util import ProtoUtil
-from bisq.shared.preferences.cookie_key import CookieKey
+from bisq.core.user.cookie_key import CookieKey
 
 class Cookie(dict[CookieKey, str]):
     """

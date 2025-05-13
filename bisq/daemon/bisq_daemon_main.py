@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     )
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.user.user_manager import UserManager
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 
 base_logger = get_base_logger(__name__)
 shared_logger = get_base_logger(__name__)
@@ -229,7 +229,7 @@ class BisqDaemonMain(
         shared_persistence_orchestrator: "PersistenceOrchestrator",
     ):
         # See comment for CoreNetworkProtoResolver import above
-        from bisq.shared.preferences.preferences import Preferences
+        from bisq.core.user.preferences import Preferences
         from bisq.common.persistence.persistence_manager import PersistenceManager
 
         self._preferences = Preferences(

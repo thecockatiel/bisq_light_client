@@ -8,7 +8,7 @@ from bitcoinj.core.insufficient_money_exception import InsufficientMoneyExceptio
 if TYPE_CHECKING:
     from bisq.core.btc.wallet.btc_wallet_service import BtcWalletService
     from bisq.core.provider.fee.fee_service import FeeService
-    from bisq.shared.preferences.preferences import Preferences
+    from bisq.core.user.preferences import Preferences
 
 
 class TxFeeEstimationService:
