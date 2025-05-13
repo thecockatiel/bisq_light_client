@@ -17,6 +17,7 @@ class FeeService:
     BTC_DEFAULT_TX_FEE = 50
     filter_manager: "FilterManager" = None
     dao_state_service: "DaoStateService" = None
+    current_instance: "FeeService" = None
 
     def __init__(self, dao_state_service: "DaoStateService"):
         self.logger = get_ctx_logger(__name__)
@@ -25,10 +26,16 @@ class FeeService:
         self.tx_fee_per_vbyte = FeeService.BTC_DEFAULT_TX_FEE
         self.last_request = 0
         self.min_fee_per_vbyte = 0
+        FeeService.current_instance = self
 
     def on_all_services_initialized(self, provided_filter_manager: "FilterManager"):
         FeeService.filter_manager = provided_filter_manager
         self.min_fee_per_vbyte = Config.BASE_CURRENCY_NETWORK_VALUE.get_default_min_fee_per_vbyte()
+
+    def shut_down(self):
+        FeeService.filter_manager = None
+        FeeService.dao_state_service = None
+        FeeService.current_instance = None
 
     @staticmethod
     def get_fee_from_param_as_coin(param: Param) -> Coin:

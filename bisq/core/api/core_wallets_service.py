@@ -156,7 +156,8 @@ class CoreWalletsService:
 
         # Check if any address has zero balance
         no_address_has_zero_balance = all(
-            memoized_balance(user_context, addr_str) != 0 for addr_str in address_strings
+            memoized_balance(user_context, addr_str) != 0
+            for addr_str in address_strings
         )
 
         if no_address_has_zero_balance:
@@ -199,8 +200,7 @@ class CoreWalletsService:
             receiver_amount = self._get_valid_transfer_amount(amount, c.bsq_formatter)
             tx_fee_per_vbyte = (
                 self._get_tx_fee_rate_from_param_or_preference_or_fee_service(
-                    user_context,
-                    tx_fee_rate
+                    user_context, tx_fee_rate
                 )
             )
             model = c.bsq_transfer_service.get_bsq_transfer_model(
@@ -332,26 +332,29 @@ class CoreWalletsService:
     def set_tx_fee_rate_preference(
         self, user_context: "UserContext", tx_fee_rate: int
     ) -> None:
-        min_fee_per_vbyte = user_context.global_container.fee_service.min_fee_per_vbyte
+        c = user_context.global_container
+        min_fee_per_vbyte = c.fee_service.min_fee_per_vbyte
         if tx_fee_rate < min_fee_per_vbyte:
             raise IllegalArgumentException(
                 f"tx fee rate preference must be >= {min_fee_per_vbyte} sats/byte"
             )
 
-        user_context.preferences.set_use_custom_withdrawal_tx_fee(True)
+        c.preferences.set_use_custom_withdrawal_tx_fee(True)
         sats_per_byte = Coin.value_of(tx_fee_rate)
-        user_context.preferences.set_withdrawal_tx_fee_in_vbytes(sats_per_byte.value)
+        c.preferences.set_withdrawal_tx_fee_in_vbytes(sats_per_byte.value)
 
     def unset_tx_fee_rate_preference(self, user_context: "UserContext") -> None:
-        user_context.preferences.set_use_custom_withdrawal_tx_fee(False)
+        user_context.global_container.preferences.set_use_custom_withdrawal_tx_fee(
+            False
+        )
 
     def get_most_recent_tx_fee_rate_info(
         self, user_context: "UserContext"
     ) -> "TxFeeRateInfo":
         c = user_context.global_container
         return TxFeeRateInfo(
-            user_context.preferences.get_use_custom_withdrawal_tx_fee(),
-            user_context.preferences.get_withdrawal_tx_fee_in_vbytes(),
+            c.preferences.get_use_custom_withdrawal_tx_fee(),
+            c.preferences.get_withdrawal_tx_fee_in_vbytes(),
             c.fee_service.min_fee_per_vbyte,
             c.fee_service.get_tx_fee_per_vbyte().value,
             c.fee_service.last_request,

@@ -1,5 +1,8 @@
 import contextvars
 from bisq.core.api.core_context import CoreContext
+from bisq.core.protocol.persistable.core_persistence_proto_resolver import (
+    CorePersistenceProtoResolver,
+)
 from bisq.daemon.grpc.grpc_container import GrpcContainer
 from utils.aio import as_future, stop_reactor_and_exit
 from collections.abc import Callable
@@ -31,8 +34,12 @@ from utils.dir import user_data_dir
 from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator
 
 if TYPE_CHECKING:
+    from bisq.common.protocol.persistable.persistence_proto_resolver import (
+        PersistenceProtoResolver,
+    )
     from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
     from bisq.core.user.user_manager import UserManager
+    from bisq.shared.preferences.preferences import Preferences
 
 base_logger = get_base_logger(__name__)
 shared_logger = get_base_logger(__name__)
@@ -54,6 +61,7 @@ class BisqDaemonMain(
         self.__is_shutdown_in_progress = AtomicBoolean(False)
         self._has_downgraded = False
         self._user_manager: Optional["UserManager"] = None
+        self._preferences: Optional["Preferences"] = None
         self._config: Optional["Config"] = None
         self._shared_container: Optional["SharedContainer"] = None
         self._core_context = (
@@ -84,12 +92,24 @@ class BisqDaemonMain(
                 corrupted_storage_file_handler = CorruptedStorageFileHandler()
                 network_proto_resolver = CoreNetworkProtoResolver(clock)
                 shared_persistence_orchestrator = PersistenceOrchestrator()
+                persistence_proto_resolver = CorePersistenceProtoResolver(
+                    Clock(), None, network_proto_resolver
+                )
 
-                await self.init_user_manager(
-                    network_proto_resolver,
+                await self._init_user_manager(
+                    persistence_proto_resolver,
                     corrupted_storage_file_handler,
                     shared_persistence_orchestrator,
                 )
+
+                await self._init_preferences(
+                    self._user_manager,
+                    persistence_proto_resolver,
+                    corrupted_storage_file_handler,
+                    shared_persistence_orchestrator,
+                )
+
+                shared_persistence_orchestrator.on_all_services_initialized()
 
                 self._shared_container = SharedContainer(
                     self._core_context,
@@ -101,6 +121,7 @@ class BisqDaemonMain(
                     clock,
                     network_proto_resolver,
                     corrupted_storage_file_handler,
+                    self._preferences,
                 )
             if self._config.full_dao_node:
                 print("Full DAO node is not supported.")
@@ -178,9 +199,9 @@ class BisqDaemonMain(
     # // First synchronous execution tasks
     # /////////////////////////////////////////////////////////////////////////////////////
 
-    async def init_user_manager(
+    async def _init_user_manager(
         self,
-        network_proto_resolver: "NetworkProtoResolver",
+        persistence_proto_resolver: "PersistenceProtoResolver",
         corrupted_storage_file_handler: "CorruptedStorageFileHandler",
         shared_persistence_orchestrator: "PersistenceOrchestrator",
     ):
@@ -189,14 +210,40 @@ class BisqDaemonMain(
 
         self._user_manager = UserManager(
             self._config,
+            persistence_proto_resolver,
             corrupted_storage_file_handler,
-            network_proto_resolver,
             shared_persistence_orchestrator,
         )
         d = Deferred()
         try:
             self._user_manager.read_persisted(lambda: d.callback(True))
-            shared_persistence_orchestrator.on_all_services_initialized()
+        except BaseException as e:
+            d.errback(e)
+        await as_future(d)
+
+    async def _init_preferences(
+        self,
+        user_manager: "UserManager",
+        persistence_proto_resolver: "PersistenceProtoResolver",
+        corrupted_storage_file_handler: "CorruptedStorageFileHandler",
+        shared_persistence_orchestrator: "PersistenceOrchestrator",
+    ):
+        # See comment for CoreNetworkProtoResolver import above
+        from bisq.shared.preferences.preferences import Preferences
+        from bisq.common.persistence.persistence_manager import PersistenceManager
+
+        self._preferences = Preferences(
+            PersistenceManager(
+                user_manager.data_dir,
+                persistence_proto_resolver,
+                corrupted_storage_file_handler,
+                shared_persistence_orchestrator,
+            ),
+            self._config,
+        )
+        d = Deferred()
+        try:
+            self._preferences.read_persisted(lambda: d.callback(True))
         except BaseException as e:
             d.errback(e)
         await as_future(d)

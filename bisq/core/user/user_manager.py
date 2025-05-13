@@ -3,7 +3,6 @@ from bisq.common.config.config import Config
 from bisq.common.file.corrupted_storage_file_handler import CorruptedStorageFileHandler
 from bisq.common.file.file_util import delete_directory
 from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator
-from bisq.common.protocol.network.network_proto_resolver import NetworkProtoResolver
 from bisq.common.util.utilities import get_random_id
 from bisq.core.exceptions.illegal_state_exception import IllegalStateException
 
@@ -22,7 +21,6 @@ from bisq.common.setup.log_setup import (
     logger_context,
 )
 from bisq.common.user_thread import UserThread
-from bisq.shared.preferences.preferences import Preferences
 from bisq.core.user.user import User
 from bisq.core.user.user_context import UserContext
 from bisq.core.user.user_manager_payload import UserManagerPayload
@@ -30,17 +28,13 @@ from utils.aio import as_future
 from utils.concurrency import AtomicInt
 from utils.data import SimpleProperty
 from utils.preconditions import check_argument
-from bisq.core.provider.fee.fee_service import FeeService
-from bisq.core.protocol.persistable.core_persistence_proto_resolver import (
-    CorePersistenceProtoResolver,
-)
-from utils.clock import Clock
 from twisted.internet.defer import Deferred
 import asyncio
 
 if TYPE_CHECKING:
     from global_container import GlobalContainer
     from shared_container import SharedContainer
+    from bisq.common.protocol.persistable.persistence_proto_resolver import PersistenceProtoResolver
 
 
 class UserManager(PersistedDataHost):
@@ -49,15 +43,14 @@ class UserManager(PersistedDataHost):
     def __init__(
         self,
         config: "Config",
-        network_proto_resolver: "NetworkProtoResolver",
+        persistence_proto_resolver: "PersistenceProtoResolver",
         corrupted_storage_file_handler: "CorruptedStorageFileHandler",
         shared_persistence_orchestrator: "PersistenceOrchestrator",
     ):
         super().__init__()
         self.logger = get_ctx_logger(__name__)
-        self._persistence_proto_resolver = CorePersistenceProtoResolver(
-            Clock(), None, network_proto_resolver
-        )
+        self._persistence_proto_resolver = persistence_proto_resolver
+
         self._corrupted_storage_file_handler = corrupted_storage_file_handler
         self._data_dir = config.app_data_dir.joinpath("user_manager")
         self._data_dir.mkdir(parents=True, exist_ok=True)
@@ -75,6 +68,10 @@ class UserManager(PersistedDataHost):
         ]()  # user_id -> GlobalContainer
         self.active_user_context_property = SimpleProperty[Optional[UserContext]]()
         self._lock = RLock()
+
+    @property
+    def data_dir(self):
+        return self._data_dir
 
     def read_persisted(self, complete_handler: Callable[[], None]):
         assert self._persistence_manager is not None
@@ -112,7 +109,7 @@ class UserManager(PersistedDataHost):
                 UserThread.execute(complete_handler)
 
         for user_id in self._user_contexts.keys():
-            self._read_persisted_user_and_preference(user_id, _on_data_read)
+            self._read_persisted_user(user_id, _on_data_read)
 
     def _load_user_context(self, user_id: str):
         alias = self._user_manager_payload.user_alias_entries[user_id]
@@ -140,40 +137,24 @@ class UserManager(PersistedDataHost):
                 ),
                 key_ring,
             )
-            user_preferences = Preferences(
-                PersistenceManager(
-                    storage_dir,
-                    self._persistence_proto_resolver,
-                    self._corrupted_storage_file_handler,
-                    persistence_orchestrator,
-                ),
-                self._config,
-                FeeService(
-                    None,
-                ),  # create a temporary fee service, later replaced by each user's own fee service
-            )
 
         self._user_contexts[user_id] = UserContext(
             user_id=user_id,
             alias=alias,
             user=user,
-            preferences=user_preferences,
             persistence_orchestrator=persistence_orchestrator,
             logger=logger,
         )
 
-    def _read_persisted_user_and_preference(
+    def _read_persisted_user(
         self, user_id: str, complete_handler: Callable[[], None]
     ):
         ctx = self.get_user_context(user_id)
-        remaining = AtomicInt(2)
 
         def _on_data_read():
-            if remaining.decrement_and_get() == 0:
-                UserThread.execute(complete_handler)
+            UserThread.execute(complete_handler)
 
         ctx.user.read_persisted(_on_data_read)
-        ctx.preferences.read_persisted(_on_data_read)
 
     @property
     def active_user_id(self):
@@ -234,7 +215,7 @@ class UserManager(PersistedDataHost):
                 d.callback(True)
 
             try:
-                self._read_persisted_user_and_preference(user_id, _on_data_read)
+                self._read_persisted_user(user_id, _on_data_read)
             except Exception as e:
                 d.errback(e)
             await as_future(d)
@@ -297,10 +278,8 @@ class UserManager(PersistedDataHost):
             new_user_id = None
             ctx = self.get_user_context(user_id)
             await ctx.shut_down()
-            await ctx.preferences.shut_down_for_removal(remove_user_data)
             await ctx.user.shut_down_for_removal(remove_user_data)
             user_data_dir = ctx.user.data_dir
-            del ctx.preferences
             del ctx.user
             destory_user_logger(ctx.user_id)
             ctx.logger = None

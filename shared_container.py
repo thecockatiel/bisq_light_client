@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
+    from bisq.shared.preferences.preferences import Preferences
     from bisq.common.setup.graceful_shut_down_handler import GracefulShutDownHandler
     from bisq.common.setup.uncought_exception_handler import UncaughtExceptionHandler
     from bisq.common.persistence.persistence_orchestrator import PersistenceOrchestrator
@@ -27,6 +28,7 @@ class SharedContainer:
         clock: "Clock",
         network_proto_resolver: "NetworkProtoResolver",
         corrupted_storage_file_handler: "CorruptedStorageFileHandler",
+        preferences: "Preferences",
     ):
         self.core_context = core_context
         self._config = config
@@ -37,6 +39,7 @@ class SharedContainer:
         self.clock = clock
         self.network_proto_resolver = network_proto_resolver
         self.corrupted_storage_file_handler = corrupted_storage_file_handler
+        self.preferences = preferences
 
     def __getattr__(self, name):
         return None

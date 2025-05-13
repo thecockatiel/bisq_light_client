@@ -309,3 +309,4 @@ class DomainInitialisation:
         self.failed_trades_manager.shut_down()
         self.trade_manager.shut_down()
         self.bsq_swap_trade_manager.shut_down()
+        self.fee_service.shut_down()

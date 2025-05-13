@@ -21,3 +21,7 @@ Logs written to `Shared` will be logged to aggregated logs and to `User` Logs (T
 Logs written to `User` logs will only be written to the respective user logs, living in each user's `logs` directory
 
 To switch to each user currently we shutdown each user before starting up the next one
+
+### Preferences/FeeService
+
+Currently preferences relies on FeeService indirectly which relies on dao state and filter manager for correct values. this means until dao and filter manager is not shared, multiple users cannot operate at the same time safely, without some effort

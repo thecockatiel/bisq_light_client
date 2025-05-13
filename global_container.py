@@ -8,7 +8,6 @@ from utils.di import DependencyProvider
 if TYPE_CHECKING:
     from shared_container import SharedContainer
     from bisq.core.user.user import User
-    from bisq.shared.preferences.preferences import Preferences
 
 
 class GlobalContainer:
@@ -16,12 +15,10 @@ class GlobalContainer:
         self,
         shared_container: "SharedContainer",
         user: "User",
-        preferences: "Preferences",
         persistence_orchestrator: "PersistenceOrchestrator",
     ):
         self._shared_container = shared_container
         self._user = user
-        self._preferences = preferences
         self._persistence_orchestrator = persistence_orchestrator
         # this is to allow shut_down to free these from instances as well
         self._logger = None
@@ -67,7 +64,7 @@ class GlobalContainer:
 
     @property
     def preferences(self):
-        return self._preferences
+        return self._shared_container.preferences
 
     @property
     def persistence_orchestrator(self):

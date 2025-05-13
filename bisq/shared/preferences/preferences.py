@@ -56,13 +56,11 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self,
         persistence_manager: "PersistenceManager[PreferencesPayload]",
         config: "Config",
-        fee_service: "FeeService",
     ) -> None:
         super().__init__()
         self.logger = get_ctx_logger(__name__)
         self.persistence_manager = persistence_manager
         self.config = config
-        self.fee_service = fee_service
         self.btc_nodes_from_options = config.btc_nodes
         self.referral_id_from_options = config.referral_id
         self.full_dao_node_from_options = config.full_dao_node
@@ -124,27 +122,6 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         self._subscriptions.append(self.fiat_currencies_as_observable.add_listener(self.update_trade_currencies))
         self._subscriptions.append(self.crypto_currencies_as_observable.add_listener(self.update_trade_currencies))
 
-    async def shut_down_for_removal(self, removing_user_data: False):
-        for unsub in self._subscriptions:
-            unsub()
-        self._subscriptions.clear()
-        if not removing_user_data:
-            d = Deferred()
-
-            def _on_persisted():
-                d.callback(True)
-
-            try:
-                self.persistence_manager.persist_now(_on_persisted, True)
-                self.persistence_manager.shutdown()
-            except BaseException as e:
-                d.errback(e)
-
-            await as_future(d)
-        else:
-            self.persistence_manager.shutdown()
-
-        
     def read_persisted(self, complete_handler: Callable[[], None]) -> None:
         def result_handler(persisted: "PreferencesPayload"):
             self._init_from_persisted_preferences(persisted)
@@ -770,8 +747,10 @@ class Preferences(PersistedDataHost, BridgeAddressProvider):
         return self.pref_payload.bridge_addresses
 
     def get_withdrawal_tx_fee_in_vbytes(self) -> int:
-        return max(self.pref_payload.withdrawal_tx_fee_in_vbytes,
-                  self.fee_service.min_fee_per_vbyte)
+        return max(
+            self.pref_payload.withdrawal_tx_fee_in_vbytes,
+            FeeService.current_instance.min_fee_per_vbyte if FeeService.current_instance else 0,
+        )
 
     def is_dao_full_node(self) -> bool:
         if self.config.full_dao_node_option_set_explicitly:

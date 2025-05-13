@@ -20,7 +20,6 @@ from bisq.common.setup.log_setup import (
     add_user_handler_to_shared,
 )
 from bisq.core.setup.core_persisted_data_host import CorePersistedDataHost
-from bisq.shared.preferences.preferences import Preferences
 from bisq.core.user.user import User
 from global_container import GlobalContainer
 from utils.concurrency import AtomicInt
@@ -33,7 +32,6 @@ class UserContext:
     user_id: str
     alias: str
     user: User
-    preferences: Preferences
     persistence_orchestrator: PersistenceOrchestrator
     logger: logging.Logger
     global_container: Optional[GlobalContainer] = field(default=None)
@@ -90,10 +88,8 @@ class UserContext:
                     self.global_container = GlobalContainer(
                         shared_container,
                         self.user,
-                        self.preferences,
                         self.persistence_orchestrator,
                     )
-                    self.preferences.fee_service = self.global_container.fee_service
                     await self._read_all_persisted_user_data()
                     if shared_container.config.gui_mode:
                         # TODO gui app
