@@ -778,7 +778,7 @@ def asyncSlot(*args, **kwargs):
     def _error_handler(task):
         try:
             task.result()
-        except Exception:
+        except BaseException:
             sys.excepthook(*sys.exc_info())
 
     def outer_decorator(fn):
