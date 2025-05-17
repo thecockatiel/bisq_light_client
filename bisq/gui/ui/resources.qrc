@@ -1,0 +1,17 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="icons">
+        <file alias="tor">icons/tor.png</file>
+        <file alias="logo">icons/logo.png</file>
+        <file alias="external">icons/external.png</file>
+        <file alias="copy">icons/copy.png</file>
+        <file alias="check">icons/check.png</file>
+        <file alias="clock1">icons/clock1.png</file>
+        <file alias="clock2">icons/clock2.png</file>
+        <file alias="clock3">icons/clock3.png</file>
+        <file alias="clock4">icons/clock4.png</file>
+        <file alias="clock5">icons/clock5.png</file>
+        <file alias="check-circle">icons/check-circle.png</file>
+        <file alias="wait">icons/wait.png</file>
+    </qresource>
+</RCC>

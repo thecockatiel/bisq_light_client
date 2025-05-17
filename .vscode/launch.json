@@ -5,6 +5,39 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: bisq gui",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "run_gui.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--apiPassword=123456",
+        "--genesisBlockHeight=111",
+        "--genesisTxId=30af0050040befd8af25068cc697e418e09c2d8ebd8d411d2240591b9ec203cf",
+        "--baseCurrencyNetwork=BTC_REGTEST",
+        "--useDevPrivilegeKeys=true",
+        "--useLocalhostForP2P=true",
+        "--nodePort=6687",
+        "--appName=bisq_light_BTC_REGTEST_steve",
+        "--useDevCommands"
+        // #################################
+        // "--logLevel=DEBUG",
+        // #################################
+        // "--torControlPort=9052",
+        // "--torControlHost=127.0.0.1"
+        // #################################
+        // "--torProxyHost=127.0.0.1",
+        // "--torProxyPort=9050",
+        // "--torProxyHiddenServiceName=s2cuw6nu5nydypyrliaqltfpqkjrfkhd3tjas3jhpoqahsmb6zvqeiyd.onion",
+        // "--torProxyHiddenServicePort='9999 127.0.0.1:65018'",
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "subProcess": false
+    },
+    {
       "name": "Python Debugger: bisq daemon",
       "type": "debugpy",
       "request": "launch",
@@ -18,7 +51,7 @@
         "--useDevPrivilegeKeys=true",
         "--useLocalhostForP2P=true",
         "--nodePort=6687",
-        "--appName=bisq_light_python_BTC_REGTEST_steve",
+        "--appName=bisq_light_BTC_REGTEST_steve",
         "--useDevCommands"
         // #################################
         // "--logLevel=DEBUG",
