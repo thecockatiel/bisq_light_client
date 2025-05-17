@@ -68,3 +68,7 @@ python3 run_daemon.py
 ## Credits
 
 This project uses source codes taken from [Electrum](https://github.com/spesmilo/electrum) where applicable
+
+## Simplex address
+
+You can contact me on Simplex: [Link](https://simplex.chat/contact#/?v=2-7&smp=smp%3A%2F%2FPtsqghzQKU83kYTlQ1VKg996dW4Cw4x_bvpKmiv8uns%3D%40smp18.simplex.im%2FGfB7KGndhLe8PxTPjtIIm8BV0vv6wGKA%23%2F%3Fv%3D1-4%26dh%3DMCowBQYDK2VuAyEAj_mmVKhbUHj5RMgQrydsXH75xo3v1qb-dG2IhaA1Ik0%253D%26q%3Dc%26srv%3Dlyqpnwbs2zqfr45jqkncwpywpbtq7jrhxnib5qddtr6npjyezuwd3nqd.onion)
