@@ -125,5 +125,5 @@ class Ui_OfferBookView(object):
         self.label_4.setText(_translate("OfferBookView", "Currency"))
         self.label.setText(_translate("OfferBookView", "Sell BTC to"))
         self.sell_btc_button.setText(_translate("OfferBookView", "Sell BTC"))
-        self.label_3.setText(_translate("OfferBookView", "Sell BTC to"))
+        self.label_3.setText(_translate("OfferBookView", "Buy BTC from"))
         self.buy_btc_button.setText(_translate("OfferBookView", "Buy BTC"))

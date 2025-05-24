@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChatBubble</class>
+ <widget class="QWidget" name="ChatBubble">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>609</width>
+    <height>341</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="date_label">
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QLabel {
+  color: #aaaaaa;
+}</string>
+     </property>
+     <property name="text">
+      <string>22 May 2025 16:00:00</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="message_label">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QLabel {
+ background-color: palette(mid);
+ color: palette(base);
+ border: 1px solid transparent;
+ border-radius: 8px;
+ padding: 6px;
+}</string>
+     </property>
+     <property name="text">
+      <string>You can communicate with your trade peer to resolve potential problems with this trade.
+  It is not mandatory to reply in the chat.
+  If a trader violates any of the rules below, open a dispute and report it to the mediator or arbitrator.
+  Chat rules:
+  ● Do not send any links (risk of malware). You can send the transaction ID and the name of a block explorer.
+  ● Do not send your seed words, private keys, passwords or other sensitive information!
+  ● Do not encourage trading outside of Bisq (no security).
+  ● Do not engage in any form of social engineering scam attempts.
+  ● If a peer is not responding and prefers to not communicate via chat, respect their decision.
+  ● Keep conversation scope limited to the trade. This chat is not a messenger replacement or troll-box.
+  ● Keep conversation friendly and respectful.</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="textInteractionFlags">
+      <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="message_delivery_label">
+     <property name="font">
+      <font>
+       <pointsize>8</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QLabel {
+ color: #aaaaaa;
+}</string>
+     </property>
+     <property name="text">
+      <string>Message saved in receiver's mailbox</string>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
